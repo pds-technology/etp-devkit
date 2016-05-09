@@ -205,7 +205,7 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>powershell.exe -file "$(SolutionDir)\..\build\InsertCopyright.ps1" -target $(ProjectDir) -productname "ETP DevKit" -productversion "1.0"</PreBuildEvent>
+    <PreBuildEvent>powershell.exe -file "$(SolutionDir)scripts\InsertCopyright.ps1" -target $(ProjectDir) -productname "ETP DevKit" -productversion "1.0"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
