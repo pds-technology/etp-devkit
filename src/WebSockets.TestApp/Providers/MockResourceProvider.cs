@@ -27,6 +27,7 @@ namespace Energistics.Providers
 {
     public class MockResourceProvider : DiscoveryStoreHandler
     {
+        private const string Witsml141 = "application/x-witsml+xml;version=1.4.1.1;";
         private const string BaseUri = "eml://witsml14";
 
         protected override void HandleGetResources(ProtocolEventArgs<GetResources, IList<Resource>> args)
@@ -35,50 +36,50 @@ namespace Energistics.Providers
             {
                 args.Context.Add(New(
                     x => BaseUri,
-                    contentType: ContentTypes.Witsml141,
+                    contentType: Witsml141,
                     resourceType: ResourceTypes.UriProtocol,
                     name: "WITSML Store (1.4.1.1)"));
             }
             else if (EtpUri.IsRoot(args.Message.Uri))
             {
                 args.Context.Add(New(
-                    uuid => string.Format("{0}/well({1})", args.Message.Uri, uuid),
-                    contentType: ContentTypes.Witsml141 + "type=obj_well",
+                    uuid => String.Format("{0}/well({1})", args.Message.Uri, uuid),
+                    contentType: Witsml141 + "type=obj_well",
                     resourceType: ResourceTypes.DataObject,
                     name: "Well 01"));
 
                 args.Context.Add(New(
-                    uuid => string.Format("{0}/well({1})", args.Message.Uri, uuid),
-                    contentType: ContentTypes.Witsml141 + "type=obj_well",
+                    uuid => String.Format("{0}/well({1})", args.Message.Uri, uuid),
+                    contentType: Witsml141 + "type=obj_well",
                     resourceType: ResourceTypes.DataObject,
                     name: "Well 02"));
             }
             else if (args.Message.Uri.Contains("/well(") && !args.Message.Uri.Contains("/wellbore("))
             {
                 args.Context.Add(New(
-                    uuid => string.Format("{0}/wellbore({1})", args.Message.Uri, uuid),
-                    contentType: ContentTypes.Witsml141 + "type=obj_wellbore",
+                    uuid => String.Format("{0}/wellbore({1})", args.Message.Uri, uuid),
+                    contentType: Witsml141 + "type=obj_wellbore",
                     resourceType: ResourceTypes.DataObject,
                     name: "Wellbore 01-01"));
 
                 args.Context.Add(New(
-                    uuid => string.Format("{0}/wellbore({1})", args.Message.Uri, uuid),
-                    contentType: ContentTypes.Witsml141 + "type=obj_wellbore",
+                    uuid => String.Format("{0}/wellbore({1})", args.Message.Uri, uuid),
+                    contentType: Witsml141 + "type=obj_wellbore",
                     resourceType: ResourceTypes.DataObject,
                     name: "Wellbore 01-02"));
             }
             else if (args.Message.Uri.Contains("/wellbore("))
             {
                 args.Context.Add(New(
-                    uuid => string.Format("{0}/log({1})", args.Message.Uri, uuid),
-                    contentType: ContentTypes.Witsml141 + "type=obj_log",
+                    uuid => String.Format("{0}/log({1})", args.Message.Uri, uuid),
+                    contentType: Witsml141 + "type=obj_log",
                     resourceType: ResourceTypes.DataObject,
                     name: "Depth Log 01",
                     count: 0));
 
                 args.Context.Add(New(
-                    uuid => string.Format("{0}/log({1})", args.Message.Uri, uuid),
-                    contentType: ContentTypes.Witsml141 + "type=obj_log",
+                    uuid => String.Format("{0}/log({1})", args.Message.Uri, uuid),
+                    contentType: Witsml141 + "type=obj_log",
                     resourceType: ResourceTypes.DataObject,
                     name: "Time Log 01",
                     count: 0));

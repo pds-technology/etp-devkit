@@ -29,8 +29,8 @@ namespace Energistics
     public class Program
     {
         private static readonly string AppVersion = typeof(Program).Assembly.GetName().Version.ToString();
-        private const string ServerAppName = "etp-server";
         private const string ClientAppName = "etp-client";
+        private const string ServerAppName = "etp-server";
 
         private const string WebSocketUri = "ws://localhost:9000";
         private const int WebSocketPort = 9000;
@@ -75,6 +75,7 @@ namespace Energistics
 
             using (var server = new EtpSocketServer(WebSocketPort, ServerAppName, AppVersion))
             {
+                // Register protocol handlers
                 server.Register<IDiscoveryStore, MockResourceProvider>();
 
                 while (true)
