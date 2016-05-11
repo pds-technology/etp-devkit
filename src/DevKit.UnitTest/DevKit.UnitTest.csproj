@@ -7,7 +7,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Energistics</RootNamespace>
-    <AssemblyName>ETP.WebSockets.UnitTest</AssemblyName>
+    <AssemblyName>ETP.DevKit.UnitTest</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -63,9 +63,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\WebSockets\WebSockets.csproj">
+    <ProjectReference Include="..\DevKit\DevKit.csproj">
       <Project>{30de888b-a6b7-4528-ad89-324a7f9b0f4c}</Project>
-      <Name>WebSockets</Name>
+      <Name>DevKit</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

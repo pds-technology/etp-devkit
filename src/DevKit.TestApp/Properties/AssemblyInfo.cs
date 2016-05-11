@@ -1,5 +1,5 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.0
+// ETP DevKit, 2016.1
 //
 // Copyright 2016 Petrotechnical Data Systems
 // 
@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ETP.WebSockets.IntegrationTest")]
+[assembly: AssemblyTitle("ETP.DevKit.TestApp")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
@@ -37,7 +37,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("067456c0-086c-46a8-b37f-1405717b7bfc")]
+[assembly: Guid("6dcd4aa3-aa28-49a8-bca9-99d534b34864")]
 
 // Version information for an assembly consists of the following four values:
 //

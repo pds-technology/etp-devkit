@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSockets", "WebSockets\WebSockets.csproj", "{30DE888B-A6B7-4528-AD89-324A7F9B0F4C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevKit", "DevKit\DevKit.csproj", "{30DE888B-A6B7-4528-AD89-324A7F9B0F4C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSockets.IntegrationTest", "WebSockets.IntegrationTest\WebSockets.IntegrationTest.csproj", "{067456C0-086C-46A8-B37F-1405717B7BFC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevKit.IntegrationTest", "DevKit.IntegrationTest\DevKit.IntegrationTest.csproj", "{067456C0-086C-46A8-B37F-1405717B7BFC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSockets.UnitTest", "WebSockets.UnitTest\WebSockets.UnitTest.csproj", "{BC953158-9584-45CF-BA13-10CE67348759}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevKit.UnitTest", "DevKit.UnitTest\DevKit.UnitTest.csproj", "{BC953158-9584-45CF-BA13-10CE67348759}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSockets.TestApp", "WebSockets.TestApp\WebSockets.TestApp.csproj", "{6DCD4AA3-AA28-49A8-BCA9-99D534B34864}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevKit.TestApp", "DevKit.TestApp\DevKit.TestApp.csproj", "{6DCD4AA3-AA28-49A8-BCA9-99D534B34864}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
