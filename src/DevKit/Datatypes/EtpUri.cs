@@ -28,7 +28,7 @@ namespace Energistics.Datatypes
     /// </summary>
     public struct EtpUri
     {
-        private static readonly Regex Pattern = new Regex(@"^eml:\/\/((witsml|resqml|prodml|energyml)([0-9]+))(\/((obj_)?(\w+))(\(([\-\w]+)\))?)*?$", RegexOptions.IgnoreCase);
+        private static readonly Regex Pattern = new Regex(@"^eml:\/\/([_\w\-]+)?\/((witsml|resqml|prodml|energyml)([0-9]+))(\/((obj_|cs_)?(\w+))(\(([\-\w]+)\))?)*?$", RegexOptions.IgnoreCase);
         private readonly Match _match;
 
         /// <summary>
@@ -47,18 +47,21 @@ namespace Energistics.Datatypes
             Uri = uri;
             IsValid = _match.Success;
 
-            Family = GetValue(_match, 2);
-            Version = FormatVersion(GetValue(_match, 3));
+            DataSpace = GetValue(_match, 1);
+            Family = GetValue(_match, 3);
+            Version = FormatVersion(GetValue(_match, 4), Family);
             ContentType = new EtpContentType(Family, Version);
+            SchemaType = null;
             ObjectType = null;
             ObjectId = null;
 
             if (!HasRepeatValues(_match)) return;
 
             var last = GetObjectIds().Last();
-            ObjectType = last.Key;
-            ObjectId = last.Value;
-            ContentType = new EtpContentType(Family, Version, ObjectType);
+            SchemaType = last.SchemaType;
+            ObjectType = last.ObjectType;
+            ObjectId = last.ObjectId;
+            ContentType = new EtpContentType(Family, Version, SchemaType);
         }
 
         /// <summary>
@@ -66,6 +69,12 @@ namespace Energistics.Datatypes
         /// </summary>
         /// <value>The URI.</value>
         public string Uri { get; }
+
+        /// <summary>
+        /// Gets the data space.
+        /// </summary>
+        /// <value>The data space.</value>
+        public string DataSpace { get; }
 
         /// <summary>
         /// Gets the ML family name.
@@ -78,6 +87,12 @@ namespace Energistics.Datatypes
         /// </summary>
         /// <value>The version.</value>
         public string Version { get; }
+
+        /// <summary>
+        /// Gets the XSD type of the object.
+        /// </summary>
+        /// <value>The XSD type of the object.</value>
+        public string SchemaType { get; }
 
         /// <summary>
         /// Gets the type of the object.
@@ -147,22 +162,30 @@ namespace Energistics.Datatypes
         }
 
         /// <summary>
-        /// Gets a collection of object type and ID key/value pairs.
+        /// Gets a collection of <see cref="Segment"/> items.
         /// </summary>
-        /// <returns>A collection of key/value pairs.</returns>
-        public IEnumerable<KeyValuePair<string, string>> GetObjectIds()
+        /// <returns>A collection of <see cref="Segment"/> items.</returns>
+        public IEnumerable<Segment> GetObjectIds()
         {
             if (HasRepeatValues(_match))
             {
-                var typeGroup = _match.Groups[7];
-                var idGroup = _match.Groups[9];
+                var schemaTypeGroup = _match.Groups[7];
+                var objectTypeGroup = _match.Groups[8];
+                var objectIdGroup = _match.Groups[10];
 
-                for (int i=0; i<typeGroup.Captures.Count; i++)
+                for (int i=0; i<objectTypeGroup.Captures.Count; i++)
                 {
-                    var type = typeGroup.Captures[i].Value;
-                    var id = idGroup.Captures.Count > i ? idGroup.Captures[i].Value : null;
+                    var objectType = objectTypeGroup.Captures[i].Value;
+                    var schemaType = schemaTypeGroup.Captures.Count > i ? schemaTypeGroup.Captures[i].Value : string.Empty;
+                    var objectId = objectIdGroup.Captures.Count > i ? objectIdGroup.Captures[i].Value : null;
 
-                    yield return new KeyValuePair<string, string>(type, id);
+                    if (!string.IsNullOrWhiteSpace(objectType))
+                        schemaType += objectType;
+
+                    yield return new Segment(
+                        EtpContentType.FormatSchemaType(schemaType, Version),
+                        EtpContentType.FormatObjectType(objectType),
+                        objectId);
                 }
             }
         }
@@ -262,20 +285,41 @@ namespace Energistics.Datatypes
         /// <returns><c>true</c> if any repeating groups were matched; otherwise, <c>false</c>.</returns>
         private static bool HasRepeatValues(Match match)
         {
-            return match.Success && match.Groups[7].Captures.Count > 0;
+            return match.Success && match.Groups[8].Captures.Count > 0;
         }
 
         /// <summary>
         /// Formats the version number.
         /// </summary>
         /// <param name="version">The version.</param>
+        /// <param name="family">The ML family.</param>
         /// <returns>A dot delimited version number.</returns>
-        private static string FormatVersion(string version)
+        private static string FormatVersion(string version, string family)
         {
             if (string.IsNullOrWhiteSpace(version))
                 return null;
 
+            // Force WITSML versions 13 and 14 to be formatted as 1.3.1.1 and 1.4.1.1, respectively
+            if ("WITSML".Equals(family, StringComparison.InvariantCultureIgnoreCase) && (version == "13" || version == "14"))
+                version += "11";
+
             return string.Join(".", version.Trim().Select(x => x));
+        }
+
+        public struct Segment
+        {
+            public Segment(string schemaType, string objectType, string objectId)
+            {
+                SchemaType = schemaType;
+                ObjectType = objectType;
+                ObjectId = objectId;
+            }
+
+            public string SchemaType { get; }
+
+            public string ObjectType { get; }
+
+            public string ObjectId { get; }
         }
     }
 }

@@ -25,9 +25,9 @@ namespace Energistics.Datatypes
     /// </summary>
     public struct EtpContentType
     {
-        private static readonly Regex Pattern = new Regex(@"^application/x\-(witsml|resqml|prodml|energyml)\+xml;version=([0-9.]+)((;)?|(;type=((obj_)?(\w+))(;)?)?)$");
+        private static readonly Regex Pattern = new Regex(@"^application/x\-(witsml|resqml|prodml|energyml)\+xml;version=([0-9.]+)((;)?|(;type=((obj_|cs_)?(\w+))(;)?)?)$");
         private static readonly string BaseFormat = "application/x-{0}+xml;version={1};";
-        private static readonly string TypeFormat = "type=obj_{0};";
+        private static readonly string TypeFormat = "type={0};";
         private readonly string _contentType;
 
         /// <summary>
@@ -44,6 +44,7 @@ namespace Energistics.Datatypes
             Family = GetValue(match, 1);
             Version = GetValue(match, 2);
             ObjectType = GetValue(match, 6);
+            SchemaType = GetValue(match, 5) + ObjectType;
         }
 
         /// <summary>
@@ -56,45 +57,52 @@ namespace Energistics.Datatypes
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EtpContentType"/> struct.
+        /// Initializes a new instance of the <see cref="EtpContentType" /> struct.
         /// </summary>
         /// <param name="family">The ML family name.</param>
         /// <param name="version">The version.</param>
-        /// <param name="objectType">Type of the object.</param>
-        public EtpContentType(string family, string version, string objectType)
+        /// <param name="schemaType">The XSD type of the object.</param>
+        public EtpContentType(string family, string version, string schemaType)
         {
             IsValid = true;
 
             Family = family;
             Version = version;
-            ObjectType = objectType;
+            SchemaType = FormatSchemaType(schemaType, Version);
+            ObjectType = FormatObjectType(SchemaType);
 
-            _contentType = string.Format(BaseFormat, family, version) + FormatType(objectType, version);
+            _contentType = string.Format(BaseFormat, family, version) + FormatType(SchemaType);
         }
 
         /// <summary>
         /// Gets the ML family name.
         /// </summary>
         /// <value>The ML family.</value>
-        public string Family { get; private set; }
+        public string Family { get; }
 
         /// <summary>
         /// Gets the version.
         /// </summary>
         /// <value>The version.</value>
-        public string Version { get; private set; }
+        public string Version { get; }
+
+        /// <summary>
+        /// Gets the XSD type of the object.
+        /// </summary>
+        /// <value>The XSD type of the object.</value>
+        public string SchemaType { get; }
 
         /// <summary>
         /// Gets the type of the object.
         /// </summary>
         /// <value>The type of the object.</value>
-        public string ObjectType { get; private set; }
+        public string ObjectType { get; }
 
         /// <summary>
         /// Returns true if a valid content type was specified.
         /// </summary>
         /// <value><c>true</c> if this instance is valid; otherwise, <c>false</c>.</value>
-        public bool IsValid { get; private set; }
+        public bool IsValid { get; }
 
         /// <summary>
         /// Gets a value indicating whether this instance is a base content type.
@@ -107,13 +115,13 @@ namespace Energistics.Datatypes
 
         /// <summary>
         /// Initializes a new instance of <see cref="EtpContentType"/> based on the
-        /// current ML family name, version number and the specified object type.
+        /// current ML family name, version number and the specified schema type.
         /// </summary>
-        /// <param name="objectType">Type of the object.</param>
+        /// <param name="schemaType">The XSD ype of the object.</param>
         /// <returns>The new <see cref="EtpContentType"/> instance.</returns>
-        public EtpContentType For(string objectType)
+        public EtpContentType For(string schemaType)
         {
-            return new EtpContentType(Family, Version, objectType);
+            return new EtpContentType(Family, Version, schemaType);
         }
 
         /// <summary>
@@ -136,6 +144,62 @@ namespace Energistics.Datatypes
         }
 
         /// <summary>
+        /// Formats the schema type based on the specified version.
+        /// </summary>
+        /// <param name="schemaType">The XSD object type.</param>
+        /// <param name="version">The data schema version.</param>
+        /// <returns>The formatted schema type.</returns>
+        public static string FormatSchemaType(string schemaType, string version)
+        {
+            if (string.IsNullOrWhiteSpace(schemaType))
+                return string.Empty;
+
+            var index = schemaType.IndexOf('_');
+            var objectType = schemaType.Substring(index + 1);
+            var prefix = (index > -1) ? schemaType.Substring(0, index + 1) : "obj_";
+
+            if (!version.Contains("_"))
+            {
+                System.Version ver;
+
+                // Capitalize object type when version >= 2.0
+                objectType = (System.Version.TryParse(version, out ver) && ver.Major < 2
+                    ? objectType.Substring(0, 1).ToLowerInvariant()
+                    : objectType.Substring(0, 1).ToUpperInvariant())
+                    + objectType.Substring(1);
+            }
+
+            schemaType = prefix + objectType;
+
+            return schemaType;
+        }
+
+        /// <summary>
+        /// Formats the object type based on the specified schema type.
+        /// </summary>
+        /// <param name="schemaType">The XSD object type.</param>
+        /// <returns>The formatted object type.</returns>
+        public static string FormatObjectType(string schemaType)
+        {
+            if (string.IsNullOrWhiteSpace(schemaType))
+                return string.Empty;
+
+            var objectType = schemaType;
+            var index = objectType.IndexOf('_');
+
+            if (index > -1)
+            {
+                objectType = objectType.Substring(index + 1);
+            }
+
+            // Camel case object type name to match WMLTypeIn parameter
+            objectType = objectType.Substring(0, 1).ToLowerInvariant()
+                       + objectType.Substring(1);
+
+            return objectType;
+        }
+
+        /// <summary>
         /// Gets the value contained within the specified match at the specified index.
         /// </summary>
         /// <param name="match">The match.</param>
@@ -149,27 +213,16 @@ namespace Energistics.Datatypes
         }
 
         /// <summary>
-        /// Formats the specified object type to match the ML version.
+        /// Formats the specified schema type for appending to a content type.
         /// </summary>
-        /// <param name="objectType">Type of the object.</param>
-        /// <param name="version">The version.</param>
-        /// <returns>The formatted object type.</returns>
-        private static string FormatType(string objectType, string version)
+        /// <param name="schemaType">Type of the object.</param>
+        /// <returns>The formatted content type segment.</returns>
+        private static string FormatType(string schemaType)
         {
-            if (string.IsNullOrWhiteSpace(objectType))
+            if (string.IsNullOrWhiteSpace(schemaType))
                 return string.Empty;
 
-            if (!version.Contains("_"))
-            {
-                System.Version ver;
-
-                objectType = (System.Version.TryParse(version, out ver) && ver.Major < 2
-                    ? objectType.Substring(0, 1).ToLowerInvariant()
-                    : objectType.Substring(0, 1).ToUpperInvariant())
-                    + objectType.Substring(1);
-            }
-
-            return string.Format(TypeFormat, objectType);
+            return string.Format(TypeFormat, schemaType);
         }
     }
 }
