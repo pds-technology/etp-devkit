@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version/>
+    <authors>$author$</authors>
+    <description>$description$</description>
+    <projectUrl>https://witsml.pds.nl/</projectUrl>
+    <licenseUrl>https://witsml.pds.nl/license</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <files>
+      <file src="bin/$configuration$/$id$.dll" target="lib" />
+      <file src="bin/$configuration$/$id$.pdb" target="lib" />
+    </files>
+
+    <dependencies>
+      <group targetFramework="net40">
+        <dependency id="Apache.Avro" version="1.7.7.2" />
+        <dependency id="SuperWebSocket" version="0.9.0.2" />
+      </group>
+      <group targetFramework="net46">
+        <dependency id="log4net" version="2.0.5" />
+        <dependency id="Newtonsoft.Json" version="8.0.2" />
+        <dependency id="ETP" version="1.3.0-BUILD55" />
+        <dependency id="WebSocket4Net" version="0.14.1" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

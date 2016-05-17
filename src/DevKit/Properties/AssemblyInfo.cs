@@ -23,9 +23,9 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("ETP.DevKit")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("DevKit for the Energistics Transfer Protocol")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Petrotechnical Data Systems")]
 [assembly: AssemblyProduct("ETP DevKit")]
 [assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
