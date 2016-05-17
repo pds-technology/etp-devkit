@@ -8,11 +8,6 @@
     <projectUrl>https://witsml.pds.nl/</projectUrl>
     <licenseUrl>https://witsml.pds.nl/license</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <files>
-      <file src="bin/$configuration$/$id$.dll" target="lib" />
-      <file src="bin/$configuration$/$id$.pdb" target="lib" />
-    </files>
-
     <dependencies>
       <group targetFramework="net40">
         <dependency id="Apache.Avro" version="1.7.7.2" />
@@ -26,4 +21,8 @@
       </group>
     </dependencies>
   </metadata>
+  <files>
+    <file src="bin/$configuration$/$id$.dll" target="lib" />
+    <file src="bin/$configuration$/$id$.pdb" target="lib" />
+  </files>
 </package>
