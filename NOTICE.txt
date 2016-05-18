@@ -1,4 +1,4 @@
-PDS.Witsml, 2016.1
+ETP.DevKit, 1.0
 Copyright 2016 Petrotechnical Data Systems
 
 Third Party Software
