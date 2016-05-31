@@ -127,7 +127,7 @@ namespace Energistics
         /// <param name="session">The session.</param>
         private void OnNewSessionConnected(WebSocketSession session)
         {
-            Logger.Debug(Format("[{0}] Socket session connected.", session.SessionID));
+            Logger.Debug(Log("[{0}] Socket session connected.", session.SessionID));
 
             var etpServer = new EtpServer(session, ApplicationName, ApplicationVersion, null);
             etpServer.SupportedObjects = SupportedObjects;
@@ -143,7 +143,7 @@ namespace Energistics
         /// <param name="value">The value.</param>
         private void OnSessionClosed(WebSocketSession session, CloseReason value)
         {
-            Logger.Debug(Format("[{0}] Socket session closed.", session.SessionID));
+            Logger.Debug(Log("[{0}] Socket session closed.", session.SessionID));
 
             var etpSession = GetEtpSession(session);
 

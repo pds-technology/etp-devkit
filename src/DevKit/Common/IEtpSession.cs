@@ -60,19 +60,19 @@ namespace Energistics.Common
         Action<string> Output { get; set; }
 
         /// <summary>
-        /// Formats the specified message for output.
+        /// Logs the specified message using the Output delegate, if available.
         /// </summary>
         /// <param name="message">The message.</param>
-        /// <returns>The formatted message.</returns>
-        string Format(string message);
+        /// <returns>The message.</returns>
+        string Log(string message);
 
         /// <summary>
-        /// Formats the specified message for output.
+        /// Logs the specified message using the Output delegate, if available.
         /// </summary>
-        /// <param name="message">The message.</param>
-        /// <param name="args">The arguments.</param>
+        /// <param name="message">The message format string.</param>
+        /// <param name="args">The format parameter values.</param>
         /// <returns>The formatted message.</returns>
-        string Format(string message, params object[] args);
+        string Log(string message, params object[] args);
 
         /// <summary>
         /// Called when the ETP session is opened.

@@ -96,8 +96,8 @@ namespace Energistics.Common
                 return (T)handler;
             }
 
-            Logger.Error(Format("[{0}] Protocol handler not registered for {1}.", SessionId, typeof(T).FullName));
-            throw new NotSupportedException(string.Format("Protocol handler not registered for {0}.", typeof(T).FullName));
+            Logger.Error(Log("[{0}] Protocol handler not registered for {1}.", SessionId, typeof(T).FullName));
+            throw new NotSupportedException($"Protocol handler not registered for { typeof(T).FullName }.");
         }
 
         /// <summary>
@@ -296,8 +296,8 @@ namespace Energistics.Common
                 return Handlers[protocol];
             }
 
-            Logger.Error(Format("[{0}] Protocol handler not registered for protocol {1}.", SessionId, protocol));
-            throw new NotSupportedException(string.Format("Protocol handler not registered for protocol {0}.", protocol));
+            Logger.Error(Log("[{0}] Protocol handler not registered for protocol {1}.", SessionId, protocol));
+            throw new NotSupportedException($"Protocol handler not registered for protocol { protocol }.");
         }
 
         /// <summary>
@@ -335,9 +335,9 @@ namespace Energistics.Common
         {
             if (Output != null)
             {
-                Format("[{0}] Message sent at {1}", SessionId, DateTime.Now);
-                Format(this.Serialize(header));
-                Format(this.Serialize(body, true));
+                Log("[{0}] Message sent at {1}", SessionId, DateTime.Now);
+                Log(this.Serialize(header));
+                Log(this.Serialize(body, true));
             }
 
             if (Logger.IsDebugEnabled)

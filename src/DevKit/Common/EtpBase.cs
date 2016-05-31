@@ -71,25 +71,25 @@ namespace Energistics.Common
         protected IDictionary<Type, Func<object>> RegisteredFactories { get; }
 
         /// <summary>
-        /// Formats the specified message.
+        /// Logs the specified message using the Output delegate, if available.
         /// </summary>
         /// <param name="message">The message.</param>
-        /// <param name="args">The arguments.</param>
-        /// <returns>The formatted message.</returns>
-        public string Format(string message, params object[] args)
-        {
-            return Format(string.Format(message, args));
-        }
-
-        /// <summary>
-        /// Formats the specified message.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        /// <returns></returns>
-        public string Format(string message)
+        /// <returns>The message.</returns>
+        public string Log(string message)
         {
             Output?.Invoke(message);
             return message;
+        }
+
+        /// <summary>
+        /// Logs the specified message using the Output delegate, if available.
+        /// </summary>
+        /// <param name="message">The message format string.</param>
+        /// <param name="args">The format parameter values.</param>
+        /// <returns>The formatted message.</returns>
+        public string Log(string message, params object[] args)
+        {
+            return Log(string.Format(message, args));
         }
 
         /// <summary>
