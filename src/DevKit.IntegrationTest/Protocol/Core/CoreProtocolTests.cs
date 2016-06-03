@@ -75,8 +75,8 @@ namespace Energistics.Protocol.Core
             Assert.IsNotNull(args.Message.SessionId);
         }
 
-        [Ignore]
-        //[TestMethod]
+        //[Ignore]
+        [TestMethod]
         [Description("EtpClient authenticates using JWT retrieved from supported token provider")]
         public async Task EtpClient_OpenSession_Can_Authenticate_Using_Json_Web_Token()
         {

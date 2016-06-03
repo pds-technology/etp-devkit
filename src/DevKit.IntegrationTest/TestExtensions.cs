@@ -27,19 +27,22 @@ namespace Energistics
     /// </summary>
     public static class TestExtensions
     {
+        private const int DefaultTimeoutInMilliseconds = 5000;
+
         /// <summary>
         /// Opens a WebSocket connection and waits for the SocketOpened event to be called.
         /// </summary>
         /// <param name="client">The client.</param>
+        /// <param name="milliseconds">The timeout, in milliseconds.</param>
         /// <returns>An awaitable task.</returns>
-        public static async Task<bool> OpenAsync(this EtpClient client)
+        public static async Task<bool> OpenAsync(this EtpClient client, int milliseconds = DefaultTimeoutInMilliseconds)
         {
             var task = new Task<bool>(() => client.IsOpen);
 
             client.SocketOpened += (s, e) => task.Start();
             client.Open();
 
-            return await task.WaitAsync();
+            return await task.WaitAsync(milliseconds);
         }
 
         /// <summary>
@@ -49,7 +52,7 @@ namespace Energistics
         /// <param name="task">The task to execute.</param>
         /// <param name="milliseconds">The timeout, in milliseconds.</param>
         /// <returns>An awaitable task.</returns>
-        public static async Task<TResult> WaitAsync<TResult>(this Task<TResult> task, int milliseconds = 5000)
+        public static async Task<TResult> WaitAsync<TResult>(this Task<TResult> task, int milliseconds = DefaultTimeoutInMilliseconds)
         {
             return await task.WaitAsync(TimeSpan.FromMilliseconds(milliseconds));
         }

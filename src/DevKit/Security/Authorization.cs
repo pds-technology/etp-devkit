@@ -37,7 +37,11 @@ namespace Energistics.Security
         /// <returns>A dictionary containing an Authorization header.</returns>
         public static IDictionary<string, string> Basic(string username, string password)
         {
-            return GetAuthorizationHeader("Basic", string.IsNullOrWhiteSpace(username) ? string.Empty : string.Concat(username, ":", password));
+            var credentials = string.IsNullOrWhiteSpace(username)
+                ? string.Empty
+                : string.Concat(username, ":", password);
+
+            return GetAuthorizationHeader("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials)));
         }
 
         /// <summary>
@@ -58,12 +62,11 @@ namespace Energistics.Security
         /// <returns>A dictionary containing an Authorization header.</returns>
         private static IDictionary<string, string> GetAuthorizationHeader(string schema, string encodedString)
         {
-            var encoded = Convert.ToBase64String(Encoding.Default.GetBytes(encodedString));
             var headers = new Dictionary<string, string>();
 
-            if (!string.IsNullOrWhiteSpace(encoded))
+            if (!string.IsNullOrWhiteSpace(encodedString))
             {
-                headers[Header] = string.Concat(schema, " ", encoded);
+                headers[Header] = string.Concat(schema, " ", encodedString);
             }
 
             return headers;

@@ -74,6 +74,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IntegrationTestBase.cs" />
+    <Compile Include="JsonClientTests.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -93,6 +94,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
       <CustomToolNamespace>Energistics.IntegrationTest</CustomToolNamespace>
+      <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>

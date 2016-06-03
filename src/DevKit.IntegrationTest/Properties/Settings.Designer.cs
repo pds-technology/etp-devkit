@@ -34,6 +34,24 @@ namespace Energistics.IntegrationTest {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Password {
+            get {
+                return ((string)(this["Password"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/witsml.web/api/etp/ServerCapabilities")]
+        public string ServerCapabilitiesUrl {
+            get {
+                return ((string)(this["ServerCapabilitiesUrl"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("ws://localhost/witsml.web/api/etp")]
         public string ServerUrl {
             get {
@@ -43,19 +61,10 @@ namespace Energistics.IntegrationTest {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("witsml.user")]
         public string Username {
             get {
                 return ((string)(this["Username"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string Password {
-            get {
-                return ((string)(this["Password"]));
             }
         }
     }
