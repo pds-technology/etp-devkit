@@ -28,7 +28,7 @@ namespace Energistics.Datatypes
     /// </summary>
     public struct EtpUri
     {
-        private static readonly Regex Pattern = new Regex(@"^eml:\/\/([_\w\-]+)?\/((witsml|resqml|prodml|energyml)([0-9]+))(\/((obj_|cs_)?(\w+))(\(([\-\w]+)\))?)*?$", RegexOptions.IgnoreCase);
+        private static readonly Regex Pattern = new Regex(@"^eml:\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|energyml)([0-9]+))(\/((obj_|cs_)?(\w+))(\(([\-\=\w]+)\))?)*?$", RegexOptions.IgnoreCase);
         private readonly Match _match;
 
         /// <summary>
@@ -47,9 +47,9 @@ namespace Energistics.Datatypes
             Uri = uri;
             IsValid = _match.Success;
 
-            DataSpace = GetValue(_match, 1);
-            Family = GetValue(_match, 3);
-            Version = FormatVersion(GetValue(_match, 4), Family);
+            DataSpace = GetValue(_match, 2);
+            Family = GetValue(_match, 4);
+            Version = FormatVersion(GetValue(_match, 5), Family);
             ContentType = new EtpContentType(Family, Version);
             SchemaType = null;
             ObjectType = null;
@@ -169,9 +169,9 @@ namespace Energistics.Datatypes
         {
             if (HasRepeatValues(_match))
             {
-                var schemaTypeGroup = _match.Groups[7];
-                var objectTypeGroup = _match.Groups[8];
-                var objectIdGroup = _match.Groups[10];
+                var schemaTypeGroup = _match.Groups[8];
+                var objectTypeGroup = _match.Groups[9];
+                var objectIdGroup = _match.Groups[11];
 
                 for (int i=0; i<objectTypeGroup.Captures.Count; i++)
                 {
@@ -285,7 +285,7 @@ namespace Energistics.Datatypes
         /// <returns><c>true</c> if any repeating groups were matched; otherwise, <c>false</c>.</returns>
         private static bool HasRepeatValues(Match match)
         {
-            return match.Success && match.Groups[8].Captures.Count > 0;
+            return match.Success && match.Groups[9].Captures.Count > 0;
         }
 
         /// <summary>
