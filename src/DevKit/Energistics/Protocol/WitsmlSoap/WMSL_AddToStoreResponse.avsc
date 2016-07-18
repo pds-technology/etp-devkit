@@ -1,0 +1,14 @@
+{
+	"type": "record",
+	"namespace": "Energistics.Protocol.WitsmlSoap",	
+	"name": "WMSL_AddToStoreResponse",
+	"messageType": "2",
+	"protocol": "8",
+	"senderRole": "store",
+	"protocolRoles": "store,customer",
+	"fields":
+	[
+		{ "name": "Result", "type": "int" },
+		{ "name": "SuppMsgOut", "type": "string" }
+	]
+}

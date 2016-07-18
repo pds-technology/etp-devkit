@@ -260,7 +260,7 @@ namespace Energistics.Common
                 var message = string.Format("Protocol handler not registered for protocol {0}.", header.Protocol);
 
                 Handler((int)Protocols.Core)
-                    .ProtocolException((int)ErrorCodes.EUNSUPPORTED_PROTOCOL, message, header.MessageId);
+                    .ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, message, header.MessageId);
             }
         }
 

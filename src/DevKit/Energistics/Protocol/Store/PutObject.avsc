@@ -8,6 +8,6 @@
 	"protocolRoles": "store,customer",
 	"fields":
 	[
-		{ "name": "data", "type": "Energistics.Datatypes.Object.DataObject" }
+		{ "name": "dataObject", "type": "Energistics.Datatypes.Object.DataObject" }
 	]
 }

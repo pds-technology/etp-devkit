@@ -1,0 +1,15 @@
+{
+	"type": "record",
+	"namespace": "Energistics.Protocol.DataArray",	
+	"name": "PutDataArray",
+	"messageType": "4",
+	"protocol": "7",
+	"senderRole": "customer",
+	"protocolRoles": "store,customer",
+	"fields":
+	[
+		{ "name": "uri", "type": "string" },
+		{ "name": "data", "type": "Energistics.Datatypes.AnyArray" },
+		{ "name": "dimensions", "type": "long" }
+	]
+}

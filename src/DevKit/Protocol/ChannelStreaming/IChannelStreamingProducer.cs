@@ -77,11 +77,11 @@ namespace Energistics.Protocol.ChannelStreaming
         void ChannelStatusChange(long channelId, ChannelStatuses status);
 
         /// <summary>
-        /// Sends a ChannelDelete message to a consumer.
+        /// Sends a ChannelRemove message to a consumer.
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="reason">The reason.</param>
-        void ChannelDelete(long channelId, string reason = null);
+        void ChannelRemove(long channelId, string reason = null);
 
         /// <summary>
         /// Handles the Start event from a consumer.

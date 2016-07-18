@@ -6,7 +6,6 @@
 	[
 		{ "name": "applicationName", "type": "string" },
 		{ "name": "applicationVersion", "type": "string" },
-		{ "name": "sessionId", "type": "string" },
 		{ 
 		"name": "supportedProtocols", 
 		"type": { "type": "array", "items": "Energistics.Datatypes.SupportedProtocol" } 
@@ -15,6 +14,7 @@
 		"name": "supportedObjects", 
 		"type": { "type": "array", "items": "string" } 
 	},
-		{ "name": "contactInfomration", "type": "Energistics.Datatypes.Contact" }
+		{ "name": "contactInformation", "type": "Energistics.Datatypes.Contact" },
+		{ "name": "supportedEncodings", "type": "string" }
 	]
 }

@@ -1,0 +1,16 @@
+{
+	"type": "record",
+	"namespace": "Energistics.Protocol.WitsmlSoap",	
+	"name": "WMLS_GetFromStore",
+	"messageType": "9",
+	"protocol": "8",
+	"senderRole": "customer",
+	"protocolRoles": "store,customer",
+	"fields":
+	[
+		{ "name": "WMLtypeIn", "type": "string" },
+		{ "name": "XMLin", "type": "string" },
+		{ "name": "OptionsIn", "type": "string" },
+		{ "name": "CapabilitiesIn", "type": "string" }
+	]
+}

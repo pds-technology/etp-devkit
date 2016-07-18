@@ -82,8 +82,8 @@ namespace Energistics.Protocol.ChannelStreaming
         event ProtocolEventHandler<ChannelStatusChange> OnChannelStatusChange;
 
         /// <summary>
-        /// Handles the ChannelDelete event from a producer.
+        /// Handles the ChannelRemove event from a producer.
         /// </summary>
-        event ProtocolEventHandler<ChannelDelete> OnChannelDelete;
+        event ProtocolEventHandler<ChannelRemove> OnChannelRemove;
     }
 }

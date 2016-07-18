@@ -1,0 +1,13 @@
+{
+	"type": "record",
+	"namespace": "Energistics.Protocol.WitsmlSoap",	
+	"name": "WMLS_GetCap",
+	"messageType": "7",
+	"protocol": "8",
+	"senderRole": "customer",
+	"protocolRoles": "store,customer",
+	"fields":
+	[
+		{ "name": "OptionsIn", "type": "string" }
+	]
+}

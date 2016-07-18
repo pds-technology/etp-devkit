@@ -126,7 +126,7 @@ namespace Energistics.Protocol.Core
 
             Assert.IsNotNull(args);
             Assert.IsNotNull(args.Message);
-            Assert.AreEqual((int)ErrorCodes.EINVALID_MESSAGETYPE, args.Message.ErrorCode);
+            Assert.AreEqual((int)EtpErrorCodes.InvalidMessageType, args.Message.ErrorCode);
         }
     }
 }

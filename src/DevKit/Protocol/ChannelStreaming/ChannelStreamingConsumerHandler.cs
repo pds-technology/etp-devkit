@@ -151,7 +151,7 @@ namespace Energistics.Protocol.ChannelStreaming
         /// <summary>
         /// Handles the ChannelDelete event from a producer.
         /// </summary>
-        public event ProtocolEventHandler<ChannelDelete> OnChannelDelete;
+        public event ProtocolEventHandler<ChannelRemove> OnChannelRemove;
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader" />.
@@ -178,8 +178,8 @@ namespace Energistics.Protocol.ChannelStreaming
                     HandleChannelStatusChange(header, decoder.Decode<ChannelStatusChange>());
                     break;
 
-                case (int)MessageTypes.ChannelStreaming.ChannelDelete:
-                    HandleChannelDelete(header, decoder.Decode<ChannelDelete>());
+                case (int)MessageTypes.ChannelStreaming.ChannelRemove:
+                    HandleChannelRemove(header, decoder.Decode<ChannelRemove>());
                     break;
 
                 default:
@@ -232,13 +232,13 @@ namespace Energistics.Protocol.ChannelStreaming
         }
 
         /// <summary>
-        /// Handles the ChannelDelete message from a producer.
+        /// Handles the ChannelRemove message from a producer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="channelDelete">The ChannelDelete message.</param>
-        protected virtual void HandleChannelDelete(MessageHeader header, ChannelDelete channelDelete)
+        /// <param name="channelRemove">The ChannelRemove message.</param>
+        protected virtual void HandleChannelRemove(MessageHeader header, ChannelRemove channelRemove)
         {
-            Notify(OnChannelDelete, header, channelDelete);
+            Notify(OnChannelRemove, header, channelRemove);
         }
     }
 }

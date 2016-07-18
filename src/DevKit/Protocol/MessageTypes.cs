@@ -48,7 +48,7 @@ namespace Energistics.Protocol
             ChannelStreamingStop = 5,
             ChannelDataChange = 6,
             //NotUsed = 7,
-            ChannelDelete = 8,
+            ChannelRemove = 8,
             ChannelRangeRequest = 9,
             ChannelStatusChange = 10
         }

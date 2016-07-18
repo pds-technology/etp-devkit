@@ -1,7 +1,7 @@
 {
 	"type": "record",
 	"namespace": "Energistics.Protocol.ChannelStreaming",	
-	"name": "ChannelDelete",
+	"name": "ChannelRemove",
 	"messageType": "8",
 	"protocol": "1",
 	"senderRole": "producer",
@@ -9,6 +9,6 @@
 	"fields":
 	[
 		{ "name": "channelId", "type": "long" },
-		{ "name": "deleteReason", "type": ["null", "string"] }
+		{ "name": "removeReason", "type": ["null", "string"] }
 	]
 }

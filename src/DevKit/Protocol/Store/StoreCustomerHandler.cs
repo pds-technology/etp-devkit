@@ -65,7 +65,7 @@ namespace Energistics.Protocol.Store
 
             var putObject = new PutObject()
             {
-                Data = dataObject
+                DataObject = dataObject
             };
 
             Session.SendMessage(header, putObject);

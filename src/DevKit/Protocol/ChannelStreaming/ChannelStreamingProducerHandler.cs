@@ -173,21 +173,21 @@ namespace Energistics.Protocol.ChannelStreaming
         }
 
         /// <summary>
-        /// Sends a ChannelDelete message to a consumer.
+        /// Sends a ChannelRemove message to a consumer.
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="reason">The reason.</param>
-        public virtual void ChannelDelete(long channelId, string reason = null)
+        public virtual void ChannelRemove(long channelId, string reason = null)
         {
-            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelDelete);
+            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelRemove);
 
-            var channelDelete = new ChannelDelete()
+            var channelRemove = new ChannelRemove()
             {
                 ChannelId = channelId,
-                DeleteReason = reason
+                RemoveReason = reason
             };
 
-            Session.SendMessage(header, channelDelete);
+            Session.SendMessage(header, channelRemove);
         }
 
         /// <summary>

@@ -1,0 +1,13 @@
+{
+	"type": "record",
+	"namespace": "Energistics.Protocol.WitsmlSoap",	
+	"name": "WMLS_GetBaseMsg",
+	"messageType": "5",
+	"protocol": "8",
+	"senderRole": "customer",
+	"protocolRoles": "store,customer",
+	"fields":
+	[
+		{ "name": "ReturnValueIn", "type": "int" }
+	]
+}

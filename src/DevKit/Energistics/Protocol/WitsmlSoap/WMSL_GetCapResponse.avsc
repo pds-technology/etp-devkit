@@ -1,0 +1,15 @@
+{
+	"type": "record",
+	"namespace": "Energistics.Protocol.WitsmlSoap",	
+	"name": "WMSL_GetCapResponse",
+	"messageType": "8",
+	"protocol": "8",
+	"senderRole": "store",
+	"protocolRoles": "store,customer",
+	"fields":
+	[
+		{ "name": "Result", "type": "int" },
+		{ "name": "CapabilitiesOut", "type": "string" },
+		{ "name": "SuppMsgOut", "type": "string" }
+	]
+}

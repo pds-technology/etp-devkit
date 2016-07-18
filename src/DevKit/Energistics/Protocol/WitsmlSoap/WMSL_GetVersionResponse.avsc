@@ -1,0 +1,13 @@
+{
+	"type": "record",
+	"namespace": "Energistics.Protocol.WitsmlSoap",	
+	"name": "WMSL_GetVersionResponse",
+	"messageType": "12",
+	"protocol": "8",
+	"senderRole": "store",
+	"protocolRoles": "store,customer",
+	"fields":
+	[
+		{ "name": "Result", "type": "string" }
+	]
+}

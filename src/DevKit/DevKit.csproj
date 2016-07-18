@@ -37,8 +37,8 @@
       <HintPath>..\packages\Apache.Avro.1.7.7.2\lib\Avro.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ETP.Messages, Version=0.0.0.0, Culture=neutral, PublicKeyToken=10cba23b8f544b64, processorArchitecture=MSIL">
-      <HintPath>..\packages\ETP.1.3.0-BUILD55\lib\ETP.Messages.dll</HintPath>
+    <Reference Include="ETP.Messages, Version=1.4.1.0, Culture=neutral, PublicKeyToken=c2b7028481fb2795, processorArchitecture=MSIL">
+      <HintPath>..\packages\ETP.1.4.1.0\lib\ETP.Messages.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
@@ -83,6 +83,7 @@
     <Compile Include="Common\IEtpSession.cs" />
     <Compile Include="Common\ProtocolEventArgs.cs" />
     <Compile Include="Common\ProtocolEventHandler.cs" />
+    <Compile Include="EtpErrorCodes.cs" />
     <Compile Include="EtpServer.cs" />
     <Compile Include="EtpServerHandler.cs" />
     <Compile Include="JsonClient.cs" />
@@ -142,7 +143,6 @@
     <None Include="Energistics\Datatypes\ChannelData\ChannelStreamingInfo.avsc" />
     <None Include="Energistics\Datatypes\ChannelData\DataFrame.avsc" />
     <None Include="Energistics\Datatypes\ChannelData\DataItem.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\ErrorCodes.avsc" />
     <None Include="Energistics\Datatypes\ChannelData\IndexDirections.avsc" />
     <None Include="Energistics\Datatypes\ChannelData\IndexMetadataRecord.avsc" />
     <None Include="Energistics\Datatypes\ChannelData\Roles.avsc" />
@@ -150,7 +150,6 @@
     <None Include="Energistics\Datatypes\Contact.avsc" />
     <None Include="Energistics\Datatypes\DataAttribute.avsc" />
     <None Include="Energistics\Datatypes\DataValue.avsc" />
-    <None Include="Energistics\Datatypes\ErrorCodes.avsc" />
     <None Include="Energistics\Datatypes\MessageHeader.avsc" />
     <None Include="Energistics\Datatypes\Object\DataObject.avsc" />
     <None Include="Energistics\Datatypes\Object\NotificationRequestRecord.avsc" />
@@ -166,10 +165,10 @@
     <None Include="Energistics\Protocol\ChannelDataFrame\RequestChannelData.avsc" />
     <None Include="Energistics\Protocol\ChannelStreaming\ChannelData.avsc" />
     <None Include="Energistics\Protocol\ChannelStreaming\ChannelDataChange.avsc" />
-    <None Include="Energistics\Protocol\ChannelStreaming\ChannelDelete.avsc" />
     <None Include="Energistics\Protocol\ChannelStreaming\ChannelDescribe.avsc" />
     <None Include="Energistics\Protocol\ChannelStreaming\ChannelMetadata.avsc" />
     <None Include="Energistics\Protocol\ChannelStreaming\ChannelRangeRequest.avsc" />
+    <None Include="Energistics\Protocol\ChannelStreaming\ChannelRemove.avsc" />
     <None Include="Energistics\Protocol\ChannelStreaming\ChannelStatusChange.avsc" />
     <None Include="Energistics\Protocol\ChannelStreaming\ChannelStreamingStart.avsc" />
     <None Include="Energistics\Protocol\ChannelStreaming\ChannelStreamingStop.avsc" />
@@ -182,6 +181,8 @@
     <None Include="Energistics\Protocol\DataArray\DataArray.avsc" />
     <None Include="Energistics\Protocol\DataArray\GetDataArray.avsc" />
     <None Include="Energistics\Protocol\DataArray\GetDataArraySlice.avsc" />
+    <None Include="Energistics\Protocol\DataArray\PutDataArray.avsc" />
+    <None Include="Energistics\Protocol\DataArray\PutDataArraySlice.avsc" />
     <None Include="Energistics\Protocol\Discovery\GetResources.avsc" />
     <None Include="Energistics\Protocol\Discovery\GetResourcesResponse.avsc" />
     <None Include="Energistics\Protocol\GrowingObject\GrowingObjectDelete.avsc" />
@@ -190,6 +191,7 @@
     <None Include="Energistics\Protocol\GrowingObject\GrowingObjectGetRange.avsc" />
     <None Include="Energistics\Protocol\GrowingObject\GrowingObjectPut.avsc" />
     <None Include="Energistics\Protocol\GrowingObject\ObjectFragment.avsc" />
+    <None Include="Energistics\Protocol\StoreNotification\CancelNotification.avsc" />
     <None Include="Energistics\Protocol\StoreNotification\ChangeNotification.avsc" />
     <None Include="Energistics\Protocol\StoreNotification\DeleteNotification.avsc" />
     <None Include="Energistics\Protocol\StoreNotification\NotificationRequest.avsc" />
@@ -197,6 +199,20 @@
     <None Include="Energistics\Protocol\Store\GetObject.avsc" />
     <None Include="Energistics\Protocol\Store\Object.avsc" />
     <None Include="Energistics\Protocol\Store\PutObject.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_AddToStore.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_DeleteFromStore.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_GetBaseMsg.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_GetCap.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_GetFromStore.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_GetVersion.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_UpdateInStore.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_AddToStoreResponse.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_DeleteFromStoreResponse.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_GetBaseMsgResponse.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_GetCapResponse.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_GetFromStoreResponse.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_GetVersionResponse.avsc" />
+    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_UpdateInStoreResponse.avsc" />
     <None Include="etp.avpr" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -207,7 +223,8 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>powershell.exe -file "$(SolutionDir)scripts\InsertCopyright.ps1" -target $(ProjectDir) -productname "ETP DevKit" -productversion "1.0"</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

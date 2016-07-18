@@ -10,7 +10,7 @@
 		"name": "indexes", 
 		"type": { "type": "array", "items": "Energistics.Datatypes.ChannelData.IndexMetadataRecord" } 
 	},
-		{ "name": "mnemonic", "type": "string" },
+		{ "name": "channelName", "type": "string" },
 		{ "name": "dataType", "type": "string" },
 		{ "name": "uom", "type": "string" },
 		{ "name": "startIndex", "type": ["null", "long"] },
@@ -21,9 +21,7 @@
 		{ "name": "source", "type": "string" },
 		{ "name": "measureClass", "type": "string" },
 		{ "name": "uuid", "type": ["null", "string"] },
-		{ 
-		"name": "channelAxes", 
-		"type": { "type": "array", "items": "Energistics.Datatypes.ChannelData.ChannelAxis" } 
-	}
+		{ "name": "customData", "type": { "type": "map", "values": "Energistics.Datatypes.DataValue" } },
+		{ "name": "domainObject", "type": ["null", "Energistics.Datatypes.Object.DataObject"] }
 	]
 }

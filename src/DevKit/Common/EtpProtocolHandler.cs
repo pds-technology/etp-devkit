@@ -137,7 +137,7 @@ namespace Energistics.Common
         /// <param name="header">The message header.</param>
         protected virtual void InvalidMessage(MessageHeader header)
         {
-            ProtocolException((int)ErrorCodes.EINVALID_MESSAGETYPE, "Invalid message type: " + header.MessageType, header.MessageId);
+            ProtocolException((int)EtpErrorCodes.InvalidMessageType, "Invalid message type: " + header.MessageType, header.MessageId);
         }
 
         /// <summary>
