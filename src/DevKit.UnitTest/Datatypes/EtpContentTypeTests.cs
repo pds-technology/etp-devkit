@@ -64,6 +64,7 @@ namespace Energistics.Datatypes
 
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
+            Assert.AreEqual("obj_well", contentType.SchemaType);
             Assert.AreEqual("1.4.1.1", contentType.Version);
             Assert.AreEqual(expected + ";type=obj_well;", (string)contentType);
         }
@@ -71,22 +72,24 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpContentType_Can_Parse_Witsml_20_Well_Content_Type()
         {
-            var expected = "application/x-witsml+xml;version=2.0;type=well;";
+            var expected = "application/x-witsml+xml;version=2.0;type=Well;";
             var contentType = new EtpContentType(expected);
 
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
+            Assert.AreEqual("Well", contentType.SchemaType);
             Assert.AreEqual("2.0", contentType.Version);
         }
 
         [TestMethod]
         public void EtpContentType_Can_Parse_Witsml_1411_Well_Content_Type()
         {
-            var expected = "application/x-witsml+xml;version=1.4.1.1;type=well;";
+            var expected = "application/x-witsml+xml;version=1.4.1.1;type=obj_well;";
             var contentType = new EtpContentType(expected);
 
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
+            Assert.AreEqual("obj_well", contentType.SchemaType);
             Assert.AreEqual("1.4.1.1", contentType.Version);
         }
     }

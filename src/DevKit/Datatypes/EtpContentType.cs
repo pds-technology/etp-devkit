@@ -43,8 +43,8 @@ namespace Energistics.Datatypes
 
             Family = GetValue(match, 1);
             Version = GetValue(match, 2);
-            ObjectType = GetValue(match, 6);
-            SchemaType = GetValue(match, 5) + ObjectType;
+            ObjectType = FormatObjectType(GetValue(match, 8));
+            SchemaType = FormatSchemaType(GetValue(match, 7) + ObjectType, Version);
         }
 
         /// <summary>
@@ -158,10 +158,10 @@ namespace Energistics.Datatypes
             var objectType = schemaType.Substring(index + 1);
             var prefix = (index > -1) ? schemaType.Substring(0, index + 1) : "obj_";
 
+            System.Version ver = null;
+
             if (!version.Contains("_"))
             {
-                System.Version ver;
-
                 // Capitalize object type when version >= 2.0
                 objectType = (System.Version.TryParse(version, out ver) && ver.Major < 2
                     ? objectType.Substring(0, 1).ToLowerInvariant()
@@ -169,7 +169,9 @@ namespace Energistics.Datatypes
                     + objectType.Substring(1);
             }
 
-            schemaType = prefix + objectType;
+            schemaType = (ver != null && ver.Major < 2)
+                ? prefix + objectType
+                : objectType;
 
             return schemaType;
         }

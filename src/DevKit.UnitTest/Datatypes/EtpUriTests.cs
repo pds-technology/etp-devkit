@@ -88,7 +88,7 @@ namespace Energistics.Datatypes
         public void EtpUri_Can_Parse_Witsml_14_Well_Uri_With_Equals_In_The_Uid()
         {
             var uuid = Uuid() + "=";
-            var uri = new EtpUri("eml://witsml14/well(" + uuid + ")");
+            var uri = new EtpUri("eml://witsml14/obj_well(" + uuid + ")");
             var clone = new EtpUri(uri);
 
             Assert.IsTrue(uri.IsValid);
@@ -128,7 +128,7 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpUri_IsRelatedTo_Can_Detect_Different_Versions()
         {
-            var uri14 = new EtpUri("eml://witsml14/well");
+            var uri14 = new EtpUri("eml://witsml14/obj_well");
             var uri20 = new EtpUri("eml://witsml20/well");
 
             Assert.IsTrue(uri14.IsValid);
@@ -193,7 +193,7 @@ namespace Energistics.Datatypes
         public void EtpUri_Can_Parse_Witsml_1411_Wellbore_Uri()
         {
             var uuid = Uuid();
-            var uriWell = new EtpUri("eml://witsml1411/well(" + Uuid() + ")");
+            var uriWell = new EtpUri("eml://witsml1411/obj_well(" + Uuid() + ")");
             var uriWellbore = uriWell.Append("wellbore", uuid);
 
             Assert.IsNotNull(uriWellbore);

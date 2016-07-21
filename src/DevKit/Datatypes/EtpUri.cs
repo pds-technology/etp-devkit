@@ -192,10 +192,12 @@ namespace Energistics.Datatypes
 
         public EtpUri Append(string objectType, string objectId = null)
         {
-            if (string.IsNullOrWhiteSpace(objectId))
-                return new EtpUri(Uri + "/" + objectType);
+            var schemaType = EtpContentType.FormatSchemaType(objectType, Version);
 
-            return new EtpUri(Uri + string.Format("/{0}({1})", objectType, objectId));
+            if (string.IsNullOrWhiteSpace(objectId))
+                return new EtpUri(Uri + "/" + schemaType);
+
+            return new EtpUri(Uri + string.Format("/{0}({1})", schemaType, objectId));
         }
 
         /// <summary>
