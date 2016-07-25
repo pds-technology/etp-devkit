@@ -22,7 +22,7 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="bin/$configuration$/$id$.dll" target="lib" />
-    <file src="bin/$configuration$/$id$.pdb" target="lib" />
+    <file src="bin/$configuration$/$id$.dll" target="lib/net46" />
+    <file src="bin/$configuration$/$id$.pdb" target="lib/net46" />
   </files>
 </package>

@@ -29,6 +29,8 @@ namespace Energistics.Common
     /// <seealso cref="System.IDisposable" />
     public abstract class EtpBase : IDisposable
     {
+        protected const string TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpBase"/> class.
         /// </summary>

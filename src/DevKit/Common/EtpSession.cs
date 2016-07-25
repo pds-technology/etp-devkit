@@ -335,7 +335,7 @@ namespace Energistics.Common
         {
             if (Output != null)
             {
-                Log("[{0}] Message sent at {1}", SessionId, DateTime.Now);
+                Log("[{0}] Message sent at {1}", SessionId, DateTime.Now.ToString(TimestampFormat));
                 Log(this.Serialize(header));
                 Log(this.Serialize(body, true));
             }

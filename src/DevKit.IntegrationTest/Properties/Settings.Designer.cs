@@ -43,7 +43,7 @@ namespace Energistics.IntegrationTest {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/witsml.web/api/etp/ServerCapabilities")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/witsml.web/.well-known/etp-server-capabilities")]
         public string ServerCapabilitiesUrl {
             get {
                 return ((string)(this["ServerCapabilitiesUrl"]));

@@ -9,7 +9,7 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="ServerCapabilitiesUrl" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">http://localhost/witsml.web/api/etp/ServerCapabilities</Value>
+      <Value Profile="(Default)">http://localhost/witsml.web/.well-known/etp-server-capabilities</Value>
     </Setting>
     <Setting Name="ServerUrl" Type="System.String" Scope="Application">
       <Value Profile="(Default)">ws://localhost/witsml.web/api/etp</Value>

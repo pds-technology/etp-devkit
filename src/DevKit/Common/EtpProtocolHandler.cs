@@ -237,7 +237,7 @@ namespace Energistics.Common
         protected void Received<T>(MessageHeader header, T message)
         {
             if (Session?.Output == null) return;
-            Session.Log("[{0}] Message received at {1}", Session.SessionId, DateTime.Now);
+            Session.Log("[{0}] Message received at {1}", Session.SessionId, DateTime.Now.ToString(TimestampFormat));
             Session.Log(this.Serialize(header));
             Session.Log(this.Serialize(message, true));
         }
