@@ -101,7 +101,10 @@ namespace Energistics.Protocol.ChannelDataFrame
             var args = Notify(OnRequestChannelData, header, requestChannelData, new ChannelMetadata());
             HandleRequestChannelData(args);
 
-            ChannelMetadata(args.Context);
+            if (!args.Cancel)
+            {
+                ChannelMetadata(args.Context);
+            }
         }
 
         /// <summary>

@@ -51,6 +51,14 @@ namespace Energistics.Common
         /// </summary>
         /// <value>The message body.</value>
         public T Message { get; private set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether further processing should be cancelled.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if cancel; otherwise, <c>false</c>.
+        /// </value>
+        public bool Cancel { get; set; }
     }
 
     /// <summary>

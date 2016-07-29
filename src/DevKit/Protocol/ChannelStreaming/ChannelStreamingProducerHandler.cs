@@ -272,7 +272,10 @@ namespace Energistics.Protocol.ChannelStreaming
             var args = Notify(OnChannelDescribe, header, channelDescribe, new List<ChannelMetadataRecord>());
             HandleChannelDescribe(args);
 
-            ChannelMetadata(header, args.Context);
+            if (!args.Cancel)
+            {
+                ChannelMetadata(header, args.Context);
+            }
         }
 
         /// <summary>

@@ -103,7 +103,10 @@ namespace Energistics.Protocol.Discovery
             var args = Notify(OnGetResources, header, getResources, new List<Resource>());
             HandleGetResources(args);
 
-            GetResourcesResponse(header, args.Context);
+            if (!args.Cancel)
+            {
+                GetResourcesResponse(header, args.Context);
+            }
         }
 
         /// <summary>
