@@ -23,6 +23,7 @@ using Energistics.Common;
 using Energistics.Datatypes;
 using Energistics.Properties;
 using Energistics.Protocol.Core;
+using SuperSocket.ClientEngine;
 using WebSocket4Net;
 
 namespace Energistics
@@ -61,11 +62,12 @@ namespace Energistics
         /// <param name="headers">The WebSocket headers.</param>
         public EtpClient(string uri, string application, string version, IDictionary<string, string> headers) : base(application, version, headers)
         {
-            _socket = new WebSocket(uri, EtpSubProtocolName, null, BinaryHeaders.Union(Headers).ToList());
+            _socket = new WebSocket(uri, EtpSubProtocolName, null, Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList());
 
             _socket.Opened += OnWebSocketOpened;
             _socket.Closed += OnWebSocketClosed;
             _socket.DataReceived += OnWebSocketDataReceived;
+            _socket.Error += OnWebSocketError;
 
             Register<ICoreClient, CoreClientHandler>();
         }
@@ -196,6 +198,16 @@ namespace Energistics
         private void OnWebSocketDataReceived(object sender, DataReceivedEventArgs e)
         {
             OnDataReceived(e.Data);
+        }
+
+        /// <summary>
+        /// Called when an error is raised by the WebSocket.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The <see cref="ErrorEventArgs"/> instance containing the event data.</param>
+        private void OnWebSocketError(object sender, ErrorEventArgs e)
+        {
+            Logger.Error(Log("[{0}] Socket error: {1}", SessionId, e.Exception.Message), e.Exception);
         }
     }
 }

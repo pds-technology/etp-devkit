@@ -154,7 +154,7 @@ namespace Energistics.Common
             catch (Exception ex)
             {
                 Handler(header.Protocol)
-                    .ProtocolException(1000, ex.Message, header.MessageId);
+                    .ProtocolException((int)EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
 
                 return;
             }
@@ -252,12 +252,21 @@ namespace Energistics.Common
         {
             if (Handlers.ContainsKey(header.Protocol))
             {
-                Handler(header.Protocol)
-                    .HandleMessage(header, decoder);
+                var handler = Handler(header.Protocol);
+
+                try
+                {
+                    handler.HandleMessage(header, decoder);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex);
+                    handler.ProtocolException((int)EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
+                }
             }
             else
             {
-                var message = string.Format("Protocol handler not registered for protocol {0}.", header.Protocol);
+                var message = $"Protocol handler not registered for protocol { header.Protocol }.";
 
                 Handler((int)Protocols.Core)
                     .ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, message, header.MessageId);
