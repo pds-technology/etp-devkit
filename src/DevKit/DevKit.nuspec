@@ -5,8 +5,8 @@
     <version>$version$</version>
     <authors>$author$</authors>
     <description>$description$</description>
-    <projectUrl>https://witsml.pds.nl/</projectUrl>
-    <licenseUrl>https://witsml.pds.nl/license</licenseUrl>
+    <projectUrl>https://bitbucket.org/energistics/etp-devkit/</projectUrl>
+    <licenseUrl>http://www.energistics.org/product-license-agreement</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <dependencies>
       <group targetFramework="net40">
