@@ -1,4 +1,4 @@
-ETP.DevKit, 1.1
+ETP DevKit, 1.1
 Copyright 2016 Energistics
 
 Third Party Software
@@ -17,11 +17,11 @@ The following Energistics © products were used in the creation of this work:
 Energistics®, WITSML™, PRODML™, RESQML™ and their logos are trademarks or registered
 trademarks of Energistics Consortium, Inc.  All rights in the Energistics Trasfer Protocol
 (ETP) Standard, WITSML™ Standard, the PRODML™ Standard, the RESQML™ Standard, and the
-Standards DevKit or any portion thereof, which remain in the ETP.DevKit shall remain
+Standards DevKit or any portion thereof, which remain in the ETP DevKit shall remain
 with Energistics and/or its suppliers and shall remain subject to the terms of the Product
 License Agreement available at:
 http://www.energistics.org/product-license-agreement. 
 
 PDS
-The ETP.DevKit was originally created and contributed by Petrotechnical Data Systems
+The ETP DevKit was originally created and contributed by Petrotechnical Data Systems
 on August 1, 2016.
