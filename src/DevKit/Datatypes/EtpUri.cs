@@ -51,17 +51,15 @@ namespace Energistics.Datatypes
             Family = GetValue(_match, 4);
             Version = FormatVersion(GetValue(_match, 5), Family);
             ContentType = new EtpContentType(Family, Version);
-            SchemaType = null;
             ObjectType = null;
             ObjectId = null;
 
             if (!HasRepeatValues(_match)) return;
 
             var last = GetObjectIds().Last();
-            SchemaType = last.SchemaType;
             ObjectType = last.ObjectType;
             ObjectId = last.ObjectId;
-            ContentType = new EtpContentType(Family, Version, SchemaType);
+            ContentType = new EtpContentType(Family, Version, ObjectType);
         }
 
         /// <summary>
@@ -87,12 +85,6 @@ namespace Energistics.Datatypes
         /// </summary>
         /// <value>The version.</value>
         public string Version { get; }
-
-        /// <summary>
-        /// Gets the XSD type of the object.
-        /// </summary>
-        /// <value>The XSD type of the object.</value>
-        public string SchemaType { get; }
 
         /// <summary>
         /// Gets the type of the object.
@@ -169,35 +161,34 @@ namespace Energistics.Datatypes
         {
             if (HasRepeatValues(_match))
             {
-                var schemaTypeGroup = _match.Groups[8];
                 var objectTypeGroup = _match.Groups[9];
                 var objectIdGroup = _match.Groups[11];
 
                 for (int i=0; i<objectTypeGroup.Captures.Count; i++)
                 {
                     var objectType = objectTypeGroup.Captures[i].Value;
-                    var schemaType = schemaTypeGroup.Captures.Count > i ? schemaTypeGroup.Captures[i].Value : string.Empty;
                     var objectId = objectIdGroup.Captures.Count > i ? objectIdGroup.Captures[i].Value : null;
 
-                    if (!string.IsNullOrWhiteSpace(objectType))
-                        schemaType += objectType;
-
                     yield return new Segment(
-                        EtpContentType.FormatSchemaType(schemaType, Version),
                         EtpContentType.FormatObjectType(objectType),
                         objectId);
                 }
             }
         }
 
+        /// <summary>
+        /// Appends the specified object type and optional object identifier to the <see cref="EtpUri"/>.
+        /// </summary>
+        /// <param name="objectType">The object type.</param>
+        /// <param name="objectId">The object identifier.</param>
+        /// <returns>A new <see cref="EtpUri"/> instance.</returns>
         public EtpUri Append(string objectType, string objectId = null)
         {
-            var schemaType = EtpContentType.FormatSchemaType(objectType, Version);
+            objectType = EtpContentType.FormatObjectType(objectType);
 
-            if (string.IsNullOrWhiteSpace(objectId))
-                return new EtpUri(Uri + "/" + schemaType);
-
-            return new EtpUri(Uri + string.Format("/{0}({1})", schemaType, objectId));
+            return string.IsNullOrWhiteSpace(objectId) ?
+                new EtpUri(Uri + "/" + objectType) :
+                new EtpUri(Uri + $"/{ objectType }({ objectId })");
         }
 
         /// <summary>
@@ -301,26 +292,45 @@ namespace Energistics.Datatypes
             if (string.IsNullOrWhiteSpace(version))
                 return null;
 
-            // Force WITSML versions 13 and 14 to be formatted as 1.3.1.1 and 1.4.1.1, respectively
-            if ("WITSML".Equals(family, StringComparison.InvariantCultureIgnoreCase) && (version == "13" || version == "14"))
-                version += "11";
+            // Force WITSML versions 13* and 14* to be formatted as 1.3.1.1 and 1.4.1.1, respectively
+            if ("WITSML".Equals(family, StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (version == "13" || version == "131")
+                    version = "1311";
+                else if (version == "14" || version == "141")
+                    version = "1411";
+            }
 
             return string.Join(".", version.Trim().Select(x => x));
         }
 
+        /// <summary>
+        /// Represents an <see cref="EtpUri"/> path segment containing an
+        /// object type and an optional object identifier (e.g. UUID or UID).
+        /// </summary>
         public struct Segment
         {
-            public Segment(string schemaType, string objectType, string objectId)
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Segment"/> struct.
+            /// </summary>
+            /// <param name="objectType">The object type.</param>
+            /// <param name="objectId">The object identifier.</param>
+            public Segment(string objectType, string objectId)
             {
-                SchemaType = schemaType;
                 ObjectType = objectType;
                 ObjectId = objectId;
             }
 
-            public string SchemaType { get; }
-
+            /// <summary>
+            /// Gets the type of the object.
+            /// </summary>
+            /// <value>The type of the object.</value>
             public string ObjectType { get; }
 
+            /// <summary>
+            /// Gets the object identifier.
+            /// </summary>
+            /// <value>The object identifier.</value>
             public string ObjectId { get; }
         }
     }

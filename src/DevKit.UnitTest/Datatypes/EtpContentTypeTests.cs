@@ -64,9 +64,8 @@ namespace Energistics.Datatypes
 
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
-            Assert.AreEqual("obj_well", contentType.SchemaType);
             Assert.AreEqual("1.4.1.1", contentType.Version);
-            Assert.AreEqual(expected + ";type=obj_well;", (string)contentType);
+            Assert.AreEqual(expected + ";type=well;", (string)contentType);
         }
 
         [TestMethod]
@@ -77,7 +76,6 @@ namespace Energistics.Datatypes
 
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
-            Assert.AreEqual("Well", contentType.SchemaType);
             Assert.AreEqual("2.0", contentType.Version);
         }
 
@@ -89,7 +87,6 @@ namespace Energistics.Datatypes
 
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
-            Assert.AreEqual("obj_well", contentType.SchemaType);
             Assert.AreEqual("1.4.1.1", contentType.Version);
         }
     }

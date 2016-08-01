@@ -178,7 +178,7 @@ namespace Energistics.Datatypes
         {
             var uuid = Uuid();
             var expected = "eml://witsml14/well(" + uuid + ")";
-            var type = "application/x-witsml+xml;version=1.4.1.1;type=obj_well;";
+            var contentType = "application/x-witsml+xml;version=1.4.1.1;type=well;";
             var uri = new EtpUri(expected);
 
             Assert.IsTrue(uri.IsValid);
@@ -186,7 +186,7 @@ namespace Energistics.Datatypes
             Assert.AreEqual("well", uri.ObjectType);
             Assert.AreEqual("1.4.1.1", uri.Version);
             Assert.AreEqual(expected, uri.ToString());
-            Assert.AreEqual(type, uri.ContentType.ToString());
+            Assert.AreEqual(contentType, uri.ContentType.ToString());
         }
 
         [TestMethod]
@@ -227,7 +227,19 @@ namespace Energistics.Datatypes
             Assert.AreEqual("custom-database", uri.DataSpace);
             Assert.AreEqual("witsml", uri.Family);
             Assert.AreEqual("1.4.1.1", uri.Version);
-            Assert.AreEqual("cs_logCurveInfo", uri.SchemaType);
+            Assert.AreEqual("logCurveInfo", uri.ObjectType);
+            Assert.AreEqual("GR", uri.ObjectId);
+        }
+
+        [TestMethod]
+        public void EtpUri_Can_Parse_Full_Uri_Using_Object_Types()
+        {
+            var uri = new EtpUri("eml://custom-database/witsml14/well(" + Uuid() + ")/wellbore(" + Uuid() + ")/log(" + Uuid() + ")/logCurveInfo(GR)");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("custom-database", uri.DataSpace);
+            Assert.AreEqual("witsml", uri.Family);
+            Assert.AreEqual("1.4.1.1", uri.Version);
             Assert.AreEqual("logCurveInfo", uri.ObjectType);
             Assert.AreEqual("GR", uri.ObjectId);
         }
