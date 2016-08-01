@@ -1,5 +1,5 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.0
+// ETP DevKit, 1.1
 //
 // Copyright 2016 Petrotechnical Data Systems
 // 

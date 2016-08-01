@@ -1,5 +1,5 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.0
+// ETP DevKit, 1.1
 //
 // Copyright 2016 Petrotechnical Data Systems
 // 
@@ -173,7 +173,8 @@ namespace Energistics.Common
             var supportedProtocols = new List<SupportedProtocol>();
             var version = new Datatypes.Version()
             {
-                Major = 1
+                Major = 1,
+                Minor = 1
             };
 
             // Skip Core protocol (0)
