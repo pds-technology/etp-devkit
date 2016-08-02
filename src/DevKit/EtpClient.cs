@@ -34,7 +34,6 @@ namespace Energistics
     /// <seealso cref="Energistics.Common.EtpSession" />
     public class EtpClient : EtpSession
     {
-        private static readonly string EtpSubProtocolName = Settings.Default.EtpSubProtocolName;
         private static readonly IDictionary<string, string> EmptyHeaders = new Dictionary<string, string>();
         private static readonly IDictionary<string, string> BinaryHeaders = new Dictionary<string, string>()
         {
@@ -62,7 +61,7 @@ namespace Energistics
         /// <param name="headers">The WebSocket headers.</param>
         public EtpClient(string uri, string application, string version, IDictionary<string, string> headers) : base(application, version, headers)
         {
-            _socket = new WebSocket(uri, EtpSubProtocolName, null, Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList());
+            _socket = new WebSocket(uri, EtpSettings.EtpSubProtocolName, null, Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList());
 
             _socket.Opened += OnWebSocketOpened;
             _socket.Closed += OnWebSocketClosed;
