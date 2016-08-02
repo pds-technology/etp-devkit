@@ -30,11 +30,6 @@ namespace Energistics
     /// </summary>
     public abstract class IntegrationTestBase
     {
-        protected static readonly string AuthTokenUrl = Settings.Default.AuthTokenUrl;
-        protected static readonly string ServerUrl = Settings.Default.ServerUrl;
-        protected static readonly string Username = Settings.Default.Username;
-        protected static readonly string Password = Settings.Default.Password;
-
         /// <summary>
         /// Creates an <see cref="EtpClient"/> instance configurated with the
         /// current connection and authorization parameters.
@@ -43,9 +38,9 @@ namespace Energistics
         protected EtpClient CreateClient()
         {
             var version = GetType().Assembly.GetName().Version.ToString();
-            var headers = Authorization.Basic(Username, Password);
+            var headers = Authorization.Basic(TestSettings.Username, TestSettings.Password);
 
-            return new EtpClient(ServerUrl, GetType().AssemblyQualifiedName, version, headers);
+            return new EtpClient(TestSettings.ServerUrl, GetType().AssemblyQualifiedName, version, headers);
         }
 
         /// <summary>

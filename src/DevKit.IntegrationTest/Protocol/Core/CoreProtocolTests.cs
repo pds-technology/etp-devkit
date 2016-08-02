@@ -80,7 +80,7 @@ namespace Energistics.Protocol.Core
         [Description("EtpClient authenticates using JWT retrieved from supported token provider")]
         public async Task EtpClient_OpenSession_Can_Authenticate_Using_Json_Web_Token()
         {
-            var headers = Authorization.Basic(Username, Password);
+            var headers = Authorization.Basic(TestSettings.Username, TestSettings.Password);
             string token;
 
             using (var client = new System.Net.WebClient())
@@ -88,14 +88,14 @@ namespace Energistics.Protocol.Core
                 foreach (var header in headers)
                     client.Headers[header.Key] = header.Value;
 
-                var response = await client.UploadStringTaskAsync(AuthTokenUrl, "grant_type=password");
+                var response = await client.UploadStringTaskAsync(TestSettings.AuthTokenUrl, "grant_type=password");
                 var json = JObject.Parse(response);
 
                 token = json["access_token"].Value<string>();
             }
 
             _client.Dispose();
-            _client = new EtpClient(ServerUrl, _client.ApplicationName, _client.ApplicationVersion, Authorization.Bearer(token));
+            _client = new EtpClient(TestSettings.ServerUrl, _client.ApplicationName, _client.ApplicationVersion, Authorization.Bearer(token));
 
             var onOpenSession = HandleAsync<OpenSession>(x => _client.Handler<ICoreClient>().OnOpenSession += x);
 

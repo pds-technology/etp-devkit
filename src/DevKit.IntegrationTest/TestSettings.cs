@@ -16,28 +16,43 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Energistics.Properties;
+using Energistics.IntegrationTest;
 
-namespace Energistics.Common
+namespace Energistics
 {
     /// <summary>
-    /// Defines static fields for the ETP settings.
+    /// Defines static fields for the ETP test settings.
     /// </summary>
-    public static class EtpSettings
+    public static class TestSettings
     {
         /// <summary>
-        /// The default ETP sub protocol name
+        /// The default authentication token URL
         /// </summary>
-        public static string EtpSubProtocolName = Settings.Default.EtpSubProtocolName;
+        public static string AuthTokenUrl = Settings.Default.AuthTokenUrl;
 
         /// <summary>
-        /// The default ETP encoding header
+        /// The default server URL
         /// </summary>
-        public static string EtpEncodingHeader = Settings.Default.EtpEncodingHeader;
+        public static string ServerUrl = Settings.Default.ServerUrl;
+
+        /// <summary>
+        /// The default username
+        /// </summary>
+        public static string Username = Settings.Default.Username;
+
+        /// <summary>
+        /// The default password
+        /// </summary>
+        public static string Password = Settings.Default.Password;
+
+        /// <summary>
+        /// The default server capabilities URL
+        /// </summary>
+        public static string ServerCapabilitiesUrl = Settings.Default.ServerCapabilitiesUrl;
 
         /// <summary>
         /// The default ETP version
         /// </summary>
-        public static string EtpVersion = Settings.Default.EtpVersion;
+        public static string EtpVersion = Properties.Settings.Default.EtpVersion;
     }
 }

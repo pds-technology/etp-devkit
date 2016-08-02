@@ -89,6 +89,7 @@
     <Compile Include="Protocol\Discovery\DiscoveryProtocolTests.cs" />
     <Compile Include="TestExtensions.cs" />
     <Compile Include="EtpClientTests.cs" />
+    <Compile Include="TestSettings.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
