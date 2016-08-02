@@ -22,6 +22,34 @@ namespace Energistics.Common
 {
     public static class EtpSettings
     {
+        /// <summary>
+        /// The ETP sub protocol name
+        /// </summary>
         public static string EtpSubProtocolName = Settings.Default.EtpSubProtocolName;
+
+        /// <summary>
+        /// The default authentication token URL
+        /// </summary>
+        public static string AuthTokenUrl = Settings.Default.AuthTokenUrl;
+
+        /// <summary>
+        /// The default server URL
+        /// </summary>
+        public static string ServerUrl = Settings.Default.ServerUrl;
+
+        /// <summary>
+        /// The default username
+        /// </summary>
+        public static string Username = Settings.Default.Username;
+
+        /// <summary>
+        /// The default password
+        /// </summary>
+        public static string Password = Settings.Default.Password;
+
+        /// <summary>
+        /// The default ETP version
+        /// </summary>
+        public static string EtpVersion = Settings.Default.EtpVersion;
     }
 }
