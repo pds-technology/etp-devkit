@@ -54,5 +54,10 @@ namespace Energistics
         /// The default ETP version
         /// </summary>
         public static string EtpVersion = Properties.Settings.Default.EtpVersion;
+
+        /// <summary>
+        /// The default timeout in milliseconds
+        /// </summary>
+        public const int DefaultTimeoutInMilliseconds = 5000;
     }
 }
