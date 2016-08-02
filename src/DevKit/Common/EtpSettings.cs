@@ -20,12 +20,20 @@ using Energistics.Properties;
 
 namespace Energistics.Common
 {
+    /// <summary>
+    /// Defines static fields for the ETP settings.
+    /// </summary>
     public static class EtpSettings
     {
         /// <summary>
-        /// The ETP sub protocol name
+        /// The default ETP sub protocol name
         /// </summary>
         public static string EtpSubProtocolName = Settings.Default.EtpSubProtocolName;
+
+        /// <summary>
+        /// The default ETP encoding header
+        /// </summary>
+        public static string EtpEncodingHeader = Settings.Default.EtpEncodingHeader;
 
         /// <summary>
         /// The default authentication token URL
