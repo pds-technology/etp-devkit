@@ -20,7 +20,6 @@ using System;
 using System.Threading.Tasks;
 using Avro.Specific;
 using Energistics.Common;
-using Energistics.IntegrationTest;
 using Energistics.Security;
 
 namespace Energistics

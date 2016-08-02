@@ -100,8 +100,8 @@
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-      <CustomToolNamespace>Energistics.IntegrationTest</CustomToolNamespace>
       <SubType>Designer</SubType>
+      <CustomToolNamespace>Energistics.IntegrationTest</CustomToolNamespace>
     </None>
   </ItemGroup>
   <ItemGroup>

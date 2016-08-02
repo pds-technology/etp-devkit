@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Threading.Tasks;
-using Energistics.IntegrationTest;
 using Energistics.Protocol.ChannelStreaming;
 using Energistics.Protocol.Discovery;
 using Energistics.Protocol.Store;
@@ -29,7 +28,6 @@ namespace Energistics
     [TestClass]
     public class EtpClientTests
     {
-        private static readonly string Uri = Settings.Default.ServerUrl;
         private const string AppName = "EtpClientTests";
         private const string AppVersion = "1.0";
 
@@ -40,7 +38,7 @@ namespace Energistics
             var auth = Authorization.Basic("witsml.user", "P@$$^0rd!");
 
             // Initialize an EtpClient with a valid Uri, app name and version, and auth header
-            using (var client = new EtpClient(Uri, AppName, AppVersion, auth))
+            using (var client = new EtpClient(TestSettings.ServerUrl, AppName, AppVersion, auth))
             {
                 // Register protocol handlers to be used in later tests
                 client.Register<IChannelStreamingConsumer, ChannelStreamingConsumerHandler>();

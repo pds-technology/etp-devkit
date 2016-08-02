@@ -33,7 +33,7 @@ namespace Energistics
         /// <param name="client">The client.</param>
         /// <param name="milliseconds">The timeout, in milliseconds.</param>
         /// <returns>An awaitable task.</returns>
-        public static async Task<bool> OpenAsync(this EtpClient client, int milliseconds = TestSettings.DefaultTimeoutInMilliseconds)
+        public static async Task<bool> OpenAsync(this EtpClient client, int? milliseconds = null)
         {
             var task = new Task<bool>(() => client.IsOpen);
 
@@ -50,9 +50,9 @@ namespace Energistics
         /// <param name="task">The task to execute.</param>
         /// <param name="milliseconds">The timeout, in milliseconds.</param>
         /// <returns>An awaitable task.</returns>
-        public static async Task<TResult> WaitAsync<TResult>(this Task<TResult> task, int milliseconds = TestSettings.DefaultTimeoutInMilliseconds)
+        public static async Task<TResult> WaitAsync<TResult>(this Task<TResult> task, int? milliseconds = null)
         {
-            return await task.WaitAsync(TimeSpan.FromMilliseconds(milliseconds));
+            return await task.WaitAsync(TimeSpan.FromMilliseconds(milliseconds ?? TestSettings.DefaultTimeoutInMilliseconds));
         }
 
         /// <summary>

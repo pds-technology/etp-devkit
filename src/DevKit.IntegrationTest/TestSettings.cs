@@ -26,6 +26,11 @@ namespace Energistics
     public static class TestSettings
     {
         /// <summary>
+        /// The default server capabilities URL
+        /// </summary>
+        public static string ServerCapabilitiesUrl = Settings.Default.ServerCapabilitiesUrl;
+
+        /// <summary>
         /// The default authentication token URL
         /// </summary>
         public static string AuthTokenUrl = Settings.Default.AuthTokenUrl;
@@ -46,18 +51,27 @@ namespace Energistics
         public static string Password = Settings.Default.Password;
 
         /// <summary>
-        /// The default server capabilities URL
-        /// </summary>
-        public static string ServerCapabilitiesUrl = Settings.Default.ServerCapabilitiesUrl;
-
-        /// <summary>
         /// The default ETP version
         /// </summary>
-        public static string EtpVersion = Properties.Settings.Default.EtpVersion;
+        public static string EtpVersion = Settings.Default.EtpVersion;
 
         /// <summary>
         /// The default timeout in milliseconds
         /// </summary>
-        public const int DefaultTimeoutInMilliseconds = 5000;
+        public static int DefaultTimeoutInMilliseconds = 5000;
+
+        /// <summary>
+        /// Resets any modified test settings.
+        /// </summary>
+        public static void Reset()
+        {
+            ServerCapabilitiesUrl = Settings.Default.ServerCapabilitiesUrl;
+            AuthTokenUrl = Settings.Default.AuthTokenUrl;
+            ServerUrl = Settings.Default.ServerUrl;
+            Username = Settings.Default.Username;
+            Password = Settings.Default.Password;
+            EtpVersion = Settings.Default.EtpVersion;
+            DefaultTimeoutInMilliseconds = 5000;
+        }
     }
 }

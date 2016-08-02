@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Linq;
-using Energistics.IntegrationTest;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Energistics
@@ -25,16 +24,11 @@ namespace Energistics
     [TestClass]
     public class JsonClientTests
     {
-        private static readonly string CapServerUrl = Settings.Default.ServerCapabilitiesUrl;
-        private static readonly string AuthTokenUrl = Settings.Default.AuthTokenUrl;
-        private static readonly string Username = Settings.Default.Username;
-        private static readonly string Password = Settings.Default.Password;
-
         [TestMethod]
         public void JsonClient_GetServerCapabilities_Using_Basic_Authentication()
         {
-            var client = new JsonClient(Username, Password);
-            var capServer = client.GetServerCapabilities(CapServerUrl);
+            var client = new JsonClient(TestSettings.Username, TestSettings.Password);
+            var capServer = client.GetServerCapabilities(TestSettings.ServerCapabilitiesUrl);
 
             Assert.IsNotNull(capServer);
             Assert.IsNotNull(capServer.SupportedObjects);
@@ -47,12 +41,12 @@ namespace Energistics
         [TestMethod]
         public void JsonClient_GetServerCapabilities_Using_Json_Web_Token()
         {
-            var client = new JsonClient(Username, Password);
+            var client = new JsonClient(TestSettings.Username, TestSettings.Password);
 
-            var token = client.GetJsonWebToken(AuthTokenUrl);
+            var token = client.GetJsonWebToken(TestSettings.AuthTokenUrl);
             Assert.IsNotNull(token);
 
-            var capServer = client.GetServerCapabilities(CapServerUrl);
+            var capServer = client.GetServerCapabilities(TestSettings.ServerCapabilitiesUrl);
 
             Assert.IsNotNull(capServer);
             Assert.IsNotNull(capServer.SupportedObjects);
