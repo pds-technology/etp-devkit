@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 
 namespace Energistics.Datatypes
@@ -28,7 +29,7 @@ namespace Energistics.Datatypes
     /// </summary>
     public struct EtpUri
     {
-        private static readonly Regex Pattern = new Regex(@"^eml:\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|energyml)([0-9]+))(\/((obj_|cs_)?(\w+))(\(([\-\=\w]+)\))?)*?$", RegexOptions.IgnoreCase);
+        private static readonly Regex Pattern = new Regex(@"^eml:\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|energyml)([0-9]+))(\/((obj_|cs_)?(\w+))(\(([\-\=\%\w]+)\))?)*?(\?[^#]*)?(#.*)?$", RegexOptions.IgnoreCase);
         private readonly Match _match;
 
         /// <summary>
@@ -53,6 +54,8 @@ namespace Energistics.Datatypes
             ContentType = new EtpContentType(Family, Version);
             ObjectType = null;
             ObjectId = null;
+            Query = GetValue(_match, 12);
+            Hash = GetValue(_match, 13);
 
             if (!HasRepeatValues(_match)) return;
 
@@ -97,6 +100,18 @@ namespace Energistics.Datatypes
         /// </summary>
         /// <value>The object identifier.</value>
         public string ObjectId { get; }
+
+        /// <summary>
+        /// Gets the query string.
+        /// </summary>
+        /// <value>The query string.</value>
+        public string Query { get; }
+
+        /// <summary>
+        /// Gets the hash segment.
+        /// </summary>
+        /// <value>The hash segment.</value>
+        public string Hash { get; }
 
         /// <summary>
         /// Gets the content type.
@@ -167,7 +182,10 @@ namespace Energistics.Datatypes
                 for (int i=0; i<objectTypeGroup.Captures.Count; i++)
                 {
                     var objectType = objectTypeGroup.Captures[i].Value;
-                    var objectId = objectIdGroup.Captures.Count > i ? objectIdGroup.Captures[i].Value : null;
+
+                    var objectId = objectIdGroup.Captures.Count > i
+                        ? WebUtility.UrlDecode(objectIdGroup.Captures[i].Value)
+                        : null;
 
                     yield return new Segment(
                         EtpContentType.FormatObjectType(objectType),

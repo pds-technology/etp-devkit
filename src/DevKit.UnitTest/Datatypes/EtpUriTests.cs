@@ -244,6 +244,53 @@ namespace Energistics.Datatypes
             Assert.AreEqual("GR", uri.ObjectId);
         }
 
+        [TestMethod]
+        public void EtpUri_Can_Parse_Uri_With_Query_String()
+        {
+            var uri = new EtpUri("eml://witsml20/Well?name=value");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("2.0", uri.Version);
+            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("?name=value", uri.Query);
+            Assert.AreEqual(string.Empty, uri.Hash);
+        }
+
+        [TestMethod]
+        public void EtpUri_Can_Parse_Uri_With_Hash_Segment()
+        {
+            var uri = new EtpUri("eml://witsml20/Well#/value");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("2.0", uri.Version);
+            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("#/value", uri.Hash);
+            Assert.AreEqual(string.Empty, uri.Query);
+        }
+
+        [TestMethod]
+        public void EtpUri_Can_Parse_Uri_With_Query_String_And_Hash_Segment()
+        {
+            var uri = new EtpUri("eml://witsml20/Well?name=value#/value");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("2.0", uri.Version);
+            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("?name=value", uri.Query);
+            Assert.AreEqual("#/value", uri.Hash);
+        }
+
+        [TestMethod]
+        public void EtpUri_Can_Parse_Uri_With_Url_Encoded_Values()
+        {
+            var uri = new EtpUri("eml://witsml20/Well(abc%20123%3D)");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("2.0", uri.Version);
+            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("abc 123=", uri.ObjectId);
+        }
+
         private string Uuid()
         {
             return Guid.NewGuid().ToString();
