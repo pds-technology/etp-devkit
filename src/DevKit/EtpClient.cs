@@ -128,6 +128,11 @@ namespace Energistics
         }
 
         /// <summary>
+        /// Occurs when the WebSocket has an error.
+        /// </summary>
+        public event EventHandler<Exception> SocketError;
+
+        /// <summary>
         /// Sends the specified data.
         /// </summary>
         /// <param name="data">The data.</param>
@@ -207,6 +212,7 @@ namespace Energistics
         private void OnWebSocketError(object sender, ErrorEventArgs e)
         {
             Logger.Error(Log("[{0}] Socket error: {1}", SessionId, e.Exception.Message), e.Exception);
+            SocketError?.Invoke(this, e.Exception);
         }
     }
 }
