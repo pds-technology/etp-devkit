@@ -109,7 +109,7 @@ namespace Energistics.Protocol.Store
             if (args.Cancel)
                 return;
 
-            if (string.IsNullOrEmpty(args.Context.GetXml()))
+            if (args.Context.Data == null || args.Context.Data.Length == 0)
                 Object(args.Context, MessageFlags.NoData);
             else
                 Object(args.Context);
