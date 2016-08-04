@@ -106,10 +106,13 @@ namespace Energistics.Protocol.Store
             var args = Notify(OnGetObject, header, getObject, new DataObject());
             HandleGetObject(args);
 
-            if (!args.Cancel)
-            {
+            if (args.Cancel)
+                return;
+
+            if (string.IsNullOrEmpty(args.Context.GetXml()))
+                Object(args.Context, MessageFlags.NoData);
+            else
                 Object(args.Context);
-            }
         }
 
         /// <summary>
