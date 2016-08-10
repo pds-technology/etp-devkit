@@ -24,7 +24,7 @@ namespace Energistics.Datatypes
     /// Specifies protocol and role requirements for a protocol handler.
     /// </summary>
     /// <seealso cref="System.Attribute" />
-    [AttributeUsage(AttributeTargets.Interface, Inherited = true, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, Inherited = true, AllowMultiple = false)]
     public class ProtocolRoleAttribute : Attribute
     {
         /// <summary>

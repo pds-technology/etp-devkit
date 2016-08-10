@@ -50,7 +50,8 @@ namespace Energistics.Protocol.ChannelStreaming
         /// </summary>
         /// <param name="maxDataItems">The maximum data items.</param>
         /// <param name="maxMessageRate">The maximum message rate.</param>
-        public virtual void Start(int maxDataItems = 10000, int maxMessageRate = 1000)
+        /// <returns>The message identifier.</returns>
+        public virtual long Start(int maxDataItems = 10000, int maxMessageRate = 1000)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.Start);
 
@@ -61,14 +62,15 @@ namespace Energistics.Protocol.ChannelStreaming
             };
 
             ChannelMetadataRecords.Clear();
-            Session.SendMessage(header, start);
+            return Session.SendMessage(header, start);
         }
 
         /// <summary>
         /// Sends a ChannelDescribe message to a producer with the specified URIs.
         /// </summary>
         /// <param name="uris">The list of URIs.</param>
-        public virtual void ChannelDescribe(IList<string> uris)
+        /// <returns>The message identifier.</returns>
+        public virtual long ChannelDescribe(IList<string> uris)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelDescribe);
 
@@ -77,14 +79,15 @@ namespace Energistics.Protocol.ChannelStreaming
                 Uris = uris
             };
 
-            Session.SendMessage(header, channelDescribe);
+            return Session.SendMessage(header, channelDescribe);
         }
 
         /// <summary>
         /// Sends a ChannelStreamingStart message to a producer.
         /// </summary>
         /// <param name="channelStreamingInfos">The list of <see cref="ChannelStreamingInfo" /> objects.</param>
-        public virtual void ChannelStreamingStart(IList<ChannelStreamingInfo> channelStreamingInfos)
+        /// <returns>The message identifier.</returns>
+        public virtual long ChannelStreamingStart(IList<ChannelStreamingInfo> channelStreamingInfos)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelStreamingStart);
 
@@ -93,14 +96,15 @@ namespace Energistics.Protocol.ChannelStreaming
                 Channels = channelStreamingInfos
             };
 
-            Session.SendMessage(header, channelStreamingStart);
+            return Session.SendMessage(header, channelStreamingStart);
         }
 
         /// <summary>
         /// Sends a ChannelStreamingStop message to a producer.
         /// </summary>
         /// <param name="channelIds">The list of channel identifiers.</param>
-        public virtual void ChannelStreamingStop(IList<long> channelIds)
+        /// <returns>The message identifier.</returns>
+        public virtual long ChannelStreamingStop(IList<long> channelIds)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelStreamingStop);
 
@@ -109,14 +113,15 @@ namespace Energistics.Protocol.ChannelStreaming
                 Channels = channelIds
             };
 
-            Session.SendMessage(header, channelStreamingStop);
+            return Session.SendMessage(header, channelStreamingStop);
         }
 
         /// <summary>
         /// Sends a ChannelRangeRequest message to a producer.
         /// </summary>
         /// <param name="channelRangeInfos">The list of <see cref="ChannelRangeInfo" /> objects.</param>
-        public virtual void ChannelRangeRequest(IList<ChannelRangeInfo> channelRangeInfos)
+        /// <returns>The message identifier.</returns>
+        public virtual long ChannelRangeRequest(IList<ChannelRangeInfo> channelRangeInfos)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelRangeRequest);
 
@@ -125,7 +130,7 @@ namespace Energistics.Protocol.ChannelStreaming
                 ChannelRanges = channelRangeInfos
             };
 
-            Session.SendMessage(header, channelRangeRequest);
+            return Session.SendMessage(header, channelRangeRequest);
         }
 
         /// <summary>

@@ -35,19 +35,22 @@ namespace Energistics.Protocol.Store
         /// </summary>
         /// <param name="uri">The URI.</param>
         /// <param name="messageFlag">The message flag.</param>
-        void GetObject(string uri, MessageFlags messageFlag = MessageFlags.FinalPart);
+        /// <returns>The message identifier.</returns>
+        long GetObject(string uri, MessageFlags messageFlag = MessageFlags.FinalPart);
 
         /// <summary>
         /// Sends a PutObject message to a store.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
-        void PutObject(DataObject dataObject);
+        /// <returns>The message identifier.</returns>
+        long PutObject(DataObject dataObject);
 
         /// <summary>
         /// Sends a DeleteObject message to a store.
         /// </summary>
         /// <param name="uris">The list of URIs.</param>
-        void DeleteObject(IList<string> uris);
+        /// <returns>The message identifier.</returns>
+        long DeleteObject(IList<string> uris);
 
         /// <summary>
         /// Handles the Object event from a store.

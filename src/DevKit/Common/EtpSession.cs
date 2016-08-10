@@ -143,7 +143,8 @@ namespace Energistics.Common
         /// <typeparam name="T"></typeparam>
         /// <param name="header">The header.</param>
         /// <param name="body">The body.</param>
-        public void SendMessage<T>(MessageHeader header, T body) where T : ISpecificRecord
+        /// <returns>The message identifier.</returns>
+        public long SendMessage<T>(MessageHeader header, T body) where T : ISpecificRecord
         {
             byte[] data;
 
@@ -153,14 +154,14 @@ namespace Energistics.Common
             }
             catch (Exception ex)
             {
-                Handler(header.Protocol)
+                return Handler(header.Protocol)
                     .ProtocolException((int)EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
-
-                return;
             }
 
             Send(data, 0, data.Length);
             Sent(header, body);
+
+            return header.MessageId;
         }
 
         /// <summary>

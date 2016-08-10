@@ -45,7 +45,8 @@ namespace Energistics.Protocol.Discovery
         /// Sends a GetResources message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        public virtual void GetResources(string uri)
+        /// <returns>The message identifier.</returns>
+        public virtual long GetResources(string uri)
         {
             var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResources);
 
@@ -57,7 +58,7 @@ namespace Energistics.Protocol.Discovery
             // Cache requested URIs by message ID
             _requests[header.MessageId] = uri;
 
-            Session.SendMessage(header, getResources);
+            return Session.SendMessage(header, getResources);
         }
 
         /// <summary>

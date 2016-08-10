@@ -32,7 +32,8 @@ namespace Energistics.Protocol.Discovery
         /// Sends a GetResources message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        void GetResources(string uri);
+        /// <returns>The message identifier.</returns>
+        long GetResources(string uri);
 
         /// <summary>
         /// Handles the GetResourcesResponse event from a store.

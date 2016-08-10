@@ -43,7 +43,8 @@ namespace Energistics.Protocol.Store
         /// </summary>
         /// <param name="uri">The URI.</param>
         /// <param name="messageFlag">The message flag.</param>
-        public virtual void GetObject(string uri, MessageFlags messageFlag = MessageFlags.FinalPart)
+        /// <returns>The message identifier.</returns>
+        public virtual long GetObject(string uri, MessageFlags messageFlag = MessageFlags.FinalPart)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetObject, messageFlags: messageFlag);
 
@@ -52,14 +53,15 @@ namespace Energistics.Protocol.Store
                 Uri = uri
             };
 
-            Session.SendMessage(header, getObject);
+            return Session.SendMessage(header, getObject);
         }
 
         /// <summary>
         /// Sends a PutObject message to a store.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
-        public virtual void PutObject(DataObject dataObject)
+        /// <returns>The message identifier.</returns>
+        public virtual long PutObject(DataObject dataObject)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.PutObject);
 
@@ -68,14 +70,15 @@ namespace Energistics.Protocol.Store
                 DataObject = dataObject
             };
 
-            Session.SendMessage(header, putObject);
+            return Session.SendMessage(header, putObject);
         }
 
         /// <summary>
         /// Sends a DeleteObject message to a store.
         /// </summary>
         /// <param name="uris">The list of URIs.</param>
-        public virtual void DeleteObject(IList<string> uris)
+        /// <returns>The message identifier.</returns>
+        public virtual long DeleteObject(IList<string> uris)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.DeleteObject);
 
@@ -84,7 +87,7 @@ namespace Energistics.Protocol.Store
                 Uri = uris
             };
 
-            Session.SendMessage(header, deleteObject);
+            return Session.SendMessage(header, deleteObject);
         }
 
         /// <summary>

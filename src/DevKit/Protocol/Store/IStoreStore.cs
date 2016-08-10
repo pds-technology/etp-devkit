@@ -34,7 +34,8 @@ namespace Energistics.Protocol.Store
         /// </summary>
         /// <param name="dataObject">The data object.</param>
         /// <param name="messageFlag">The message flag.</param>
-        void Object(DataObject dataObject, MessageFlags messageFlag = MessageFlags.FinalPart);
+        /// <returns>The message identifier.</returns>
+        long Object(DataObject dataObject, MessageFlags messageFlag = MessageFlags.FinalPart);
 
         /// <summary>
         /// Handles the GetObject event from a customer.

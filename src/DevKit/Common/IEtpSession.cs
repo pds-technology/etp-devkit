@@ -92,7 +92,8 @@ namespace Energistics.Common
         /// <typeparam name="T"></typeparam>
         /// <param name="header">The header.</param>
         /// <param name="body">The body.</param>
-        void SendMessage<T>(MessageHeader header, T body) where T : ISpecificRecord;
+        /// <returns>The message identifier.</returns>
+        long SendMessage<T>(MessageHeader header, T body) where T : ISpecificRecord;
 
         /// <summary>
         /// Gets the supported protocols.

@@ -50,7 +50,8 @@ namespace Energistics.Protocol.ChannelStreaming
         /// <param name="request">The request.</param>
         /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
         /// <param name="messageFlag">The message flag.</param>
-        void ChannelMetadata(MessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.FinalPart);
+        /// <returns>The message identifier.</returns>
+        long ChannelMetadata(MessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.FinalPart);
 
         /// <summary>
         /// Sends a ChannelData message to a consumer.
@@ -58,7 +59,8 @@ namespace Energistics.Protocol.ChannelStreaming
         /// <param name="request">The request.</param>
         /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
         /// <param name="messageFlag">The message flag.</param>
-        void ChannelData(MessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart);
+        /// <returns>The message identifier.</returns>
+        long ChannelData(MessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart);
 
         /// <summary>
         /// Sends a ChannelDataChange message to a consumer.
@@ -67,21 +69,24 @@ namespace Energistics.Protocol.ChannelStreaming
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
         /// <param name="dataItems">The data items.</param>
-        void ChannelDataChange(long channelId, long startIndex, long endIndex, IList<DataItem> dataItems);
+        /// <returns>The message identifier.</returns>
+        long ChannelDataChange(long channelId, long startIndex, long endIndex, IList<DataItem> dataItems);
 
         /// <summary>
         /// Sends a ChannelStatusChange message to a consumer.
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="status">The channel status.</param>
-        void ChannelStatusChange(long channelId, ChannelStatuses status);
+        /// <returns>The message identifier.</returns>
+        long ChannelStatusChange(long channelId, ChannelStatuses status);
 
         /// <summary>
         /// Sends a ChannelRemove message to a consumer.
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="reason">The reason.</param>
-        void ChannelRemove(long channelId, string reason = null);
+        /// <returns>The message identifier.</returns>
+        long ChannelRemove(long channelId, string reason = null);
 
         /// <summary>
         /// Handles the Start event from a consumer.

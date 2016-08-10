@@ -44,13 +44,15 @@ namespace Energistics.Protocol.Discovery
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="resources">The list of <see cref="Resource" /> objects.</param>
-        public virtual void GetResourcesResponse(MessageHeader request, IList<Resource> resources)
+        /// <returns>The message identifier.</returns>
+        public virtual long GetResourcesResponse(MessageHeader request, IList<Resource> resources)
         {
             if (!resources.Any())
             {
-                Acknowledge(request.MessageId, MessageFlags.NoData);
-                return;
+                return Acknowledge(request.MessageId, MessageFlags.NoData);
             }
+
+            long messageId = 0;
 
             for (int i=0; i<resources.Count; i++)
             {
@@ -65,8 +67,10 @@ namespace Energistics.Protocol.Discovery
                     Resource = resources[i]
                 };
 
-                Session.SendMessage(header, getResourcesResponse);
+                messageId = Session.SendMessage(header, getResourcesResponse);
             }
+
+            return messageId;
         }
 
         /// <summary>

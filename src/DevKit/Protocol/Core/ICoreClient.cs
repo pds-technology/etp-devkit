@@ -35,13 +35,15 @@ namespace Energistics.Protocol.Core
         /// <param name="applicationName">The application name.</param>
         /// <param name="applicationVersion">The application version.</param>
         /// <param name="requestedProtocols">The requested protocols.</param>
-        void RequestSession(string applicationName, string applicationVersion, IList<SupportedProtocol> requestedProtocols);
+        /// <returns>The message identifier.</returns>
+        long RequestSession(string applicationName, string applicationVersion, IList<SupportedProtocol> requestedProtocols);
 
         /// <summary>
         /// Sends a CloseSession message to a server.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        void CloseSession(string reason = null);
+        /// <returns>The message identifier.</returns>
+        long CloseSession(string reason = null);
 
         /// <summary>
         /// Handles the OpenSession event from a server.

@@ -70,7 +70,8 @@ namespace Energistics.Common
         /// </summary>
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
-        void Acknowledge(long correlationId, MessageFlags messageFlag = MessageFlags.None);
+        /// <returns>The message identifier.</returns>
+        long Acknowledge(long correlationId, MessageFlags messageFlag = MessageFlags.None);
 
         /// <summary>
         /// Sends a ProtocolException message with the specified error code, message and correlation identifier.
@@ -78,7 +79,8 @@ namespace Energistics.Common
         /// <param name="errorCode">The error code.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <param name="correlationId">The correlation identifier.</param>
-        void ProtocolException(int errorCode, string errorMessage, long correlationId = 0);
+        /// <returns>The message identifier.</returns>
+        long ProtocolException(int errorCode, string errorMessage, long correlationId = 0);
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader"/>.

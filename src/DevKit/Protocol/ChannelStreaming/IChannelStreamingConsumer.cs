@@ -35,31 +35,36 @@ namespace Energistics.Protocol.ChannelStreaming
         /// </summary>
         /// <param name="maxDataItems">The maximum data items.</param>
         /// <param name="maxMessageRate">The maximum message rate.</param>
-        void Start(int maxDataItems = 10000, int maxMessageRate = 1000);
+        /// <returns>The message identifier.</returns>
+        long Start(int maxDataItems = 10000, int maxMessageRate = 1000);
 
         /// <summary>
         /// Sends a ChannelDescribe message to a producer with the specified URIs.
         /// </summary>
         /// <param name="uris">The list of URIs.</param>
-        void ChannelDescribe(IList<string> uris);
+        /// <returns>The message identifier.</returns>
+        long ChannelDescribe(IList<string> uris);
 
         /// <summary>
         /// Sends a ChannelStreamingStart message to a producer.
         /// </summary>
         /// <param name="channelStreamingInfos">The list of <see cref="ChannelStreamingInfo"/> objects.</param>
-        void ChannelStreamingStart(IList<ChannelStreamingInfo> channelStreamingInfos);
+        /// <returns>The message identifier.</returns>
+        long ChannelStreamingStart(IList<ChannelStreamingInfo> channelStreamingInfos);
 
         /// <summary>
         /// Sends a ChannelStreamingStop message to a producer.
         /// </summary>
         /// <param name="channelIds">The list of channel identifiers.</param>
-        void ChannelStreamingStop(IList<long> channelIds);
+        /// <returns>The message identifier.</returns>
+        long ChannelStreamingStop(IList<long> channelIds);
 
         /// <summary>
         /// Sends a ChannelRangeRequest message to a producer.
         /// </summary>
         /// <param name="channelRangeInfos">The list of <see cref="ChannelRangeInfo"/> objects.</param>
-        void ChannelRangeRequest(IList<ChannelRangeInfo> channelRangeInfos);
+        /// <returns>The message identifier.</returns>
+        long ChannelRangeRequest(IList<ChannelRangeInfo> channelRangeInfos);
 
         /// <summary>
         /// Handles the ChannelMetadata event from a producer.

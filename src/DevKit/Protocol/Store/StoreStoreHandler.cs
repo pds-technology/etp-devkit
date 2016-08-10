@@ -42,7 +42,8 @@ namespace Energistics.Protocol.Store
         /// </summary>
         /// <param name="dataObject">The data object.</param>
         /// <param name="messageFlag">The message flag.</param>
-        public virtual void Object(DataObject dataObject, MessageFlags messageFlag = MessageFlags.FinalPart)
+        /// <returns>The message identifier.</returns>
+        public virtual long Object(DataObject dataObject, MessageFlags messageFlag = MessageFlags.FinalPart)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.Object, messageFlags: messageFlag);
 
@@ -51,7 +52,7 @@ namespace Energistics.Protocol.Store
                 DataObject = dataObject
             };
 
-            Session.SendMessage(header, @object);
+            return Session.SendMessage(header, @object);
         }
 
         /// <summary>

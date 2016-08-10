@@ -35,7 +35,8 @@ namespace Energistics.Protocol.Discovery
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
-        void GetResourcesResponse(MessageHeader request, IList<Resource> resources);
+        /// <returns>The message identifier.</returns>
+        long GetResourcesResponse(MessageHeader request, IList<Resource> resources);
 
         /// <summary>
         /// Handles the GetResources event from a customer.

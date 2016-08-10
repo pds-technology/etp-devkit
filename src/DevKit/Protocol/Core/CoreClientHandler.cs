@@ -57,7 +57,8 @@ namespace Energistics.Protocol.Core
         /// <param name="applicationName">The application name.</param>
         /// <param name="applicationVersion">The application version.</param>
         /// <param name="requestedProtocols">The requested protocols.</param>
-        public virtual void RequestSession(string applicationName, string applicationVersion, IList<SupportedProtocol> requestedProtocols)
+        /// <returns>The message identifier.</returns>
+        public virtual long RequestSession(string applicationName, string applicationVersion, IList<SupportedProtocol> requestedProtocols)
         {
             var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.RequestSession);
 
@@ -69,14 +70,15 @@ namespace Energistics.Protocol.Core
                 SupportedObjects = new List<string>()
             };
 
-            Session.SendMessage(header, requestSession);
+            return Session.SendMessage(header, requestSession);
         }
 
         /// <summary>
         /// Sends a CloseSession message to a server.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        public virtual void CloseSession(string reason = null)
+        /// <returns>The message identifier.</returns>
+        public virtual long CloseSession(string reason = null)
         {
             var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.CloseSession);
 
@@ -85,7 +87,7 @@ namespace Energistics.Protocol.Core
                 Reason = reason ?? "Session closed"
             };
 
-            Session.SendMessage(header, closeSession);
+            return Session.SendMessage(header, closeSession);
         }
 
         /// <summary>

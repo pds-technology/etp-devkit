@@ -96,7 +96,8 @@ namespace Energistics.Protocol.ChannelStreaming
         /// <param name="request">The request.</param>
         /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
         /// <param name="messageFlag">The message flag.</param>
-        public virtual void ChannelMetadata(MessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.FinalPart)
+        /// <returns>The message identifier.</returns>
+        public virtual long ChannelMetadata(MessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.FinalPart)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelMetadata, request.MessageId, messageFlag);
 
@@ -105,7 +106,7 @@ namespace Energistics.Protocol.ChannelStreaming
                 Channels = channelMetadataRecords
             };
 
-            Session.SendMessage(header, channelMetadata);
+            return Session.SendMessage(header, channelMetadata);
         }
 
         /// <summary>
@@ -114,7 +115,8 @@ namespace Energistics.Protocol.ChannelStreaming
         /// <param name="request">The request.</param>
         /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
         /// <param name="messageFlag">The message flag.</param>
-        public virtual void ChannelData(MessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart)
+        /// <returns>The message identifier.</returns>
+        public virtual long ChannelData(MessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart)
         {
             var correlationId = 0L;
 
@@ -129,7 +131,7 @@ namespace Energistics.Protocol.ChannelStreaming
                 Data = dataItems
             };
 
-            Session.SendMessage(header, channelData);
+            return Session.SendMessage(header, channelData);
         }
 
         /// <summary>
@@ -139,7 +141,8 @@ namespace Energistics.Protocol.ChannelStreaming
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
         /// <param name="dataItems">The data items.</param>
-        public virtual void ChannelDataChange(long channelId, long startIndex, long endIndex, IList<DataItem> dataItems)
+        /// <returns>The message identifier.</returns>
+        public virtual long ChannelDataChange(long channelId, long startIndex, long endIndex, IList<DataItem> dataItems)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelDataChange);
 
@@ -151,7 +154,7 @@ namespace Energistics.Protocol.ChannelStreaming
                 Data = dataItems
             };
 
-            Session.SendMessage(header, channelDataChange);
+            return Session.SendMessage(header, channelDataChange);
         }
 
         /// <summary>
@@ -159,7 +162,8 @@ namespace Energistics.Protocol.ChannelStreaming
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="status">The channel status.</param>
-        public virtual void ChannelStatusChange(long channelId, ChannelStatuses status)
+        /// <returns>The message identifier.</returns>
+        public virtual long ChannelStatusChange(long channelId, ChannelStatuses status)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelStatusChange);
 
@@ -169,7 +173,7 @@ namespace Energistics.Protocol.ChannelStreaming
                 Status = status
             };
 
-            Session.SendMessage(header, channelStatusChange);
+            return Session.SendMessage(header, channelStatusChange);
         }
 
         /// <summary>
@@ -177,7 +181,8 @@ namespace Energistics.Protocol.ChannelStreaming
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="reason">The reason.</param>
-        public virtual void ChannelRemove(long channelId, string reason = null)
+        /// <returns>The message identifier.</returns>
+        public virtual long ChannelRemove(long channelId, string reason = null)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelRemove);
 
@@ -187,7 +192,7 @@ namespace Energistics.Protocol.ChannelStreaming
                 RemoveReason = reason
             };
 
-            Session.SendMessage(header, channelRemove);
+            return Session.SendMessage(header, channelRemove);
         }
 
         /// <summary>

@@ -94,12 +94,13 @@ namespace Energistics.Common
         /// </summary>
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
-        public virtual void Acknowledge(long correlationId, MessageFlags messageFlag = MessageFlags.None)
+        /// <returns>The message identifier.</returns>
+        public virtual long Acknowledge(long correlationId, MessageFlags messageFlag = MessageFlags.None)
         {
             var header = CreateMessageHeader(Protocol, (int)MessageTypes.Core.Acknowledge, correlationId, messageFlag);
             var acknowledge = new Acknowledge();
 
-            Session.SendMessage(header, acknowledge);
+            return Session.SendMessage(header, acknowledge);
         }
 
         /// <summary>
@@ -108,7 +109,8 @@ namespace Energistics.Common
         /// <param name="errorCode">The error code.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <param name="correlationId">The correlation identifier.</param>
-        public virtual void ProtocolException(int errorCode, string errorMessage, long correlationId = 0)
+        /// <returns>The message identifier.</returns>
+        public virtual long ProtocolException(int errorCode, string errorMessage, long correlationId = 0)
         {
             var header = CreateMessageHeader(Protocol, (int)MessageTypes.Core.ProtocolException, correlationId);
 
@@ -118,7 +120,7 @@ namespace Energistics.Common
                 ErrorMessage = errorMessage
             };
 
-            Session.SendMessage(header, error);
+            return Session.SendMessage(header, error);
         }
 
         /// <summary>
@@ -135,9 +137,10 @@ namespace Energistics.Common
         /// Sends a ProtocolException message for an invalid message type.
         /// </summary>
         /// <param name="header">The message header.</param>
-        protected virtual void InvalidMessage(MessageHeader header)
+        /// <returns>The message identifier.</returns>
+        protected virtual long InvalidMessage(MessageHeader header)
         {
-            ProtocolException((int)EtpErrorCodes.InvalidMessageType, "Invalid message type: " + header.MessageType, header.MessageId);
+            return ProtocolException((int)EtpErrorCodes.InvalidMessageType, "Invalid message type: " + header.MessageType, header.MessageId);
         }
 
         /// <summary>
