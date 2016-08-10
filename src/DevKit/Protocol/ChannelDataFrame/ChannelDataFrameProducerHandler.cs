@@ -42,11 +42,12 @@ namespace Energistics.Protocol.ChannelDataFrame
         /// Sends a ChannelMetadata message to a consumer.
         /// </summary>
         /// <param name="channelMetadata">The channel metadata.</param>
-        public virtual void ChannelMetadata(ChannelMetadata channelMetadata)
+        /// <returns>The message identifier.</returns>
+        public virtual long ChannelMetadata(ChannelMetadata channelMetadata)
         {
             var header = CreateMessageHeader(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.ChannelMetadata);
 
-            Session.SendMessage(header, channelMetadata);
+            return Session.SendMessage(header, channelMetadata);
         }
 
         /// <summary>
@@ -54,7 +55,8 @@ namespace Energistics.Protocol.ChannelDataFrame
         /// </summary>
         /// <param name="channelIds">The channel ids.</param>
         /// <param name="dataFrames">The data frames.</param>
-        public virtual void ChannelDataFrameSet(IList<long> channelIds, IList<DataFrame> dataFrames)
+        /// <returns>The message identifier.</returns>
+        public virtual long ChannelDataFrameSet(IList<long> channelIds, IList<DataFrame> dataFrames)
         {
             var header = CreateMessageHeader(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.ChannelDataFrameSet);
 
@@ -64,7 +66,7 @@ namespace Energistics.Protocol.ChannelDataFrame
                 Data = dataFrames
             };
 
-            Session.SendMessage(header, channelDataFrameSet);
+            return Session.SendMessage(header, channelDataFrameSet);
         }
 
         /// <summary>

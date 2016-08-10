@@ -34,14 +34,16 @@ namespace Energistics.Protocol.ChannelDataFrame
         /// Sends a ChannelMetadata message to a consumer.
         /// </summary>
         /// <param name="channelMetadata">The channel metadata.</param>
-        void ChannelMetadata(ChannelMetadata channelMetadata);
+        /// <returns>The message identifier.</returns>
+        long ChannelMetadata(ChannelMetadata channelMetadata);
 
         /// <summary>
         /// Sends a ChannelDataFrameSet message to a customer.
         /// </summary>
         /// <param name="channelIds">The channel ids.</param>
         /// <param name="dataFrames">The data frames.</param>
-        void ChannelDataFrameSet(IList<long> channelIds, IList<DataFrame> dataFrames);
+        /// <returns>The message identifier.</returns>
+        long ChannelDataFrameSet(IList<long> channelIds, IList<DataFrame> dataFrames);
 
         /// <summary>
         /// Handles the RequestChannelData event from a customer.

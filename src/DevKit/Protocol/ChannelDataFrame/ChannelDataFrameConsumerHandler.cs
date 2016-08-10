@@ -42,7 +42,8 @@ namespace Energistics.Protocol.ChannelDataFrame
         /// <param name="uri">The URI.</param>
         /// <param name="fromIndex">From index.</param>
         /// <param name="toIndex">To index.</param>
-        public virtual void RequestChannelData(string uri, long? fromIndex = null, long? toIndex = null)
+        /// <returns>The message identifier.</returns>
+        public virtual long RequestChannelData(string uri, long? fromIndex = null, long? toIndex = null)
         {
             var header = CreateMessageHeader(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.RequestChannelData);
 
@@ -53,7 +54,7 @@ namespace Energistics.Protocol.ChannelDataFrame
                 ToIndex = toIndex
             };
 
-            Session.SendMessage(header, requestChannelData);
+            return Session.SendMessage(header, requestChannelData);
         }
 
         /// <summary>

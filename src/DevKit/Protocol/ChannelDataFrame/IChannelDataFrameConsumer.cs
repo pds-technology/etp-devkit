@@ -34,7 +34,8 @@ namespace Energistics.Protocol.ChannelDataFrame
         /// <param name="uri">The URI.</param>
         /// <param name="fromIndex">From index.</param>
         /// <param name="toIndex">To index.</param>
-        void RequestChannelData(string uri, long? fromIndex = null, long? toIndex = null);
+        /// <returns>The message identifier.</returns>
+        long RequestChannelData(string uri, long? fromIndex = null, long? toIndex = null);
 
         /// <summary>
         /// Handles the ChannelMetadata event from a producer.
