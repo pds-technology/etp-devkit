@@ -116,6 +116,10 @@
     <Compile Include="Protocol\MessageFlags.cs" />
     <Compile Include="Protocol\MessageTypes.cs" />
     <Compile Include="Datatypes\ProtocolRoleAttribute.cs" />
+    <Compile Include="Protocol\StoreNotification\IStoreNotificationCustomer.cs" />
+    <Compile Include="Protocol\StoreNotification\IStoreNotificationStore.cs" />
+    <Compile Include="Protocol\StoreNotification\StoreNotificationCustomerHandler.cs" />
+    <Compile Include="Protocol\StoreNotification\StoreNotificationStoreHandler.cs" />
     <Compile Include="Protocol\Store\IStoreCustomer.cs" />
     <Compile Include="Protocol\Store\IStoreStore.cs" />
     <Compile Include="EtpClient.cs" />

@@ -89,6 +89,10 @@ namespace Energistics.Protocol
         /// </summary>
         public enum StoreNotification
         {
+            NotificationRequest = 1,
+            ChangeNotification,
+            DeleteNotification,
+            CancelNotification
         }
 
         /// <summary>
@@ -96,6 +100,12 @@ namespace Energistics.Protocol
         /// </summary>
         public enum GrowingObject
         {
+            GrowingObjectDelete = 1,
+            GrowingObjectDeleteRange,
+            GrowingObjectGet,
+            GrowingObjectGetRange,
+            GrowingObjectPut,
+            ObjectFragment
         }
 
         /// <summary>
@@ -103,6 +113,32 @@ namespace Energistics.Protocol
         /// </summary>
         public enum DataArray
         {
+            DataArray = 1,
+            GetDataArray,
+            GetDataArraySlice,
+            PutDataArray,
+            PutDataArraySlice
+        }
+
+        /// <summary>
+        /// An enumeration of Witsml Soap protocol message types.
+        /// </summary>
+        public enum WitsmlSoap
+        {
+            AddToStore = 1,
+            AddToStoreResponse,
+            DeleteFromStore,
+            DeleteFromStoreResponse,
+            GetBaseMsg,
+            GetBaseMsgResponse,
+            GetCap,
+            GetCapResponse,
+            GetFromStore,
+            GetFromStoreResponse,
+            GetVersion,
+            GetVersionResponse,
+            UpdateInStore,
+            UpdateInStoreResponse
         }
     }
 }

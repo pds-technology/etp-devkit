@@ -35,7 +35,7 @@ namespace Energistics
         public async Task EtpClient_Opens_WebSocket_Connection()
         {
             // Create a Basic authorization header dictionary
-            var auth = Authorization.Basic("witsml.user", "P@$$^0rd!");
+            var auth = Authorization.Basic(TestSettings.Username, TestSettings.Password);
 
             // Initialize an EtpClient with a valid Uri, app name and version, and auth header
             using (var client = new EtpClient(TestSettings.ServerUrl, AppName, AppVersion, auth))
