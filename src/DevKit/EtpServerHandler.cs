@@ -179,20 +179,5 @@ namespace Energistics
                 throw new HttpException(412, "JSON Encoding not supported");
             }
         }
-
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
-        /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _socket?.Dispose();
-            }
-
-            _socket = null;
-            base.Dispose(disposing);
-        }
     }
 }
