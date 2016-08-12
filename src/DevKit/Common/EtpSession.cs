@@ -358,6 +358,29 @@ namespace Energistics.Common
         }
 
         /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing">
+        ///     <c>true</c> to release both managed and unmanaged resources;
+        ///     <c>false</c> to release only unmanaged resources.
+        /// </param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                var handlers = Handlers
+                    .Where(x => x.Key is int)
+                    .Select(x => x.Value)
+                    .OfType<IDisposable>();
+
+                foreach (var handler in handlers)
+                    handler.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+
+        /// <summary>
         /// Validates the headers.
         /// </summary>
         protected virtual void ValidateHeaders()

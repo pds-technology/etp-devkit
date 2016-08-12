@@ -134,16 +134,6 @@ namespace Energistics.Common
         public event ProtocolEventHandler<ProtocolException> OnProtocolException;
 
         /// <summary>
-        /// Sends a ProtocolException message for an invalid message type.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
-        protected virtual long InvalidMessage(MessageHeader header)
-        {
-            return ProtocolException((int)EtpErrorCodes.InvalidMessageType, "Invalid message type: " + header.MessageType, header.MessageId);
-        }
-
-        /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader"/>.
         /// </summary>
         /// <param name="header">The message header.</param>
@@ -171,7 +161,7 @@ namespace Energistics.Common
                     break;
 
                 default:
-                    InvalidMessage(header);
+                    this.InvalidMessage(header);
                     break;
             }
         }
