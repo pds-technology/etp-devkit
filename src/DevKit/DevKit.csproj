@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Energistics</RootNamespace>
     <AssemblyName>ETP.DevKit</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -132,7 +132,9 @@
   <ItemGroup>
     <None Include="!Protocols 3-4.cd" />
     <None Include="!Protocols 0-1.cd" />
-    <None Include="app.config" />
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="!BaseTypes.cd" />
     <None Include="DevKit.nuspec" />
     <None Include="Energistics\Datatypes\AnyArray.avsc" />
