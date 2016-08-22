@@ -71,16 +71,17 @@ namespace Energistics.Protocol.Discovery
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="decoder">The message decoder.</param>
-        protected override void HandleMessage(MessageHeader header, Decoder decoder)
+        /// <param name="body">The message body.</param>
+        protected override void HandleMessage(MessageHeader header, Decoder decoder, string body)
         {
             switch (header.MessageType)
             {
                 case (int)MessageTypes.Discovery.GetResourcesResponse:
-                    HandleGetResourcesResponse(header, decoder.Decode<GetResourcesResponse>());
+                    HandleGetResourcesResponse(header, decoder.Decode<GetResourcesResponse>(body));
                     break;
 
                 default:
-                    base.HandleMessage(header, decoder);
+                    base.HandleMessage(header, decoder, body);
                     break;
             }
         }

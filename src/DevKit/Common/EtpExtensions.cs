@@ -78,9 +78,13 @@ namespace Energistics.Common
         /// </summary>
         /// <typeparam name="T">The type of the message.</typeparam>
         /// <param name="decoder">The decoder.</param>
+        /// <param name="body">The message body.</param>
         /// <returns>The decoded message body.</returns>
-        public static T Decode<T>(this Decoder decoder) where T : ISpecificRecord
+        public static T Decode<T>(this Decoder decoder, string body) where T : ISpecificRecord
         {
+            if (!string.IsNullOrWhiteSpace(body))
+                return Deserialize<T>(null, body);
+
             var record = Activator.CreateInstance<T>();
             var reader = new SpecificReader<T>(record.Schema, record.Schema);
 
@@ -111,6 +115,30 @@ namespace Energistics.Common
         {
             var formatting = (indent) ? Formatting.Indented : Formatting.None;
             return JsonConvert.SerializeObject(instance, formatting, JsonSettings);
+        }
+
+        /// <summary>
+        /// Deserializes the specified JSON string.
+        /// </summary>
+        /// <typeparam name="T">The type of object.</typeparam>
+        /// <param name="etpBase">The ETP base object.</param>
+        /// <param name="json">The JSON string.</param>
+        /// <returns></returns>
+        public static T Deserialize<T>(this EtpBase etpBase, string json)
+        {
+            return JsonConvert.DeserializeObject<T>(json, JsonSettings);
+        }
+
+        /// <summary>
+        /// Clears the specified <see cref="MemoryStream"/>.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        public static void Clear(this MemoryStream stream)
+        {
+            var buffer = stream.GetBuffer();
+            Array.Clear(buffer, 0, buffer.Length);
+            stream.Position = 0;
+            stream.SetLength(0);
         }
 
         /// <summary>

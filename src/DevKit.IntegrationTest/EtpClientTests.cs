@@ -17,7 +17,10 @@
 //-----------------------------------------------------------------------
 
 using System.Threading.Tasks;
+using Energistics.Common;
+using Energistics.Properties;
 using Energistics.Protocol.ChannelStreaming;
+using Energistics.Protocol.Core;
 using Energistics.Protocol.Discovery;
 using Energistics.Protocol.Store;
 using Energistics.Security;
@@ -54,6 +57,26 @@ namespace Energistics
                 // Explicit Close not needed as the WebSocket connection will be closed
                 // automatically after leaving the scope of the using statement
                 //client.Close("reason");
+            }
+        }
+
+        [TestMethod]
+        public async Task EtpClient_Connects_Using_Json_Encoding()
+        {
+            // Create a Basic authorization header dictionary
+            var headers = Authorization.Basic(TestSettings.Username, TestSettings.Password);
+
+            // Specify preference for JSON encoding
+            headers[EtpSettings.EtpEncodingHeader] = Settings.Default.EtpEncodingJson;
+
+            // Initialize an EtpClient with a valid Uri, app name and version, and headers
+            using (var client = new EtpClient(TestSettings.ServerUrl, AppName, AppVersion, headers))
+            {
+                // Open the connection (uses an async extension method)
+                await client.OpenAsync();
+
+                // Assert the current state of the connection
+                Assert.IsTrue(client.IsOpen);
             }
         }
     }

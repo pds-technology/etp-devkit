@@ -105,20 +105,21 @@ namespace Energistics.Protocol.Core
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="decoder">The message decoder.</param>
-        protected override void HandleMessage(MessageHeader header, Decoder decoder)
+        /// <param name="body">The message body.</param>
+        protected override void HandleMessage(MessageHeader header, Decoder decoder, string body)
         {
             switch (header.MessageType)
             {
                 case (int)MessageTypes.Core.OpenSession:
-                    HandleOpenSession(header, decoder.Decode<OpenSession>());
+                    HandleOpenSession(header, decoder.Decode<OpenSession>(body));
                     break;
 
                 case (int)MessageTypes.Core.CloseSession:
-                    HandleCloseSession(header, decoder.Decode<CloseSession>());
+                    HandleCloseSession(header, decoder.Decode<CloseSession>(body));
                     break;
 
                 default:
-                    base.HandleMessage(header, decoder);
+                    base.HandleMessage(header, decoder, body);
                     break;
             }
         }

@@ -24,6 +24,8 @@ using System.Threading;
 using Avro.IO;
 using Avro.Specific;
 using Energistics.Datatypes;
+using Energistics.Properties;
+using Newtonsoft.Json.Linq;
 
 namespace Energistics.Common
 {
@@ -35,6 +37,7 @@ namespace Energistics.Common
     public abstract class EtpSession : EtpBase, IEtpSession
     {
         private long _messageId;
+        private bool? _isJsonEncoding;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpSession"/> class.
@@ -68,6 +71,27 @@ namespace Energistics.Common
         /// </summary>
         /// <value>The session identifier.</value>
         public string SessionId { get; set; }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is json encoding.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if this instance is json encoding; otherwise, <c>false</c>.
+        /// </value>
+        public bool IsJsonEncoding
+        {
+            get
+            {
+                if (!_isJsonEncoding.HasValue)
+                {
+                    string header;
+                    Headers.TryGetValue(Settings.Default.EtpEncodingHeader, out header);
+                    _isJsonEncoding = Settings.Default.EtpEncodingJson.Equals(header);
+                }
+
+                return _isJsonEncoding.Value;
+            }
+        }
 
         /// <summary>
         /// Gets the collection of WebSocket or HTTP headers.
@@ -138,6 +162,15 @@ namespace Energistics.Common
         }
 
         /// <summary>
+        /// Called when a WebSocket message is received.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        public virtual void OnMessageReceived(string message)
+        {
+            Decode(message);
+        }
+
+        /// <summary>
         /// Sends the message.
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -146,11 +179,18 @@ namespace Energistics.Common
         /// <returns>The message identifier.</returns>
         public long SendMessage<T>(MessageHeader header, T body) where T : ISpecificRecord
         {
-            byte[] data;
-
             try
             {
-                data = body.Encode(header);
+                if (IsJsonEncoding)
+                {
+                    var message = this.Serialize(new object[] { header, body });
+                    Send(message);
+                }
+                else
+                {
+                    var data = body.Encode(header);
+                    Send(data, 0, data.Length);
+                }
             }
             catch (Exception ex)
             {
@@ -158,7 +198,6 @@ namespace Energistics.Common
                     .ProtocolException((int)EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
             }
 
-            Send(data, 0, data.Length);
             Sent(header, body);
 
             return header.MessageId;
@@ -222,6 +261,12 @@ namespace Energistics.Common
         protected abstract void Send(byte[] data, int offset, int length);
 
         /// <summary>
+        /// Sends the specified messages.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        protected abstract void Send(string message);
+
+        /// <summary>
         /// Decodes the specified data.
         /// </summary>
         /// <param name="data">The data.</param>
@@ -232,7 +277,7 @@ namespace Energistics.Common
                 // create avro binary decoder to read from memory stream
                 var decoder = new BinaryDecoder(inputStream);
                 // deserialize the header
-                var header = decoder.Decode<MessageHeader>();
+                var header = decoder.Decode<MessageHeader>(null);
 
                 // log message metadata
                 if (Logger.IsDebugEnabled)
@@ -241,8 +286,29 @@ namespace Energistics.Common
                 }
 
                 // call processing action
-                HandleMessage(header, decoder);
+                HandleMessage(header, decoder, null);
             }
+        }
+
+        /// <summary>
+        /// Decodes the specified message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        protected void Decode(string message)
+        {
+            // split message header and body
+            var array = JArray.Parse(message);
+            var header = array[0].ToString();
+            var body = array[1].ToString();
+
+            // log message metadata
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.DebugFormat("[{0}] Message received: {1}", SessionId, header);
+            }
+
+            // call processing action
+            HandleMessage(this.Deserialize<MessageHeader>(header), null, body);
         }
 
         /// <summary>
@@ -250,7 +316,8 @@ namespace Energistics.Common
         /// </summary>
         /// <param name="header">The header.</param>
         /// <param name="decoder">The decoder.</param>
-        protected void HandleMessage(MessageHeader header, Decoder decoder)
+        /// <param name="body">The body.</param>
+        protected void HandleMessage(MessageHeader header, Decoder decoder, string body)
         {
             if (Handlers.ContainsKey(header.Protocol))
             {
@@ -258,7 +325,7 @@ namespace Energistics.Common
 
                 try
                 {
-                    handler.HandleMessage(header, decoder);
+                    handler.HandleMessage(header, decoder, body);
                 }
                 catch (Exception ex)
                 {

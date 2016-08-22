@@ -75,24 +75,25 @@ namespace Energistics.Protocol.Store
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="decoder">The message decoder.</param>
-        protected override void HandleMessage(MessageHeader header, Decoder decoder)
+        /// <param name="body">The message body.</param>
+        protected override void HandleMessage(MessageHeader header, Decoder decoder, string body)
         {
             switch (header.MessageType)
             {
                 case (int)MessageTypes.Store.GetObject:
-                    HandleGetObject(header, decoder.Decode<GetObject>());
+                    HandleGetObject(header, decoder.Decode<GetObject>(body));
                     break;
 
                 case (int)MessageTypes.Store.PutObject:
-                    HandlePutObject(header, decoder.Decode<PutObject>());
+                    HandlePutObject(header, decoder.Decode<PutObject>(body));
                     break;
 
                 case (int)MessageTypes.Store.DeleteObject:
-                    HandleDeleteObject(header, decoder.Decode<DeleteObject>());
+                    HandleDeleteObject(header, decoder.Decode<DeleteObject>(body));
                     break;
 
                 default:
-                    base.HandleMessage(header, decoder);
+                    base.HandleMessage(header, decoder, body);
                     break;
             }
         }

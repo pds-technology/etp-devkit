@@ -83,11 +83,12 @@ namespace Energistics.Common
         long ProtocolException(int errorCode, string errorMessage, long correlationId = 0);
 
         /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader"/>.
+        /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader" />.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="decoder">The message decoder.</param>
-        void HandleMessage(MessageHeader header, Decoder decoder);
+        /// <param name="body">The message body.</param>
+        void HandleMessage(MessageHeader header, Decoder decoder, string body);
 
         /// <summary>
         /// Occurs when an Acknowledge message is received for the current protocol.

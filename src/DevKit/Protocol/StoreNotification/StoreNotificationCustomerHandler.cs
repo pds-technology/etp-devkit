@@ -86,20 +86,21 @@ namespace Energistics.Protocol.StoreNotification
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="decoder">The message decoder.</param>
-        protected override void HandleMessage(MessageHeader header, Decoder decoder)
+        /// <param name="body">The message body.</param>
+        protected override void HandleMessage(MessageHeader header, Decoder decoder, string body)
         {
             switch (header.MessageType)
             {
                 case (int)MessageTypes.StoreNotification.ChangeNotification:
-                    HandleChangeNotification(header, decoder.Decode<ChangeNotification>());
+                    HandleChangeNotification(header, decoder.Decode<ChangeNotification>(body));
                     break;
 
                 case (int)MessageTypes.StoreNotification.DeleteNotification:
-                    HandleDeleteNotification(header, decoder.Decode<DeleteNotification>());
+                    HandleDeleteNotification(header, decoder.Decode<DeleteNotification>(body));
                     break;
 
                 default:
-                    base.HandleMessage(header, decoder);
+                    base.HandleMessage(header, decoder, body);
                     break;
             }
         }

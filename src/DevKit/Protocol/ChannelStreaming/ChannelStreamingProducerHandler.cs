@@ -225,32 +225,33 @@ namespace Energistics.Protocol.ChannelStreaming
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="decoder">The message decoder.</param>
-        protected override void HandleMessage(MessageHeader header, Decoder decoder)
+        /// <param name="body">The message body.</param>
+        protected override void HandleMessage(MessageHeader header, Decoder decoder, string body)
         {
             switch (header.MessageType)
             {
                 case (int)MessageTypes.ChannelStreaming.Start:
-                    HandleStart(header, decoder.Decode<Start>());
+                    HandleStart(header, decoder.Decode<Start>(body));
                     break;
 
                 case (int)MessageTypes.ChannelStreaming.ChannelDescribe:
-                    HandleChannelDescribe(header, decoder.Decode<ChannelDescribe>());
+                    HandleChannelDescribe(header, decoder.Decode<ChannelDescribe>(body));
                     break;
 
                 case (int)MessageTypes.ChannelStreaming.ChannelStreamingStart:
-                    HandleChannelStreamingStart(header, decoder.Decode<ChannelStreamingStart>());
+                    HandleChannelStreamingStart(header, decoder.Decode<ChannelStreamingStart>(body));
                     break;
 
                 case (int)MessageTypes.ChannelStreaming.ChannelStreamingStop:
-                    HandleChannelStreamingStop(header, decoder.Decode<ChannelStreamingStop>());
+                    HandleChannelStreamingStop(header, decoder.Decode<ChannelStreamingStop>(body));
                     break;
 
                 case (int)MessageTypes.ChannelStreaming.ChannelRangeRequest:
-                    HandleChannelRangeRequest(header, decoder.Decode<ChannelRangeRequest>());
+                    HandleChannelRangeRequest(header, decoder.Decode<ChannelRangeRequest>(body));
                     break;
 
                 default:
-                    base.HandleMessage(header, decoder);
+                    base.HandleMessage(header, decoder, body);
                     break;
             }
         }

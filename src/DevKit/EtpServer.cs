@@ -66,14 +66,24 @@ namespace Energistics
         }
 
         /// <summary>
+        /// Sends the specified messages.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        protected override void Send(string message)
+        {
+            CheckDisposed();
+            _session.Send(message);
+        }
+
+        /// <summary>
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && _session != null)
+            if (disposing)
             {
-                _session.Close();
+                _session?.Close();
             }
 
             _session = null;

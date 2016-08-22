@@ -87,6 +87,12 @@ namespace Energistics.Common
         void OnDataReceived(byte[] data);
 
         /// <summary>
+        /// Called when a WebSocket message is received.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        void OnMessageReceived(string message);
+
+        /// <summary>
         /// Sends the message.
         /// </summary>
         /// <typeparam name="T"></typeparam>

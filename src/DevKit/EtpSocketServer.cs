@@ -47,6 +47,7 @@ namespace Energistics
             _server.Setup(port);
 
             _server.NewSessionConnected += OnNewSessionConnected;
+            //_server.NewMessageReceived += OnNewMessageReceived;
             _server.NewDataReceived += OnNewDataReceived;
             _server.SessionClosed += OnSessionClosed;
 
@@ -152,6 +153,17 @@ namespace Energistics
                 etpSession.Dispose();
                 session.Items[EtpSessionKey] = null;
             }
+        }
+
+        /// <summary>
+        /// Called when a new message is received.
+        /// </summary>
+        /// <param name="session">The session.</param>
+        /// <param name="message">The message.</param>
+        private void OnNewMessageReceived(WebSocketSession session, string message)
+        {
+            var etpSession = GetEtpSession(session);
+            etpSession?.OnMessageReceived(message);
         }
 
         /// <summary>

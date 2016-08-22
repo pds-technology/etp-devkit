@@ -66,6 +66,7 @@ namespace Energistics
             _socket.Opened += OnWebSocketOpened;
             _socket.Closed += OnWebSocketClosed;
             _socket.DataReceived += OnWebSocketDataReceived;
+            _socket.MessageReceived += OnWebSocketMessageReceived;
             _socket.Error += OnWebSocketError;
 
             Register<ICoreClient, CoreClientHandler>();
@@ -145,6 +146,16 @@ namespace Energistics
         }
 
         /// <summary>
+        /// Sends the specified messages.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        protected override void Send(string message)
+        {
+            CheckDisposed();
+            _socket.Send(message);
+        }
+
+        /// <summary>
         /// Handles the unsupported protocols.
         /// </summary>
         /// <param name="supportedProtocols">The supported protocols.</param>
@@ -202,6 +213,16 @@ namespace Energistics
         private void OnWebSocketDataReceived(object sender, DataReceivedEventArgs e)
         {
             OnDataReceived(e.Data);
+        }
+
+        /// <summary>
+        /// Called when a WebSocket message is received.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The <see cref="MessageReceivedEventArgs"/> instance containing the event data.</param>
+        private void OnWebSocketMessageReceived(object sender, MessageReceivedEventArgs e)
+        {
+            OnMessageReceived(e.Message);
         }
 
         /// <summary>

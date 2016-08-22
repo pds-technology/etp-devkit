@@ -21,11 +21,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.WebSockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using Energistics.Common;
-using Energistics.Properties;
 using Energistics.Protocol.Core;
 
 namespace Energistics
@@ -103,51 +102,61 @@ namespace Energistics
 
             Logger.Debug(Log("[{0}] Socket session connected.", SessionId));
 
-            using (var stream = new MemoryStream())
+            try
             {
-                try
-                {
-                    // keep track of connected clients
-                    Clients.AddOrUpdate(SessionId, this, (id, client) => this);
+                // keep track of connected clients
+                Clients.AddOrUpdate(SessionId, this, (id, client) => this);
 
-                    while (true)
+                using (var stream = new MemoryStream())
+                {
+                    var token = new CancellationToken();
+
+                    while (_socket.State == WebSocketState.Open)
                     {
                         var buffer = new ArraySegment<byte>(new byte[BufferSize]);
-                        var result = await _socket.ReceiveAsync(buffer, CancellationToken.None);
+                        var result = await _socket.ReceiveAsync(buffer, token);
 
-                        if (_socket.State == WebSocketState.Open)
-                        {
-                            stream.Write(buffer.Array, 0, result.Count);
+                        // transfer received data to MemoryStream
+                        stream.Write(buffer.Array, 0, result.Count);
 
-                            if (result.EndOfMessage)
-                            {
-                                OnDataReceived(stream.GetBuffer());
-                                stream.SetLength(0);
-                            }
-                        }
-                        else
+                        // do not process data until EndOfMessage received
+                        if (!result.EndOfMessage || result.CloseStatus.HasValue)
+                            continue;
+
+                        // filter null bytes from data buffer
+                        var bytes = stream.GetBuffer();
+
+                        if (result.MessageType == WebSocketMessageType.Binary)
                         {
-                            break;
+                            OnDataReceived(bytes);
                         }
+                        else // json encoding
+                        {
+                            var message = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
+                            OnMessageReceived(message);
+                        }
+
+                        // clear and reuse MemoryStream
+                        stream.Clear();
                     }
                 }
-                catch (Exception ex)
+            }
+            catch (Exception ex)
+            {
+                Log("Error: {0}", ex.Message);
+                Logger.Error(ex);
+                throw;
+            }
+            finally
+            {
+                EtpServerHandler item;
+
+                // remove client after connection ends
+                if (Clients.TryRemove(SessionId, out item))
                 {
-                    Log("Error: {0}", ex.Message);
-                    Logger.Error(ex);
-                    throw;
-                }
-                finally
-                {
-                    EtpServerHandler item;
-                    
-                    // remove client after connection ends
-                    if (Clients.TryRemove(SessionId, out item))
+                    if (item != this)
                     {
-                        if (item != this)
-                        {
-                            Clients.AddOrUpdate(item.SessionId, item, (id, client) => item);
-                        }
+                        Clients.AddOrUpdate(item.SessionId, item, (id, client) => item);
                     }
                 }
             }
@@ -168,16 +177,15 @@ namespace Energistics
         }
 
         /// <summary>
-        /// Validates the WebSocket headers.
+        /// Sends the specified messages.
         /// </summary>
-        /// <exception cref="HttpException">412;JSON Encoding not supported</exception>
-        protected override void ValidateHeaders()
+        /// <param name="message">The message.</param>
+        protected override void Send(string message)
         {
-            if (Headers.ContainsKey(Settings.Default.EtpEncodingHeader) &&
-                string.Equals(Headers[Settings.Default.EtpEncodingHeader], Settings.Default.EtpEncodingJson, StringComparison.InvariantCultureIgnoreCase))
-            {
-                throw new HttpException(412, "JSON Encoding not supported");
-            }
+            CheckDisposed();
+
+            var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
+            _socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
         }
     }
 }

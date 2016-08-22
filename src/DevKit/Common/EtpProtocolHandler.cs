@@ -134,30 +134,32 @@ namespace Energistics.Common
         public event ProtocolEventHandler<ProtocolException> OnProtocolException;
 
         /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader"/>.
+        /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader" />.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="decoder">The message decoder.</param>
-        void IProtocolHandler.HandleMessage(MessageHeader header, Decoder decoder)
+        /// <param name="body">The message body.</param>
+        void IProtocolHandler.HandleMessage(MessageHeader header, Decoder decoder, string body)
         {
-            HandleMessage(header, decoder);
+            HandleMessage(header, decoder, body);
         }
 
         /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader"/>.
+        /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader" />.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="decoder">The message decoder.</param>
-        protected virtual void HandleMessage(MessageHeader header, Decoder decoder)
+        /// <param name="body">The message body.</param>
+        protected virtual void HandleMessage(MessageHeader header, Decoder decoder, string body)
         {
             switch (header.MessageType)
             {
                 case (int)MessageTypes.Core.ProtocolException:
-                    HandleProtocolException(header, decoder.Decode<ProtocolException>());
+                    HandleProtocolException(header, decoder.Decode<ProtocolException>(body));
                     break;
 
                 case (int)MessageTypes.Core.Acknowledge:
-                    HandleAcknowledge(header, decoder.Decode<Acknowledge>());
+                    HandleAcknowledge(header, decoder.Decode<Acknowledge>(body));
                     break;
 
                 default:
