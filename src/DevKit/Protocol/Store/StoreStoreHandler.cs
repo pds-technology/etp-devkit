@@ -41,11 +41,12 @@ namespace Energistics.Protocol.Store
         /// Sends an Object message to a customer.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
+        /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long Object(DataObject dataObject, MessageFlags messageFlag = MessageFlags.FinalPart)
+        public virtual long Object(DataObject dataObject, long correlationId, MessageFlags messageFlag = MessageFlags.FinalPart)
         {
-            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.Object, messageFlags: messageFlag);
+            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.Object, correlationId, messageFlag);
 
             var @object = new Object()
             {
@@ -112,9 +113,9 @@ namespace Energistics.Protocol.Store
                 return;
 
             if (args.Context.Data == null || args.Context.Data.Length == 0)
-                Object(args.Context, MessageFlags.NoData);
+                Object(args.Context, header.MessageId, MessageFlags.NoData);
             else
-                Object(args.Context);
+                Object(args.Context, header.MessageId);
         }
 
         /// <summary>
