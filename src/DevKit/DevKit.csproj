@@ -114,6 +114,10 @@
     <Compile Include="Protocol\Discovery\IDiscoveryStore.cs" />
     <Compile Include="Common\EtpContractResolver.cs" />
     <Compile Include="Datatypes\ResourceTypes.cs" />
+    <Compile Include="Protocol\GrowingObject\GrowingObjectCustomerHandler.cs" />
+    <Compile Include="Protocol\GrowingObject\GrowingObjectStoreHandler.cs" />
+    <Compile Include="Protocol\GrowingObject\IGrowingObjectStore.cs" />
+    <Compile Include="Protocol\GrowingObject\IGrowingObjectCustomer.cs" />
     <Compile Include="Protocol\MessageFlags.cs" />
     <Compile Include="Protocol\MessageTypes.cs" />
     <Compile Include="Datatypes\ProtocolRoleAttribute.cs" />
