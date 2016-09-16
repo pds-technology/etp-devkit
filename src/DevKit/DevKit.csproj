@@ -108,6 +108,10 @@
     <Compile Include="Protocol\Core\ICoreClient.cs" />
     <Compile Include="Common\IProtocolHandler.cs" />
     <Compile Include="Protocol\Core\ICoreServer.cs" />
+    <Compile Include="Protocol\DataArray\DataArrayCustomerHandler.cs" />
+    <Compile Include="Protocol\DataArray\DataArrayStoreHandler.cs" />
+    <Compile Include="Protocol\DataArray\IDataArrayStore.cs" />
+    <Compile Include="Protocol\DataArray\IDataArrayCustomer.cs" />
     <Compile Include="Protocol\Discovery\DiscoveryCustomerHandler.cs" />
     <Compile Include="Protocol\Discovery\DiscoveryStoreHandler.cs" />
     <Compile Include="Protocol\Discovery\IDiscoveryCustomer.cs" />
