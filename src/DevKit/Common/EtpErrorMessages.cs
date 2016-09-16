@@ -62,7 +62,7 @@ namespace Energistics.Common
         {
             if (ex != null)
             {
-                handler.Logger.Error(ex);
+                handler.Logger?.Error(ex);
             }
 
             return handler.ProtocolException((int)EtpErrorCodes.UnsupportedObject, "Data object not supported. URI: " + uri, messageId);
