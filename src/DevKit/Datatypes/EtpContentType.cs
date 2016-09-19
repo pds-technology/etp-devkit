@@ -16,6 +16,8 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Energistics.Datatypes
@@ -26,8 +28,9 @@ namespace Energistics.Datatypes
     public struct EtpContentType
     {
         private static readonly Regex Pattern = new Regex(@"^application/x\-(witsml|resqml|prodml|energyml)\+xml;version=([0-9.]+)((;)?|(;type=((obj_|cs_)?(\w+))(;)?)?)$");
-        private static readonly string BaseFormat = "application/x-{0}+xml;version={1};";
-        private static readonly string TypeFormat = "type={0};";
+        private static readonly string[] ComponentSchemas = { "logCurveInfo", "trajectoryStation", "geologyInterval" };
+        private const string BaseFormat = "application/x-{0}+xml;version={1};";
+        private const string TypeFormat = "type={0};";
         private readonly string _contentType;
 
         /// <summary>
@@ -44,6 +47,7 @@ namespace Energistics.Datatypes
             Family = GetValue(match, 1);
             Version = GetValue(match, 2);
             ObjectType = FormatObjectType(GetValue(match, 8));
+            SchemaType = FormatSchemaType(GetValue(match, 7) + ObjectType, Version);
         }
 
         /// <summary>
@@ -67,9 +71,10 @@ namespace Energistics.Datatypes
 
             Family = family;
             Version = version;
-            ObjectType = FormatObjectType(objectType);
+            SchemaType = FormatSchemaType(objectType, Version);
+            ObjectType = FormatObjectType(SchemaType);
 
-            _contentType = string.Format(BaseFormat, family, version) + FormatType(ObjectType);
+            _contentType = string.Format(BaseFormat, family, version) + FormatType(SchemaType);
         }
 
         /// <summary>
@@ -83,6 +88,12 @@ namespace Energistics.Datatypes
         /// </summary>
         /// <value>The version.</value>
         public string Version { get; }
+
+        /// <summary>
+        /// Gets the XSD type of the object.
+        /// </summary>
+        /// <value>The XSD type of the object.</value>
+        public string SchemaType { get; }
 
         /// <summary>
         /// Gets the type of the object.
@@ -136,6 +147,43 @@ namespace Energistics.Datatypes
         }
 
         /// <summary>
+        /// Formats the schema type based on the specified version.
+        /// </summary>
+        /// <param name="schemaType">The XSD object type.</param>
+        /// <param name="version">The data schema version.</param>
+        /// <returns>The formatted schema type.</returns>
+        public static string FormatSchemaType(string schemaType, string version)
+        {
+            if (string.IsNullOrWhiteSpace(schemaType))
+                return string.Empty;
+
+            var index = schemaType.IndexOf('_');
+            var objectType = schemaType.Substring(index + 1);
+
+            System.Version ver = null;
+
+            if (!version.Contains("_"))
+            {
+                // Capitalize object type when version >= 2.0
+                objectType = (System.Version.TryParse(version, out ver) && ver.Major < 2
+                    ? objectType.Substring(0, 1).ToLowerInvariant()
+                    : objectType.Substring(0, 1).ToUpperInvariant())
+                    + objectType.Substring(1);
+            }
+
+            // prefix to be used for 1.x XSD types
+            var prefix = ComponentSchemas.Any(cs => cs.Equals(objectType, StringComparison.InvariantCultureIgnoreCase))
+                ? "cs_"
+                : "obj_";
+
+            schemaType = (ver != null && ver.Major < 2)
+                ? prefix + objectType
+                : objectType;
+
+            return schemaType;
+        }
+
+        /// <summary>
         /// Formats the object type based on the specified object type name.
         /// </summary>
         /// <param name="objectType">The object type.</param>
@@ -173,16 +221,16 @@ namespace Energistics.Datatypes
         }
 
         /// <summary>
-        /// Formats the specified object type for appending to a content type.
+        /// Formats the specified schema type for appending to a content type.
         /// </summary>
-        /// <param name="objectType">The object type.</param>
+        /// <param name="schemaType">Type of the object.</param>
         /// <returns>The formatted content type segment.</returns>
-        private static string FormatType(string objectType)
+        private static string FormatType(string schemaType)
         {
-            if (string.IsNullOrWhiteSpace(objectType))
+            if (string.IsNullOrWhiteSpace(schemaType))
                 return string.Empty;
 
-            return string.Format(TypeFormat, objectType);
+            return string.Format(TypeFormat, schemaType);
         }
     }
 }
