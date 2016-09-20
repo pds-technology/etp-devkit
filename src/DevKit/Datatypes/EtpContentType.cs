@@ -29,8 +29,8 @@ namespace Energistics.Datatypes
     {
         private static readonly Regex Pattern = new Regex(@"^application/x\-(witsml|resqml|prodml|energyml)\+xml;version=([0-9.]+)((;)?|(;type=((obj_|cs_)?(\w+))(;)?)?)$");
         private static readonly string[] ComponentSchemas = { "logCurveInfo", "trajectoryStation", "geologyInterval" };
-        private const string BaseFormat = "application/x-{0}+xml;version={1};";
-        private const string TypeFormat = "type={0};";
+        private const string BaseFormat = "application/x-{0}+xml;version={1}";
+        private const string TypeFormat = ";type={0}";
         private readonly string _contentType;
 
         /// <summary>

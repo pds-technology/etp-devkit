@@ -178,7 +178,7 @@ namespace Energistics.Datatypes
         {
             var uuid = Uuid();
             var expected = "eml://witsml14/well(" + uuid + ")";
-            var contentType = "application/x-witsml+xml;version=1.4.1.1;type=obj_well;";
+            var contentType = "application/x-witsml+xml;version=1.4.1.1;type=obj_well";
             var uri = new EtpUri(expected);
 
             Assert.IsTrue(uri.IsValid);
