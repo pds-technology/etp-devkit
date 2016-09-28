@@ -14,4 +14,4 @@ The ETP DevKit was developed by Petrotechnical Data Systems (PDS) and contribute
 
 ##### RESOURCES
 
-The ETP Specification defines the messages and interfaces that can be used to exchange data between applications that support the EnergyML family of data standards: WITSML, PRODML and RESQML.  The messages define the content that is exchanged between applications and the interfaces define the expected behavior in exchanging messages.  More information about ETP resources can be found at http://www.energistics.org/standards-portfolio/energistics-transfer-protocol. 
+The ETP Specification defines the messages and interfaces that can be used to exchange data between applications that support the EnergyML family of data standards: WITSML, PRODML and RESQML.  The messages define the content that is exchanged between applications and the interfaces define the expected behavior in exchanging messages.  More information about ETP resources can be found at [http://www.energistics.org/standards-portfolio/energistics-transfer-protocol](http://www.energistics.org/standards-portfolio/energistics-transfer-protocol).
