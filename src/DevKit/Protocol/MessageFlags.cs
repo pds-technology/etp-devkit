@@ -37,9 +37,9 @@ namespace Energistics.Protocol
         MultiPart = 0x1,
 
         /// <summary>
-        /// The final part of a multi-part message.
+        /// The final part of a multi-part message, componsed of: 0x1 | 0x2.
         /// </summary>
-        FinalPart = 0x2,
+        FinalPart = 0x3,
 
         /// <summary>
         /// No data is available.
