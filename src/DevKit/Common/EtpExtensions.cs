@@ -161,15 +161,17 @@ namespace Energistics.Common
         /// <returns></returns>
         public static bool IsSimpleStreamer(this IList<SupportedProtocol> supportedProtocols)
         {
-            return supportedProtocols.Any(x =>
-            {
-                DataValue dataValue;
-                return (
-                    x.Protocol == (int)Protocols.ChannelStreaming &&
-                    x.ProtocolCapabilities.TryGetValue(ChannelStreamingProducerHandler.SimpleStreamer, out dataValue) &&
-                    Convert.ToBoolean(dataValue.Item)
-                );
-            });
+            return supportedProtocols
+                .Where(x => x.Protocol == (int)Protocols.ChannelStreaming && x.ProtocolCapabilities != null)
+                .Any(x =>
+                {
+                    var dataValue = x.ProtocolCapabilities
+                        .Where(y => string.Equals(y.Key, ChannelStreamingProducerHandler.SimpleStreamer, StringComparison.InvariantCultureIgnoreCase))
+                        .Select(y => y.Value)
+                        .FirstOrDefault();
+
+                    return dataValue != null && Convert.ToBoolean(dataValue.Item);
+                });
         }
 
         /// <summary>
