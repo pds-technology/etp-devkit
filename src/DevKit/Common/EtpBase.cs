@@ -97,8 +97,9 @@ namespace Energistics.Common
         /// <summary>
         /// Called when the ETP session is opened.
         /// </summary>
+        /// <param name="requestedProtocols">The requested protocols.</param>
         /// <param name="supportedProtocols">The supported protocols.</param>
-        public virtual void OnSessionOpened(IList<SupportedProtocol> supportedProtocols)
+        public virtual void OnSessionOpened(IList<SupportedProtocol> requestedProtocols, IList<SupportedProtocol> supportedProtocols)
         {
         }
 

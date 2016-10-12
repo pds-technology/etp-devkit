@@ -139,8 +139,9 @@ namespace Energistics.Common
         /// <summary>
         /// Called when the ETP session is opened.
         /// </summary>
+        /// <param name="requestedProtocols">The requested protocols.</param>
         /// <param name="supportedProtocols">The supported protocols.</param>
-        public override void OnSessionOpened(IList<SupportedProtocol> supportedProtocols)
+        public override void OnSessionOpened(IList<SupportedProtocol> requestedProtocols, IList<SupportedProtocol> supportedProtocols)
         {
             HandleUnsupportedProtocols(supportedProtocols);
 
@@ -148,7 +149,7 @@ namespace Energistics.Common
             foreach (var item in Handlers)
             {
                 if (item.Key is Type)
-                    item.Value.OnSessionOpened(supportedProtocols);
+                    item.Value.OnSessionOpened(requestedProtocols, supportedProtocols);
             }
         }
 

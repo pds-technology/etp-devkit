@@ -53,6 +53,12 @@ namespace Energistics.Protocol.Core
         public IList<SupportedProtocol> RequestedProtocols { get; private set; }
 
         /// <summary>
+        /// Gets the list of supported protocols.
+        /// </summary>
+        /// <value>The supported protocols.</value>
+        public IList<SupportedProtocol> SupportedProtocols { get; private set; }
+
+        /// <summary>
         /// Sends an OpenSession message to a client.
         /// </summary>
         /// <param name="request">The request.</param>
@@ -71,11 +77,13 @@ namespace Energistics.Protocol.Core
                 SessionId = Session.SessionId
             };
 
+            SupportedProtocols = supportedProtocols;
+
             var messageId = Session.SendMessage(header, openSession);
 
             if (messageId == header.MessageId)
             {
-                Session.OnSessionOpened(supportedProtocols);
+                Session.OnSessionOpened(RequestedProtocols, SupportedProtocols);
             }
 
             return messageId;

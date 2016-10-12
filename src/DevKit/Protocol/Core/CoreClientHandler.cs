@@ -35,15 +35,22 @@ namespace Energistics.Protocol.Core
         /// </summary>
         public CoreClientHandler() : base(Protocols.Core, "client", "server")
         {
-            ServerProtocols = new List<SupportedProtocol>(0);
+            RequestedProtocols = new List<SupportedProtocol>(0);
+            SupportedProtocols = new List<SupportedProtocol>(0);
             ServerObjects = new List<string>(0);
         }
 
         /// <summary>
-        /// Gets the list of supported server protocols.
+        /// Gets the list of requested protocols.
         /// </summary>
         /// <value>The server protocols.</value>
-        public IList<SupportedProtocol> ServerProtocols { get; private set; }
+        public IList<SupportedProtocol> RequestedProtocols { get; private set; }
+
+        /// <summary>
+        /// Gets the list of supported protocols.
+        /// </summary>
+        /// <value>The supported protocols.</value>
+        public IList<SupportedProtocol> SupportedProtocols { get; private set; }
 
         /// <summary>
         /// Gets the list of supported server objects.
@@ -69,6 +76,8 @@ namespace Energistics.Protocol.Core
                 RequestedProtocols = requestedProtocols,
                 SupportedObjects = new List<string>()
             };
+
+            RequestedProtocols = requestedProtocols;
 
             return Session.SendMessage(header, requestSession);
         }
@@ -131,11 +140,11 @@ namespace Energistics.Protocol.Core
         /// <param name="openSession">The OpenSession message.</param>
         protected virtual void HandleOpenSession(MessageHeader header, OpenSession openSession)
         {
-            ServerProtocols = openSession.SupportedProtocols;
+            SupportedProtocols = openSession.SupportedProtocols;
             ServerObjects = openSession.SupportedObjects;
             Session.SessionId = openSession.SessionId;
             Notify(OnOpenSession, header, openSession);
-            Session.OnSessionOpened(ServerProtocols);
+            Session.OnSessionOpened(RequestedProtocols, SupportedProtocols);
         }
 
         /// <summary>
