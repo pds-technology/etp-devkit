@@ -78,14 +78,7 @@ namespace Energistics
         /// <value>
         ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
         /// </value>
-        public bool IsOpen
-        {
-            get
-            {
-                CheckDisposed();
-                return _socket.State == WebSocketState.Open;
-            }
-        }
+        public bool IsOpen => (_socket?.State ?? WebSocketState.None) == WebSocketState.Open;
 
         /// <summary>
         /// Opens the WebSocket connection.
