@@ -67,5 +67,29 @@ namespace Energistics.Common
 
             return handler.ProtocolException((int)EtpErrorCodes.UnsupportedObject, "Data object not supported. URI: " + uri, messageId);
         }
+
+        /// <summary>
+        /// Sends a <see cref="ProtocolException"/> message for an invalid state.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="value">The argument value.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
+        public static long InvalidState(this EtpProtocolHandler handler, object value, long messageId = 0)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.InvalidState, "Invalid State: " + value, messageId);
+        }
+
+        /// <summary>
+        /// Sends a <see cref="ProtocolException"/> message for an invalid URI.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="value">The argument value.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
+        public static long InvalidUri(this EtpProtocolHandler handler, object value, long messageId = 0)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.InvalidUri, "Invalid Uri: " + value, messageId);
+        }
     }
 }
