@@ -166,7 +166,7 @@ namespace Energistics
             CheckDisposed();
 
             var buffer = new ArraySegment<byte>(data, offset, length);
-            _socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
+            _socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None).Wait();
         }
 
         /// <summary>
@@ -178,7 +178,7 @@ namespace Energistics
             CheckDisposed();
 
             var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
-            _socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+            _socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None).Wait();
         }
     }
 }
