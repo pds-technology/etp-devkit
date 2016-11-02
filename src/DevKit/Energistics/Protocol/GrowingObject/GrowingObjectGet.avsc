@@ -8,7 +8,7 @@
 	"protocolRoles": "store,customer",
 	"fields":
 	[
-		{ "name": "uuid", "type": "string" },
+		{ "name": "uri", "type": "string" },
 		{ "name": "uid", "type": "string" }
 	]
 }

@@ -10,7 +10,10 @@
 	[
 		{ "name": "uri", "type": "string" },
 		{ "name": "data", "type": "Energistics.Datatypes.AnyArray" },
-		{ "name": "dimensions", "type": "long" },
+		{ 
+		"name": "dimensions", 
+		"type": { "type": "array", "items": "long" } 
+	},
 		{ 
 		"name": "start", 
 		"type": { "type": "array", "items": "long" } 

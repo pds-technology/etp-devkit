@@ -37,8 +37,8 @@
       <HintPath>..\packages\Apache.Avro.1.7.7.2\lib\Avro.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ETP.Messages, Version=1.4.1.0, Culture=neutral, PublicKeyToken=c2b7028481fb2795, processorArchitecture=MSIL">
-      <HintPath>..\packages\ETP.1.4.1.0\lib\ETP.Messages.dll</HintPath>
+    <Reference Include="ETP.Messages, Version=1.5.0.0, Culture=neutral, PublicKeyToken=c2b7028481fb2795, processorArchitecture=MSIL">
+      <HintPath>..\packages\ETP.1.5.0.0\lib\ETP.Messages.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
@@ -151,7 +151,6 @@
     <None Include="Energistics\Datatypes\ArrayOfFloat.avsc" />
     <None Include="Energistics\Datatypes\ArrayOfInt.avsc" />
     <None Include="Energistics\Datatypes\ArrayOfLong.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\ChannelAxis.avsc" />
     <None Include="Energistics\Datatypes\ChannelData\ChannelIndexTypes.avsc" />
     <None Include="Energistics\Datatypes\ChannelData\ChannelMetadataRecord.avsc" />
     <None Include="Energistics\Datatypes\ChannelData\ChannelRangeInfo.avsc" />
@@ -168,6 +167,7 @@
     <None Include="Energistics\Datatypes\DataValue.avsc" />
     <None Include="Energistics\Datatypes\MessageHeader.avsc" />
     <None Include="Energistics\Datatypes\Object\DataObject.avsc" />
+    <None Include="Energistics\Datatypes\Object\GrowingObjectIndex.avsc" />
     <None Include="Energistics\Datatypes\Object\NotificationRequestRecord.avsc" />
     <None Include="Energistics\Datatypes\Object\ObjectChange.avsc" />
     <None Include="Energistics\Datatypes\Object\ObjectChangeTypes.avsc" />
@@ -193,6 +193,7 @@
     <None Include="Energistics\Protocol\Core\CloseSession.avsc" />
     <None Include="Energistics\Protocol\Core\OpenSession.avsc" />
     <None Include="Energistics\Protocol\Core\ProtocolException.avsc" />
+    <None Include="Energistics\Protocol\Core\RenewSecurityToken.avsc" />
     <None Include="Energistics\Protocol\Core\RequestSession.avsc" />
     <None Include="Energistics\Protocol\DataArray\DataArray.avsc" />
     <None Include="Energistics\Protocol\DataArray\GetDataArray.avsc" />
@@ -230,7 +231,9 @@
     <None Include="Energistics\Protocol\WitsmlSoap\WMSL_GetVersionResponse.avsc" />
     <None Include="Energistics\Protocol\WitsmlSoap\WMSL_UpdateInStoreResponse.avsc" />
     <None Include="etp.avpr" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

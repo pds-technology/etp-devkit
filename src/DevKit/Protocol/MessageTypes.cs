@@ -31,6 +31,7 @@ namespace Energistics.Protocol
             RequestSession = 1,
             OpenSession = 2,
             CloseSession = 5,
+            RenewSecurityToken = 6,
             ProtocolException = 1000,
             Acknowledge = 1001
         }

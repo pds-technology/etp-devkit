@@ -39,19 +39,19 @@ namespace Energistics.Protocol.GrowingObject
         /// <summary>
         /// Sends a single list item as a response for Get and GetRange.
         /// </summary>
-        /// <param name="uuid">The UUID of the parent object.</param>
+        /// <param name="uri">The URI of the parent object.</param>
         /// <param name="contentType">The content type string.</param>
         /// <param name="data">The data.</param>
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public long ObjectFragment(string uuid, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.FinalPart)
+        public long ObjectFragment(string uri, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.FinalPart)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.ObjectFragment, correlationId, messageFlag);
 
             var message = new ObjectFragment
             {
-                Uuid = uuid,
+                Uri = uri,
                 ContentType = contentType,
                 ContentEncoding = "text/xml",
                 Data = data

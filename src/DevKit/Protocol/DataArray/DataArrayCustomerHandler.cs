@@ -93,7 +93,7 @@ namespace Energistics.Protocol.DataArray
             {
                 Uri = uri,
                 Data = data,
-                Dimensions = dimensions[0] // TODO: remove brackets when ETP.Messages is updated
+                Dimensions = dimensions
             };
 
             return Session.SendMessage(header, message);
@@ -117,7 +117,7 @@ namespace Energistics.Protocol.DataArray
             {
                 Uri = uri,
                 Data = data,
-                Dimensions = dimensions[0], // TODO: remove brackets when ETP.Messages is updated
+                Dimensions = dimensions,
                 Start = start,
                 Count = count
             };

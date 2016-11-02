@@ -117,6 +117,11 @@ namespace Energistics.Protocol.Core
         public event ProtocolEventHandler<CloseSession> OnCloseSession;
 
         /// <summary>
+        /// Handles the RenewSecurityToken event from a client.
+        /// </summary>
+        public event ProtocolEventHandler<RenewSecurityToken> OnRenewSecurityToken;
+
+        /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader" />.
         /// </summary>
         /// <param name="header">The message header.</param>
@@ -132,6 +137,10 @@ namespace Energistics.Protocol.Core
 
                 case (int)MessageTypes.Core.CloseSession:
                     HandleCloseSession(header, decoder.Decode<CloseSession>(body));
+                    break;
+
+                case (int)MessageTypes.Core.RenewSecurityToken:
+                    HandleRenewSecurityToken(header, decoder.Decode<RenewSecurityToken>(body));
                     break;
 
                 default:
@@ -182,6 +191,16 @@ namespace Energistics.Protocol.Core
         {
             Notify(OnCloseSession, header, closeSession);
             Session.Close(closeSession.Reason);
+        }
+
+        /// <summary>
+        /// Handles the RenewSecurityToken message from a client.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="renewSecurityToken">The RenewSecurityToken message.</param>
+        protected virtual void HandleRenewSecurityToken(MessageHeader header, RenewSecurityToken renewSecurityToken)
+        {
+            Notify(OnRenewSecurityToken, header, renewSecurityToken);
         }
     }
 }

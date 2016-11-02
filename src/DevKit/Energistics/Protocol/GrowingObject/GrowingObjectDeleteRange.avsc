@@ -8,8 +8,8 @@
 	"protocolRoles": "store,customer",
 	"fields":
 	[
-		{ "name": "uuid", "type": "string" },
-		{ "name": "startIndex", "type": "long" },
-		{ "name": "endIndex", "type": "long" }
+		{ "name": "uri", "type": "string" },
+		{ "name": "startIndex", "type": "Energistics.Datatypes.Object.GrowingObjectIndex" },
+		{ "name": "endIndex", "type": "Energistics.Datatypes.Object.GrowingObjectIndex" }
 	]
 }

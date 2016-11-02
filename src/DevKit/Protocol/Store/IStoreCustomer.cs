@@ -48,9 +48,9 @@ namespace Energistics.Protocol.Store
         /// <summary>
         /// Sends a DeleteObject message to a store.
         /// </summary>
-        /// <param name="uris">The list of URIs.</param>
+        /// <param name="uri">The URI.</param>
         /// <returns>The message identifier.</returns>
-        long DeleteObject(IList<string> uris);
+        long DeleteObject(string uri);
 
         /// <summary>
         /// Handles the Object event from a store.

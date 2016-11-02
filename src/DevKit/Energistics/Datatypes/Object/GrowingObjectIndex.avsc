@@ -1,0 +1,6 @@
+{
+	"type": "record",
+	"namespace": "Energistics.Datatypes.Object",	
+	"name": "GrowingObjectIndex",
+	"fields": [{"name": "item", "type": [ "null",  "long",  "double"] }]
+}

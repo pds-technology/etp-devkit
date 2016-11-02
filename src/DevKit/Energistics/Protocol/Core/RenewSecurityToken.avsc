@@ -1,0 +1,13 @@
+{
+	"type": "record",
+	"namespace": "Energistics.Protocol.Core",	
+	"name": "RenewSecurityToken",
+	"messageType": "6",
+	"protocol": "0",
+	"senderRole": "client",
+	"protocolRoles": "client,server",
+	"fields":
+	[
+		{ "name": "token", "type": "string" }
+	]
+}

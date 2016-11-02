@@ -46,6 +46,13 @@ namespace Energistics.Protocol.Core
         long CloseSession(string reason = null);
 
         /// <summary>
+        /// Renews the security token.
+        /// </summary>
+        /// <param name="token">The token.</param>
+        /// <returns>The message identifier.</returns>
+        long RenewSecurityToken(string token);
+
+        /// <summary>
         /// Handles the OpenSession event from a server.
         /// </summary>
         event ProtocolEventHandler<OpenSession> OnOpenSession;

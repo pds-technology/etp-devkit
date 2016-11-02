@@ -53,5 +53,10 @@ namespace Energistics.Protocol.Core
         /// Handles the CloseSession event from a client.
         /// </summary>
         event ProtocolEventHandler<CloseSession> OnCloseSession;
+
+        /// <summary>
+        /// Handles the RenewSecurityToken event from a client.
+        /// </summary>
+        event ProtocolEventHandler<RenewSecurityToken> OnRenewSecurityToken;
     }
 }

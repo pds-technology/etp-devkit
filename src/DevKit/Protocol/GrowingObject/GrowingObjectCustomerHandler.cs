@@ -19,6 +19,7 @@
 using Avro.IO;
 using Energistics.Common;
 using Energistics.Datatypes;
+using Energistics.Datatypes.Object;
 
 namespace Energistics.Protocol.GrowingObject
 {
@@ -39,16 +40,16 @@ namespace Energistics.Protocol.GrowingObject
         /// <summary>
         /// Gets a single list item in a growing object, by its ID.
         /// </summary>
-        /// <param name="uuid">The UUID of the parent object.</param>
+        /// <param name="uri">The URI of the parent object.</param>
         /// <param name="uid">The ID of the element within the list.</param>
         /// <returns>The message identifier.</returns>
-        public long GrowingObjectGet(string uuid, string uid)
+        public long GrowingObjectGet(string uri, string uid)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectGet);
 
             var message = new GrowingObjectGet
             {
-                Uuid = uuid,
+                Uri = uri,
                 Uid = uid
             };
 
@@ -58,19 +59,23 @@ namespace Energistics.Protocol.GrowingObject
         /// <summary>
         /// Gets all list items in a growing object within an index range.
         /// </summary>
-        /// <param name="uuid">The UUID of the parent object.</param>
+        /// <param name="uri">The URI of the parent object.</param>
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
+        /// <param name="uom">The unit of measure.</param>
+        /// <param name="depthDatum">The depth datum.</param>
         /// <returns>The message identifier.</returns>
-        public long GrowingObjectGetRange(string uuid, long startIndex, long endIndex)
+        public long GrowingObjectGetRange(string uri, object startIndex, object endIndex, string uom, string depthDatum)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectGetRange);
 
             var message = new GrowingObjectGetRange
             {
-                Uuid = uuid,
-                StartIndex = startIndex,
-                EndIndex = endIndex
+                Uri = uri,
+                StartIndex = new GrowingObjectIndex { Item = startIndex },
+                EndIndex = new GrowingObjectIndex { Item = endIndex },
+                Uom = uom,
+                DepthDatum = depthDatum
             };
 
             return Session.SendMessage(header, message);
@@ -79,17 +84,17 @@ namespace Energistics.Protocol.GrowingObject
         /// <summary>
         /// Adds or updates a list item in a growing object.
         /// </summary>
-        /// <param name="uuid">The UUID of the parent object.</param>
+        /// <param name="uri">The URI of the parent object.</param>
         /// <param name="contentType">The content type string for the parent object.</param>
         /// <param name="data">The data (list items) to be added to the growing object.</param>
         /// <returns>The message identifier.</returns>
-        public long GrowingObjectPut(string uuid, string contentType, byte[] data)
+        public long GrowingObjectPut(string uri, string contentType, byte[] data)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectPut);
 
             var message = new GrowingObjectPut
             {
-                Uuid = uuid,
+                Uri = uri,
                 ContentType = contentType,
                 ContentEncoding = "text/xml",
                 Data = data
@@ -101,16 +106,16 @@ namespace Energistics.Protocol.GrowingObject
         /// <summary>
         /// Deletes one list item in a growing object.
         /// </summary>
-        /// <param name="uuid">The UUID of the parent object.</param>
+        /// <param name="uri">The URI of the parent object.</param>
         /// <param name="uid">The ID of the element within the list.</param>
         /// <returns>The message identifier.</returns>
-        public long GrowingObjectDelete(string uuid, string uid)
+        public long GrowingObjectDelete(string uri, string uid)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectDelete);
 
             var message = new GrowingObjectDelete
             {
-                Uuid = uuid,
+                Uri = uri,
                 Uid = uid
             };
 
@@ -120,19 +125,19 @@ namespace Energistics.Protocol.GrowingObject
         /// <summary>
         /// Deletes all list items in a range of index values. Range is inclusive of the limits.
         /// </summary>
-        /// <param name="uuid">The UUID of the parent object.</param>
+        /// <param name="uri">The URI of the parent object.</param>
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
         /// <returns>The message identifier.</returns>
-        public long GrowingObjectDeleteRange(string uuid, long startIndex, long endIndex)
+        public long GrowingObjectDeleteRange(string uri, object startIndex, object endIndex)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectDeleteRange);
 
             var message = new GrowingObjectDeleteRange
             {
-                Uuid = uuid,
-                StartIndex = startIndex,
-                EndIndex = endIndex
+                Uri = uri,
+                StartIndex = new GrowingObjectIndex { Item = startIndex },
+                EndIndex = new GrowingObjectIndex { Item = endIndex }
             };
 
             return Session.SendMessage(header, message);

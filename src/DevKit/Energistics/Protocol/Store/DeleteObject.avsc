@@ -8,9 +8,6 @@
 	"protocolRoles": "store,customer",
 	"fields":
 	[
-		{ 
-		"name": "uri", 
-		"type": { "type": "array", "items": "string" } 
-	}
+		{ "name": "uri", "type": "string" }
 	]
 }

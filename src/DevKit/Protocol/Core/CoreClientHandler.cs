@@ -100,6 +100,23 @@ namespace Energistics.Protocol.Core
         }
 
         /// <summary>
+        /// Renews the security token.
+        /// </summary>
+        /// <param name="token">The token.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long RenewSecurityToken(string token)
+        {
+            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.RenewSecurityToken);
+
+            var renewSecurityToken = new RenewSecurityToken
+            {
+                Token = token
+            };
+
+            return Session.SendMessage(header, renewSecurityToken);
+        }
+
+        /// <summary>
         /// Handles the OpenSession event from a server.
         /// </summary>
         public event ProtocolEventHandler<OpenSession> OnOpenSession;

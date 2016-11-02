@@ -76,15 +76,15 @@ namespace Energistics.Protocol.Store
         /// <summary>
         /// Sends a DeleteObject message to a store.
         /// </summary>
-        /// <param name="uris">The list of URIs.</param>
+        /// <param name="uri">The URI.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long DeleteObject(IList<string> uris)
+        public virtual long DeleteObject(string uri)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.DeleteObject);
 
             var deleteObject = new DeleteObject()
             {
-                Uri = uris
+                Uri = uri
             };
 
             return Session.SendMessage(header, deleteObject);

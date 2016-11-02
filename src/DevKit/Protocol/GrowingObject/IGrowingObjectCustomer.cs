@@ -31,45 +31,47 @@ namespace Energistics.Protocol.GrowingObject
         /// <summary>
         /// Gets a single list item in a growing object, by its ID.
         /// </summary>
-        /// <param name="uuid">The UUID of the parent object.</param>
+        /// <param name="uri">The URI of the parent object.</param>
         /// <param name="uid">The ID of the element within the list.</param>
         /// <returns>The message identifier.</returns>
-        long GrowingObjectGet(string uuid, string uid);
+        long GrowingObjectGet(string uri, string uid);
 
         /// <summary>
         /// Gets all list items in a growing object within an index range.
         /// </summary>
-        /// <param name="uuid">The UUID of the parent object.</param>
+        /// <param name="uri">The URI of the parent object.</param>
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
+        /// <param name="uom">The unit of measure.</param>
+        /// <param name="depthDatum">The depth datum.</param>
         /// <returns>The message identifier.</returns>
-        long GrowingObjectGetRange(string uuid, long startIndex, long endIndex);
+        long GrowingObjectGetRange(string uri, object startIndex, object endIndex, string uom, string depthDatum);
 
         /// <summary>
         /// Adds or updates a list item in a growing object.
         /// </summary>
-        /// <param name="uuid">The UUID of the parent object.</param>
+        /// <param name="uri">The URI of the parent object.</param>
         /// <param name="contentType">The content type string for the parent object.</param>
         /// <param name="data">The data (list items) to be added to the growing object.</param>
         /// <returns>The message identifier.</returns>
-        long GrowingObjectPut(string uuid, string contentType, byte[] data);
+        long GrowingObjectPut(string uri, string contentType, byte[] data);
 
         /// <summary>
         /// Deletes one list item in a growing object.
         /// </summary>
-        /// <param name="uuid">The UUID of the parent object.</param>
+        /// <param name="uri">The URI of the parent object.</param>
         /// <param name="uid">The ID of the element within the list.</param>
         /// <returns>The message identifier.</returns>
-        long GrowingObjectDelete(string uuid, string uid);
+        long GrowingObjectDelete(string uri, string uid);
 
         /// <summary>
         /// Deletes all list items in a range of index values. Range is inclusive of the limits.
         /// </summary>
-        /// <param name="uuid">The UUID of the parent object.</param>
+        /// <param name="uri">The URI of the parent object.</param>
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
         /// <returns>The message identifier.</returns>
-        long GrowingObjectDeleteRange(string uuid, long startIndex, long endIndex);
+        long GrowingObjectDeleteRange(string uri, object startIndex, object endIndex);
 
         /// <summary>
         /// Handles the ObjectFragment event from a store.
