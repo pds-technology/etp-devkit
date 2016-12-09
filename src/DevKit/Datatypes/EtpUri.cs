@@ -29,7 +29,7 @@ namespace Energistics.Datatypes
     /// </summary>
     public struct EtpUri
     {
-        private static readonly Regex Pattern = new Regex(@"^eml:\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|energyml)([0-9]+))(\/((obj_|cs_)?(\w+))(\(([^\s]+)\))?)*?(\?[^#]*)?(#.*)?$", RegexOptions.IgnoreCase);
+        private static readonly Regex Pattern = new Regex(@"^eml:\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|energyml)([0-9]+))(\/((obj_|cs_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?$", RegexOptions.IgnoreCase);
         private readonly Match _match;
 
         /// <summary>
