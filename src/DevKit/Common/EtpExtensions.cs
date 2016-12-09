@@ -24,6 +24,7 @@ using System.Linq;
 using Avro.IO;
 using Avro.Specific;
 using Energistics.Datatypes;
+using Energistics.Datatypes.ChannelData;
 using Energistics.Datatypes.Object;
 using Energistics.Protocol.ChannelStreaming;
 using Newtonsoft.Json;
@@ -43,6 +44,7 @@ namespace Energistics.Common
             ContractResolver = new EtpContractResolver(),
             Converters = new List<JsonConverter>()
             {
+                new StreamingStartIndexConverter(),
                 new StringEnumConverter()
             }
         };
