@@ -90,10 +90,28 @@ namespace Energistics.Datatypes.ChannelData
         [TestMethod]
         public void StreamingStartIndexConverter_ReadJson_deserializes_null_value()
         {
-            const string json = "{\"item\":null}";
+            const string json = "{\"item\":null,\"value\":null}";
             var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
 
             Assert.IsNull(index.Item);
+        }
+
+        [TestMethod]
+        public void StreamingStartIndexConverter_WriteJson_serializes_null_object()
+        {
+            const string expected = "null";
+            var json = EtpExtensions.Serialize(null, null);
+
+            Assert.AreEqual(expected, json);
+        }
+
+        [TestMethod]
+        public void StreamingStartIndexConverter_ReadJson_deserializes_null_object()
+        {
+            const string json = "null";
+            var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
+
+            Assert.IsNull(index);
         }
 
         [TestMethod]
@@ -129,6 +147,24 @@ namespace Energistics.Datatypes.ChannelData
             try
             {
                 EtpExtensions.Serialize(null, index);
+            }
+            catch (JsonSerializationException)
+            {
+                pass = true;
+            }
+
+            Assert.IsTrue(pass);
+        }
+
+        [TestMethod]
+        public void StreamingStartIndexConverter_ReadJson_raises_error_for_unsupported_union_type()
+        {
+            const string json = "{\"item\":{\"string\":\"abc\"}}";
+            var pass = false;
+
+            try
+            {
+                EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
             }
             catch (JsonSerializationException)
             {
