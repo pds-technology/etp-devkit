@@ -18,6 +18,7 @@
 
 using Energistics.Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
 
 namespace Energistics.Datatypes.ChannelData
 {
@@ -32,20 +33,20 @@ namespace Energistics.Datatypes.ChannelData
                 Item = 2
             };
 
-            var expected = "{\"item\":{\"int\":2}}";
+            const string expected = "{\"item\":{\"int\":2}}";
             var json = EtpExtensions.Serialize(null, index);
 
             Assert.AreEqual(expected, json);
         }
 
         [TestMethod]
-        public void StreamingStartIndexConverter_WriteJson_deserializes_int_value()
+        public void StreamingStartIndexConverter_ReadJson_deserializes_int_value()
         {
-            var json = "{\"item\":{\"int\":2}}";
+            const string json = "{\"item\":{\"int\":2}}";
             var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
 
             Assert.IsTrue(index.Item is int);
-            Assert.AreEqual(2, (int)index.Item);
+            Assert.AreEqual(2, (int) index.Item);
         }
 
         [TestMethod]
@@ -63,13 +64,13 @@ namespace Energistics.Datatypes.ChannelData
         }
 
         [TestMethod]
-        public void StreamingStartIndexConverter_WriteJson_deserializes_long_value()
+        public void StreamingStartIndexConverter_ReadJson_deserializes_long_value()
         {
-            var json = "{\"item\":{\"long\":10}}";
+            const string json = "{\"item\":{\"long\":10}}";
             var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
 
             Assert.IsTrue(index.Item is long);
-            Assert.AreEqual(10L, (long)index.Item);
+            Assert.AreEqual(10L, (long) index.Item);
         }
 
         [TestMethod]
@@ -80,19 +81,79 @@ namespace Energistics.Datatypes.ChannelData
                 Item = null
             };
 
-            var expected = "{\"item\":null}";
+            const string expected = "{\"item\":null}";
             var json = EtpExtensions.Serialize(null, index);
 
             Assert.AreEqual(expected, json);
         }
 
         [TestMethod]
-        public void StreamingStartIndexConverter_WriteJson_deserializes_null_value()
+        public void StreamingStartIndexConverter_ReadJson_deserializes_null_value()
         {
-            var json = "{\"item\":null}";
+            const string json = "{\"item\":null}";
             var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
 
             Assert.IsNull(index.Item);
+        }
+
+        [TestMethod]
+        public void StreamingStartIndexConverter_ReadJson_deserializes_default_value()
+        {
+            const string json = "{\"item\":1}";
+            var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
+
+            Assert.IsTrue(index.Item is long);
+            Assert.AreEqual(1L, (long) index.Item);
+        }
+
+        [TestMethod]
+        public void StreamingStartIndexConverter_ReadJson_deserializes_string_value()
+        {
+            const string json = "{\"item\":\"5\"}";
+            var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
+
+            Assert.IsTrue(index.Item is long);
+            Assert.AreEqual(5L, (long) index.Item);
+        }
+
+        [TestMethod]
+        public void StreamingStartIndexConverter_WriteJson_raises_error_for_unsupported_data_type()
+        {
+            var index = new StreamingStartIndex
+            {
+                Item = "abc"
+            };
+
+            var pass = false;
+
+            try
+            {
+                EtpExtensions.Serialize(null, index);
+            }
+            catch (JsonSerializationException)
+            {
+                pass = true;
+            }
+
+            Assert.IsTrue(pass);
+        }
+
+        [TestMethod]
+        public void StreamingStartIndexConverter_ReadJson_raises_error_for_unsupported_data_type()
+        {
+            const string json = "{\"item\":\"abc\"}";
+            var pass = false;
+
+            try
+            {
+                EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
+            }
+            catch (JsonSerializationException)
+            {
+                pass = true;
+            }
+
+            Assert.IsTrue(pass);
         }
     }
 }

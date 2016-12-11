@@ -28,6 +28,10 @@ namespace Energistics.Datatypes.ChannelData
     /// <seealso cref="Newtonsoft.Json.JsonConverter" />
     public class StreamingStartIndexConverter : JsonConverter
     {
+        private const string ItemPropertyName = "item";
+        private const string IntDataType = "int";
+        private const string LongDataType = "long";
+
         /// <summary>
         /// Determines whether this instance can convert the specified object type.
         /// </summary>
@@ -58,27 +62,46 @@ namespace Energistics.Datatypes.ChannelData
             while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
             {
                 var propertyName = reader.Value.ToString();
+                reader.Read();
 
-                if ("item".Equals(propertyName))
+                if (!ItemPropertyName.Equals(propertyName))
+                    continue;
+
+                var value = serializer.Deserialize(reader);
+                long longValue;
+
+                // Handle case where avro-json format is not used
+                if (value is int || value is long)
                 {
-                    reader.Read();
+                    index.Item = value;
+                }
+                // Handle number sent as string
+                else if (value is string && long.TryParse(value.ToString(), out longValue))
+                {
+                    index.Item = longValue;
+                }
+                else if (value is JObject)
+                {
+                    var jObject = value as JObject;
+                    var intProperty = jObject.Property(IntDataType);
+                    var longProperty = jObject.Property(LongDataType);
 
-                    var value = serializer.Deserialize(reader) as JObject;
-
-                    if (value != null)
+                    if (intProperty != null)
                     {
-                        var intProperty = value.Property("int");
-                        var longProperty = value.Property("long");
-
-                        if (intProperty != null)
-                        {
-                            index.Item = intProperty.Value.Value<int>();
-                        }
-                        else if (longProperty != null)
-                        {
-                            index.Item = longProperty.Value.Value<long>();
-                        }
+                        index.Item = intProperty.Value.Value<int>();
                     }
+                    else if (longProperty != null)
+                    {
+                        index.Item = longProperty.Value.Value<long>();
+                    }
+                    else
+                    {
+                        throw new JsonSerializationException($"Unsupported data type: {value}");
+                    }
+                }
+                else if (value != null)
+                {
+                    throw new JsonSerializationException($"Unsupported data type: {value}");
                 }
             }
 
@@ -101,9 +124,8 @@ namespace Energistics.Datatypes.ChannelData
                 return;
             }
 
-
             writer.WriteStartObject();
-            writer.WritePropertyName("item");
+            writer.WritePropertyName(ItemPropertyName);
 
             if (index.Item == null)
             {
@@ -114,9 +136,11 @@ namespace Energistics.Datatypes.ChannelData
                 writer.WriteStartObject();
 
                 if (index.Item is int)
-                    writer.WritePropertyName("int");
-                if (index.Item is long)
-                    writer.WritePropertyName("long");
+                    writer.WritePropertyName(IntDataType);
+                else if (index.Item is long)
+                    writer.WritePropertyName(LongDataType);
+                else
+                    throw new JsonSerializationException($"Unsupported data type '{index.Item.GetType().FullName}' for value '{index.Item}'.");
 
                 serializer.Serialize(writer, index.Item, index.Item.GetType());
                 writer.WriteEndObject();
