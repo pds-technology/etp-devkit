@@ -310,15 +310,50 @@ namespace Energistics.Datatypes
         }
 
         [TestMethod, Description("Tests object UIDs with special characters are valid")]
-        public void EtpUris_UIDs_With_Special_Characters_Are_Valid()
+        public void EtpUri_UIDs_With_Special_Characters_Are_Valid()
         {
-            var specialCharacterUid = "UID-~!@#$%=^&*_{}|<>?;:',./[]\"";
+            var specialCharacterUid = "UID-~!@#$%=^&*_{}|(<>?;:',./[]\"";
             var uri = new EtpUri($"eml://witsml20/well({Uuid()})/wellbore({specialCharacterUid})");
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("witsml", uri.Family);
             Assert.AreEqual("2.0", uri.Version);
             Assert.AreEqual(uri.ObjectId, specialCharacterUid);
+        }
+
+        [TestMethod, Description("Tests Uris with components and must end with the component ")]
+        public void EtpUri_Components_Without_Identifiers_Must_End_At_Component()
+        {
+            var uri = new EtpUri("eml://witsml20/log/");
+
+            Assert.IsTrue(!uri.IsValid);
+
+            uri = new EtpUri("eml://witsml20/log");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("witsml", uri.Family);
+            Assert.AreEqual("2.0", uri.Version);
+            Assert.AreEqual("log", uri.ObjectType);
+        }
+
+        [TestMethod, Description("Tests Uris with components and identifier must end with end parenthesis")]
+        public void EtpUri_Components_With_Identifiers_Must_End_With_End_Parenthesis()
+        {
+            var uuid = Uuid();
+            var uri = new EtpUri($"eml://witsml20/well({uuid}))");
+
+            Assert.IsTrue(!uri.IsValid);
+
+            uri = new EtpUri($"eml://witsml20/well({uuid})/");
+
+            Assert.IsTrue(!uri.IsValid);
+
+            uri = new EtpUri($"eml://witsml20/well({uuid})");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("witsml", uri.Family);
+            Assert.AreEqual("2.0", uri.Version);
+            Assert.AreEqual("well", uri.ObjectType);
         }
 
         private string Uuid()
