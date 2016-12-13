@@ -291,6 +291,36 @@ namespace Energistics.Datatypes
             Assert.AreEqual("abc 123=", uri.ObjectId);
         }
 
+        [TestMethod, Description("Tests object UIDs with a space are invalid")]
+        public void EtpUri_UIDs_With_Spaces_Are_Invalid()
+        {
+            var wellUid = Uuid();
+            wellUid = wellUid.Insert(wellUid.Length/2, " ");
+            Assert.IsTrue(wellUid.Contains(" "));
+
+            var uri = new EtpUri($"eml://custom-database/witsml14/well({wellUid})/wellbore({Uuid()})");
+
+            Assert.IsTrue(!uri.IsValid);
+
+            uri = new EtpUri($"eml://witsml14/well({wellUid.Replace(" ", "")})/wellbore({Uuid()})");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("witsml", uri.Family);
+            Assert.AreEqual("1.4.1.1", uri.Version);
+        }
+
+        [TestMethod, Description("Tests object UIDs with special characters are valid")]
+        public void EtpUris_UIDs_With_Special_Characters_Are_Valid()
+        {
+            var specialCharacterUid = "UID-~!@#$%=^&*_{}|<>?;:',./[]\"";
+            var uri = new EtpUri($"eml://witsml20/well({Uuid()})/wellbore({specialCharacterUid})");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("witsml", uri.Family);
+            Assert.AreEqual("2.0", uri.Version);
+            Assert.AreEqual(uri.ObjectId, specialCharacterUid);
+        }
+
         private string Uuid()
         {
             return Guid.NewGuid().ToString();
