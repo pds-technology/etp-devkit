@@ -114,6 +114,12 @@ namespace Energistics
         {
             if (disposing && _server != null)
             {
+                // Unregister event handlers
+                _server.NewSessionConnected -= OnNewSessionConnected;
+                //_server.NewMessageReceived -= OnNewMessageReceived;
+                _server.NewDataReceived -= OnNewDataReceived;
+                _server.SessionClosed -= OnSessionClosed;
+
                 Stop();
                 _server.Dispose();
             }
@@ -183,13 +189,16 @@ namespace Energistics
         private void CloseSessions()
         {
             CheckDisposed();
-            const string reason = "Server stopping";
+            const string reason = "Server stopping";
 
             foreach (var session in _server.GetAllSessions())
             {
                 var etpSession = GetEtpSession(session);
+                session.Items[EtpSessionKey] = null;
                 etpSession?.Close(reason);
+                etpSession?.Dispose();
             }
+
         }
 
         /// <summary>

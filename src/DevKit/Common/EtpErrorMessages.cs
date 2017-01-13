@@ -28,6 +28,39 @@ namespace Energistics.Common
     public static class EtpErrorMessages
     {
         /// <summary>
+        /// Sends a ProtocolException message for a unset type.
+        /// </summary>
+        /// <param name="handler">The handler.</param>
+        /// <param name="header">The message header.</param>
+        /// <returns>The message identifier.</returns>
+        public static long Unset(this IProtocolHandler handler, MessageHeader header)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.Unset, "Unset: " + header.MessageType, header.MessageId);
+        }
+
+        /// <summary>
+        /// Sends a ProtocolException message for a no role type.
+        /// </summary>
+        /// <param name="handler">The handler.</param>
+        /// <param name="header">The message header.</param>
+        /// <returns>The message identifier.</returns>
+        public static long NoRole(this IProtocolHandler handler, MessageHeader header)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.NoRole, "No Role: " + header.MessageType, header.MessageId);
+        }
+
+        /// <summary>
+        /// Sends a ProtocolException message for a no supported protocols type.
+        /// </summary>
+        /// <param name="handler">The handler.</param>
+        /// <param name="header">The message header.</param>
+        /// <returns>The message identifier.</returns>
+        public static long NoSupportedProtocols(this IProtocolHandler handler, MessageHeader header)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.NoSupportedProtocols, "No supported protocols: " + header.MessageType, header.MessageId);
+        }
+
+        /// <summary>
         /// Sends a ProtocolException message for an invalid message type.
         /// </summary>
         /// <param name="handler">The handler.</param>
@@ -36,6 +69,18 @@ namespace Energistics.Common
         public static long InvalidMessage(this IProtocolHandler handler, MessageHeader header)
         {
             return handler.ProtocolException((int)EtpErrorCodes.InvalidMessageType, "Invalid message type: " + header.MessageType, header.MessageId);
+        }
+
+        /// <summary>
+        /// Sends a <see cref="ProtocolException"/> message for an unsupported protocol.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="value">The argument value.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
+        public static long UnsupportedProtocol(this EtpProtocolHandler handler, object value, long messageId = 0)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, "Invalid Argument: " + value, messageId);
         }
 
         /// <summary>
@@ -51,21 +96,27 @@ namespace Energistics.Common
         }
 
         /// <summary>
-        /// Sends a <see cref="ProtocolException"/> message for an unsupported object.
+        /// Sends a <see cref="ProtocolException"/> message for permission denied.
         /// </summary>
         /// <param name="handler">The protocol handler.</param>
-        /// <param name="ex">The exception.</param>
-        /// <param name="uri">The URI.</param>
+        /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long UnsupportedObject(this EtpProtocolHandler handler, Exception ex, string uri, long messageId = 0)
+        public static long PermissionDenied(this EtpProtocolHandler handler, object value, long messageId = 0)
         {
-            if (ex != null)
-            {
-                handler.Logger?.Error(ex);
-            }
+            return handler.ProtocolException((int)EtpErrorCodes.PermissionDenied, "Permission Denied: " + value, messageId);
+        }
 
-            return handler.ProtocolException((int)EtpErrorCodes.UnsupportedObject, "Data object not supported. URI: " + uri, messageId);
+        /// <summary>
+        /// Sends a <see cref="ProtocolException"/> message for not supported.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="value">The argument value.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
+        public static long NotSupported(this EtpProtocolHandler handler, object value, long messageId = 0)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.NotSupported, "Not Supported: " + value, messageId);
         }
 
         /// <summary>
@@ -102,6 +153,54 @@ namespace Energistics.Common
         public static long InvalidChannelId(this EtpProtocolHandler handler, object value, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.InvalidChannelId, "Invalid ChannelId: " + value, messageId);
+        }
+
+        /// <summary>
+        /// Sends a <see cref="ProtocolException"/> message for an unsupported object.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="ex">The exception.</param>
+        /// <param name="uri">The URI.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
+        public static long UnsupportedObject(this EtpProtocolHandler handler, Exception ex, string uri, long messageId = 0)
+        {
+            if (ex != null)
+            {
+                handler.Logger?.Error(ex);
+            }
+
+            return handler.ProtocolException((int)EtpErrorCodes.UnsupportedObject, "Data object not supported. URI: " + uri, messageId);
+        }
+
+        /// <summary>
+        /// Sends a <see cref="ProtocolException"/> message for an invalid object.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="ex">The exception.</param>
+        /// <param name="uri">The URI.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
+        public static long InvalidObject(this EtpProtocolHandler handler, Exception ex, string uri, long messageId = 0)
+        {
+            if (ex != null)
+            {
+                handler.Logger?.Error(ex);
+            }
+
+            return handler.ProtocolException((int)EtpErrorCodes.InvalidObject, "Data object not supported. URI: " + uri, messageId);
+        }
+
+        /// <summary>
+        /// Sends a <see cref="ProtocolException"/> message for no cascade delete.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="value">The argument value.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
+        public static long NoCascadeDelete(this EtpProtocolHandler handler, object value, long messageId = 0)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.NoCascadeDelete, "If cascading deletes are not invoked, a client must only request deletion of bottom level data-objects such that all child data - objects are deleted before the parent is deleted.", messageId);
         }
     }
 }

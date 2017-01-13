@@ -68,6 +68,6 @@ namespace Energistics
         InvalidObject = 3002,
         /// <summary>ENOCASCADE_DELETE</summary>
         [Description("ENOCASCADE_DELETE")]
-        NoCascaseDelete = 3003
+        NoCascadeDelete = 3003
     }
 }
