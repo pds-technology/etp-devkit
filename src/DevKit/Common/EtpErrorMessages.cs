@@ -80,7 +80,7 @@ namespace Energistics.Common
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
         public static long UnsupportedProtocol(this EtpProtocolHandler handler, object value, long messageId = 0)
         {
-            return handler.ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, "Invalid Argument: " + value, messageId);
+            return handler.ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, "Unsupported Protocol: " + value, messageId);
         }
 
         /// <summary>
@@ -188,19 +188,19 @@ namespace Energistics.Common
                 handler.Logger?.Error(ex);
             }
 
-            return handler.ProtocolException((int)EtpErrorCodes.InvalidObject, "Data object not supported. URI: " + uri, messageId);
+            return handler.ProtocolException((int)EtpErrorCodes.InvalidObject, "Invalid Object. URI: " + uri, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="ProtocolException"/> message for no cascade delete.
         /// </summary>
         /// <param name="handler">The protocol handler.</param>
-        /// <param name="value">The argument value.</param>
+        /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long NoCascadeDelete(this EtpProtocolHandler handler, object value, long messageId = 0)
+        public static long NoCascadeDelete(this EtpProtocolHandler handler, string uri, long messageId = 0)
         {
-            return handler.ProtocolException((int)EtpErrorCodes.NoCascadeDelete, "If cascading deletes are not invoked, a client must only request deletion of bottom level data-objects such that all child data - objects are deleted before the parent is deleted.", messageId);
+            return handler.ProtocolException((int)EtpErrorCodes.NoCascadeDelete, "If cascading deletes are not invoked, a client must only request deletion of bottom level data-objects such that all child data - objects are deleted before the parent is deleted. URI: " + uri, messageId);
         }
     }
 }
