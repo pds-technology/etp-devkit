@@ -162,10 +162,9 @@ namespace Energistics
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && _socket != null)
+            if (disposing)
             {
-                _socket.Close();
-                _socket.Dispose();
+                _socket?.Dispose();
             }
 
             _socket = null;
