@@ -16,7 +16,9 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Linq;
 using System.Reflection;
+using System.Xml.Serialization;
 using Avro;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -41,7 +43,7 @@ namespace Energistics.Common
         {
             var property = base.CreateProperty(member, memberSerialization);
 
-            if (property.PropertyType == typeof(Schema))
+            if (property.PropertyType == typeof(Schema) || member.GetCustomAttributes(typeof(XmlIgnoreAttribute), true).Any())
             {
                 property.ShouldSerialize = (instance) => false;
             }

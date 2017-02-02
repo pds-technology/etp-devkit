@@ -27,11 +27,14 @@ namespace Energistics.Datatypes
     /// </summary>
     public struct EtpContentType
     {
-        private static readonly Regex Pattern = new Regex(@"^application/x\-(witsml|resqml|prodml|energyml)\+xml;version=([0-9.]+)((;)?|(;type=((obj_|cs_)?(\w+))(;)?)?)$");
+        private static readonly Regex Pattern = new Regex(@"^application/x\-(witsml|resqml|prodml|eml)\+(xml|json);version=([0-9.]+)((;)?|(;type=((obj_|cs_)?(\w+))(;)?)?)$");
         private static readonly string[] ComponentSchemas = { "logCurveInfo", "trajectoryStation", "geologyInterval" };
-        private const string BaseFormat = "application/x-{0}+xml;version={1}";
+        private const string BaseFormat = "application/x-{0}+{1};version={2}";
         private const string TypeFormat = ";type={0}";
         private readonly string _contentType;
+
+        public const string Xml = "xml";
+        public const string Json = "json";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpContentType"/> struct.
@@ -45,9 +48,10 @@ namespace Energistics.Datatypes
             IsValid = match.Success;
 
             Family = GetValue(match, 1);
-            Version = GetValue(match, 2);
-            ObjectType = FormatObjectType(GetValue(match, 8));
-            SchemaType = FormatSchemaType(GetValue(match, 7) + ObjectType, Version);
+            Format = GetValue(match, 2);
+            Version = GetValue(match, 3);
+            ObjectType = FormatObjectType(GetValue(match, 9));
+            SchemaType = FormatSchemaType(GetValue(match, 8) + ObjectType, Version);
         }
 
         /// <summary>
@@ -65,16 +69,18 @@ namespace Energistics.Datatypes
         /// <param name="family">The ML family name.</param>
         /// <param name="version">The version.</param>
         /// <param name="objectType">The object type.</param>
-        public EtpContentType(string family, string version, string objectType)
+        /// <param name="format">The format.</param>
+        public EtpContentType(string family, string version, string objectType, string format = Xml)
         {
             IsValid = true;
 
             Family = family;
+            Format = format;
             Version = version;
             SchemaType = FormatSchemaType(objectType, Version);
             ObjectType = FormatObjectType(SchemaType);
 
-            _contentType = string.Format(BaseFormat, family, version) + FormatType(SchemaType);
+            _contentType = string.Format(BaseFormat, family, format, version) + FormatType(SchemaType);
         }
 
         /// <summary>
@@ -82,6 +88,12 @@ namespace Energistics.Datatypes
         /// </summary>
         /// <value>The ML family.</value>
         public string Family { get; }
+
+        /// <summary>
+        /// Gets the format.
+        /// </summary>
+        /// <value>The format.</value>
+        public string Format { get; }
 
         /// <summary>
         /// Gets the version.
@@ -125,6 +137,26 @@ namespace Energistics.Datatypes
         public EtpContentType For(string objectType)
         {
             return new EtpContentType(Family, Version, objectType);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="EtpContentType"/> based on the
+        /// current ML family name, version number, object type and XML format.
+        /// </summary>
+        /// <returns>The new <see cref="EtpContentType"/> instance.</returns>
+        public EtpContentType AsXml()
+        {
+            return new EtpContentType(Family, Version, ObjectType);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="EtpContentType"/> based on the
+        /// current ML family name, version number, object type and XML format.
+        /// </summary>
+        /// <returns>The new <see cref="EtpContentType"/> instance.</returns>
+        public EtpContentType AsJson()
+        {
+            return new EtpContentType(Family, Version, ObjectType, Json);
         }
 
         /// <summary>

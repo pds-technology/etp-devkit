@@ -29,7 +29,7 @@ namespace Energistics.Datatypes
     /// </summary>
     public struct EtpUri
     {
-        private static readonly Regex Pattern = new Regex(@"^eml:\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|energyml)([0-9]+))(\/((obj_|cs_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?$", RegexOptions.IgnoreCase);
+        private static readonly Regex Pattern = new Regex(@"^eml:\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|eml)([0-9]+)(\+(xml|json))?)(\/((obj_|cs_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?$", RegexOptions.IgnoreCase);
         private readonly Match _match;
 
         /// <summary>
@@ -48,21 +48,24 @@ namespace Energistics.Datatypes
             Uri = uri;
             IsValid = _match.Success;
 
+            var format = GetValue(_match, 7);
+
             DataSpace = GetValue(_match, 2);
             Family = GetValue(_match, 4);
             Version = FormatVersion(GetValue(_match, 5), Family);
-            ContentType = new EtpContentType(Family, Version);
+            Format = string.IsNullOrWhiteSpace(format) ? EtpContentType.Xml : format;
+            ContentType = new EtpContentType(Family, Version, null, Format);
             ObjectType = null;
             ObjectId = null;
-            Query = GetValue(_match, 12);
-            Hash = GetValue(_match, 13);
+            Query = GetValue(_match, 14);
+            Hash = GetValue(_match, 15);
 
             if (!HasRepeatValues(_match)) return;
 
             var last = GetObjectIds().Last();
             ObjectType = last.ObjectType;
             ObjectId = last.ObjectId;
-            ContentType = new EtpContentType(Family, Version, ObjectType);
+            ContentType = new EtpContentType(Family, Version, ObjectType, Format);
         }
 
         /// <summary>
@@ -88,6 +91,12 @@ namespace Energistics.Datatypes
         /// </summary>
         /// <value>The version.</value>
         public string Version { get; }
+
+        /// <summary>
+        /// Gets the format.
+        /// </summary>
+        /// <value>The format.</value>
+        public string Format { get; }
 
         /// <summary>
         /// Gets the type of the object.
@@ -176,8 +185,8 @@ namespace Energistics.Datatypes
         {
             if (HasRepeatValues(_match))
             {
-                var objectTypeGroup = _match.Groups[9];
-                var objectIdGroup = _match.Groups[11];
+                var objectTypeGroup = _match.Groups[11];
+                var objectIdGroup = _match.Groups[13];
 
                 for (int i=0; i<objectTypeGroup.Captures.Count; i++)
                 {
@@ -296,7 +305,7 @@ namespace Energistics.Datatypes
         /// <returns><c>true</c> if any repeating groups were matched; otherwise, <c>false</c>.</returns>
         private static bool HasRepeatValues(Match match)
         {
-            return match.Success && match.Groups[9].Captures.Count > 0;
+            return match.Success && match.Groups[11].Captures.Count > 0;
         }
 
         /// <summary>

@@ -103,7 +103,7 @@ namespace Energistics.Common
         /// <returns>The serialized JSON string.</returns>
         public static string Serialize(this EtpBase etpBase, object instance)
         {
-            return etpBase.Serialize(instance, false);
+            return Serialize(instance);
         }
 
         /// <summary>
@@ -115,7 +115,18 @@ namespace Energistics.Common
         /// <returns>The serialized JSON string.</returns>
         public static string Serialize(this EtpBase etpBase, object instance, bool indent)
         {
-            var formatting = (indent) ? Formatting.Indented : Formatting.None;
+            return Serialize(instance, indent);
+        }
+
+        /// <summary>
+        /// Serializes the specified object instance.
+        /// </summary>
+        /// <param name="instance">The object to serialize.</param>
+        /// <param name="indent">if set to <c>true</c> the JSON output should be indented; otherwise, <c>false</c>.</param>
+        /// <returns>The serialized JSON string.</returns>
+        public static string Serialize(object instance, bool indent = false)
+        {
+            var formatting = indent ? Formatting.Indented : Formatting.None;
             return JsonConvert.SerializeObject(instance, formatting, JsonSettings);
         }
 
@@ -128,7 +139,29 @@ namespace Energistics.Common
         /// <returns></returns>
         public static T Deserialize<T>(this EtpBase etpBase, string json)
         {
+            return Deserialize<T>(json);
+        }
+
+        /// <summary>
+        /// Deserializes the specified JSON string.
+        /// </summary>
+        /// <typeparam name="T">The type of object.</typeparam>
+        /// <param name="json">The JSON string.</param>
+        /// <returns></returns>
+        public static T Deserialize<T>(string json)
+        {
             return JsonConvert.DeserializeObject<T>(json, JsonSettings);
+        }
+
+        /// <summary>
+        /// Deserializes the specified JSON string.
+        /// </summary>
+        /// <param name="type">The type of object.</param>
+        /// <param name="json">The JSON string.</param>
+        /// <returns></returns>
+        public static object Deserialize(Type type, string json)
+        {
+            return JsonConvert.DeserializeObject(json, type, JsonSettings);
         }
 
         /// <summary>
@@ -177,36 +210,36 @@ namespace Energistics.Common
         }
 
         /// <summary>
-        /// Decodes the data contained by the <see cref="DataObject"/> as an XML string.
+        /// Decodes the data contained by the <see cref="DataObject"/> as a string.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
-        /// <returns>The decoded XML string.</returns>
-        public static string GetXml(this DataObject dataObject)
+        /// <returns>The decoded string.</returns>
+        public static string GetString(this DataObject dataObject)
         {
             return System.Text.Encoding.UTF8.GetString(dataObject.GetData());
             //return System.Text.Encoding.Unicode.GetString(dataObject.GetData());
         }
 
         /// <summary>
-        /// Encodes and optionally compresses the XML string for the <see cref="DataObject"/> data.
+        /// Encodes and optionally compresses the string for the <see cref="DataObject"/> data.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
-        /// <param name="xml">The XML string.</param>
+        /// <param name="data">The data string.</param>
         /// <param name="compress">if set to <c>true</c> the data will be compressed.</param>
-        public static void SetXml(this DataObject dataObject, string xml, bool compress = true)
+        public static void SetString(this DataObject dataObject, string data, bool compress = true)
         {
-            if (string.IsNullOrWhiteSpace(xml))
+            if (string.IsNullOrWhiteSpace(data))
             {
                 dataObject.SetData(new byte[0], compress);
                 return;
             }
 
-            var bytes = System.Text.Encoding.UTF8.GetBytes(xml);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(data);
 
             //var bytes = System.Text.Encoding.Convert(
             //    System.Text.Encoding.UTF8,
             //    System.Text.Encoding.Unicode,
-            //    System.Text.Encoding.UTF8.GetBytes(xml));
+            //    System.Text.Encoding.UTF8.GetBytes(data));
 
             dataObject.SetData(bytes, compress);
         }

@@ -245,6 +245,39 @@ namespace Energistics.Datatypes
         }
 
         [TestMethod]
+        public void EtpUri_Can_Parse_Uri_With_No_Format_Specified()
+        {
+            var uri = new EtpUri("eml://witsml14/obj_well(" + Uuid() + ")");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("1.4.1.1", uri.Version);
+            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("xml", uri.Format);
+        }
+
+        [TestMethod]
+        public void EtpUri_Can_Parse_Uri_With_Xml_Format_Specified()
+        {
+            var uri = new EtpUri("eml://witsml14+xml/obj_well(" + Uuid() + ")");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("1.4.1.1", uri.Version);
+            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("xml", uri.Format);
+        }
+
+        [TestMethod]
+        public void EtpUri_Can_Parse_Uri_With_Json_Format_Specified()
+        {
+            var uri = new EtpUri("eml://witsml14+json/obj_well(" + Uuid() + ")");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("1.4.1.1", uri.Version);
+            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("json", uri.Format);
+        }
+
+        [TestMethod]
         public void EtpUri_Can_Parse_Uri_With_Query_String()
         {
             var uri = new EtpUri("eml://witsml20/Well?name=value");

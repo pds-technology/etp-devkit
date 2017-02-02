@@ -89,5 +89,59 @@ namespace Energistics.Datatypes
             Assert.AreEqual("well", contentType.ObjectType);
             Assert.AreEqual("1.4.1.1", contentType.Version);
         }
+
+        [TestMethod]
+        public void EtpContentType_Can_Be_Parsed_With_Json_Format()
+        {
+            var expected = "application/x-witsml+json;version=1.4.1.1;type=obj_well";
+            var contentType = new EtpContentType(expected);
+
+            Assert.IsTrue(contentType.IsValid);
+            Assert.AreEqual("well", contentType.ObjectType);
+            Assert.AreEqual("1.4.1.1", contentType.Version);
+            Assert.AreEqual("json", contentType.Format);
+        }
+
+        [TestMethod]
+        public void EtpContentType_Can_Be_Converted_From_Xml_To_Json_Format()
+        {
+            var expected = "application/x-witsml+xml;version=1.4.1.1;type=obj_well";
+            var contentType = new EtpContentType(expected);
+
+            Assert.IsTrue(contentType.IsValid);
+            Assert.AreEqual("well", contentType.ObjectType);
+            Assert.AreEqual("1.4.1.1", contentType.Version);
+            Assert.AreEqual("xml", contentType.Format);
+
+            var converted = "application/x-witsml+json;version=1.4.1.1;type=obj_well";
+            contentType = contentType.AsJson();
+
+            Assert.IsTrue(contentType.IsValid);
+            Assert.AreEqual("well", contentType.ObjectType);
+            Assert.AreEqual("1.4.1.1", contentType.Version);
+            Assert.AreEqual("json", contentType.Format);
+            Assert.AreEqual(converted, contentType.ToString());
+        }
+
+        [TestMethod]
+        public void EtpContentType_Can_Be_Converted_From_Json_To_Xml_Format()
+        {
+            var expected = "application/x-witsml+json;version=1.4.1.1;type=obj_well";
+            var contentType = new EtpContentType(expected);
+
+            Assert.IsTrue(contentType.IsValid);
+            Assert.AreEqual("well", contentType.ObjectType);
+            Assert.AreEqual("1.4.1.1", contentType.Version);
+            Assert.AreEqual("json", contentType.Format);
+
+            var converted = "application/x-witsml+xml;version=1.4.1.1;type=obj_well";
+            contentType = contentType.AsXml();
+
+            Assert.IsTrue(contentType.IsValid);
+            Assert.AreEqual("well", contentType.ObjectType);
+            Assert.AreEqual("1.4.1.1", contentType.Version);
+            Assert.AreEqual("xml", contentType.Format);
+            Assert.AreEqual(converted, contentType.ToString());
+        }
     }
 }
