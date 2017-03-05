@@ -158,8 +158,16 @@ namespace Energistics.Datatypes
                 if (!IsValid || IsBaseUri)
                     return this;
 
-                var index = Uri.LastIndexOf('/');
-                return new EtpUri(Uri.Substring(0, index));
+                var uri = Uri;
+
+                if (!string.IsNullOrWhiteSpace(Query))
+                    uri = uri.Substring(0, uri.IndexOf('?'));
+
+                else if (!string.IsNullOrWhiteSpace(Hash))
+                    uri = uri.Substring(0, uri.IndexOf('#'));
+
+                var index = uri.LastIndexOf('/');
+                return new EtpUri(uri.Substring(0, index));
             }
         }
 

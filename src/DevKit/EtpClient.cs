@@ -61,7 +61,13 @@ namespace Energistics
         /// <param name="headers">The WebSocket headers.</param>
         public EtpClient(string uri, string application, string version, IDictionary<string, string> headers) : base(application, version, headers)
         {
-            _socket = new WebSocket(uri, EtpSettings.EtpSubProtocolName, null, Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList());
+            var headerItems = Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList();
+
+            _socket = new WebSocket(uri,
+                subProtocol: EtpSettings.EtpSubProtocolName,
+                cookies: null,
+                customHeaderItems: headerItems,
+                userAgent: application);
 
             _socket.Opened += OnWebSocketOpened;
             _socket.Closed += OnWebSocketClosed;
