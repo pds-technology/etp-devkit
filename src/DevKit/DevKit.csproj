@@ -138,6 +138,8 @@
     <Compile Include="Protocol\Store\StoreCustomerHandler.cs" />
     <Compile Include="Protocol\Store\StoreStoreHandler.cs" />
     <Compile Include="Security\Authorization.cs" />
+    <Compile Include="Security\HttpConnectProxy.cs" />
+    <Compile Include="Security\ProxyConnectorBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="!Protocols 3-4.cd" />

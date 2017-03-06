@@ -19,10 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Energistics.Common;
 using Energistics.Datatypes;
 using Energistics.Properties;
 using Energistics.Protocol.Core;
+using Energistics.Security;
 using SuperSocket.ClientEngine;
 using WebSocket4Net;
 
@@ -131,6 +133,18 @@ namespace Energistics
         /// Occurs when the WebSocket has an error.
         /// </summary>
         public event EventHandler<Exception> SocketError;
+
+        /// <summary>
+        /// Sets the proxy server host name and port number.
+        /// </summary>
+        /// <param name="host">The host name.</param>
+        /// <param name="port">The port number.</param>
+        public void SetProxy(string host, int port)
+        {
+            if (_socket == null) return;
+            var endPoint = new DnsEndPoint(host, port);
+            _socket.Proxy = new HttpConnectProxy(endPoint);
+        }
 
         /// <summary>
         /// Sends the specified data.
