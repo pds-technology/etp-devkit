@@ -16,9 +16,8 @@ namespace Energistics.Security
             public SearchMarkState<byte> SearchState { get; set; }
         }
 
-        private const string m_RequestTemplate = "CONNECT {0}:{1} HTTP/1.1\r\nHost: {0}:{1}\r\nProxy-Connection: Keep-Alive\r\n\r\n";
-
-        private const string m_ResponsePrefix = "HTTP/1.1";
+        private const string m_RequestTemplate = "CONNECT {0}:{1} HTTP/1.1\r\nHost: {0}:{1}\r\nProxy-Connection: Keep-Alive\r\n{2}\r\n";
+        private const string m_ResponsePrefix = "HTTP/";
         private const char m_Space = ' ';
 
         private static byte[] m_LineSeparator;
@@ -28,7 +27,8 @@ namespace Energistics.Security
             m_LineSeparator = ASCIIEncoding.GetBytes("\r\n\r\n");
         }
 
-        private int m_ReceiveBufferSize;
+        private readonly int m_ReceiveBufferSize;
+        private readonly string m_Authorizaton;
 
 #if SILVERLIGHT && !WINDOWS_PHONE
         public HttpConnectProxy(EndPoint proxyEndPoint, SocketClientAccessPolicyProtocol clientAccessPolicyProtocol)
@@ -43,16 +43,17 @@ namespace Energistics.Security
             m_ReceiveBufferSize = receiveBufferSize;
         }
 #else
-        public HttpConnectProxy(EndPoint proxyEndPoint)
-            : this(proxyEndPoint, 128)
+        public HttpConnectProxy(EndPoint proxyEndPoint, string authorization = null)
+            : this(proxyEndPoint, 128, authorization)
         {
 
         }
 
-        public HttpConnectProxy(EndPoint proxyEndPoint, int receiveBufferSize)
+        public HttpConnectProxy(EndPoint proxyEndPoint, int receiveBufferSize, string authorization = null)
             : base(proxyEndPoint)
         {
             m_ReceiveBufferSize = receiveBufferSize;
+            m_Authorizaton = authorization;
         }
 #endif
 
@@ -98,16 +99,22 @@ namespace Energistics.Security
                 e = new SocketAsyncEventArgs();
 
             string request;
+            string authorizationHeader = null;
+
+            if (!string.IsNullOrWhiteSpace(m_Authorizaton))
+            {
+                authorizationHeader = $"Proxy-Authorization: {m_Authorizaton}\r\n";
+            }
 
             if (targetEndPoint is DnsEndPoint)
             {
                 var targetDnsEndPoint = (DnsEndPoint)targetEndPoint;
-                request = string.Format(m_RequestTemplate, targetDnsEndPoint.Host, targetDnsEndPoint.Port);
+                request = string.Format(m_RequestTemplate, targetDnsEndPoint.Host, targetDnsEndPoint.Port, authorizationHeader);
             }
             else
             {
                 var targetIPEndPoint = (IPEndPoint)targetEndPoint;
-                request = string.Format(m_RequestTemplate, targetIPEndPoint.Address, targetIPEndPoint.Port);
+                request = string.Format(m_RequestTemplate, targetIPEndPoint.Address, targetIPEndPoint.Port, authorizationHeader);
             }
 
             var requestData = ASCIIEncoding.GetBytes(request);
@@ -187,7 +194,7 @@ namespace Energistics.Security
 
             var httpProtocol = line.Substring(0, pos);
 
-            if (!m_ResponsePrefix.Equals(httpProtocol))
+            if (!httpProtocol.StartsWith(m_ResponsePrefix))
             {
                 OnException("protocol error: invalid protocol");
                 return;

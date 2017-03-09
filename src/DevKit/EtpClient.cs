@@ -139,11 +139,14 @@ namespace Energistics
         /// </summary>
         /// <param name="host">The host name.</param>
         /// <param name="port">The port number.</param>
-        public void SetProxy(string host, int port)
+        /// <param name="username">The username.</param>
+        /// <param name="password">The password.</param>
+        public void SetProxy(string host, int port, string username = null, string password = null)
         {
             if (_socket == null) return;
             var endPoint = new DnsEndPoint(host, port);
-            _socket.Proxy = new HttpConnectProxy(endPoint);
+            var headers = Security.Authorization.Basic(username, password);
+            _socket.Proxy = new HttpConnectProxy(endPoint, headers[Security.Authorization.Header]);
         }
 
         /// <summary>

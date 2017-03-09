@@ -18,10 +18,11 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Energistics.Datatypes;
-using Energistics.Security;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Authorization = Energistics.Security.Authorization;
 
 namespace Energistics
 {
@@ -35,34 +36,46 @@ namespace Energistics
         private const string DefaultGrantType = "password";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonClient"/> class.
+        /// Initializes a new instance of the <see cref="JsonClient" /> class.
         /// </summary>
-        public JsonClient()
+        /// <param name="proxy">The proxy.</param>
+        public JsonClient(IWebProxy proxy = null)
         {
             BasicHeader = new Dictionary<string, string>();
             BearerHeader = new Dictionary<string, string>();
+            Proxy = proxy;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonClient"/> class.
+        /// Initializes a new instance of the <see cref="JsonClient" /> class.
         /// </summary>
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
-        public JsonClient(string username, string password)
+        /// <param name="proxy">The proxy.</param>
+        public JsonClient(string username, string password, IWebProxy proxy = null)
         {
             BasicHeader = Authorization.Basic(username, password);
             BearerHeader = new Dictionary<string, string>();
+            Proxy = proxy;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonClient"/> class.
+        /// Initializes a new instance of the <see cref="JsonClient" /> class.
         /// </summary>
         /// <param name="token">The token.</param>
-        public JsonClient(string token)
+        /// <param name="proxy">The proxy.</param>
+        public JsonClient(string token, IWebProxy proxy = null)
         {
             BasicHeader = new Dictionary<string, string>();
             BearerHeader = Authorization.Bearer(token);
+            Proxy = proxy;
         }
+
+        /// <summary>
+        /// Gets or sets the proxy.
+        /// </summary>
+        /// <value>The proxy.</value>
+        public IWebProxy Proxy { get; set; }
 
         /// <summary>
         /// Gets the Basic authorization header.
@@ -92,6 +105,8 @@ namespace Energistics
         {
             using (var client = new System.Net.WebClient())
             {
+                client.Proxy = Proxy;
+
                 foreach (var header in BasicHeader)
                     client.Headers[header.Key] = header.Value;
 
@@ -129,6 +144,8 @@ namespace Energistics
         {
             using (var client = new System.Net.WebClient())
             {
+                client.Proxy = Proxy;
+
                 foreach (var header in headers)
                     client.Headers[header.Key] = header.Value;
 
