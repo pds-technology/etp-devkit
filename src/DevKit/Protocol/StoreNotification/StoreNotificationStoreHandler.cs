@@ -40,11 +40,12 @@ namespace Energistics.Protocol.StoreNotification
         /// <summary>
         /// Sends a ChangeNotification message to a customer.
         /// </summary>
+        /// <param name="request">The request.</param>
         /// <param name="change">The object change.</param>
         /// <returns>The message identifier.</returns>
-        public long ChangeNotification(ObjectChange change)
+        public long ChangeNotification(MessageHeader request, ObjectChange change)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ChangeNotification);
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ChangeNotification, request.MessageId);
 
             var notification = new ChangeNotification()
             {
@@ -57,11 +58,12 @@ namespace Energistics.Protocol.StoreNotification
         /// <summary>
         /// Sends a NotificationRequestDeleteNotification message to a customer.
         /// </summary>
+        /// <param name="request">The request.</param>
         /// <param name="change">The object change.</param>
         /// <returns>The message identifier.</returns>
-        public long DeleteNotification(ObjectChange change)
+        public long DeleteNotification(MessageHeader request, ObjectChange change)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.DeleteNotification);
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.DeleteNotification, request.MessageId);
 
             var notification = new DeleteNotification()
             {
