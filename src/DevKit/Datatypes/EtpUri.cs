@@ -29,13 +29,13 @@ namespace Energistics.Datatypes
     /// </summary>
     public struct EtpUri
     {
-        private static readonly Regex Pattern = new Regex(@"^eml:\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|eml)([0-9]+)(\+(xml|json))?)(\/((obj_|cs_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?$", RegexOptions.IgnoreCase);
+        private static readonly Regex Pattern = new Regex(@"^eml:(\/|\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|eml)([0-9]+)(\+(xml|json))?)(\/((obj_|cs_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?)$", RegexOptions.IgnoreCase);
         private readonly Match _match;
 
         /// <summary>
         /// The root URI supported by the Discovery protocol.
         /// </summary>
-        public const string RootUri = "/";
+        public static readonly EtpUri RootUri = new EtpUri("eml:/");
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpUri"/> struct.
@@ -46,19 +46,19 @@ namespace Energistics.Datatypes
             _match = Pattern.Match(uri);
 
             Uri = uri;
-            IsValid = _match.Success;
+            IsValid = _match.Success || IsRoot(uri);
 
-            var format = GetValue(_match, 7);
+            var format = GetValue(_match, 8);
 
-            DataSpace = GetValue(_match, 2);
-            Family = GetValue(_match, 4);
-            Version = FormatVersion(GetValue(_match, 5), Family);
+            DataSpace = GetValue(_match, 3);
+            Family = GetValue(_match, 5);
+            Version = FormatVersion(GetValue(_match, 6), Family);
             Format = string.IsNullOrWhiteSpace(format) ? EtpContentType.Xml : format;
             ContentType = new EtpContentType(Family, Version, null, Format);
             ObjectType = null;
             ObjectId = null;
-            Query = GetValue(_match, 14);
-            Hash = GetValue(_match, 15);
+            Query = GetValue(_match, 15);
+            Hash = GetValue(_match, 16);
 
             if (!HasRepeatValues(_match)) return;
 
@@ -148,6 +148,18 @@ namespace Energistics.Datatypes
         }
 
         /// <summary>
+        /// Gets a value indicating whether this instance is a the root URI.
+        /// </summary>
+        /// <value><c>true</c> if this instance is the root URI; otherwise, <c>false</c>.</value>
+        public bool IsRootUri
+        {
+            get
+            {
+                return string.Equals(RootUri, Uri, StringComparison.InvariantCultureIgnoreCase);
+            }
+        }
+
+        /// <summary>
         /// Gets the parent URI.
         /// </summary>
         /// <value>The parent URI.</value>
@@ -193,8 +205,8 @@ namespace Energistics.Datatypes
         {
             if (HasRepeatValues(_match))
             {
-                var objectTypeGroup = _match.Groups[11];
-                var objectIdGroup = _match.Groups[13];
+                var objectTypeGroup = _match.Groups[12];
+                var objectIdGroup = _match.Groups[14];
 
                 for (int i=0; i<objectTypeGroup.Captures.Count; i++)
                 {
@@ -290,7 +302,7 @@ namespace Energistics.Datatypes
         /// <returns><c>true</c> if the URI is a root URI; otherwise, <c>false</c>.</returns>
         public static bool IsRoot(string uri)
         {
-            return RootUri.Equals(uri);
+            return string.Equals(RootUri, uri, StringComparison.InvariantCultureIgnoreCase);
         }
 
         /// <summary>
@@ -313,7 +325,7 @@ namespace Energistics.Datatypes
         /// <returns><c>true</c> if any repeating groups were matched; otherwise, <c>false</c>.</returns>
         private static bool HasRepeatValues(Match match)
         {
-            return match.Success && match.Groups[11].Captures.Count > 0;
+            return match.Success && match.Groups[12].Captures.Count > 0;
         }
 
         /// <summary>

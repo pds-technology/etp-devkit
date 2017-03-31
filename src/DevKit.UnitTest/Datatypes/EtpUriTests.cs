@@ -28,7 +28,35 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpUri_IsRoot_Can_Detect_Root_Uri()
         {
-            Assert.IsTrue(EtpUri.IsRoot("/"));
+            var uri = "eml:/";
+            var etpUri = new EtpUri(uri);
+
+            Assert.IsTrue(etpUri.IsRootUri);
+            Assert.IsTrue(etpUri.IsValid);
+            Assert.AreEqual(EtpUri.RootUri, etpUri);
+
+            uri = "EML:/";
+            etpUri = new EtpUri(uri);
+
+            Assert.IsTrue(etpUri.IsRootUri);
+            Assert.IsTrue(etpUri.IsValid);
+            Assert.AreEqual(EtpUri.RootUri, etpUri);
+        }
+
+        [TestMethod]
+        public void EtpUri_IsRoot_Can_Detect_Invalid_Root_Uri()
+        {
+            var uri = "eml://";
+            var etpUri = new EtpUri(uri);
+
+            Assert.IsFalse(etpUri.IsValid);
+            Assert.IsFalse(etpUri.IsRootUri);
+
+            uri = "eml:///";
+            etpUri = new EtpUri(uri);
+
+            Assert.IsFalse(etpUri.IsValid);
+            Assert.IsFalse(etpUri.IsRootUri);
         }
 
         [TestMethod]
