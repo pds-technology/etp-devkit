@@ -32,16 +32,18 @@ namespace Energistics.Protocol.StoreNotification
         /// <summary>
         /// Sends a ChangeNotification message to a customer.
         /// </summary>
+        /// <param name="request">The request.</param>
         /// <param name="change">The object change.</param>
         /// <returns>The message identifier.</returns>
-        long ChangeNotification(ObjectChange change);
+        long ChangeNotification(MessageHeader request, ObjectChange change);
 
         /// <summary>
         /// Sends a NotificationRequestDeleteNotification message to a customer.
         /// </summary>
+        /// <param name="request">The request.</param>
         /// <param name="change">The object change.</param>
         /// <returns>The message identifier.</returns>
-        long DeleteNotification(ObjectChange change);
+        long DeleteNotification(MessageHeader request, ObjectChange change);
 
         /// <summary>
         /// Handles the NotificationRequest event from a customer.

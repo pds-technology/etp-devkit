@@ -129,6 +129,20 @@ namespace Energistics.Datatypes
         }
 
         /// <summary>
+        /// Determines whether this instance is related to the specified <see cref="EtpContentType"/>.
+        /// </summary>
+        /// <param name="other">The other content type.</param>
+        /// <returns>
+        ///   <c>true</c> if the two <see cref="EtpContentType"/> instances share the same family and
+        ///   version; otherwise, <c>false</c>.
+        /// </returns>
+        public bool IsRelatedTo(EtpContentType other)
+        {
+            return string.Equals(Family, other.Family, StringComparison.InvariantCultureIgnoreCase)
+                && string.Equals(Version, other.Version, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        /// <summary>
         /// Initializes a new instance of <see cref="EtpContentType"/> based on the
         /// current ML family name, version number and the specified object type.
         /// </summary>
@@ -166,6 +180,44 @@ namespace Energistics.Datatypes
         public override string ToString()
         {
             return _contentType;
+        }
+
+        /// <summary>
+        /// Determines whether the specified <see cref="System.Object" />, is equal to this instance.
+        /// </summary>
+        /// <param name="obj">The <see cref="System.Object" /> to compare with this instance.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
+        /// </returns>
+        public override bool Equals(object obj)
+        {
+            if (!(obj is EtpContentType))
+                return false;
+
+            return Equals((EtpContentType)obj);
+        }
+
+        /// <summary>
+        /// Determines whether the specified <see cref="EtpContentType" />, is equal to this instance.
+        /// </summary>
+        /// <param name="other">The <see cref="EtpContentType" /> to compare with this instance.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified <see cref="EtpContentType" /> is equal to this instance; otherwise, <c>false</c>.
+        /// </returns>
+        public bool Equals(EtpContentType other)
+        {
+            return string.Equals(other, this, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        /// <summary>
+        /// Returns a hash code for this instance.
+        /// </summary>
+        /// <returns>
+        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
+        /// </returns>
+        public override int GetHashCode()
+        {
+            return _contentType.ToLower().GetHashCode();
         }
 
         /// <summary>

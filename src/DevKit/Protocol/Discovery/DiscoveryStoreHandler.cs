@@ -33,6 +33,11 @@ namespace Energistics.Protocol.Discovery
     public class DiscoveryStoreHandler : EtpProtocolHandler, IDiscoveryStore
     {
         /// <summary>
+        /// The MaxGetResourcesResponse protocol capability key.
+        /// </summary>
+        public const string MaxGetResourcesResponse = "MaxGetResourcesResponse";
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="DiscoveryStoreHandler"/> class.
         /// </summary>
         public DiscoveryStoreHandler() : base(Protocols.Discovery, "store", "customer")
