@@ -65,7 +65,7 @@ namespace Energistics.Datatypes
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
             Assert.AreEqual("1.4.1.1", contentType.Version);
-            Assert.AreEqual(expected + ";type=obj_well", (string)contentType);
+            Assert.AreEqual(expected + ";type=well", (string)contentType);
         }
 
         [TestMethod]
@@ -75,14 +75,14 @@ namespace Energistics.Datatypes
             var contentType = new EtpContentType(expected);
 
             Assert.IsTrue(contentType.IsValid);
-            Assert.AreEqual("well", contentType.ObjectType);
+            Assert.AreEqual("Well", contentType.ObjectType);
             Assert.AreEqual("2.0", contentType.Version);
         }
 
         [TestMethod]
         public void EtpContentType_Can_Parse_Witsml_1411_Well_Content_Type()
         {
-            var expected = "application/x-witsml+xml;version=1.4.1.1;type=obj_well";
+            var expected = "application/x-witsml+xml;version=1.4.1.1;type=well";
             var contentType = new EtpContentType(expected);
 
             Assert.IsTrue(contentType.IsValid);
@@ -93,7 +93,7 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpContentType_Can_Be_Parsed_With_Json_Format()
         {
-            var expected = "application/x-witsml+json;version=1.4.1.1;type=obj_well";
+            var expected = "application/x-witsml+json;version=1.4.1.1;type=well";
             var contentType = new EtpContentType(expected);
 
             Assert.IsTrue(contentType.IsValid);
@@ -105,7 +105,7 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpContentType_Can_Be_Converted_From_Xml_To_Json_Format()
         {
-            var expected = "application/x-witsml+xml;version=1.4.1.1;type=obj_well";
+            var expected = "application/x-witsml+xml;version=1.4.1.1;type=well";
             var contentType = new EtpContentType(expected);
 
             Assert.IsTrue(contentType.IsValid);
@@ -113,7 +113,7 @@ namespace Energistics.Datatypes
             Assert.AreEqual("1.4.1.1", contentType.Version);
             Assert.AreEqual("xml", contentType.Format);
 
-            var converted = "application/x-witsml+json;version=1.4.1.1;type=obj_well";
+            var converted = "application/x-witsml+json;version=1.4.1.1;type=well";
             contentType = contentType.AsJson();
 
             Assert.IsTrue(contentType.IsValid);
@@ -126,7 +126,7 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpContentType_Can_Be_Converted_From_Json_To_Xml_Format()
         {
-            var expected = "application/x-witsml+json;version=1.4.1.1;type=obj_well";
+            var expected = "application/x-witsml+json;version=1.4.1.1;type=well";
             var contentType = new EtpContentType(expected);
 
             Assert.IsTrue(contentType.IsValid);
@@ -134,7 +134,7 @@ namespace Energistics.Datatypes
             Assert.AreEqual("1.4.1.1", contentType.Version);
             Assert.AreEqual("json", contentType.Format);
 
-            var converted = "application/x-witsml+xml;version=1.4.1.1;type=obj_well";
+            var converted = "application/x-witsml+xml;version=1.4.1.1;type=well";
             contentType = contentType.AsXml();
 
             Assert.IsTrue(contentType.IsValid);

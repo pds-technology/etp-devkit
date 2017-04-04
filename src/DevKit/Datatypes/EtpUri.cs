@@ -29,7 +29,7 @@ namespace Energistics.Datatypes
     /// </summary>
     public struct EtpUri
     {
-        private static readonly Regex Pattern = new Regex(@"^eml:(\/|\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|eml)([0-9]+)(\+(xml|json))?)(\/((obj_|cs_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?)$", RegexOptions.IgnoreCase);
+        private static readonly Regex Pattern = new Regex(@"^eml:(\/|\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|eml)([0-9]+)(\+(xml|json))?)(\/((obj_|cs_|part_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?)$", RegexOptions.IgnoreCase);
         private readonly Match _match;
 
         /// <summary>
@@ -217,7 +217,7 @@ namespace Energistics.Datatypes
                         : null;
 
                     yield return new Segment(
-                        EtpContentType.FormatObjectType(objectType),
+                        EtpContentType.FormatObjectType(objectType, Version),
                         objectId);
                 }
             }
@@ -231,7 +231,7 @@ namespace Energistics.Datatypes
         /// <returns>A new <see cref="EtpUri"/> instance.</returns>
         public EtpUri Append(string objectType, string objectId = null)
         {
-            objectType = EtpContentType.FormatObjectType(objectType);
+            objectType = EtpContentType.FormatObjectType(objectType, Version);
 
             return string.IsNullOrWhiteSpace(objectId) ?
                 new EtpUri(Uri + "/" + objectType) :

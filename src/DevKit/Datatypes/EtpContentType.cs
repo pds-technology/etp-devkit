@@ -27,7 +27,7 @@ namespace Energistics.Datatypes
     /// </summary>
     public struct EtpContentType
     {
-        private static readonly Regex Pattern = new Regex(@"^application/x\-(witsml|resqml|prodml|eml)\+(xml|json);version=([0-9.]+)((;)?|(;type=((obj_|cs_)?(\w+))(;)?)?)$");
+        private static readonly Regex Pattern = new Regex(@"^application/x\-(witsml|resqml|prodml|eml)\+(xml|json);version=([0-9.]+)((;)?|(;type=((obj_|cs_|part_)?(\w+))(;)?)?)$");
         private static readonly string[] ComponentSchemas = { "logCurveInfo", "trajectoryStation", "geologyInterval" };
         private const string BaseFormat = "application/x-{0}+{1};version={2}";
         private const string TypeFormat = ";type={0}";
@@ -50,8 +50,7 @@ namespace Energistics.Datatypes
             Family = GetValue(match, 1);
             Format = GetValue(match, 2);
             Version = GetValue(match, 3);
-            ObjectType = FormatObjectType(GetValue(match, 9));
-            SchemaType = FormatSchemaType(GetValue(match, 8) + ObjectType, Version);
+            ObjectType = FormatObjectType(GetValue(match, 9), Version);
         }
 
         /// <summary>
@@ -77,10 +76,9 @@ namespace Energistics.Datatypes
             Family = family;
             Format = format;
             Version = version;
-            SchemaType = FormatSchemaType(objectType, Version);
-            ObjectType = FormatObjectType(SchemaType);
+            ObjectType = FormatObjectType(objectType, Version);
 
-            _contentType = string.Format(BaseFormat, family, format, version) + FormatType(SchemaType);
+            _contentType = string.Format(BaseFormat, family, format, version) + FormatType(ObjectType);
         }
 
         /// <summary>
@@ -100,12 +98,6 @@ namespace Energistics.Datatypes
         /// </summary>
         /// <value>The version.</value>
         public string Version { get; }
-
-        /// <summary>
-        /// Gets the XSD type of the object.
-        /// </summary>
-        /// <value>The XSD type of the object.</value>
-        public string SchemaType { get; }
 
         /// <summary>
         /// Gets the type of the object.
@@ -271,11 +263,15 @@ namespace Energistics.Datatypes
         /// Formats the object type based on the specified object type name.
         /// </summary>
         /// <param name="objectType">The object type.</param>
+        /// <param name="version">The data schema version.</param>
         /// <returns>The formatted object type.</returns>
-        public static string FormatObjectType(string objectType)
+        public static string FormatObjectType(string objectType, string version)
         {
             if (string.IsNullOrWhiteSpace(objectType))
                 return string.Empty;
+
+            if (objectType.StartsWith("part_"))
+                return objectType;
 
             var index = objectType.IndexOf('_');
 
@@ -284,9 +280,22 @@ namespace Energistics.Datatypes
                 objectType = objectType.Substring(index + 1);
             }
 
-            // Camel case object type name to match WMLTypeIn parameter
-            objectType = objectType.Substring(0, 1).ToLowerInvariant()
-                       + objectType.Substring(1);
+            System.Version ver;
+
+            if (!version.Contains("_"))
+            {
+                // Capitalize object type when version >= 2.0
+                objectType = (System.Version.TryParse(version, out ver) && ver.Major < 2
+                    ? objectType.Substring(0, 1).ToLowerInvariant()
+                    : objectType.Substring(0, 1).ToUpperInvariant())
+                    + objectType.Substring(1);
+            }
+            else
+            {
+                // Camel case object type name to match WMLTypeIn parameter
+                objectType = objectType.Substring(0, 1).ToLowerInvariant()
+                           + objectType.Substring(1);
+            }
 
             return objectType;
         }

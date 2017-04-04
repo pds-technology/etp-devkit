@@ -36,11 +36,6 @@ namespace Energistics.Datatypes
         /// <summary>
         /// The data object resource type.
         /// </summary>
-        DataObject,
-
-        /// <summary>
-        /// The decorator folder resource type.
-        /// </summary>
-        DecoratorFolder
+        DataObject
     }
 }

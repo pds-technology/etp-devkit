@@ -102,7 +102,7 @@ namespace Energistics.Datatypes
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual(uuid, uri.ObjectId);
-            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("Well", uri.ObjectType);
             Assert.AreEqual("2.0", uri.Version);
 
             // Assert Equals and GetHashCode
@@ -129,16 +129,16 @@ namespace Energistics.Datatypes
         public void EtpUri_Can_Parse_Witsml_20_Log_Channel_Uri()
         {
             var uuid = Uuid();
-            var uri = new EtpUri("eml://witsml20/log(" + uuid + ")/channel(ROPA)");
+            var uri = new EtpUri("eml://witsml20/Log(" + uuid + ")/Channel(ROPA)");
             var ids = uri.GetObjectIds().FirstOrDefault();
 
             Assert.IsTrue(uri.IsValid);
-            Assert.AreEqual("channel", uri.ObjectType);
+            Assert.AreEqual("Channel", uri.ObjectType);
             Assert.AreEqual("ROPA", uri.ObjectId);
             Assert.AreEqual("2.0", uri.Version);
 
             Assert.IsNotNull(ids);
-            Assert.AreEqual("log", ids.ObjectType);
+            Assert.AreEqual("Log", ids.ObjectType);
             Assert.AreEqual(uuid, ids.ObjectId);
         }
 
@@ -156,8 +156,8 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpUri_IsRelatedTo_Can_Detect_Different_Versions()
         {
-            var uri14 = new EtpUri("eml://witsml14/obj_well");
-            var uri20 = new EtpUri("eml://witsml20/well");
+            var uri14 = new EtpUri("eml://witsml14/well");
+            var uri20 = new EtpUri("eml://witsml20/Well");
 
             Assert.IsTrue(uri14.IsValid);
             Assert.IsTrue(uri20.IsValid);
@@ -167,7 +167,7 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpUri_Can_Parse_Witsml_1411_Base_Uri()
         {
-            var uri = new EtpUri("eml://witsml1411");
+            var uri = new EtpUri("eml://witsml14");
 
             Assert.IsTrue(uri.IsValid);
             Assert.IsTrue(uri.IsBaseUri);
@@ -177,7 +177,7 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpUri_Append_Can_Append_Object_Type_To_Base_Uri()
         {
-            var uri14 = new EtpUri("eml://witsml1411");
+            var uri14 = new EtpUri("eml://witsml14");
             var uriWell = uri14.Append("well");
 
             Assert.IsTrue(uriWell.IsValid);
@@ -192,7 +192,7 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpUri_Append_Can_Append_Object_Type_And_Id_To_Base_Uri()
         {
-            var uri = new EtpUri("eml://witsml1411").Append("well", "w-01");
+            var uri = new EtpUri("eml://witsml14").Append("well", "w-01");
 
             Assert.IsTrue(uri.IsValid);
             Assert.IsFalse(uri.IsBaseUri);
@@ -206,7 +206,7 @@ namespace Energistics.Datatypes
         {
             var uuid = Uuid();
             var expected = "eml://witsml14/well(" + uuid + ")";
-            var contentType = "application/x-witsml+xml;version=1.4.1.1;type=obj_well";
+            var contentType = "application/x-witsml+xml;version=1.4.1.1;type=well";
             var uri = new EtpUri(expected);
 
             Assert.IsTrue(uri.IsValid);
@@ -221,7 +221,7 @@ namespace Energistics.Datatypes
         public void EtpUri_Can_Parse_Witsml_1411_Wellbore_Uri()
         {
             var uuid = Uuid();
-            var uriWell = new EtpUri("eml://witsml1411/obj_well(" + Uuid() + ")");
+            var uriWell = new EtpUri("eml://witsml14/well(" + Uuid() + ")");
             var uriWellbore = uriWell.Append("wellbore", uuid);
 
             Assert.IsNotNull(uriWellbore);
@@ -238,7 +238,7 @@ namespace Energistics.Datatypes
         public void EtpUri_Can_Parse_Witsml_1411_Log_Uri()
         {
             var uuid = Uuid();
-            var uri = new EtpUri("eml://witsml1411/well(" + Uuid() + ")/wellbore(" + Uuid() + ")/log(" + uuid + ")");
+            var uri = new EtpUri("eml://witsml14/well(" + Uuid() + ")/wellbore(" + Uuid() + ")/log(" + uuid + ")");
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual(uuid, uri.ObjectId);
@@ -249,7 +249,7 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpUri_Can_Parse_Full_Uri_Using_Schema_Types()
         {
-            var uri = new EtpUri("eml://custom-database/witsml14/obj_well(" + Uuid() + ")/obj_wellbore(" + Uuid() + ")/obj_log(" + Uuid() + ")/cs_logCurveInfo(GR)");
+            var uri = new EtpUri("eml://custom-database/witsml14/well(" + Uuid() + ")/wellbore(" + Uuid() + ")/log(" + Uuid() + ")/logCurveInfo(GR)");
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("custom-database", uri.DataSpace);
@@ -275,7 +275,7 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpUri_Can_Parse_Uri_With_No_Format_Specified()
         {
-            var uri = new EtpUri("eml://witsml14/obj_well(" + Uuid() + ")");
+            var uri = new EtpUri("eml://witsml14/well(" + Uuid() + ")");
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("1.4.1.1", uri.Version);
@@ -286,7 +286,7 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpUri_Can_Parse_Uri_With_Xml_Format_Specified()
         {
-            var uri = new EtpUri("eml://witsml14+xml/obj_well(" + Uuid() + ")");
+            var uri = new EtpUri("eml://witsml14+xml/well(" + Uuid() + ")");
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("1.4.1.1", uri.Version);
@@ -297,7 +297,7 @@ namespace Energistics.Datatypes
         [TestMethod]
         public void EtpUri_Can_Parse_Uri_With_Json_Format_Specified()
         {
-            var uri = new EtpUri("eml://witsml14+json/obj_well(" + Uuid() + ")");
+            var uri = new EtpUri("eml://witsml14+json/well(" + Uuid() + ")");
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("1.4.1.1", uri.Version);
@@ -312,7 +312,7 @@ namespace Energistics.Datatypes
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("2.0", uri.Version);
-            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("Well", uri.ObjectType);
             Assert.AreEqual("?name=value", uri.Query);
             Assert.AreEqual(string.Empty, uri.Hash);
         }
@@ -324,7 +324,7 @@ namespace Energistics.Datatypes
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("2.0", uri.Version);
-            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("Well", uri.ObjectType);
             Assert.AreEqual("#/value", uri.Hash);
             Assert.AreEqual(string.Empty, uri.Query);
         }
@@ -336,7 +336,7 @@ namespace Energistics.Datatypes
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("2.0", uri.Version);
-            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("Well", uri.ObjectType);
             Assert.AreEqual("?name=value", uri.Query);
             Assert.AreEqual("#/value", uri.Hash);
         }
@@ -348,7 +348,7 @@ namespace Energistics.Datatypes
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("2.0", uri.Version);
-            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("Well", uri.ObjectType);
             Assert.AreEqual("abc 123=", uri.ObjectId);
         }
 
@@ -374,7 +374,7 @@ namespace Energistics.Datatypes
         public void EtpUri_UIDs_With_Special_Characters_Are_Valid()
         {
             var specialCharacterUid = "UID-~!@#$%=^&*_{}|(<>?;:',./[]\"";
-            var uri = new EtpUri($"eml://witsml20/well({Uuid()})/wellbore({specialCharacterUid})");
+            var uri = new EtpUri($"eml://witsml20/Well({Uuid()})/Wellbore({specialCharacterUid})");
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("witsml", uri.Family);
@@ -385,36 +385,36 @@ namespace Energistics.Datatypes
         [TestMethod, Description("Tests Uris with components and must end with the component ")]
         public void EtpUri_Components_Without_Identifiers_Must_End_At_Component()
         {
-            var uri = new EtpUri("eml://witsml20/log/");
+            var uri = new EtpUri("eml://witsml20/Log/");
 
             Assert.IsTrue(!uri.IsValid);
 
-            uri = new EtpUri("eml://witsml20/log");
+            uri = new EtpUri("eml://witsml20/Log");
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("witsml", uri.Family);
             Assert.AreEqual("2.0", uri.Version);
-            Assert.AreEqual("log", uri.ObjectType);
+            Assert.AreEqual("Log", uri.ObjectType);
         }
 
         [TestMethod, Description("Tests Uris with components and identifier must end with end parenthesis")]
         public void EtpUri_Components_With_Identifiers_Must_End_With_End_Parenthesis()
         {
             var uuid = Uuid();
-            var uri = new EtpUri($"eml://witsml20/well({uuid}))");
+            var uri = new EtpUri($"eml://witsml20/Well({uuid}))");
 
             Assert.IsTrue(!uri.IsValid);
 
-            uri = new EtpUri($"eml://witsml20/well({uuid})/");
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/");
 
             Assert.IsTrue(!uri.IsValid);
 
-            uri = new EtpUri($"eml://witsml20/well({uuid})");
+            uri = new EtpUri($"eml://witsml20/Well({uuid})");
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("witsml", uri.Family);
             Assert.AreEqual("2.0", uri.Version);
-            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("Well", uri.ObjectType);
         }
 
         private string Uuid()
