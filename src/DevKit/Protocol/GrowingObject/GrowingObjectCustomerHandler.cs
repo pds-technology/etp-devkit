@@ -128,8 +128,10 @@ namespace Energistics.Protocol.GrowingObject
         /// <param name="uri">The URI of the parent object.</param>
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
+        /// <param name="uom">The unit of measure.</param>
+        /// <param name="depthDatum">The depth datum.</param>
         /// <returns>The message identifier.</returns>
-        public long GrowingObjectDeleteRange(string uri, object startIndex, object endIndex)
+        public long GrowingObjectDeleteRange(string uri, object startIndex, object endIndex, string uom, string depthDatum)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectDeleteRange);
 
@@ -137,7 +139,9 @@ namespace Energistics.Protocol.GrowingObject
             {
                 Uri = uri,
                 StartIndex = new GrowingObjectIndex { Item = startIndex },
-                EndIndex = new GrowingObjectIndex { Item = endIndex }
+                EndIndex = new GrowingObjectIndex { Item = endIndex },
+                //Uom = uom,
+                //DepthDatum = depthDatum
             };
 
             return Session.SendMessage(header, message);

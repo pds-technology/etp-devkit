@@ -70,8 +70,10 @@ namespace Energistics.Protocol.GrowingObject
         /// <param name="uri">The URI of the parent object.</param>
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
+        /// <param name="uom">The unit of measure.</param>
+        /// <param name="depthDatum">The depth datum.</param>
         /// <returns>The message identifier.</returns>
-        long GrowingObjectDeleteRange(string uri, object startIndex, object endIndex);
+        long GrowingObjectDeleteRange(string uri, object startIndex, object endIndex, string uom, string depthDatum);
 
         /// <summary>
         /// Handles the ObjectFragment event from a store.

@@ -96,24 +96,10 @@ namespace Energistics.Protocol.Discovery
             // Handle case when "No Data" Acknowledge message was received
             if (header.MessageFlags == (int)MessageFlags.NoData)
             {
-                var uri = GetRequestedUri(header);
-                HandleAcknowledge(header, acknowledge, uri);
-                return;
+                GetRequestedUri(header);
             }
 
             base.HandleAcknowledge(header, acknowledge);
-        }
-
-        /// <summary>
-        /// Handles the Acknowledge message from a store.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="acknowledge">The Acknowledge message.</param>
-        /// <param name="uri">The URI.</param>
-        protected virtual void HandleAcknowledge(MessageHeader header, Acknowledge acknowledge, string uri)
-        {
-            var args = Notify(OnGetResourcesResponse, header, new GetResourcesResponse(), uri);
-            HandleGetResourcesResponse(args);
         }
 
         /// <summary>
