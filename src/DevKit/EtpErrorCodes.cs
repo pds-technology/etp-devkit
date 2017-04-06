@@ -52,10 +52,16 @@ namespace Energistics
         /// <summary>EINVALID_STATE</summary>
         [Description("EINVALID_STATE")]
         InvalidState = 8,
-
         /// <summary>EINVALID_URI</summary>
         [Description("EINVALID_URI")]
-        InvalidUri = 1001,
+        InvalidUri = 9,
+        /// <summary>EEXPIRED_TOKEN</summary>
+        [Description("EEXPIRED_TOKEN")]
+        ExpiredToken = 10,
+        /// <summary>ENOT_FOUND</summary>
+        [Description("ENOT_FOUND")]
+        NotFound = 11,
+
         /// <summary>EINVALID_CHANNELID</summary>
         [Description("EINVALID_CHANNELID")]
         InvalidChannelId = 1002,
@@ -68,6 +74,12 @@ namespace Energistics
         InvalidObject = 3002,
         /// <summary>ENOCASCADE_DELETE</summary>
         [Description("ENOCASCADE_DELETE")]
-        NoCascadeDelete = 3003
+        NoCascadeDelete = 3003,
+        /// <summary>EPLURAL_OBJECT</summary>
+        [Description("EPLURAL_OBJECT")]
+        NoPluralObject = 3004,
+        /// <summary>EGROWING_PORTION_IGNORED</summary>
+        [Description("EPLURAL_OBJECT")]
+        GrowingPortionIgnored = 3005
     }
 }

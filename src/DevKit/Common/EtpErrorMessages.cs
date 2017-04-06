@@ -144,6 +144,30 @@ namespace Energistics.Common
         }
 
         /// <summary>
+        /// Sends a <see cref="ProtocolException"/> message for an expired token.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="value">The argument value.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
+        public static long ExpiredToken(this EtpProtocolHandler handler, object value, long messageId = 0)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.ExpiredToken, "Expired Token: " + value, messageId);
+        }
+
+        /// <summary>
+        /// Sends a <see cref="ProtocolException"/> message for object not found.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="value">The argument value.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
+        public static long NotFound(this EtpProtocolHandler handler, object value, long messageId = 0)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.NotFound, "Not Found: " + value, messageId);
+        }
+
+        /// <summary>
         /// Sends a <see cref="ProtocolException"/> message for an invalid ChannelId.
         /// </summary>
         /// <param name="handler">The protocol handler.</param>
@@ -201,6 +225,30 @@ namespace Energistics.Common
         public static long NoCascadeDelete(this EtpProtocolHandler handler, string uri, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.NoCascadeDelete, "If cascading deletes are not invoked, a client must only request deletion of bottom level data-objects such that all child data - objects are deleted before the parent is deleted. URI: " + uri, messageId);
+        }
+
+        /// <summary>
+        /// Sends a <see cref="ProtocolException"/> message for no plural object.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="uri">The URI.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
+        public static long NoPluralObject(this EtpProtocolHandler handler, string uri, long messageId = 0)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.NoPluralObject, "Client attempted to put more than one object under the plural root of a 1.x Energistics data object. ETP only supports a single data object, one XML document. URI: " + uri, messageId);
+        }
+
+        /// <summary>
+        /// Sends a <see cref="ProtocolException"/> message for ignoring the growing portion.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="uri">The URI.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
+        public static long GrowingPortionIgnored(this EtpProtocolHandler handler, string uri, long messageId = 0)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.GrowingPortionIgnored, "The object is upserted, but the growing portion is ignored. URI: " + uri, messageId);
         }
     }
 }
