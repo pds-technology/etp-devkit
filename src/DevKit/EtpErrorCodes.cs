@@ -61,6 +61,9 @@ namespace Energistics
         /// <summary>ENOT_FOUND</summary>
         [Description("ENOT_FOUND")]
         NotFound = 11,
+        /// <summary>ELIMIT_EXCEEDED</summary>
+        [Description("ELIMIT_EXCEEDED")]
+        LimitExceeded = 12,
 
         /// <summary>EINVALID_CHANNELID</summary>
         [Description("EINVALID_CHANNELID")]
