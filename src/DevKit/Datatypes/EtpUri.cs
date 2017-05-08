@@ -29,13 +29,13 @@ namespace Energistics.Datatypes
     /// </summary>
     public struct EtpUri
     {
-        private static readonly Regex Pattern = new Regex(@"^eml:(\/|\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|eml)([0-9]+)(\+(xml|json))?)(\/((obj_|cs_|part_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?)$", RegexOptions.IgnoreCase);
+        private static readonly Regex Pattern = new Regex(@"^eml:(\/\/|\/\/\/|\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|eml)([0-9]+)(\+(xml|json))?)(\/((obj_|cs_|part_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?)$", RegexOptions.IgnoreCase);
         private readonly Match _match;
 
         /// <summary>
         /// The root URI supported by the Discovery protocol.
         /// </summary>
-        public static readonly EtpUri RootUri = new EtpUri("eml:/");
+        public static readonly EtpUri RootUri = new EtpUri("eml://");
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpUri"/> struct.
