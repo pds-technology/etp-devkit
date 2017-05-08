@@ -96,7 +96,7 @@ namespace Energistics.Datatypes
         public void EtpUri_Can_Parse_Witsml_20_Well_Uri()
         {
             var uuid = Uuid();
-            var uri = new EtpUri("eml://witsml20/well(" + uuid + ")");
+            var uri = new EtpUri("eml://witsml20/Well(" + uuid + ")");
             var clone = new EtpUri(uri);
 
             Assert.IsTrue(uri.IsValid);
@@ -139,6 +139,34 @@ namespace Energistics.Datatypes
             Assert.IsNotNull(ids);
             Assert.AreEqual("Log", ids.ObjectType);
             Assert.AreEqual(uuid, ids.ObjectId);
+        }
+
+        [TestMethod]
+        public void EtpUri_Can_Parse_Witsml_20_TrajectoryStation_Uri()
+        {
+            var uuid1 = Uuid();
+            var uuid2 = Uuid();
+            var contentType = "application/x-witsml+xml;version=2.0;type=part_TrajectoryStation";
+            var uri = new EtpUri($"eml://witsml20/Trajectory({uuid1})/TrajectoryStation({uuid2})");
+            var ids = uri.GetObjectIds().FirstOrDefault();
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("TrajectoryStation", uri.ObjectType);
+            Assert.AreEqual(contentType, uri.ContentType);
+            Assert.AreEqual(uuid2, uri.ObjectId);
+            Assert.AreEqual("2.0", uri.Version);
+
+            Assert.IsNotNull(ids);
+            Assert.AreEqual("Trajectory", ids.ObjectType);
+            Assert.AreEqual(uuid1, ids.ObjectId);
+
+            uri = new EtpUri($"eml://witsml20/TrajectoryStation({uuid2})");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("TrajectoryStation", uri.ObjectType);
+            Assert.AreEqual(contentType, uri.ContentType);
+            Assert.AreEqual(uuid2, uri.ObjectId);
+            Assert.AreEqual("2.0", uri.Version);
         }
 
         [TestMethod]
@@ -360,7 +388,7 @@ namespace Energistics.Datatypes
 
             var uri = new EtpUri($"eml://custom-database/witsml14/well({wellUid})/wellbore({Uuid()})");
 
-            Assert.IsTrue(!uri.IsValid);
+            Assert.IsFalse(uri.IsValid);
 
             uri = new EtpUri($"eml://witsml14/well({wellUid.Replace(" ", "")})/wellbore({Uuid()})");
 
@@ -386,7 +414,7 @@ namespace Energistics.Datatypes
         {
             var uri = new EtpUri("eml://witsml20/Log/");
 
-            Assert.IsTrue(!uri.IsValid);
+            Assert.IsFalse(uri.IsValid);
 
             uri = new EtpUri("eml://witsml20/Log");
 
@@ -402,11 +430,11 @@ namespace Energistics.Datatypes
             var uuid = Uuid();
             var uri = new EtpUri($"eml://witsml20/Well({uuid}))");
 
-            Assert.IsTrue(!uri.IsValid);
+            Assert.IsFalse(uri.IsValid);
 
             uri = new EtpUri($"eml://witsml20/Well({uuid})/");
 
-            Assert.IsTrue(!uri.IsValid);
+            Assert.IsFalse(uri.IsValid);
 
             uri = new EtpUri($"eml://witsml20/Well({uuid})");
 

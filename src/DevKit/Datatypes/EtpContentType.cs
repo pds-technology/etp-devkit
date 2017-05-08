@@ -28,7 +28,7 @@ namespace Energistics.Datatypes
     public struct EtpContentType
     {
         private static readonly Regex Pattern = new Regex(@"^application/x\-(witsml|resqml|prodml|eml)\+(xml|json);version=([0-9.]+)((;)?|(;type=((obj_|cs_|part_)?(\w+))(;)?)?)$");
-        private static readonly string[] ComponentSchemas = { "logCurveInfo", "trajectoryStation", "geologyInterval" };
+        private static readonly string[] PartSchemas = { "TrajectoryStation", "MudlogReportInterval", "WellboreGeometrySection" };
         private const string BaseFormat = "application/x-{0}+{1};version={2}";
         private const string TypeFormat = ";type={0}";
         private readonly string _contentType;
@@ -78,7 +78,7 @@ namespace Energistics.Datatypes
             Version = version;
             ObjectType = FormatObjectType(objectType, Version);
 
-            _contentType = string.Format(BaseFormat, family, format, version) + FormatType(ObjectType);
+            _contentType = string.Format(BaseFormat, family, format, version) + FormatType(ObjectType, Version);
         }
 
         /// <summary>
@@ -223,43 +223,6 @@ namespace Energistics.Datatypes
         }
 
         /// <summary>
-        /// Formats the schema type based on the specified version.
-        /// </summary>
-        /// <param name="schemaType">The XSD object type.</param>
-        /// <param name="version">The data schema version.</param>
-        /// <returns>The formatted schema type.</returns>
-        public static string FormatSchemaType(string schemaType, string version)
-        {
-            if (string.IsNullOrWhiteSpace(schemaType))
-                return string.Empty;
-
-            var index = schemaType.IndexOf('_');
-            var objectType = schemaType.Substring(index + 1);
-
-            System.Version ver = null;
-
-            if (!version.Contains("_"))
-            {
-                // Capitalize object type when version >= 2.0
-                objectType = (System.Version.TryParse(version, out ver) && ver.Major < 2
-                    ? objectType.Substring(0, 1).ToLowerInvariant()
-                    : objectType.Substring(0, 1).ToUpperInvariant())
-                    + objectType.Substring(1);
-            }
-
-            // prefix to be used for 1.x XSD types
-            var prefix = ComponentSchemas.Any(cs => cs.Equals(objectType, StringComparison.InvariantCultureIgnoreCase))
-                ? "cs_"
-                : "obj_";
-
-            schemaType = (ver != null && ver.Major < 2)
-                ? prefix + objectType
-                : objectType;
-
-            return schemaType;
-        }
-
-        /// <summary>
         /// Formats the object type based on the specified object type name.
         /// </summary>
         /// <param name="objectType">The object type.</param>
@@ -282,20 +245,11 @@ namespace Energistics.Datatypes
 
             System.Version ver;
 
-            if (!version.Contains("_"))
-            {
-                // Capitalize object type when version >= 2.0
-                objectType = (System.Version.TryParse(version, out ver) && ver.Major < 2
-                    ? objectType.Substring(0, 1).ToLowerInvariant()
-                    : objectType.Substring(0, 1).ToUpperInvariant())
-                    + objectType.Substring(1);
-            }
-            else
-            {
-                // Camel case object type name to match WMLTypeIn parameter
-                objectType = objectType.Substring(0, 1).ToLowerInvariant()
-                           + objectType.Substring(1);
-            }
+            // Capitalize object type when version >= 2.0
+            objectType = (TryParseVersion(version, out ver) && ver.Major >= 2
+                       ? objectType.Substring(0, 1).ToUpperInvariant()
+                       : objectType.Substring(0, 1).ToLowerInvariant())
+                       + objectType.Substring(1);
 
             return objectType;
         }
@@ -317,13 +271,36 @@ namespace Energistics.Datatypes
         /// Formats the specified schema type for appending to a content type.
         /// </summary>
         /// <param name="schemaType">Type of the object.</param>
+        /// <param name="version">The data schema version.</param>
         /// <returns>The formatted content type segment.</returns>
-        private static string FormatType(string schemaType)
+        private static string FormatType(string schemaType, string version)
         {
             if (string.IsNullOrWhiteSpace(schemaType))
                 return string.Empty;
 
+            System.Version ver;
+
+            if (TryParseVersion(version, out ver) && ver.Major >= 2 && PartSchemas.Contains(schemaType))
+                schemaType = $"part_{schemaType}";
+
             return string.Format(TypeFormat, schemaType);
+        }
+
+        /// <summary>
+        /// Tries to convert the string representation of a version number to an equivalent System.Version
+        /// object, and returns a value that indicates whether the conversion succeeded.
+        /// </summary>
+        /// <param name="version">The version.</param>
+        /// <param name="result">The result.</param>
+        /// <returns>true if the input parameter was converted successfully; otherwise, false.</returns>
+        private static bool TryParseVersion(string version, out System.Version result)
+        {
+            if (!string.IsNullOrWhiteSpace(version) && !version.Contains("_"))
+                return System.Version.TryParse(version, out result);
+
+            result = new System.Version(0, 0);
+
+            return false;
         }
     }
 }
