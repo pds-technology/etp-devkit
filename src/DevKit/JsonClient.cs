@@ -16,9 +16,11 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text;
 using Energistics.Datatypes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -32,8 +34,10 @@ namespace Energistics
     /// </summary>
     public class JsonClient
     {
-        private const string ContentType = "application/json";
+        private const string UrlEncodedContentType = "application/x-www-form-urlencoded";
+        private const string JsonContentType = "application/json";
         private const string DefaultGrantType = "password";
+        private const string NoCache = "no-cache";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonClient" /> class.
@@ -103,19 +107,33 @@ namespace Energistics
         /// <returns>The JSON Web Token provided by the URL.</returns>
         public string GetJsonWebToken(string url, string grantType = DefaultGrantType)
         {
-            using (var client = new System.Net.WebClient())
+            using (var client = new WebClient())
             {
                 client.Proxy = Proxy;
 
+                // Include Authorization header
                 foreach (var header in BasicHeader)
                     client.Headers[header.Key] = header.Value;
 
-                var response = client.UploadString(url, "grant_type=" + grantType);
-                var json = JObject.Parse(response);
+                client.Headers[HttpRequestHeader.ContentType] = UrlEncodedContentType;
+                client.Headers[HttpRequestHeader.CacheControl] = NoCache;
 
-                var token = json["access_token"].Value<string>();
+                var payload = PreparePayload(BasicHeader, grantType);
+                var response = client.UploadString(url, payload);
+                string token;
+
+                try
+                {
+                    var json = JObject.Parse(response);
+                    token = json["access_token"].Value<string>();
+                }
+                catch (Exception e)
+                {
+                    // If we can't parse the expected response format, use the raw response as the token
+                    token = response;
+                }
+
                 BearerHeader = Authorization.Bearer(token);
-
                 return token;
             }
         }
@@ -142,14 +160,14 @@ namespace Energistics
         /// <returns>The <see cref="Energistics.Datatypes.ServerCapabilities"/> object.</returns>
         private ServerCapabilities GetServerCapabilities(string url, IDictionary<string, string> headers)
         {
-            using (var client = new System.Net.WebClient())
+            using (var client = new WebClient())
             {
                 client.Proxy = Proxy;
 
                 foreach (var header in headers)
                     client.Headers[header.Key] = header.Value;
 
-                client.Headers[System.Net.HttpRequestHeader.Accept] = ContentType;
+                client.Headers[HttpRequestHeader.Accept] = JsonContentType;
 
                 var response = client.DownloadString(url);
                 var capServer = JsonConvert.DeserializeObject<ServerCapabilities>(response);
@@ -157,6 +175,52 @@ namespace Energistics
                 ServerCapabilities = capServer;
                 return capServer;
             }
+        }
+
+        /// <summary>
+        /// Prepares the payload for the JWT request.
+        /// </summary>
+        /// <param name="headers">The headers.</param>
+        /// <param name="grantType">The grant type.</param>
+        /// <returns>The URL encoded name/value pairs.</returns>
+        private static string PreparePayload(IDictionary<string, string> headers, string grantType)
+        {
+            var payload = new StringBuilder()
+                .AppendFormat("grant_type={0}", grantType);
+
+            try
+            {
+                string header;
+                if (headers.TryGetValue(Authorization.Header, out header) && header.StartsWith("Basic "))
+                {
+                    // Skip authorization type
+                    header = header.Substring(6);
+
+                    if (!string.IsNullOrWhiteSpace(header))
+                    {
+                        var bytes = Convert.FromBase64String(header);
+                        header = Encoding.UTF8.GetString(bytes);
+
+                        var values = header.Split(new[] {':'}, 2);
+                        var username = values.FirstOrDefault();
+                        var password = values.Skip(1).FirstOrDefault();
+
+                        if (!string.IsNullOrWhiteSpace(password))
+                        {
+                            // Include URL encoded credentials in payload
+                            payload.AppendFormat("&username={0}&password={1}",
+                                WebUtility.UrlEncode(username),
+                                WebUtility.UrlEncode(password));
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Credentials will not be included in payload
+            }
+
+            return payload.ToString();
         }
     }
 }
