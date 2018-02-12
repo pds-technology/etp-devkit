@@ -66,6 +66,7 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
+    <Compile Include="Datatypes\ByteArrayConverterTests.cs" />
     <Compile Include="Datatypes\ChannelData\StreamingStartIndexConverterTests.cs" />
     <Compile Include="Datatypes\EtpUriTests.cs" />
     <Compile Include="Datatypes\EtpContentTypeTests.cs" />

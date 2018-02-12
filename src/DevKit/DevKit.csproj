@@ -81,6 +81,7 @@
     <Compile Include="Common\EtpProtocolHandler.cs" />
     <Compile Include="Common\EtpSession.cs" />
     <Compile Include="Common\EtpSettings.cs" />
+    <Compile Include="Datatypes\ByteArrayConverter.cs" />
     <Compile Include="Datatypes\ChannelData\StreamingStartIndexConverter.cs" />
     <Compile Include="Datatypes\EtpContentType.cs" />
     <Compile Include="Datatypes\EtpUri.cs" />

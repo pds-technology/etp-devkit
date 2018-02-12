@@ -44,6 +44,7 @@ namespace Energistics.Common
             ContractResolver = new EtpContractResolver(),
             Converters = new List<JsonConverter>()
             {
+                new ByteArrayConverter(),
                 new StreamingStartIndexConverter(),
                 new StringEnumConverter()
             }

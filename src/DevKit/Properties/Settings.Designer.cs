@@ -52,7 +52,7 @@ namespace Energistics.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("json")]
+        [global::System.Configuration.DefaultSettingValueAttribute("JSON")]
         public string EtpEncodingJson {
             get {
                 return ((string)(this["EtpEncodingJson"]));

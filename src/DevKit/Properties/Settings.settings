@@ -12,7 +12,7 @@
       <Value Profile="(Default)">binary</Value>
     </Setting>
     <Setting Name="EtpEncodingJson" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">json</Value>
+      <Value Profile="(Default)">JSON</Value>
     </Setting>
   </Settings>
 </SettingsFile>

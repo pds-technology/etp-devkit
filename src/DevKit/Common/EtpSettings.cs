@@ -34,5 +34,15 @@ namespace Energistics.Common
         /// The default ETP encoding header
         /// </summary>
         public static string EtpEncodingHeader = Settings.Default.EtpEncodingHeader;
+
+        /// <summary>
+        /// The binary ETP encoding.
+        /// </summary>
+        public static string EtpEncodingBinary = Settings.Default.EtpEncodingBinary;
+
+        /// <summary>
+        /// The JSON ETP encoding.
+        /// </summary>
+        public static string EtpEncodingJson = Settings.Default.EtpEncodingJson;
     }
 }
