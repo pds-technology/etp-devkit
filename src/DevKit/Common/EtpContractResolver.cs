@@ -16,10 +16,13 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
 using Avro;
+using Avro.Specific;
+using Energistics.Datatypes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -28,27 +31,52 @@ namespace Energistics.Common
     /// <summary>
     /// Resolves member mappings for ETP message types.
     /// </summary>
-    /// <seealso cref="Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver" />
+    /// <seealso cref="CamelCasePropertyNamesContractResolver" />
     public class EtpContractResolver : CamelCasePropertyNamesContractResolver
     {
+        private static readonly string[] NullStringTypes = { "null", "string" };
+
         /// <summary>
-        /// Creates a <see cref="T:Newtonsoft.Json.Serialization.JsonProperty" /> for the given <see cref="T:System.Reflection.MemberInfo" />.
+        /// Creates a <see cref="JsonProperty" /> for the given <see cref="MemberInfo" />.
         /// </summary>
-        /// <param name="member">The member to create a <see cref="T:Newtonsoft.Json.Serialization.JsonProperty" /> for.</param>
-        /// <param name="memberSerialization">The member's parent <see cref="T:Newtonsoft.Json.MemberSerialization" />.</param>
-        /// <returns>
-        /// A created <see cref="T:Newtonsoft.Json.Serialization.JsonProperty" /> for the given <see cref="T:System.Reflection.MemberInfo" />.
-        /// </returns>
+        /// <param name="member">The member to create a <see cref="JsonProperty" /> for.</param>
+        /// <param name="memberSerialization">The member's parent <see cref="MemberSerialization" />.</param>
+        /// <returns>A created <see cref="JsonProperty" /> for the given <see cref="MemberInfo" />.</returns>
         protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
         {
             var property = base.CreateProperty(member, memberSerialization);
 
             if (property.PropertyType == typeof(Schema) || member.GetCustomAttributes(typeof(XmlIgnoreAttribute), true).Any())
             {
-                property.ShouldSerialize = (instance) => false;
+                property.ShouldSerialize = instance => false;
+            }
+            else if (property.PropertyType == typeof(string))
+            {
+                if (IsNullableString(member, property))
+                {
+                    property.Converter = new NullableStringConverter();
+                    property.MemberConverter = property.Converter;
+                }
             }
 
             return property;
+        }
+
+        private bool IsNullableString(MemberInfo member, JsonProperty property)
+        {
+            if (member.DeclaringType == null) return false;
+            if (!typeof(ISpecificRecord).IsAssignableFrom(member.DeclaringType)) return false;
+
+            var instance = Activator.CreateInstance(member.DeclaringType) as ISpecificRecord;
+            var schema = instance?.Schema as RecordSchema;
+
+            var field = schema?[property.PropertyName];
+            var union = field?.Schema as UnionSchema;
+
+            if (union == null || union.Count != 2) return false;
+
+            return NullStringTypes.Contains(union[0].Name)
+                && NullStringTypes.Contains(union[1].Name);
         }
     }
 }

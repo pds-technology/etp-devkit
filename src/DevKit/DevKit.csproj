@@ -83,11 +83,15 @@
     <Compile Include="Common\EtpSettings.cs" />
     <Compile Include="Datatypes\ByteArrayConverter.cs" />
     <Compile Include="Datatypes\ChannelData\StreamingStartIndexConverter.cs" />
+    <Compile Include="Datatypes\NullableAttributeConverter.cs" />
+    <Compile Include="Datatypes\DataValueConverter.cs" />
     <Compile Include="Datatypes\EtpContentType.cs" />
     <Compile Include="Datatypes\EtpUri.cs" />
     <Compile Include="Common\IEtpSession.cs" />
     <Compile Include="Common\ProtocolEventArgs.cs" />
     <Compile Include="Common\ProtocolEventHandler.cs" />
+    <Compile Include="Datatypes\Object\GrowingObjectIndexConverter.cs" />
+    <Compile Include="Datatypes\PrimitiveConverters.cs" />
     <Compile Include="EtpErrorCodes.cs" />
     <Compile Include="EtpServer.cs" />
     <Compile Include="EtpServerHandler.cs" />

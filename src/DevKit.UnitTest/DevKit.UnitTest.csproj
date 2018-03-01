@@ -70,7 +70,9 @@
     <Compile Include="Datatypes\ChannelData\StreamingStartIndexConverterTests.cs" />
     <Compile Include="Datatypes\EtpUriTests.cs" />
     <Compile Include="Datatypes\EtpContentTypeTests.cs" />
+    <Compile Include="Datatypes\Object\GrowingObjectIndexConverterTests.cs" />
     <Compile Include="Datatypes\ProtocolRoleAttributeTests.cs" />
+    <Compile Include="Datatypes\NullableAttributeConverterTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

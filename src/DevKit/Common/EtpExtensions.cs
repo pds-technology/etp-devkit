@@ -45,6 +45,11 @@ namespace Energistics.Common
             Converters = new List<JsonConverter>()
             {
                 new ByteArrayConverter(),
+                // TODO: new DataValueConverter(),
+                new GrowingObjectIndexConverter(),
+                new NullableDoubleConverter(),
+                new NullableIntConverter(),
+                new NullableLongConverter(),
                 new StreamingStartIndexConverter(),
                 new StringEnumConverter()
             }
