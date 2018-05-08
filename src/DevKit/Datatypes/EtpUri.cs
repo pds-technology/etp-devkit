@@ -30,6 +30,7 @@ namespace Energistics.Datatypes
     public struct EtpUri
     {
         private static readonly Regex Pattern = new Regex(@"^eml:(\/\/|\/\/\/|\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|eml)([0-9]+)(\+(xml|json))?)(\/((obj_|cs_|part_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?)$", RegexOptions.IgnoreCase);
+        private readonly EtpUri?[] _parent;
         private readonly Match _match;
 
         /// <summary>
@@ -44,6 +45,7 @@ namespace Energistics.Datatypes
         public EtpUri(string uri)
         {
             _match = Pattern.Match(uri);
+            _parent = new EtpUri?[] { null };
 
             Uri = uri;
             IsValid = _match.Success || IsRoot(uri);
@@ -138,26 +140,13 @@ namespace Energistics.Datatypes
         /// Gets a value indicating whether this instance is a base URI.
         /// </summary>
         /// <value><c>true</c> if this instance is a base URI; otherwise, <c>false</c>.</value>
-        public bool IsBaseUri
-        {
-            get
-            {
-                return string.IsNullOrWhiteSpace(ObjectType)
-                    && string.IsNullOrWhiteSpace(ObjectId);
-            }
-        }
+        public bool IsBaseUri => string.IsNullOrWhiteSpace(ObjectType) && string.IsNullOrWhiteSpace(ObjectId);
 
         /// <summary>
         /// Gets a value indicating whether this instance is a the root URI.
         /// </summary>
         /// <value><c>true</c> if this instance is the root URI; otherwise, <c>false</c>.</value>
-        public bool IsRootUri
-        {
-            get
-            {
-                return string.Equals(RootUri, Uri, StringComparison.InvariantCultureIgnoreCase);
-            }
-        }
+        public bool IsRootUri => string.Equals(RootUri, Uri, StringComparison.InvariantCultureIgnoreCase);
 
         /// <summary>
         /// Gets the parent URI.
@@ -170,6 +159,9 @@ namespace Energistics.Datatypes
                 if (!IsValid || IsBaseUri)
                     return this;
 
+                if (_parent[0].HasValue)
+                    return _parent[0].Value;
+
                 var uri = Uri;
 
                 if (!string.IsNullOrWhiteSpace(Query))
@@ -179,7 +171,9 @@ namespace Energistics.Datatypes
                     uri = uri.Substring(0, uri.IndexOf('#'));
 
                 var index = uri.LastIndexOf('/');
-                return new EtpUri(uri.Substring(0, index));
+                _parent[0] = new EtpUri(uri.Substring(0, index));
+
+                return _parent[0].Value;
             }
         }
 
@@ -224,14 +218,28 @@ namespace Energistics.Datatypes
         }
 
         /// <summary>
-        /// Appends the specified object type and optional object identifier to the <see cref="EtpUri"/>.
+        /// Creates a case-insensitive dictionary of object types and object identifiers.
+        /// </summary>
+        /// <returns></returns>
+        public IReadOnlyDictionary<string, string> GetObjectIdMap()
+        {
+            return GetObjectIds()
+                .ToDictionary(x => x.ObjectType, x => x.ObjectId, StringComparer.InvariantCultureIgnoreCase);
+        }
+
+        /// <summary>
+        /// Appends the specified object type and optional object identifier to the <see cref="EtpUri" />.
         /// </summary>
         /// <param name="objectType">The object type.</param>
         /// <param name="objectId">The object identifier.</param>
-        /// <returns>A new <see cref="EtpUri"/> instance.</returns>
-        public EtpUri Append(string objectType, string objectId = null)
+        /// <param name="encode">if set to <c>true</c> encode the object identifier value.</param>
+        /// <returns>A new <see cref="EtpUri" /> instance.</returns>
+        public EtpUri Append(string objectType, string objectId = null, bool encode = false)
         {
             objectType = EtpContentType.FormatObjectType(objectType, Version);
+
+            if (encode)
+                objectId = WebUtility.UrlEncode(objectId);
 
             return string.IsNullOrWhiteSpace(objectId) ?
                 new EtpUri(Uri + "/" + objectType) :

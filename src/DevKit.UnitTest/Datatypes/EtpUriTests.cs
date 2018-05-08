@@ -116,7 +116,6 @@ namespace Energistics.Datatypes
         {
             var uuid = Uuid() + "=";
             var uri = new EtpUri("eml://witsml14/obj_well(" + uuid + ")");
-            var clone = new EtpUri(uri);
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual(uuid, uri.ObjectId);

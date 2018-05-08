@@ -78,7 +78,7 @@ namespace Energistics.Common
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long UnsupportedProtocol(this EtpProtocolHandler handler, object value, long messageId = 0)
+        public static long UnsupportedProtocol(this IProtocolHandler handler, object value, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, "Unsupported Protocol: " + value, messageId);
         }
@@ -90,7 +90,7 @@ namespace Energistics.Common
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long InvalidArgument(this EtpProtocolHandler handler, object value, long messageId = 0)
+        public static long InvalidArgument(this IProtocolHandler handler, object value, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.InvalidArgument, "Invalid Argument: " + value, messageId);
         }
@@ -102,7 +102,7 @@ namespace Energistics.Common
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long PermissionDenied(this EtpProtocolHandler handler, object value, long messageId = 0)
+        public static long PermissionDenied(this IProtocolHandler handler, object value, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.PermissionDenied, "Permission Denied: " + value, messageId);
         }
@@ -114,7 +114,7 @@ namespace Energistics.Common
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long NotSupported(this EtpProtocolHandler handler, object value, long messageId = 0)
+        public static long NotSupported(this IProtocolHandler handler, object value, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.NotSupported, "Not Supported: " + value, messageId);
         }
@@ -126,7 +126,7 @@ namespace Energistics.Common
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long InvalidState(this EtpProtocolHandler handler, object value, long messageId = 0)
+        public static long InvalidState(this IProtocolHandler handler, object value, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.InvalidState, "Invalid State: " + value, messageId);
         }
@@ -138,7 +138,7 @@ namespace Energistics.Common
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long InvalidUri(this EtpProtocolHandler handler, object value, long messageId = 0)
+        public static long InvalidUri(this IProtocolHandler handler, object value, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.InvalidUri, "Invalid Uri: " + value, messageId);
         }
@@ -150,7 +150,7 @@ namespace Energistics.Common
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long ExpiredToken(this EtpProtocolHandler handler, object value, long messageId = 0)
+        public static long ExpiredToken(this IProtocolHandler handler, object value, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.ExpiredToken, "Expired Token: " + value, messageId);
         }
@@ -162,7 +162,7 @@ namespace Energistics.Common
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long NotFound(this EtpProtocolHandler handler, object value, long messageId = 0)
+        public static long NotFound(this IProtocolHandler handler, object value, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.NotFound, "Not Found: " + value, messageId);
         }
@@ -174,7 +174,7 @@ namespace Energistics.Common
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long LimitExceeded(this EtpProtocolHandler handler, object value, long messageId = 0)
+        public static long LimitExceeded(this IProtocolHandler handler, object value, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.LimitExceeded, "Limit Exceeded: " + value, messageId);
         }
@@ -186,7 +186,7 @@ namespace Energistics.Common
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long InvalidChannelId(this EtpProtocolHandler handler, object value, long messageId = 0)
+        public static long InvalidChannelId(this IProtocolHandler handler, object value, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.InvalidChannelId, "Invalid ChannelId: " + value, messageId);
         }
@@ -199,11 +199,11 @@ namespace Energistics.Common
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long UnsupportedObject(this EtpProtocolHandler handler, Exception ex, string uri, long messageId = 0)
+        public static long UnsupportedObject(this IProtocolHandler handler, Exception ex, string uri, long messageId = 0)
         {
             if (ex != null)
             {
-                handler.Logger?.Error(ex);
+                (handler as EtpProtocolHandler)?.Logger?.Error(ex);
             }
 
             return handler.ProtocolException((int)EtpErrorCodes.UnsupportedObject, "Data object not supported. URI: " + uri, messageId);
@@ -217,11 +217,11 @@ namespace Energistics.Common
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long InvalidObject(this EtpProtocolHandler handler, Exception ex, string uri, long messageId = 0)
+        public static long InvalidObject(this IProtocolHandler handler, Exception ex, string uri, long messageId = 0)
         {
             if (ex != null)
             {
-                handler.Logger?.Error(ex);
+                (handler as EtpProtocolHandler)?.Logger?.Error(ex);
             }
 
             return handler.ProtocolException((int)EtpErrorCodes.InvalidObject, "Invalid Object. URI: " + uri, messageId);
@@ -234,7 +234,7 @@ namespace Energistics.Common
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long NoCascadeDelete(this EtpProtocolHandler handler, string uri, long messageId = 0)
+        public static long NoCascadeDelete(this IProtocolHandler handler, string uri, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.NoCascadeDelete, "If cascading deletes are not invoked, a client must only request deletion of bottom level data-objects such that all child data - objects are deleted before the parent is deleted. URI: " + uri, messageId);
         }
@@ -246,7 +246,7 @@ namespace Energistics.Common
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long NoPluralObject(this EtpProtocolHandler handler, string uri, long messageId = 0)
+        public static long NoPluralObject(this IProtocolHandler handler, string uri, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.NoPluralObject, "Client attempted to put more than one object under the plural root of a 1.x Energistics data object. ETP only supports a single data object, one XML document. URI: " + uri, messageId);
         }
@@ -258,7 +258,7 @@ namespace Energistics.Common
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="ProtocolException"/> message identifier.</returns>
-        public static long GrowingPortionIgnored(this EtpProtocolHandler handler, string uri, long messageId = 0)
+        public static long GrowingPortionIgnored(this IProtocolHandler handler, string uri, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.GrowingPortionIgnored, "The object is upserted, but the growing portion is ignored. URI: " + uri, messageId);
         }
