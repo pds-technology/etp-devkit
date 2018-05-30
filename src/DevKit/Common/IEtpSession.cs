@@ -82,6 +82,11 @@ namespace Energistics.Common
         void OnSessionOpened(IList<SupportedProtocol> requestedProtocols, IList<SupportedProtocol> supportedProtocols);
 
         /// <summary>
+        /// Called when the ETP session is closed.
+        /// </summary>
+        void OnSessionClosed();
+
+        /// <summary>
         /// Called when WebSocket data is received.
         /// </summary>
         /// <param name="data">The data.</param>

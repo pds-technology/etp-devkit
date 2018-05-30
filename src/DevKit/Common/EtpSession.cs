@@ -154,6 +154,19 @@ namespace Energistics.Common
         }
 
         /// <summary>
+        /// Called when the ETP session is closed.
+        /// </summary>
+        public override void OnSessionClosed()
+        {
+            // notify protocol handlers about closed session
+            foreach (var item in Handlers)
+            {
+                if (item.Key is Type)
+                    item.Value.OnSessionClosed();
+            }
+        }
+
+        /// <summary>
         /// Called when WebSocket data is received.
         /// </summary>
         /// <param name="data">The data.</param>

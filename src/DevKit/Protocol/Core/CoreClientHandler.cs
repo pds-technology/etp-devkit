@@ -96,7 +96,14 @@ namespace Energistics.Protocol.Core
                 Reason = reason ?? "Session closed"
             };
 
-            return Session.SendMessage(header, closeSession);
+            var messageId = Session.SendMessage(header, closeSession);
+
+            if (messageId == header.MessageId)
+            {
+                Session.OnSessionClosed();
+            }
+
+            return messageId;
         }
 
         /// <summary>
@@ -172,6 +179,7 @@ namespace Energistics.Protocol.Core
         protected virtual void HandleCloseSession(MessageHeader header, CloseSession closeSession)
         {
             Notify(OnCloseSession, header, closeSession);
+            Session.OnSessionClosed();
             Session.Close(closeSession.Reason);
         }
     }

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using Energistics.Common;
 using Energistics.Datatypes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -170,7 +171,7 @@ namespace Energistics
                 client.Headers[HttpRequestHeader.Accept] = JsonContentType;
 
                 var response = client.DownloadString(url);
-                var capServer = JsonConvert.DeserializeObject<ServerCapabilities>(response);
+                var capServer = EtpExtensions.Deserialize<ServerCapabilities>(response);
 
                 ServerCapabilities = capServer;
                 return capServer;

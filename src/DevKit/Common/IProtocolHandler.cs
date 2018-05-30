@@ -67,6 +67,11 @@ namespace Energistics.Common
         void OnSessionOpened(IList<SupportedProtocol> requestedProtocols, IList<SupportedProtocol> supportedProtocols);
 
         /// <summary>
+        /// Called when the ETP session is opened.
+        /// </summary>
+        void OnSessionClosed();
+
+        /// <summary>
         /// Sends an Acknowledge message with the specified correlation identifier and message flag.
         /// </summary>
         /// <param name="correlationId">The correlation identifier.</param>

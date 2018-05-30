@@ -39,7 +39,7 @@ namespace Energistics.Common
     {
         private const string GzipEncoding = "gzip";
 
-        private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings()
+        public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings()
         {
             ContractResolver = new EtpContractResolver(),
             Converters = new List<JsonConverter>()

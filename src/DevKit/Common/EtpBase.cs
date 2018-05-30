@@ -104,6 +104,13 @@ namespace Energistics.Common
         }
 
         /// <summary>
+        /// Called when the ETP session is closed.
+        /// </summary>
+        public virtual void OnSessionClosed()
+        {
+        }
+
+        /// <summary>
         /// Registers a protocol handler for the specified contract type.
         /// </summary>
         /// <typeparam name="TContract">The type of the contract.</typeparam>
