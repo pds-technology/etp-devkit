@@ -191,8 +191,9 @@ namespace Energistics.Common
         /// <typeparam name="T"></typeparam>
         /// <param name="header">The header.</param>
         /// <param name="body">The body.</param>
+        /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The message identifier.</returns>
-        public long SendMessage<T>(MessageHeader header, T body) where T : ISpecificRecord
+        public long SendMessage<T>(MessageHeader header, T body, Action<MessageHeader> onBeforeSend = null) where T : ISpecificRecord
         {
             try
             {
@@ -201,6 +202,11 @@ namespace Energistics.Common
 
                 // Set the message after waiting for the semaphore to ensure all message IDs are sequential.
                 header.MessageId = NewMessageId();
+
+                // Call the pre-send action in case any deterministic handling is needed with the actual message ID.
+                // Must be invoked before sending to ensure the response is not asynchronously processed before this method returns.
+                onBeforeSend?.Invoke(header);
+
                 if (IsJsonEncoding)
                 {
                     var message = this.Serialize(new object[] {header, body});
@@ -211,15 +217,13 @@ namespace Energistics.Common
                     var data = body.Encode(header);
                     Send(data, 0, data.Length);
                 }
+                _sendLock.Release();
             }
             catch (Exception ex)
             {
+                _sendLock.Release();
                 return Handler(header.Protocol)
                     .ProtocolException((int) EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
-            }
-            finally
-            {
-                _sendLock.Release();
             }
 
             Sent(header, body);

@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Avro.IO;
 using Energistics.Common;
@@ -38,7 +39,7 @@ namespace Energistics.Protocol.Discovery
         /// </summary>
         public DiscoveryCustomerHandler() : base(Protocols.Discovery, "customer", "store")
         {
-            _requests = new Dictionary<long, string>();
+            _requests = new ConcurrentDictionary<long, string>();
         }
 
         /// <summary>
@@ -54,11 +55,10 @@ namespace Energistics.Protocol.Discovery
             {
                 Uri = uri
             };
-
-            // Cache requested URIs by message ID
-            _requests[header.MessageId] = uri;
-
-            return Session.SendMessage(header, getResources);
+            
+            return Session.SendMessage(header, getResources,
+                h => _requests[h.MessageId] = uri // Cache requested URIs by message ID
+            );
         }
 
         /// <summary>

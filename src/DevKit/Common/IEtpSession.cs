@@ -104,8 +104,9 @@ namespace Energistics.Common
         /// <typeparam name="T"></typeparam>
         /// <param name="header">The header.</param>
         /// <param name="body">The body.</param>
+        /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The message identifier.</returns>
-        long SendMessage<T>(MessageHeader header, T body) where T : ISpecificRecord;
+        long SendMessage<T>(MessageHeader header, T body, Action<MessageHeader> onBeforeSend = null) where T : ISpecificRecord;
 
         /// <summary>
         /// Gets the supported protocols.
@@ -127,12 +128,6 @@ namespace Energistics.Common
         /// <typeparam name="T">The protocol handler interface.</typeparam>
         /// <returns><c>true</c> if the specified protocol handler has been registered; otherwise, <c>false</c>.</returns>
         bool CanHandle<T>() where T : IProtocolHandler;
-
-        /// <summary>
-        /// Generates a new unique message identifier for the current session.
-        /// </summary>
-        /// <returns>The message identifier.</returns>
-        long NewMessageId();
 
         /// <summary>
         /// Closes the WebSocket connection for the specified reason.
