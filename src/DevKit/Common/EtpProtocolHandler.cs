@@ -278,7 +278,7 @@ namespace Energistics.Common
             {
                 Protocol = protocol,
                 MessageType = messageType,
-                MessageId = Session.NewMessageId(),
+                MessageId = 0, // MessageId needs to be set just before sending to ensure proper sequencing
                 MessageFlags = (int)messageFlags,
                 CorrelationId = correlationId
             };

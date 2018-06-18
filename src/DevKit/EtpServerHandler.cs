@@ -36,9 +36,7 @@ namespace Energistics
     public class EtpServerHandler : EtpSession
     {
         private const int BufferSize = 4096;
-        private readonly WebSocket _socket;
-        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1);
-        private readonly SemaphoreSlim _receiveLock = new SemaphoreSlim(1);
+        private WebSocket _socket;
 
         /// <summary>
         /// Initializes the <see cref="EtpServerHandler"/> class.
@@ -104,10 +102,12 @@ namespace Energistics
 
                 using (var stream = new MemoryStream())
                 {
+                    var token = new CancellationToken();
+
                     while (_socket.State == WebSocketState.Open)
                     {
                         var buffer = new ArraySegment<byte>(new byte[BufferSize]);
-                        var result = await ReceiveData(buffer);
+                        var result = await _socket.ReceiveAsync(buffer, token);
 
                         // transfer received data to MemoryStream
                         stream.Write(buffer.Array, 0, result.Count);
@@ -166,7 +166,7 @@ namespace Energistics
             CheckDisposed();
 
             var buffer = new ArraySegment<byte>(data, offset, length);
-            SendData(buffer, WebSocketMessageType.Binary).Wait();
+            _socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None).Wait();
         }
 
         /// <summary>
@@ -178,44 +178,7 @@ namespace Energistics
             CheckDisposed();
 
             var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
-            SendData(buffer, WebSocketMessageType.Text).Wait();
-        }
-
-        /// <summary>
-        /// Wrapper around <see cref="WebSocket"/>.SendAsync to ensure only one thread attempts to send data at a time to this websocket.
-        /// </summary>
-        /// <param name="buffer">The buffer.</param>
-        /// <param name="messageType">The websocket message type.</param>
-        /// <returns>The <see cref="WebSocketReceiveResult"/></returns>
-        private async Task SendData(ArraySegment<byte> buffer, WebSocketMessageType messageType)
-        {
-            await _sendLock.WaitAsync();
-            try
-            {
-                await _socket.SendAsync(buffer, messageType, true, CancellationToken.None);
-            }
-            finally
-            {
-                _sendLock.Release();
-            }
-        }
-
-        /// <summary>
-        /// Wrapper around <see cref="WebSocket"/>.ReceiveAsync to ensure only one thread attempts to receive data at a time from this websocket.
-        /// </summary>
-        /// <param name="buffer">The buffer.</param>
-        /// <returns>The <see cref="WebSocketReceiveResult"/></returns>
-        private async Task<WebSocketReceiveResult> ReceiveData(ArraySegment<byte> buffer)
-        {
-            await _receiveLock.WaitAsync();
-            try
-            {
-                return await _socket.ReceiveAsync(buffer, CancellationToken.None);
-            }
-            finally
-            {
-                _receiveLock.Release();
-            }
+            _socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None).Wait();
         }
     }
 }

@@ -38,6 +38,7 @@ namespace Energistics.Common
     {
         private long _messageId;
         private bool? _isJsonEncoding;
+        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpSession"/> class.
@@ -195,9 +196,14 @@ namespace Energistics.Common
         {
             try
             {
+                // Wait for the send semaphore to ensure only 1 thread a time attempts to send a message.
+                _sendLock.Wait();
+
+                // Set the message after waiting for the semaphore to ensure all message IDs are sequential.
+                header.MessageId = NewMessageId();
                 if (IsJsonEncoding)
                 {
-                    var message = this.Serialize(new object[] { header, body });
+                    var message = this.Serialize(new object[] {header, body});
                     Send(message);
                 }
                 else
@@ -209,7 +215,11 @@ namespace Energistics.Common
             catch (Exception ex)
             {
                 return Handler(header.Protocol)
-                    .ProtocolException((int)EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
+                    .ProtocolException((int) EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
+            }
+            finally
+            {
+                _sendLock.Release();
             }
 
             Sent(header, body);
@@ -456,6 +466,8 @@ namespace Energistics.Common
 
                 foreach (var handler in handlers)
                     handler.Dispose();
+
+                _sendLock.Dispose();
             }
 
             base.Dispose(disposing);
