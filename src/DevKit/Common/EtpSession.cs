@@ -38,7 +38,7 @@ namespace Energistics.Common
     {
         private long _messageId;
         private bool? _isJsonEncoding;
-        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1);
+        private readonly object _sendLock = new object();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpSession"/> class.
@@ -72,6 +72,14 @@ namespace Energistics.Common
         /// </summary>
         /// <value>The session identifier.</value>
         public string SessionId { get; set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the underlying websocket connection is open.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance is open; otherwise, <c>false</c>.
+        /// </value>
+        public abstract bool IsOpen { get; }
 
         /// <summary>
         /// Gets a value indicating whether this instance is json encoding.
@@ -197,31 +205,36 @@ namespace Energistics.Common
         {
             try
             {
-                // Wait for the send semaphore to ensure only 1 thread a time attempts to send a message.
-                _sendLock.Wait();
-
-                // Set the message after waiting for the semaphore to ensure all message IDs are sequential.
-                header.MessageId = NewMessageId();
-
-                // Call the pre-send action in case any deterministic handling is needed with the actual message ID.
-                // Must be invoked before sending to ensure the response is not asynchronously processed before this method returns.
-                onBeforeSend?.Invoke(header);
-
-                if (IsJsonEncoding)
+                // Lock to ensure only one thread at a time attempts to send data and to ensure that messages are sent with sequential IDs
+                lock (_sendLock)
                 {
-                    var message = this.Serialize(new object[] {header, body});
-                    Send(message);
+                    if (!IsOpen)
+                    {
+                        Log("Warning: Sending on a session that is not open.");
+                        Logger.Warn("Sending on a session that is not open.");
+                        return -1;
+                    }
+
+                    header.MessageId = NewMessageId();
+
+                    // Call the pre-send action in case any deterministic handling is needed with the actual message ID.
+                    // Must be invoked before sending to ensure the response is not asynchronously processed before this method returns.
+                    onBeforeSend?.Invoke(header);
+
+                    if (IsJsonEncoding)
+                    {
+                        var message = this.Serialize(new object[] {header, body});
+                        Send(message);
+                    }
+                    else
+                    {
+                        var data = body.Encode(header);
+                        Send(data, 0, data.Length);
+                    }
                 }
-                else
-                {
-                    var data = body.Encode(header);
-                    Send(data, 0, data.Length);
-                }
-                _sendLock.Release();
             }
             catch (Exception ex)
             {
-                _sendLock.Release();
                 return Handler(header.Protocol)
                     .ProtocolException((int) EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
             }
@@ -278,7 +291,20 @@ namespace Energistics.Common
         /// Closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        public abstract void Close(string reason);
+        public void Close(string reason)
+        {
+            // Closing sends messages over the websocket so need to ensure no other messages are being sent when closing
+            lock (_sendLock)
+            {
+                CloseCore(reason);
+            }
+        }
+
+        /// <summary>
+        /// Closes the WebSocket connection for the specified reason.
+        /// </summary>
+        /// <param name="reason">The reason.</param>
+        protected abstract void CloseCore(string reason);
 
         /// <summary>
         /// Sends the specified data.
@@ -470,8 +496,6 @@ namespace Energistics.Common
 
                 foreach (var handler in handlers)
                     handler.Dispose();
-
-                _sendLock.Dispose();
             }
 
             base.Dispose(disposing);

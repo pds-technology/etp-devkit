@@ -86,7 +86,7 @@ namespace Energistics
         /// <value>
         ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
         /// </value>
-        public bool IsOpen => (_socket?.State ?? WebSocketState.None) == WebSocketState.Open;
+        public override bool IsOpen => (_socket?.State ?? WebSocketState.None) == WebSocketState.Open;
 
         /// <summary>
         /// Opens the WebSocket connection.
@@ -104,7 +104,7 @@ namespace Energistics
         /// Closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        public override void Close(string reason)
+        protected override void CloseCore(string reason)
         {
             if (!IsOpen) return;
             Logger.Debug(Log("Closing web socket connection: {0}", reason));

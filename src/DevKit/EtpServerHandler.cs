@@ -36,7 +36,7 @@ namespace Energistics
     public class EtpServerHandler : EtpSession
     {
         private const int BufferSize = 4096;
-        private WebSocket _socket;
+        private readonly WebSocket _socket;
 
         /// <summary>
         /// Initializes the <see cref="EtpServerHandler"/> class.
@@ -71,17 +71,33 @@ namespace Energistics
         /// <value>
         ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
         /// </value>
-        public bool IsOpen => (_socket?.State ?? WebSocketState.None) == WebSocketState.Open;
+        public override bool IsOpen => (_socket?.State ?? WebSocketState.None) == WebSocketState.Open;
 
         /// <summary>
         /// Closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        public override void Close(string reason)
+        protected override void CloseCore(string reason)
         {
             if (!IsOpen) return;
-            _socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None);
-            Logger.Debug(Log("[{0}] Socket session closed.", SessionId));
+
+            try
+            {
+                _socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None);
+                Logger.Debug(Log("[{0}] Socket session closed.", SessionId));
+            }
+            catch (WebSocketException ex)
+            {
+                if (ExceptionMeansClientClosedConnection(ex))
+                {
+                    Log("Warning: Exception caught when closing a websocket connection: {0}", ex.Message);
+                    Logger.WarnFormat("Exception caught when closing a websocket connection: {0}", ex);
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
 
         /// <summary>
@@ -134,6 +150,20 @@ namespace Energistics
                     }
                 }
             }
+            catch (WebSocketException ex)
+            {
+                if (ExceptionMeansClientClosedConnection(ex))
+                {
+                    Log("Warning: {0}", ex.Message);
+                    Logger.Warn(ex);
+                }
+                else
+                {
+                    Log("Error: {0}", ex.Message);
+                    Logger.Error(ex);
+                    throw;
+                }
+            }
             catch (Exception ex)
             {
                 Log("Error: {0}", ex.Message);
@@ -166,6 +196,7 @@ namespace Energistics
             CheckDisposed();
 
             var buffer = new ArraySegment<byte>(data, offset, length);
+
             _socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None).Wait();
         }
 
@@ -179,6 +210,23 @@ namespace Energistics
 
             var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
             _socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None).Wait();
+        }
+
+        /// <summary>
+        /// Checks if a <see cref="WebSocketException"/> is due to various low-level errors indicating the client terminated the connection.
+        /// </summary>
+        /// <param name="ex">The exception.</param>
+        /// <returns><c>true</c> if the exception indicates the client closed the connection; <c>false</c> otherwise.</returns>
+        private bool ExceptionMeansClientClosedConnection(WebSocketException ex)
+        {
+            if ((uint)ex.ErrorCode == 0x800703e3 || //  The I/O operation has been aborted because of either a thread exit or application request
+                (uint)ex.ErrorCode == 0x800704cd || // The remote host closed the connection
+                (uint)ex.ErrorCode == 0x80070026)   // Reached the end-of-file
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

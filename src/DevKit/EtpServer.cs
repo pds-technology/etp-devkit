@@ -31,6 +31,14 @@ namespace Energistics
         private WebSocketSession _session;
 
         /// <summary>
+        /// Gets a value indicating whether the connection is open.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
+        /// </value>
+        public override bool IsOpen => _session.Connected && !_session.InClosing;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="EtpServer"/> class.
         /// </summary>
         /// <param name="session">The web socket session.</param>
@@ -47,7 +55,7 @@ namespace Energistics
         /// Closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        public override void Close(string reason)
+        protected override void CloseCore(string reason)
         {
             CheckDisposed();
             _session.CloseWithHandshake(reason);
