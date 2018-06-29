@@ -107,6 +107,7 @@ namespace Energistics.Protocol.Core
 
             if (messageId == header.MessageId)
             {
+                Notify(OnCloseSession, header, closeSession);
                 Session.OnSessionClosed();
             }
 

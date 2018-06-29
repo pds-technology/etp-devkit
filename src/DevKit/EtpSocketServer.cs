@@ -34,6 +34,7 @@ namespace Energistics
         private static readonly string EtpSubProtocolName = Settings.Default.EtpSubProtocolName;
         private static readonly object EtpSessionKey = typeof(IEtpSession);
         private WebSocketServer _server;
+        private object _sync = new object();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpSocketServer"/> class.
@@ -136,11 +137,14 @@ namespace Energistics
         {
             Logger.Debug(Log("[{0}] Socket session connected.", session.SessionID));
 
-            var etpServer = new EtpServer(session, ApplicationName, ApplicationVersion, null);
-            etpServer.SupportedObjects = SupportedObjects;
-            RegisterAll(etpServer);
+            lock (_sync)
+            {
+                var etpServer = new EtpServer(session, ApplicationName, ApplicationVersion, null);
+                etpServer.SupportedObjects = SupportedObjects;
+                RegisterAll(etpServer);
 
-            session.Items[EtpSessionKey] = etpServer;
+                session.Items[EtpSessionKey] = etpServer;
+            }
         }
 
         /// <summary>
@@ -211,9 +215,12 @@ namespace Energistics
             IEtpSession etpSession = null;
             object item;
 
-            if (session.Items.TryGetValue(EtpSessionKey, out item))
+            lock (_sync)
             {
-                etpSession = item as IEtpSession;
+                if (session.Items.TryGetValue(EtpSessionKey, out item))
+                {
+                    etpSession = item as IEtpSession;
+                }
             }
 
             return etpSession;
