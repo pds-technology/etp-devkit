@@ -36,7 +36,7 @@ namespace Energistics
         /// <value>
         ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
         /// </value>
-        public override bool IsOpen => _session.Connected && !_session.InClosing;
+        public override bool IsOpen => (_session?.Connected ?? false) && (!_session?.InClosing ?? false);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpServer"/> class.

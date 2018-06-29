@@ -168,13 +168,16 @@ namespace Energistics
         {
             Logger.Debug(Log("[{0}] Socket session closed.", session.SessionID));
 
-            var etpSession = GetEtpSession(session);
-
-            if (etpSession != null)
+            lock (_sync)
             {
-                SessionClosed?.Invoke(this, etpSession);
-                etpSession.Dispose();
-                session.Items[EtpSessionKey] = null;
+                var etpSession = GetEtpSession(session);
+
+                if (etpSession != null)
+                {
+                    SessionClosed?.Invoke(this, etpSession);
+                    etpSession.Dispose();
+                    session.Items[EtpSessionKey] = null;
+                }
             }
         }
 
@@ -208,16 +211,19 @@ namespace Energistics
             CheckDisposed();
             const string reason = "Server stopping";
 
-            foreach (var session in _server.GetAllSessions())
+            lock (_sync)
             {
-                var etpSession = GetEtpSession(session);
-                session.Items[EtpSessionKey] = null;
+                foreach (var session in _server.GetAllSessions())
+                {
+                    var etpSession = GetEtpSession(session);
+                    session.Items[EtpSessionKey] = null;
 
-                if (etpSession == null) continue;
-
-                SessionClosed?.Invoke(this, etpSession);
-                etpSession.Close(reason);
-                etpSession.Dispose();
+                    if (etpSession == null) continue;
+    
+                    SessionClosed?.Invoke(this, etpSession);
+                    etpSession.Close(reason);
+                    etpSession.Dispose();
+                }
             }
         }
 
