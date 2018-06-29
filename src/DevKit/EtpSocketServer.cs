@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using Energistics.Common;
 using Energistics.Properties;
 using Energistics.Protocol.Core;
@@ -85,6 +86,16 @@ namespace Energistics
         }
 
         /// <summary>
+        /// Occurs when an ETP session is connected.
+        /// </summary>
+        public event EventHandler<IEtpSession> SessionConnected;
+
+        /// <summary>
+        /// Occurs when an ETP session is closed.
+        /// </summary>
+        public event EventHandler<IEtpSession> SessionClosed;
+
+        /// <summary>
         /// Starts the WebSocket server.
         /// </summary>
         public void Start()
@@ -144,6 +155,7 @@ namespace Energistics
                 RegisterAll(etpServer);
 
                 session.Items[EtpSessionKey] = etpServer;
+                SessionConnected?.Invoke(this, etpServer);
             }
         }
 
@@ -160,6 +172,7 @@ namespace Energistics
 
             if (etpSession != null)
             {
+                SessionClosed?.Invoke(this, etpSession);
                 etpSession.Dispose();
                 session.Items[EtpSessionKey] = null;
             }
@@ -199,10 +212,13 @@ namespace Energistics
             {
                 var etpSession = GetEtpSession(session);
                 session.Items[EtpSessionKey] = null;
-                etpSession?.Close(reason);
-                etpSession?.Dispose();
-            }
 
+                if (etpSession == null) continue;
+
+                SessionClosed?.Invoke(this, etpSession);
+                etpSession.Close(reason);
+                etpSession.Dispose();
+            }
         }
 
         /// <summary>
