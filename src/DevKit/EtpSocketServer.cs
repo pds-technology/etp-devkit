@@ -21,6 +21,7 @@ using Energistics.Common;
 using Energistics.Properties;
 using Energistics.Protocol.Core;
 using SuperSocket.SocketBase;
+using SuperSocket.SocketBase.Config;
 using SuperWebSocket;
 using SuperWebSocket.SubProtocol;
 
@@ -46,7 +47,12 @@ namespace Energistics
         public EtpSocketServer(int port, string application, string version)
         {
             _server = new WebSocketServer(new BasicSubProtocol(EtpSubProtocolName));
-            _server.Setup(port);
+            _server.Setup(new ServerConfig()
+            {
+                Ip = "Any",
+                Port = port,
+                MaxRequestLength = int.MaxValue,
+            });
 
             _server.NewSessionConnected += OnNewSessionConnected;
             //_server.NewMessageReceived += OnNewMessageReceived;
