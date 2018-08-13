@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@
 using System;
 using System.Threading.Tasks;
 using Avro.Specific;
-using Energistics.Common;
-using Energistics.Security;
+using Energistics.Etp.Common;
+using Energistics.Etp.Security;
 
-namespace Energistics
+namespace Energistics.Etp
 {
     /// <summary>
     /// Common base class for all ETP DevKit integration tests.
@@ -38,8 +38,9 @@ namespace Energistics
         {
             var version = GetType().Assembly.GetName().Version.ToString();
             var headers = Authorization.Basic(TestSettings.Username, TestSettings.Password);
+            var etpSubProtocol = TestSettings.EtpSubProtocol;
 
-            return new EtpClient(TestSettings.ServerUrl, GetType().AssemblyQualifiedName, version, headers);
+            return new EtpClient(TestSettings.ServerUrl, GetType().AssemblyQualifiedName, version, etpSubProtocol, headers);
         }
 
         /// <summary>

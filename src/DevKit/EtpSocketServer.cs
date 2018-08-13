@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,26 +17,24 @@
 //-----------------------------------------------------------------------
 
 using System;
-using Energistics.Common;
-using Energistics.Properties;
-using Energistics.Protocol.Core;
+using System.Linq;
+using Energistics.Etp.Common;
 using SuperSocket.SocketBase;
 using SuperSocket.SocketBase.Config;
 using SuperWebSocket;
 using SuperWebSocket.SubProtocol;
 
-namespace Energistics
+namespace Energistics.Etp
 {
     /// <summary>
     /// A wrapper for the SuperWebSocket library providing a base ETP server implementation.
     /// </summary>
-    /// <seealso cref="Energistics.Common.EtpBase" />
+    /// <seealso cref="Energistics.Etp.Common.EtpBase" />
     public class EtpSocketServer : EtpBase
     {
-        private static readonly string EtpSubProtocolName = Settings.Default.EtpSubProtocolName;
         private static readonly object EtpSessionKey = typeof(IEtpSession);
+        private readonly object _sync = new object();
         private WebSocketServer _server;
-        private object _sync = new object();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpSocketServer"/> class.
@@ -46,8 +44,9 @@ namespace Energistics
         /// <param name="version">The server application version.</param>
         public EtpSocketServer(int port, string application, string version)
         {
-            _server = new WebSocketServer(new BasicSubProtocol(EtpSubProtocolName));
-            _server.Setup(new ServerConfig()
+            _server = new WebSocketServer(EtpSettings.EtpSubProtocols.Select(p => new BasicSubProtocol(p)));
+
+            _server.Setup(new ServerConfig
             {
                 Ip = "Any",
                 Port = port,
@@ -61,7 +60,6 @@ namespace Energistics
 
             ApplicationName = application;
             ApplicationVersion = version;
-            Register<ICoreServer, CoreServerHandler>();
         }
 
         /// <summary>
@@ -158,6 +156,8 @@ namespace Energistics
             {
                 var etpServer = new EtpServer(session, ApplicationName, ApplicationVersion, null);
                 etpServer.SupportedObjects = SupportedObjects;
+
+                etpServer.RegisterCoreServer(session.SubProtocol.Name);
                 RegisterAll(etpServer);
 
                 session.Items[EtpSessionKey] = etpServer;

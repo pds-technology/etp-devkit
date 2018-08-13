@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@
 
 using System;
 using System.Collections.Generic;
-using Energistics.Common;
-using Energistics.Datatypes;
-using Energistics.Datatypes.Object;
-using Energistics.Protocol.Discovery;
+using Energistics.Etp.Common;
+using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v11.Datatypes.Object;
+using Energistics.Etp.v11.Protocol.Discovery;
 
-namespace Energistics.Providers
+namespace Energistics.Etp.Providers
 {
     public class MockResourceProvider : DiscoveryStoreHandler
     {
@@ -40,17 +40,17 @@ namespace Energistics.Providers
                     resourceType: ResourceTypes.UriProtocol,
                     name: "WITSML Store (1.4.1.1)"));
             }
-            else if (EtpUri.IsRoot(args.Message.Uri))
+            else if (BaseUri.Equals(args.Message.Uri, StringComparison.InvariantCultureIgnoreCase))
             {
                 args.Context.Add(New(
                     uuid => String.Format("{0}/well({1})", args.Message.Uri, uuid),
-                    contentType: Witsml141 + "type=obj_well",
+                    contentType: Witsml141 + "type=well",
                     resourceType: ResourceTypes.DataObject,
                     name: "Well 01"));
 
                 args.Context.Add(New(
                     uuid => String.Format("{0}/well({1})", args.Message.Uri, uuid),
-                    contentType: Witsml141 + "type=obj_well",
+                    contentType: Witsml141 + "type=well",
                     resourceType: ResourceTypes.DataObject,
                     name: "Well 02"));
             }
@@ -58,13 +58,13 @@ namespace Energistics.Providers
             {
                 args.Context.Add(New(
                     uuid => String.Format("{0}/wellbore({1})", args.Message.Uri, uuid),
-                    contentType: Witsml141 + "type=obj_wellbore",
+                    contentType: Witsml141 + "type=wellbore",
                     resourceType: ResourceTypes.DataObject,
                     name: "Wellbore 01-01"));
 
                 args.Context.Add(New(
                     uuid => String.Format("{0}/wellbore({1})", args.Message.Uri, uuid),
-                    contentType: Witsml141 + "type=obj_wellbore",
+                    contentType: Witsml141 + "type=wellbore",
                     resourceType: ResourceTypes.DataObject,
                     name: "Wellbore 01-02"));
             }
@@ -72,14 +72,14 @@ namespace Energistics.Providers
             {
                 args.Context.Add(New(
                     uuid => String.Format("{0}/log({1})", args.Message.Uri, uuid),
-                    contentType: Witsml141 + "type=obj_log",
+                    contentType: Witsml141 + "type=log",
                     resourceType: ResourceTypes.DataObject,
                     name: "Depth Log 01",
                     count: 0));
 
                 args.Context.Add(New(
                     uuid => String.Format("{0}/log({1})", args.Message.Uri, uuid),
-                    contentType: Witsml141 + "type=obj_log",
+                    contentType: Witsml141 + "type=log",
                     resourceType: ResourceTypes.DataObject,
                     name: "Time Log 01",
                     count: 0));

@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,29 +20,18 @@ using System;
 using System.Collections.Generic;
 using Avro.IO;
 using Avro.Specific;
-using Energistics.Datatypes;
-using Energistics.Protocol;
-using Energistics.Protocol.Core;
+using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
 
-namespace Energistics.Common
+namespace Energistics.Etp.Common
 {
     /// <summary>
     /// Provides common functionality for ETP protocol handlers.
     /// </summary>
-    /// <seealso cref="Energistics.Common.EtpBase" />
-    /// <seealso cref="Energistics.Common.IProtocolHandler" />
+    /// <seealso cref="Energistics.Etp.Common.EtpBase" />
+    /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
     public abstract class EtpProtocolHandler : EtpBase, IProtocolHandler
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EtpProtocolHandler"/> class.
-        /// </summary>
-        /// <param name="protocol">The protocol.</param>
-        /// <param name="role">The role.</param>
-        /// <param name="requestedRole">The requested role.</param>
-        protected EtpProtocolHandler(Protocols protocol, string role, string requestedRole) : this((int)protocol, role, requestedRole)
-        { 
-        }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpProtocolHandler"/> class.
         /// </summary>
@@ -84,9 +73,9 @@ namespace Energistics.Common
         /// Gets the capabilities supported by the protocol handler.
         /// </summary>
         /// <returns>A collection of protocol capabilities.</returns>
-        public virtual IDictionary<string, DataValue> GetCapabilities()
+        public virtual IDictionary<string, IDataValue> GetCapabilities()
         {
-            return new Dictionary<string, DataValue>();
+            return new Dictionary<string, IDataValue>();
         }
 
         /// <summary>
@@ -97,8 +86,8 @@ namespace Energistics.Common
         /// <returns>The message identifier.</returns>
         public virtual long Acknowledge(long correlationId, MessageFlags messageFlag = MessageFlags.None)
         {
-            var header = CreateMessageHeader(Protocol, (int)MessageTypes.Core.Acknowledge, correlationId, messageFlag);
-            var acknowledge = new Acknowledge();
+            var header = CreateMessageHeader(Protocol, (int)v11.MessageTypes.Core.Acknowledge, correlationId, messageFlag);
+            var acknowledge = Session.Adapter.CreateAcknowledge();
 
             return Session.SendMessage(header, acknowledge);
         }
@@ -112,13 +101,12 @@ namespace Energistics.Common
         /// <returns>The message identifier.</returns>
         public virtual long ProtocolException(int errorCode, string errorMessage, long correlationId = 0)
         {
-            var header = CreateMessageHeader(Protocol, (int)MessageTypes.Core.ProtocolException, correlationId);
+            var header = CreateMessageHeader(Protocol, (int)v11.MessageTypes.Core.ProtocolException, correlationId);
 
-            var error = new ProtocolException()
-            {
-                ErrorCode = errorCode,
-                ErrorMessage = errorMessage
-            };
+            var error = Session.Adapter.CreateProtocolException();
+
+            error.ErrorCode = errorCode;
+            error.ErrorMessage = errorMessage;
 
             return Session.SendMessage(header, error);
         }
@@ -126,40 +114,40 @@ namespace Energistics.Common
         /// <summary>
         /// Occurs when an Acknowledge message is received for the current protocol.
         /// </summary>
-        public event ProtocolEventHandler<Acknowledge> OnAcknowledge;
+        public event ProtocolEventHandler<IAcknowledge> OnAcknowledge;
 
         /// <summary>
         /// Occurs when a ProtocolException message is received for the current protocol.
         /// </summary>
-        public event ProtocolEventHandler<ProtocolException> OnProtocolException;
+        public event ProtocolEventHandler<IProtocolException> OnProtocolException;
 
         /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader" />.
+        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="decoder">The message decoder.</param>
         /// <param name="body">The message body.</param>
-        void IProtocolHandler.HandleMessage(MessageHeader header, Decoder decoder, string body)
+        void IProtocolHandler.HandleMessage(IMessageHeader header, Decoder decoder, string body)
         {
             HandleMessage(header, decoder, body);
         }
 
         /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader" />.
+        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="decoder">The message decoder.</param>
         /// <param name="body">The message body.</param>
-        protected virtual void HandleMessage(MessageHeader header, Decoder decoder, string body)
+        protected virtual void HandleMessage(IMessageHeader header, Decoder decoder, string body)
         {
             switch (header.MessageType)
             {
-                case (int)MessageTypes.Core.ProtocolException:
-                    HandleProtocolException(header, decoder.Decode<ProtocolException>(body));
+                case (int)v11.MessageTypes.Core.ProtocolException:
+                    HandleProtocolException(header, Session.Adapter.DecodeProtocolException(decoder, body));
                     break;
 
-                case (int)MessageTypes.Core.Acknowledge:
-                    HandleAcknowledge(header, decoder.Decode<Acknowledge>(body));
+                case (int)v11.MessageTypes.Core.Acknowledge:
+                    HandleAcknowledge(header, Session.Adapter.DecodeAcknowledge(decoder, body));
                     break;
 
                 default:
@@ -173,7 +161,7 @@ namespace Energistics.Common
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="acknowledge">The Acknowledge message.</param>
-        protected virtual void HandleAcknowledge(MessageHeader header, Acknowledge acknowledge)
+        protected virtual void HandleAcknowledge(IMessageHeader header, IAcknowledge acknowledge)
         {
             Notify(OnAcknowledge, header, acknowledge);
         }
@@ -183,7 +171,7 @@ namespace Energistics.Common
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="protocolException">The ProtocolException message.</param>
-        protected virtual void HandleProtocolException(MessageHeader header, ProtocolException protocolException)
+        protected virtual void HandleProtocolException(IMessageHeader header, IProtocolException protocolException)
         {
             Notify(OnProtocolException, header, protocolException);
             Logger.ErrorFormat("[{0}] Protocol exception: {1} - {2}", Session.SessionId, protocolException.ErrorCode, protocolException.ErrorMessage);
@@ -197,7 +185,7 @@ namespace Energistics.Common
         /// <param name="header">The message header.</param>
         /// <param name="message">The message body.</param>
         /// <returns>The protocol event args.</returns>
-        protected ProtocolEventArgs<T> Notify<T>(ProtocolEventHandler<T> handler, MessageHeader header, T message) where T : ISpecificRecord
+        protected ProtocolEventArgs<T> Notify<T>(ProtocolEventHandler<T> handler, IMessageHeader header, T message) where T : ISpecificRecord
         {
             var args = new ProtocolEventArgs<T>(header, message);
             Received(header, message);
@@ -215,7 +203,7 @@ namespace Energistics.Common
         /// <param name="message">The message body.</param>
         /// <param name="context">The message context.</param>
         /// <returns>The protocol event args.</returns>
-        protected ProtocolEventArgs<T, TContext> Notify<T, TContext>(ProtocolEventHandler<T, TContext> handler, MessageHeader header, T message, TContext context) where T : ISpecificRecord
+        protected ProtocolEventArgs<T, TContext> Notify<T, TContext>(ProtocolEventHandler<T, TContext> handler, IMessageHeader header, T message, TContext context) where T : ISpecificRecord
         {
             var args = new ProtocolEventArgs<T, TContext>(header, message, context);
             Received(header, message);
@@ -229,7 +217,7 @@ namespace Energistics.Common
         /// <typeparam name="T">The type of the message.</typeparam>
         /// <param name="header">The message header.</param>
         /// <param name="message">The message body.</param>
-        protected void Received<T>(MessageHeader header, T message)
+        protected void Received<T>(IMessageHeader header, T message)
         {
             if (Session?.Output == null) return;
             Session.Log("[{0}] Message received at {1}", Session.SessionId, DateTime.Now.ToString(TimestampFormat));
@@ -240,13 +228,28 @@ namespace Energistics.Common
         /// <summary>
         /// Creates a message header for the specified protocol, message type, correlation identifier and message flag.
         /// </summary>
-        /// <typeparam name="TEnum">The type of the enum.</typeparam>
+        /// <typeparam name="TProtocol">The protocol enum.</typeparam>
+        /// <typeparam name="TMessageType">The message type enum.</typeparam>
+        /// <param name="protocol">The protocol.</param>
+        /// <param name="messageType">The message type.</param>
+        /// <param name="correlationId">The correlation identifier.</param>
+        /// <param name="messageFlags">The message flags.</param>
+        /// <returns>A new message header instance.</returns>
+        protected IMessageHeader CreateMessageHeader<TProtocol, TMessageType>(TProtocol protocol, TMessageType messageType, long correlationId = 0, MessageFlags messageFlags = MessageFlags.None) where TProtocol : IConvertible where TMessageType : IConvertible
+        {
+            return CreateMessageHeader(Convert.ToInt32(protocol), Convert.ToInt32(messageType), correlationId, messageFlags);
+        }
+
+        /// <summary>
+        /// Creates a message header for the specified protocol, message type, correlation identifier and message flag.
+        /// </summary>
+        /// <typeparam name="TMessageType">The message type enum.</typeparam>
         /// <param name="protocol">The protocol.</param>
         /// <param name="messageType">Type of the message.</param>
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlags">The message flags.</param>
         /// <returns>A new message header instance.</returns>
-        protected MessageHeader CreateMessageHeader<TEnum>(Protocols protocol, TEnum messageType, long correlationId = 0, MessageFlags messageFlags = MessageFlags.None) where TEnum : IConvertible
+        protected IMessageHeader CreateMessageHeader<TMessageType>(int protocol, TMessageType messageType, long correlationId = 0, MessageFlags messageFlags = MessageFlags.None) where TMessageType : IConvertible
         {
             return CreateMessageHeader(protocol, Convert.ToInt32(messageType), correlationId, messageFlags);
         }
@@ -259,29 +262,17 @@ namespace Energistics.Common
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlags">The message flags.</param>
         /// <returns>A new message header instance.</returns>
-        protected MessageHeader CreateMessageHeader(Protocols protocol, int messageType, long correlationId = 0, MessageFlags messageFlags = MessageFlags.None)
+        protected IMessageHeader CreateMessageHeader(int protocol, int messageType, long correlationId = 0, MessageFlags messageFlags = MessageFlags.None)
         {
-            return CreateMessageHeader((int)protocol, messageType, correlationId, messageFlags);
-        }
+            var header = Session.Adapter.CreateMessageHeader();
 
-        /// <summary>
-        /// Creates a message header for the specified protocol, message type, correlation identifier and message flag.
-        /// </summary>
-        /// <param name="protocol">The protocol.</param>
-        /// <param name="messageType">Type of the message.</param>
-        /// <param name="correlationId">The correlation identifier.</param>
-        /// <param name="messageFlags">The message flags.</param>
-        /// <returns>A new message header instance.</returns>
-        protected MessageHeader CreateMessageHeader(int protocol, int messageType, long correlationId = 0, MessageFlags messageFlags = MessageFlags.None)
-        {
-            return new MessageHeader()
-            {
-                Protocol = protocol,
-                MessageType = messageType,
-                MessageId = 0, // MessageId needs to be set just before sending to ensure proper sequencing
-                MessageFlags = (int)messageFlags,
-                CorrelationId = correlationId
-            };
+            header.Protocol = protocol;
+            header.MessageType = messageType;
+            header.MessageId = 0; // MessageId needs to be set just before sending to ensure proper sequencing
+            header.MessageFlags = (int) messageFlags;
+            header.CorrelationId = correlationId;
+
+            return header;
         }
     }
 }

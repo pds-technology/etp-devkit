@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using SuperSocket.ClientEngine;
 
-namespace Energistics.Security
+namespace Energistics.Etp.Security
 {
     public abstract class ProxyConnectorBase : IProxyConnector
     {

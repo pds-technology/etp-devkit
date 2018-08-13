@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,11 +18,10 @@
 
 using System.Collections.Generic;
 using Avro.IO;
-using Energistics.Datatypes;
-using Energistics.Protocol;
-using Energistics.Protocol.Core;
+using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
 
-namespace Energistics.Common
+namespace Energistics.Etp.Common
 {
     /// <summary>
     /// Defines properties and methods that can be used to handle ETP messages.
@@ -57,14 +56,14 @@ namespace Energistics.Common
         /// Gets the capabilities supported by the protocol handler.
         /// </summary>
         /// <returns>A collection of protocol capabilities.</returns>
-        IDictionary<string, DataValue> GetCapabilities();
+        IDictionary<string, IDataValue> GetCapabilities();
 
         /// <summary>
         /// Called when the ETP session is opened.
         /// </summary>
         /// <param name="requestedProtocols">The requested protocols.</param>
         /// <param name="supportedProtocols">The supported protocols.</param>
-        void OnSessionOpened(IList<SupportedProtocol> requestedProtocols, IList<SupportedProtocol> supportedProtocols);
+        void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols);
 
         /// <summary>
         /// Called when the ETP session is opened.
@@ -89,21 +88,21 @@ namespace Energistics.Common
         long ProtocolException(int errorCode, string errorMessage, long correlationId = 0);
 
         /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="MessageHeader" />.
+        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="decoder">The message decoder.</param>
         /// <param name="body">The message body.</param>
-        void HandleMessage(MessageHeader header, Decoder decoder, string body);
+        void HandleMessage(IMessageHeader header, Decoder decoder, string body);
 
         /// <summary>
         /// Occurs when an Acknowledge message is received for the current protocol.
         /// </summary>
-        event ProtocolEventHandler<Acknowledge> OnAcknowledge;
+        event ProtocolEventHandler<IAcknowledge> OnAcknowledge;
 
         /// <summary>
         /// Occurs when a ProtocolException message is received for the current protocol.
         /// </summary>
-        event ProtocolEventHandler<ProtocolException> OnProtocolException;
+        event ProtocolEventHandler<IProtocolException> OnProtocolException;
     }
 }

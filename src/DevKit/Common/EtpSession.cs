@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,17 +23,17 @@ using System.Linq;
 using System.Threading;
 using Avro.IO;
 using Avro.Specific;
-using Energistics.Datatypes;
-using Energistics.Properties;
+using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Properties;
 using Newtonsoft.Json.Linq;
 
-namespace Energistics.Common
+namespace Energistics.Etp.Common
 {
     /// <summary>
     /// Provides common functionality for all ETP sessions.
     /// </summary>
-    /// <seealso cref="Energistics.Common.EtpBase" />
-    /// <seealso cref="Energistics.Common.IEtpSession" />
+    /// <seealso cref="Energistics.Etp.Common.EtpBase" />
+    /// <seealso cref="Energistics.Etp.Common.IEtpSession" />
     public abstract class EtpSession : EtpBase, IEtpSession
     {
         private long _messageId;
@@ -54,6 +54,11 @@ namespace Energistics.Common
             ApplicationVersion = version;
             ValidateHeaders();
         }
+
+        /// <summary>
+        /// Gets the version specific ETP adapter.
+        /// </summary>
+        public IEtpAdapter Adapter { get; private set; }
 
         /// <summary>
         /// Gets the name of the application.
@@ -150,7 +155,7 @@ namespace Energistics.Common
         /// </summary>
         /// <param name="requestedProtocols">The requested protocols.</param>
         /// <param name="supportedProtocols">The supported protocols.</param>
-        public override void OnSessionOpened(IList<SupportedProtocol> requestedProtocols, IList<SupportedProtocol> supportedProtocols)
+        public override void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols)
         {
             HandleUnsupportedProtocols(supportedProtocols);
 
@@ -201,7 +206,7 @@ namespace Energistics.Common
         /// <param name="body">The body.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The message identifier.</returns>
-        public long SendMessage<T>(MessageHeader header, T body, Action<MessageHeader> onBeforeSend = null) where T : ISpecificRecord
+        public long SendMessage<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null) where T : ISpecificRecord
         {
             try
             {
@@ -249,14 +254,9 @@ namespace Energistics.Common
         /// </summary>
         /// <param name="isSender">if set to <c>true</c> the current session is the sender.</param>
         /// <returns>A list of supported protocols.</returns>
-        public IList<SupportedProtocol> GetSupportedProtocols(bool isSender = false)
+        public IList<ISupportedProtocol> GetSupportedProtocols(bool isSender = false)
         {
-            var supportedProtocols = new List<SupportedProtocol>();
-            var version = new Datatypes.Version()
-            {
-                Major = 1,
-                Minor = 1
-            };
+            var supportedProtocols = new List<ISupportedProtocol>();
 
             // Skip Core protocol (0)
             foreach (var handler in Handlers.Values.Where(x => x.Protocol > 0))
@@ -266,13 +266,7 @@ namespace Energistics.Common
                 if (supportedProtocols.Contains(handler.Protocol, role))
                     continue;
 
-                supportedProtocols.Add(new SupportedProtocol()
-                {
-                    Protocol = handler.Protocol,
-                    ProtocolVersion = version,
-                    ProtocolCapabilities = handler.GetCapabilities(),
-                    Role = role
-                });
+                supportedProtocols.Add(Adapter.GetSupportedProtocol(handler, role));
             }
 
             return supportedProtocols;
@@ -298,6 +292,39 @@ namespace Energistics.Common
             {
                 CloseCore(reason);
             }
+        }
+
+        /// <summary>
+        /// Registers the core server handler.
+        /// </summary>
+        /// <param name="etpSubProtocol">The ETP sub protocol.</param>
+        public void RegisterCoreServer(string etpSubProtocol)
+        {
+            Adapter = ResolveEtpAdapter(etpSubProtocol);
+            Adapter.RegisterCoreServer(this);
+        }
+
+        /// <summary>
+        /// Registers the core client handler.
+        /// </summary>
+        /// <param name="etpSubProtocol">The ETP sub protocol.</param>
+        protected void RegisterCoreClient(string etpSubProtocol)
+        {
+            Adapter = ResolveEtpAdapter(etpSubProtocol);
+            Adapter.RegisterCoreClient(this);
+        }
+
+        /// <summary>
+        /// Resolves the ETP adapter.
+        /// </summary>
+        /// <param name="etpSubProtocol">The ETP sub protocol.</param>
+        /// <returns>A new <see cref="IEtpAdapter"/> instance.</returns>
+        protected IEtpAdapter ResolveEtpAdapter(string etpSubProtocol)
+        {
+            if (EtpSettings.Etp12SubProtocol.Equals(etpSubProtocol, StringComparison.InvariantCultureIgnoreCase))
+                return new v12.Etp12Adapter();
+
+            return new v11.Etp11Adapter();
         }
 
         /// <summary>
@@ -331,7 +358,7 @@ namespace Energistics.Common
                 // create avro binary decoder to read from memory stream
                 var decoder = new BinaryDecoder(inputStream);
                 // deserialize the header
-                var header = decoder.Decode<MessageHeader>(null);
+                var header = Adapter.DecodeMessageHeader(decoder, null);
 
                 // log message metadata
                 if (Logger.IsDebugEnabled)
@@ -360,9 +387,9 @@ namespace Energistics.Common
             {
                 Logger.DebugFormat("[{0}] Message received: {1}", SessionId, header);
             }
-
+            
             // call processing action
-            HandleMessage(this.Deserialize<MessageHeader>(header), null, body);
+            HandleMessage(Adapter.DeserializeMessageHeader(header), null, body);
         }
 
         /// <summary>
@@ -371,7 +398,7 @@ namespace Energistics.Common
         /// <param name="header">The header.</param>
         /// <param name="decoder">The decoder.</param>
         /// <param name="body">The body.</param>
-        protected void HandleMessage(MessageHeader header, Decoder decoder, string body)
+        protected void HandleMessage(IMessageHeader header, Decoder decoder, string body)
         {
             if (Handlers.ContainsKey(header.Protocol))
             {
@@ -391,7 +418,7 @@ namespace Energistics.Common
             {
                 var message = $"Protocol handler not registered for protocol { header.Protocol }.";
 
-                Handler((int)Protocols.Core)
+                Handler((int)v11.Protocols.Core)
                     .ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, message, header.MessageId);
             }
         }
@@ -436,7 +463,7 @@ namespace Energistics.Common
         /// Handles the unsupported protocols.
         /// </summary>
         /// <param name="supportedProtocols">The supported protocols.</param>
-        protected virtual void HandleUnsupportedProtocols(IList<SupportedProtocol> supportedProtocols)
+        protected virtual void HandleUnsupportedProtocols(IList<ISupportedProtocol> supportedProtocols)
         {
             // remove unsupported handler mappings (excluding Core protocol)
             Handlers
@@ -463,7 +490,7 @@ namespace Energistics.Common
         /// <typeparam name="T">The type of message.</typeparam>
         /// <param name="header">The header.</param>
         /// <param name="body">The message body.</param>
-        protected void Sent<T>(MessageHeader header, T body)
+        protected void Sent<T>(IMessageHeader header, T body)
         {
             if (Output != null)
             {

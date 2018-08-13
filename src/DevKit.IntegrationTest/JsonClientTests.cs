@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Energistics
+namespace Energistics.Etp
 {
     [TestClass]
     public class JsonClientTests
@@ -28,7 +28,7 @@ namespace Energistics
         public void JsonClient_GetServerCapabilities_Using_Basic_Authentication()
         {
             var client = new JsonClient(TestSettings.Username, TestSettings.Password);
-            var capServer = client.GetServerCapabilities(TestSettings.ServerCapabilitiesUrl);
+            var capServer = client.GetServerCapabilities(TestSettings.ServerCapabilitiesUrl) as v11.Datatypes.ServerCapabilities;
 
             Assert.IsNotNull(capServer);
             Assert.IsNotNull(capServer.SupportedObjects);
@@ -46,7 +46,7 @@ namespace Energistics
             var token = client.GetJsonWebToken(TestSettings.AuthTokenUrl);
             Assert.IsNotNull(token);
 
-            var capServer = client.GetServerCapabilities(TestSettings.ServerCapabilitiesUrl);
+            var capServer = client.GetServerCapabilities(TestSettings.ServerCapabilitiesUrl) as v11.Datatypes.ServerCapabilities;
 
             Assert.IsNotNull(capServer);
             Assert.IsNotNull(capServer.SupportedObjects);

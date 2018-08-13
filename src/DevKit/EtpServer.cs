@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,15 +17,15 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Energistics.Common;
+using Energistics.Etp.Common;
 using SuperWebSocket;
 
-namespace Energistics
+namespace Energistics.Etp
 {
     /// <summary>
     /// An ETP server session implementation that can be used with SuperWebSocket sessions.
     /// </summary>
-    /// <seealso cref="Energistics.Common.EtpSession" />
+    /// <seealso cref="Energistics.Etp.Common.EtpSession" />
     public class EtpServer : EtpSession
     {
         private WebSocketSession _session;

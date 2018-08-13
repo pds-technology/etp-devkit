@@ -76,5 +76,14 @@ namespace Energistics.IntegrationTest {
                 return ((string)(this["EtpVersion"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("energitics-tp")]
+        public string EtpSubProtocol {
+            get {
+                return ((string)(this["EtpSubProtocol"]));
+            }
+        }
     }
 }

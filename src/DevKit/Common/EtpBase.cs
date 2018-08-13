@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@
 
 using System;
 using System.Collections.Generic;
-using Energistics.Datatypes;
+using Energistics.Etp.Common.Datatypes;
 using log4net;
 
-namespace Energistics.Common
+namespace Energistics.Etp.Common
 {
     /// <summary>
     /// Provides common functionality for ETP session and protocol handler implementations.
@@ -99,7 +99,7 @@ namespace Energistics.Common
         /// </summary>
         /// <param name="requestedProtocols">The requested protocols.</param>
         /// <param name="supportedProtocols">The supported protocols.</param>
-        public virtual void OnSessionOpened(IList<SupportedProtocol> requestedProtocols, IList<SupportedProtocol> supportedProtocols)
+        public virtual void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols)
         {
         }
 

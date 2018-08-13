@@ -7,7 +7,7 @@
     <ProjectGuid>{30DE888B-A6B7-4528-AD89-324A7F9B0F4C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Energistics</RootNamespace>
+    <RootNamespace>Energistics.Etp</RootNamespace>
     <AssemblyName>ETP.DevKit</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -37,8 +37,8 @@
       <HintPath>..\packages\Apache.Avro.1.7.7.2\lib\Avro.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ETP.Messages, Version=1.5.0.0, Culture=neutral, PublicKeyToken=c2b7028481fb2795, processorArchitecture=MSIL">
-      <HintPath>..\packages\ETP.1.5.0.0\lib\ETP.Messages.dll</HintPath>
+    <Reference Include="ETP.Messages, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ETP.1.6.0-dev02\lib\net40\ETP.Messages.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
@@ -81,17 +81,19 @@
     <Compile Include="Common\EtpProtocolHandler.cs" />
     <Compile Include="Common\EtpSession.cs" />
     <Compile Include="Common\EtpSettings.cs" />
-    <Compile Include="Datatypes\ByteArrayConverter.cs" />
-    <Compile Include="Datatypes\ChannelData\StreamingStartIndexConverter.cs" />
-    <Compile Include="Datatypes\NullableAttributeConverter.cs" />
-    <Compile Include="Datatypes\DataValueConverter.cs" />
-    <Compile Include="Datatypes\EtpContentType.cs" />
-    <Compile Include="Datatypes\EtpUri.cs" />
+    <Compile Include="Common\Datatypes\ByteArrayConverter.cs" />
+    <Compile Include="Common\EtpSpecificReader.cs" />
+    <Compile Include="Common\IEtpAdapter.cs" />
+    <Compile Include="v11\Datatypes\ChannelData\StreamingStartIndexConverter.cs" />
+    <Compile Include="Common\Datatypes\NullableAttributeConverter.cs" />
+    <Compile Include="v11\Datatypes\DataValueConverter.cs" />
+    <Compile Include="Common\Datatypes\EtpContentType.cs" />
+    <Compile Include="Common\Datatypes\EtpUri.cs" />
     <Compile Include="Common\IEtpSession.cs" />
     <Compile Include="Common\ProtocolEventArgs.cs" />
     <Compile Include="Common\ProtocolEventHandler.cs" />
-    <Compile Include="Datatypes\Object\GrowingObjectIndexConverter.cs" />
-    <Compile Include="Datatypes\PrimitiveConverters.cs" />
+    <Compile Include="v11\Datatypes\Object\GrowingObjectIndexConverter.cs" />
+    <Compile Include="Common\Datatypes\PrimitiveConverters.cs" />
     <Compile Include="EtpErrorCodes.cs" />
     <Compile Include="EtpServer.cs" />
     <Compile Include="EtpServerHandler.cs" />
@@ -102,144 +104,81 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Protocol\ChannelDataFrame\ChannelDataFrameConsumerHandler.cs" />
-    <Compile Include="Protocol\ChannelDataFrame\ChannelDataFrameProducerHandler.cs" />
-    <Compile Include="Protocol\ChannelDataFrame\IChannelDataFrameConsumer.cs" />
-    <Compile Include="Protocol\ChannelDataFrame\IChannelDataFrameProducer.cs" />
-    <Compile Include="Protocol\ChannelStreaming\ChannelStreamingConsumerHandler.cs" />
-    <Compile Include="Protocol\ChannelStreaming\ChannelStreamingProducerHandler.cs" />
-    <Compile Include="Protocol\ChannelStreaming\IChannelStreamingConsumer.cs" />
-    <Compile Include="Protocol\ChannelStreaming\IChannelStreamingProducer.cs" />
-    <Compile Include="Protocol\Core\CoreClientHandler.cs" />
-    <Compile Include="Protocol\Core\CoreServerHandler.cs" />
-    <Compile Include="Protocol\Core\ICoreClient.cs" />
+    <Compile Include="v11\Etp11Adapter.cs" />
+    <Compile Include="v11\Protocol\ChannelDataFrame\ChannelDataFrameConsumerHandler.cs" />
+    <Compile Include="v11\Protocol\ChannelDataFrame\ChannelDataFrameProducerHandler.cs" />
+    <Compile Include="v11\Protocol\ChannelDataFrame\IChannelDataFrameConsumer.cs" />
+    <Compile Include="v11\Protocol\ChannelDataFrame\IChannelDataFrameProducer.cs" />
+    <Compile Include="v11\Protocol\ChannelStreaming\ChannelStreamingConsumerHandler.cs" />
+    <Compile Include="v11\Protocol\ChannelStreaming\ChannelStreamingProducerHandler.cs" />
+    <Compile Include="v11\Protocol\ChannelStreaming\IChannelStreamingConsumer.cs" />
+    <Compile Include="v11\Protocol\ChannelStreaming\IChannelStreamingProducer.cs" />
+    <Compile Include="v11\Protocol\Core\CoreClientHandler.cs" />
+    <Compile Include="v11\Protocol\Core\CoreServerHandler.cs" />
+    <Compile Include="v11\Protocol\Core\ICoreClient.cs" />
     <Compile Include="Common\IProtocolHandler.cs" />
-    <Compile Include="Protocol\Core\ICoreServer.cs" />
-    <Compile Include="Protocol\DataArray\DataArrayCustomerHandler.cs" />
-    <Compile Include="Protocol\DataArray\DataArrayStoreHandler.cs" />
-    <Compile Include="Protocol\DataArray\IDataArrayStore.cs" />
-    <Compile Include="Protocol\DataArray\IDataArrayCustomer.cs" />
-    <Compile Include="Protocol\Discovery\DiscoveryCustomerHandler.cs" />
-    <Compile Include="Protocol\Discovery\DiscoveryStoreHandler.cs" />
-    <Compile Include="Protocol\Discovery\IDiscoveryCustomer.cs" />
-    <Compile Include="Protocol\Discovery\IDiscoveryStore.cs" />
+    <Compile Include="v11\Protocol\Core\ICoreServer.cs" />
+    <Compile Include="v11\Protocol\DataArray\DataArrayCustomerHandler.cs" />
+    <Compile Include="v11\Protocol\DataArray\DataArrayStoreHandler.cs" />
+    <Compile Include="v11\Protocol\DataArray\IDataArrayStore.cs" />
+    <Compile Include="v11\Protocol\DataArray\IDataArrayCustomer.cs" />
+    <Compile Include="v11\Protocol\Discovery\DiscoveryCustomerHandler.cs" />
+    <Compile Include="v11\Protocol\Discovery\DiscoveryStoreHandler.cs" />
+    <Compile Include="v11\Protocol\Discovery\IDiscoveryCustomer.cs" />
+    <Compile Include="v11\Protocol\Discovery\IDiscoveryStore.cs" />
     <Compile Include="Common\EtpContractResolver.cs" />
-    <Compile Include="Datatypes\ResourceTypes.cs" />
-    <Compile Include="Protocol\GrowingObject\GrowingObjectCustomerHandler.cs" />
-    <Compile Include="Protocol\GrowingObject\GrowingObjectStoreHandler.cs" />
-    <Compile Include="Protocol\GrowingObject\IGrowingObjectStore.cs" />
-    <Compile Include="Protocol\GrowingObject\IGrowingObjectCustomer.cs" />
-    <Compile Include="Protocol\MessageFlags.cs" />
-    <Compile Include="Protocol\MessageTypes.cs" />
-    <Compile Include="Datatypes\ProtocolRoleAttribute.cs" />
-    <Compile Include="Protocol\StoreNotification\IStoreNotificationCustomer.cs" />
-    <Compile Include="Protocol\StoreNotification\IStoreNotificationStore.cs" />
-    <Compile Include="Protocol\StoreNotification\StoreNotificationCustomerHandler.cs" />
-    <Compile Include="Protocol\StoreNotification\StoreNotificationStoreHandler.cs" />
-    <Compile Include="Protocol\Store\IStoreCustomer.cs" />
-    <Compile Include="Protocol\Store\IStoreStore.cs" />
+    <Compile Include="Common\Datatypes\ResourceTypes.cs" />
+    <Compile Include="v11\Protocol\GrowingObject\GrowingObjectCustomerHandler.cs" />
+    <Compile Include="v11\Protocol\GrowingObject\GrowingObjectStoreHandler.cs" />
+    <Compile Include="v11\Protocol\GrowingObject\IGrowingObjectStore.cs" />
+    <Compile Include="v11\Protocol\GrowingObject\IGrowingObjectCustomer.cs" />
+    <Compile Include="Common\Datatypes\MessageFlags.cs" />
+    <Compile Include="Common\Datatypes\ProtocolRoleAttribute.cs" />
+    <Compile Include="v11\Protocol\StoreNotification\IStoreNotificationCustomer.cs" />
+    <Compile Include="v11\Protocol\StoreNotification\IStoreNotificationStore.cs" />
+    <Compile Include="v11\Protocol\StoreNotification\StoreNotificationCustomerHandler.cs" />
+    <Compile Include="v11\Protocol\StoreNotification\StoreNotificationStoreHandler.cs" />
+    <Compile Include="v11\Protocol\Store\IStoreCustomer.cs" />
+    <Compile Include="v11\Protocol\Store\IStoreStore.cs" />
     <Compile Include="EtpClient.cs" />
     <Compile Include="EtpSocketServer.cs" />
-    <Compile Include="Protocol\Store\StoreCustomerHandler.cs" />
-    <Compile Include="Protocol\Store\StoreStoreHandler.cs" />
+    <Compile Include="v11\Protocol\Store\StoreCustomerHandler.cs" />
+    <Compile Include="v11\Protocol\Store\StoreStoreHandler.cs" />
     <Compile Include="Security\Authorization.cs" />
     <Compile Include="Security\HttpConnectProxy.cs" />
     <Compile Include="Security\ProxyConnectorBase.cs" />
+    <Compile Include="v12\Datatypes\ChannelData\StreamingStartIndexConverter.cs" />
+    <Compile Include="v12\Protocol\ChannelDataFrame\ChannelDataFrameConsumerHandler.cs" />
+    <Compile Include="v12\Protocol\ChannelDataFrame\ChannelDataFrameProducerHandler.cs" />
+    <Compile Include="v12\Protocol\ChannelDataFrame\IChannelDataFrameConsumer.cs" />
+    <Compile Include="v12\Protocol\ChannelDataFrame\IChannelDataFrameProducer.cs" />
+    <Compile Include="v12\Protocol\ChannelStreaming\ChannelStreamingConsumerHandler.cs" />
+    <Compile Include="v12\Protocol\ChannelStreaming\ChannelStreamingProducerHandler.cs" />
+    <Compile Include="v12\Protocol\ChannelStreaming\IChannelStreamingConsumer.cs" />
+    <Compile Include="v12\Protocol\ChannelStreaming\IChannelStreamingProducer.cs" />
+    <Compile Include="v12\Protocol\Core\CoreClientHandler.cs" />
+    <Compile Include="v12\Protocol\Core\CoreServerHandler.cs" />
+    <Compile Include="v12\Protocol\Core\ICoreClient.cs" />
+    <Compile Include="v12\Protocol\Core\ICoreServer.cs" />
+    <Compile Include="v12\Etp12Adapter.cs" />
+    <Compile Include="v12\Protocol\Discovery\DiscoveryCustomerHandler.cs" />
+    <Compile Include="v12\Protocol\Discovery\DiscoveryStoreHandler.cs" />
+    <Compile Include="v12\Protocol\Discovery\IDiscoveryCustomer.cs" />
+    <Compile Include="v12\Protocol\Discovery\IDiscoveryStore.cs" />
+    <Compile Include="v12\Protocol\StoreNotification\IStoreNotificationCustomer.cs" />
+    <Compile Include="v12\Protocol\StoreNotification\IStoreNotificationStore.cs" />
+    <Compile Include="v12\Protocol\StoreNotification\StoreNotificationCustomerHandler.cs" />
+    <Compile Include="v12\Protocol\StoreNotification\StoreNotificationStoreHandler.cs" />
+    <Compile Include="v12\Protocol\Store\IStoreCustomer.cs" />
+    <Compile Include="v12\Protocol\Store\IStoreStore.cs" />
+    <Compile Include="v12\Protocol\Store\StoreCustomerHandler.cs" />
+    <Compile Include="v12\Protocol\Store\StoreStoreHandler.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="!Protocols 3-4.cd" />
-    <None Include="!Protocols 0-1.cd" />
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="!BaseTypes.cd" />
     <None Include="DevKit.nuspec" />
-    <None Include="Energistics\Datatypes\AnyArray.avsc" />
-    <None Include="Energistics\Datatypes\ArrayOfBoolean.avsc" />
-    <None Include="Energistics\Datatypes\ArrayOfDouble.avsc" />
-    <None Include="Energistics\Datatypes\ArrayOfFloat.avsc" />
-    <None Include="Energistics\Datatypes\ArrayOfInt.avsc" />
-    <None Include="Energistics\Datatypes\ArrayOfLong.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\ChannelIndexTypes.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\ChannelMetadataRecord.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\ChannelRangeInfo.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\ChannelStatuses.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\ChannelStreamingInfo.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\DataFrame.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\DataItem.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\IndexDirections.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\IndexMetadataRecord.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\Roles.avsc" />
-    <None Include="Energistics\Datatypes\ChannelData\StreamingStartIndex.avsc" />
-    <None Include="Energistics\Datatypes\Contact.avsc" />
-    <None Include="Energistics\Datatypes\DataAttribute.avsc" />
-    <None Include="Energistics\Datatypes\DataValue.avsc" />
-    <None Include="Energistics\Datatypes\MessageHeader.avsc" />
-    <None Include="Energistics\Datatypes\Object\DataObject.avsc" />
-    <None Include="Energistics\Datatypes\Object\GrowingObjectIndex.avsc" />
-    <None Include="Energistics\Datatypes\Object\NotificationRequestRecord.avsc" />
-    <None Include="Energistics\Datatypes\Object\ObjectChange.avsc" />
-    <None Include="Energistics\Datatypes\Object\ObjectChangeTypes.avsc" />
-    <None Include="Energistics\Datatypes\Object\Resource.avsc" />
-    <None Include="Energistics\Datatypes\Protocols.avsc" />
-    <None Include="Energistics\Datatypes\ServerCapabilities.avsc" />
-    <None Include="Energistics\Datatypes\SupportedProtocol.avsc" />
-    <None Include="Energistics\Datatypes\Version.avsc" />
-    <None Include="Energistics\Protocol\ChannelDataFrame\ChannelDataFrameSet.avsc" />
-    <None Include="Energistics\Protocol\ChannelDataFrame\ChannelMetadata.avsc" />
-    <None Include="Energistics\Protocol\ChannelDataFrame\RequestChannelData.avsc" />
-    <None Include="Energistics\Protocol\ChannelStreaming\ChannelData.avsc" />
-    <None Include="Energistics\Protocol\ChannelStreaming\ChannelDataChange.avsc" />
-    <None Include="Energistics\Protocol\ChannelStreaming\ChannelDescribe.avsc" />
-    <None Include="Energistics\Protocol\ChannelStreaming\ChannelMetadata.avsc" />
-    <None Include="Energistics\Protocol\ChannelStreaming\ChannelRangeRequest.avsc" />
-    <None Include="Energistics\Protocol\ChannelStreaming\ChannelRemove.avsc" />
-    <None Include="Energistics\Protocol\ChannelStreaming\ChannelStatusChange.avsc" />
-    <None Include="Energistics\Protocol\ChannelStreaming\ChannelStreamingStart.avsc" />
-    <None Include="Energistics\Protocol\ChannelStreaming\ChannelStreamingStop.avsc" />
-    <None Include="Energistics\Protocol\ChannelStreaming\Start.avsc" />
-    <None Include="Energistics\Protocol\Core\Acknowledge.avsc" />
-    <None Include="Energistics\Protocol\Core\CloseSession.avsc" />
-    <None Include="Energistics\Protocol\Core\OpenSession.avsc" />
-    <None Include="Energistics\Protocol\Core\ProtocolException.avsc" />
-    <None Include="Energistics\Protocol\Core\RenewSecurityToken.avsc" />
-    <None Include="Energistics\Protocol\Core\RequestSession.avsc" />
-    <None Include="Energistics\Protocol\DataArray\DataArray.avsc" />
-    <None Include="Energistics\Protocol\DataArray\GetDataArray.avsc" />
-    <None Include="Energistics\Protocol\DataArray\GetDataArraySlice.avsc" />
-    <None Include="Energistics\Protocol\DataArray\PutDataArray.avsc" />
-    <None Include="Energistics\Protocol\DataArray\PutDataArraySlice.avsc" />
-    <None Include="Energistics\Protocol\Discovery\GetResources.avsc" />
-    <None Include="Energistics\Protocol\Discovery\GetResourcesResponse.avsc" />
-    <None Include="Energistics\Protocol\GrowingObject\GrowingObjectDelete.avsc" />
-    <None Include="Energistics\Protocol\GrowingObject\GrowingObjectDeleteRange.avsc" />
-    <None Include="Energistics\Protocol\GrowingObject\GrowingObjectGet.avsc" />
-    <None Include="Energistics\Protocol\GrowingObject\GrowingObjectGetRange.avsc" />
-    <None Include="Energistics\Protocol\GrowingObject\GrowingObjectPut.avsc" />
-    <None Include="Energistics\Protocol\GrowingObject\ObjectFragment.avsc" />
-    <None Include="Energistics\Protocol\StoreNotification\CancelNotification.avsc" />
-    <None Include="Energistics\Protocol\StoreNotification\ChangeNotification.avsc" />
-    <None Include="Energistics\Protocol\StoreNotification\DeleteNotification.avsc" />
-    <None Include="Energistics\Protocol\StoreNotification\NotificationRequest.avsc" />
-    <None Include="Energistics\Protocol\Store\DeleteObject.avsc" />
-    <None Include="Energistics\Protocol\Store\GetObject.avsc" />
-    <None Include="Energistics\Protocol\Store\Object.avsc" />
-    <None Include="Energistics\Protocol\Store\PutObject.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_AddToStore.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_DeleteFromStore.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_GetBaseMsg.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_GetCap.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_GetFromStore.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_GetVersion.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMLS_UpdateInStore.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_AddToStoreResponse.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_DeleteFromStoreResponse.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_GetBaseMsgResponse.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_GetCapResponse.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_GetFromStoreResponse.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_GetVersionResponse.avsc" />
-    <None Include="Energistics\Protocol\WitsmlSoap\WMSL_UpdateInStoreResponse.avsc" />
-    <None Include="etp.avpr" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
@@ -248,7 +187,9 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="License.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

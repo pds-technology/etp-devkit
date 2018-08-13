@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Energistics.Properties {
+namespace Energistics.Etp.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
@@ -56,6 +56,15 @@ namespace Energistics.Properties {
         public string EtpEncodingJson {
             get {
                 return ((string)(this["EtpEncodingJson"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("etp-version")]
+        public string EtpVersionHeader {
+            get {
+                return ((string)(this["EtpVersionHeader"]));
             }
         }
     }

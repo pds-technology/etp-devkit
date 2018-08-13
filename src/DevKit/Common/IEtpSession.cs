@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@
 using System;
 using System.Collections.Generic;
 using Avro.Specific;
-using Energistics.Datatypes;
+using Energistics.Etp.Common.Datatypes;
 
-namespace Energistics.Common
+namespace Energistics.Etp.Common
 {
     /// <summary>
     /// Defines the properties and methods needed to manage an ETP session.
@@ -29,6 +29,11 @@ namespace Energistics.Common
     /// <seealso cref="System.IDisposable" />
     public interface IEtpSession : IDisposable
     {
+        /// <summary>
+        /// Gets the version specific ETP adapter.
+        /// </summary>
+        IEtpAdapter Adapter { get; }
+
         /// <summary>
         /// Gets the name of the application.
         /// </summary>
@@ -79,7 +84,7 @@ namespace Energistics.Common
         /// </summary>
         /// <param name="requestedProtocols">The requested protocols.</param>
         /// <param name="supportedProtocols">The supported protocols.</param>
-        void OnSessionOpened(IList<SupportedProtocol> requestedProtocols, IList<SupportedProtocol> supportedProtocols);
+        void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols);
 
         /// <summary>
         /// Called when the ETP session is closed.
@@ -106,14 +111,14 @@ namespace Energistics.Common
         /// <param name="body">The body.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The message identifier.</returns>
-        long SendMessage<T>(MessageHeader header, T body, Action<MessageHeader> onBeforeSend = null) where T : ISpecificRecord;
+        long SendMessage<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null) where T : ISpecificRecord;
 
         /// <summary>
         /// Gets the supported protocols.
         /// </summary>
         /// <param name="isSender">if set to <c>true</c> the current session is the sender.</param>
         /// <returns>A list of supported protocols.</returns>
-        IList<SupportedProtocol> GetSupportedProtocols(bool isSender = false);
+        IList<ISupportedProtocol> GetSupportedProtocols(bool isSender = false);
 
         /// <summary>
         /// Gets the registered protocol handler for the specified ETP interface.

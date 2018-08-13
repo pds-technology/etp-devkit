@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,14 +23,12 @@ using System.IO.Compression;
 using System.Linq;
 using Avro.IO;
 using Avro.Specific;
-using Energistics.Datatypes;
-using Energistics.Datatypes.ChannelData;
-using Energistics.Datatypes.Object;
-using Energistics.Protocol.ChannelStreaming;
+using Energistics.Etp.Common.Datatypes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Energistics.Etp.Common.Datatypes.Object;
 
-namespace Energistics.Common
+namespace Energistics.Etp.Common
 {
     /// <summary>
     /// Provides extension methods that can be used along with ETP message types.
@@ -45,13 +43,18 @@ namespace Energistics.Common
             Converters = new List<JsonConverter>()
             {
                 new ByteArrayConverter(),
-                // TODO: new DataValueConverter(),
-                new GrowingObjectIndexConverter(),
                 new NullableDoubleConverter(),
                 new NullableIntConverter(),
                 new NullableLongConverter(),
-                new StreamingStartIndexConverter(),
-                new StringEnumConverter()
+                new StringEnumConverter(),
+
+                // TODO: new Etp11.Datatypes.DataValueConverter(),
+                new v11.Datatypes.ChannelData.StreamingStartIndexConverter(),
+                new v11.Datatypes.Object.GrowingObjectIndexConverter(),
+
+                // TODO: new Etp12.Datatypes.DataValueConverter(),
+                new v12.Datatypes.ChannelData.StreamingStartIndexConverter(),
+                // new v12.Datatypes.Object.GrowingObjectIndexConverter()
             }
         };
 
@@ -62,7 +65,7 @@ namespace Energistics.Common
         /// <param name="body">The message body.</param>
         /// <param name="header">The message header.</param>
         /// <returns>The encoded byte array containing the message data.</returns>
-        public static byte[] Encode<T>(this T body, MessageHeader header) where T : ISpecificRecord
+        public static byte[] Encode<T>(this T body, IMessageHeader header) where T : ISpecificRecord
         {
             using (var stream = new MemoryStream())
             {
@@ -70,7 +73,7 @@ namespace Energistics.Common
                 var encoder = new BinaryEncoder(stream);
 
                 // serialize header
-                var headerWriter = new SpecificWriter<MessageHeader>(header.Schema);
+                var headerWriter = new SpecificWriter<IMessageHeader>(header.Schema);
                 headerWriter.Write(header, encoder);
 
                 // serialize body
@@ -94,7 +97,7 @@ namespace Energistics.Common
                 return Deserialize<T>(null, body);
 
             var record = Activator.CreateInstance<T>();
-            var reader = new SpecificReader<T>(record.Schema, record.Schema);
+            var reader = new SpecificReader<T>(new EtpSpecificReader(record.Schema, record.Schema));
 
             reader.Read(record, decoder);
 
@@ -189,7 +192,7 @@ namespace Energistics.Common
         /// <param name="protocol">The requested protocol.</param>
         /// <param name="role">The requested role.</param>
         /// <returns>A value indicating whether the specified protocol and role combination is supported.</returns>
-        public static bool Contains(this IList<SupportedProtocol> supportedProtocols, int protocol, string role)
+        public static bool Contains(this IList<ISupportedProtocol> supportedProtocols, int protocol, string role)
         {
             return supportedProtocols.Any(x => x.Protocol == protocol &&
                 string.Equals(x.Role, role, StringComparison.InvariantCultureIgnoreCase));
@@ -200,39 +203,42 @@ namespace Energistics.Common
         /// </summary>
         /// <param name="supportedProtocols">The supported protocols.</param>
         /// <returns></returns>
-        public static bool IsSimpleStreamer(this IList<SupportedProtocol> supportedProtocols)
+        public static bool IsSimpleStreamer(this IList<ISupportedProtocol> supportedProtocols)
         {
+            const int protocol = (int) v11.Protocols.ChannelStreaming;
+            const string keyword = v11.Protocol.ChannelStreaming.ChannelStreamingProducerHandler.SimpleStreamer;
+
             return supportedProtocols
-                .Where(x => x.Protocol == (int)Protocols.ChannelStreaming && x.ProtocolCapabilities != null)
+                .Where(x => x.Protocol == protocol && x.ProtocolCapabilities != null)
                 .Any(x =>
                 {
-                    var dataValue = x.ProtocolCapabilities
-                        .Where(y => string.Equals(y.Key, ChannelStreamingProducerHandler.SimpleStreamer, StringComparison.InvariantCultureIgnoreCase))
-                        .Select(y => y.Value)
-                        .FirstOrDefault();
-
-                    return dataValue != null && Convert.ToBoolean(dataValue.Item);
+                    return x.ProtocolCapabilities.Keys
+                        .Cast<string>()
+                        .Where(key => keyword.Equals(key, StringComparison.InvariantCultureIgnoreCase))
+                        .Select(key => x.ProtocolCapabilities[key])
+                        .Cast<IDataValue>()
+                        .Any(dataValue => Convert.ToBoolean(dataValue.Item));
                 });
         }
 
         /// <summary>
-        /// Decodes the data contained by the <see cref="DataObject"/> as a string.
+        /// Decodes the data contained by the <see cref="IDataObject"/> as a string.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
         /// <returns>The decoded string.</returns>
-        public static string GetString(this DataObject dataObject)
+        public static string GetString(this IDataObject dataObject)
         {
             return System.Text.Encoding.UTF8.GetString(dataObject.GetData());
             //return System.Text.Encoding.Unicode.GetString(dataObject.GetData());
         }
 
         /// <summary>
-        /// Encodes and optionally compresses the string for the <see cref="DataObject"/> data.
+        /// Encodes and optionally compresses the string for the <see cref="IDataObject"/> data.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
         /// <param name="data">The data string.</param>
         /// <param name="compress">if set to <c>true</c> the data will be compressed.</param>
-        public static void SetString(this DataObject dataObject, string data, bool compress = true)
+        public static void SetString(this IDataObject dataObject, string data, bool compress = true)
         {
             if (string.IsNullOrWhiteSpace(data))
             {
@@ -251,11 +257,11 @@ namespace Energistics.Common
         }
 
         /// <summary>
-        /// Gets the data contained by the <see cref="DataObject"/> and decompresses the byte array, if necessary.
+        /// Gets the data contained by the <see cref="IDataObject"/> and decompresses the byte array, if necessary.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
         /// <returns>The decompressed data as a byte array.</returns>
-        private static byte[] GetData(this DataObject dataObject)
+        private static byte[] GetData(this IDataObject dataObject)
         {
             if (string.IsNullOrWhiteSpace(dataObject.ContentEncoding))
                 return dataObject.Data;
@@ -276,12 +282,12 @@ namespace Energistics.Common
         }
 
         /// <summary>
-        /// Sets and optionally compresses the data for the <see cref="DataObject"/>.
+        /// Sets and optionally compresses the data for the <see cref="IDataObject"/>.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
         /// <param name="data">The data.</param>
         /// <param name="compress">if set to <c>true</c> the data will be compressed.</param>
-        private static void SetData(this DataObject dataObject, byte[] data, bool compress = true)
+        private static void SetData(this IDataObject dataObject, byte[] data, bool compress = true)
         {
             var encoding = string.Empty;
 

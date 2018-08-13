@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,16 +17,16 @@
 //-----------------------------------------------------------------------
 
 using System.Threading.Tasks;
-using Energistics.Common;
-using Energistics.Properties;
-using Energistics.Protocol.ChannelStreaming;
-using Energistics.Protocol.Core;
-using Energistics.Protocol.Discovery;
-using Energistics.Protocol.Store;
-using Energistics.Security;
+using Energistics.Etp.Common;
+using Energistics.Etp.Properties;
+using Energistics.Etp.Security;
+using Energistics.Etp.v11.Protocol.ChannelStreaming;
+using Energistics.Etp.v11.Protocol.Core;
+using Energistics.Etp.v11.Protocol.Discovery;
+using Energistics.Etp.v11.Protocol.Store;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Energistics
+namespace Energistics.Etp
 {
     [TestClass]
     public class EtpClientTests
@@ -41,7 +41,7 @@ namespace Energistics
             var auth = Authorization.Basic(TestSettings.Username, TestSettings.Password);
 
             // Initialize an EtpClient with a valid Uri, app name and version, and auth header
-            using (var client = new EtpClient(TestSettings.ServerUrl, AppName, AppVersion, auth))
+            using (var client = new EtpClient(TestSettings.ServerUrl, AppName, AppVersion, TestSettings.EtpSubProtocol, auth))
             {
                 // Register protocol handlers to be used in later tests
                 client.Register<IChannelStreamingConsumer, ChannelStreamingConsumerHandler>();
@@ -70,7 +70,7 @@ namespace Energistics
             headers[EtpSettings.EtpEncodingHeader] = Settings.Default.EtpEncodingJson;
 
             // Initialize an EtpClient with a valid Uri, app name and version, and headers
-            using (var client = new EtpClient(TestSettings.ServerUrl, AppName, AppVersion, headers))
+            using (var client = new EtpClient(TestSettings.ServerUrl, AppName, AppVersion, TestSettings.EtpSubProtocol, headers))
             {
                 // Open the connection (uses an async extension method)
                 await client.OpenAsync();

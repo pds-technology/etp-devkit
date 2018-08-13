@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,13 +21,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
-using Energistics.Common;
-using Energistics.Datatypes;
-using Newtonsoft.Json;
+using System.Web;
+using Energistics.Etp.Common;
 using Newtonsoft.Json.Linq;
-using Authorization = Energistics.Security.Authorization;
+using Authorization = Energistics.Etp.Security.Authorization;
 
-namespace Energistics
+namespace Energistics.Etp
 {
     /// <summary>
     /// Provides <see cref="System.Net.WebClient"/> functionality needed to execute HTTP web
@@ -95,12 +94,6 @@ namespace Energistics
         public IDictionary<string, string> BearerHeader { get; private set; }
 
         /// <summary>
-        /// Gets the cached <see cref="Energistics.Datatypes.ServerCapabilities"/> object.
-        /// </summary>
-        /// <value>The <see cref="Energistics.Datatypes.ServerCapabilities"/> object.</value>
-        public ServerCapabilities ServerCapabilities { get; private set; }
-
-        /// <summary>
         /// Gets the JSON Web Token using the specified URL and grant type.
         /// </summary>
         /// <param name="url">The URL.</param>
@@ -128,7 +121,7 @@ namespace Energistics
                     var json = JObject.Parse(response);
                     token = json["access_token"].Value<string>();
                 }
-                catch (Exception e)
+                catch
                 {
                     // If we can't parse the expected response format, use the raw response as the token
                     token = response;
@@ -140,11 +133,11 @@ namespace Energistics
         }
 
         /// <summary>
-        /// Gets the <see cref="Energistics.Datatypes.ServerCapabilities"/> object using the specified URL.
+        /// Gets the server capabilities object using the specified URL.
         /// </summary>
         /// <param name="url">The URL.</param>
-        /// <returns>The <see cref="Energistics.Datatypes.ServerCapabilities"/> object.</returns>
-        public ServerCapabilities GetServerCapabilities(string url)
+        /// <returns>The server capabilities object.</returns>
+        public object GetServerCapabilities(string url)
         {
             var headers = BearerHeader.Any()
                 ? BearerHeader
@@ -154,12 +147,12 @@ namespace Energistics
         }
 
         /// <summary>
-        /// Gets the <see cref="Energistics.Datatypes.ServerCapabilities"/> object using the specified URL and authorization header.
+        /// Gets the server capabilities object using the specified URL and authorization header.
         /// </summary>
         /// <param name="url">The URL.</param>
         /// <param name="headers">The authorization header.</param>
-        /// <returns>The <see cref="Energistics.Datatypes.ServerCapabilities"/> object.</returns>
-        private ServerCapabilities GetServerCapabilities(string url, IDictionary<string, string> headers)
+        /// <returns>The server capabilities object.</returns>
+        private object GetServerCapabilities(string url, IDictionary<string, string> headers)
         {
             using (var client = new WebClient())
             {
@@ -171,9 +164,9 @@ namespace Energistics
                 client.Headers[HttpRequestHeader.Accept] = JsonContentType;
 
                 var response = client.DownloadString(url);
-                var capServer = EtpExtensions.Deserialize<ServerCapabilities>(response);
+                var capServerType = GetServerCapabilitiesType(url);
+                var capServer = EtpExtensions.Deserialize(capServerType, response);
 
-                ServerCapabilities = capServer;
                 return capServer;
             }
         }
@@ -222,6 +215,21 @@ namespace Energistics
             }
 
             return payload.ToString();
+        }
+
+        private static Type GetServerCapabilitiesType(string url)
+        {
+            var etp11Type = typeof(Etp.v11.Datatypes.ServerCapabilities);
+            var etp12Type = typeof(Etp.v12.Datatypes.ServerCapabilities);
+            var uri = new Uri(url);
+
+            if (string.IsNullOrWhiteSpace(uri.Query))
+                return etp11Type;
+
+            var queryString = HttpUtility.ParseQueryString(uri.Query);
+            var etpVersion = queryString[EtpSettings.EtpVersionHeader];
+
+            return etpVersion == "1.2" ? etp12Type : etp11Type;
         }
     }
 }

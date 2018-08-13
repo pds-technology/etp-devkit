@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ using System.IO;
 using log4net.Config;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Energistics
+namespace Energistics.Etp
 {
     [TestClass]
     public class AssemblyInitializer

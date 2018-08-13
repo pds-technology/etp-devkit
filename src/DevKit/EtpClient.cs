@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,20 +20,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using Energistics.Common;
-using Energistics.Datatypes;
-using Energistics.Properties;
-using Energistics.Protocol.Core;
-using Energistics.Security;
+using Energistics.Etp.Common;
+using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Properties;
+using Energistics.Etp.Security;
 using SuperSocket.ClientEngine;
 using WebSocket4Net;
 
-namespace Energistics
+namespace Energistics.Etp
 {
     /// <summary>
     /// A wrapper for the WebSocket4Net library providing client connectivity to an ETP server.
     /// </summary>
-    /// <seealso cref="Energistics.Common.EtpSession" />
+    /// <seealso cref="Energistics.Etp.Common.EtpSession" />
     public class EtpClient : EtpSession
     {
         private static readonly IDictionary<string, string> EmptyHeaders = new Dictionary<string, string>();
@@ -45,12 +44,13 @@ namespace Energistics
         private WebSocket _socket;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EtpClient"/> class.
+        /// Initializes a new instance of the <see cref="EtpClient" /> class.
         /// </summary>
         /// <param name="uri">The ETP server URI.</param>
         /// <param name="application">The client application name.</param>
         /// <param name="version">The client application version.</param>
-        public EtpClient(string uri, string application, string version) : this(uri, application, version, EmptyHeaders)
+        /// <param name="etpSubProtocol">The ETP sub protocol.</param>
+        public EtpClient(string uri, string application, string version, string etpSubProtocol) : this(uri, application, version, etpSubProtocol, EmptyHeaders)
         {
         }
 
@@ -60,13 +60,14 @@ namespace Energistics
         /// <param name="uri">The ETP server URI.</param>
         /// <param name="application">The client application name.</param>
         /// <param name="version">The client application version.</param>
+        /// <param name="etpSubProtocol">The ETP sub protocol.</param>
         /// <param name="headers">The WebSocket headers.</param>
-        public EtpClient(string uri, string application, string version, IDictionary<string, string> headers) : base(application, version, headers)
+        public EtpClient(string uri, string application, string version, string etpSubProtocol, IDictionary<string, string> headers) : base(application, version, headers)
         {
             var headerItems = Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList();
 
             _socket = new WebSocket(uri,
-                subProtocol: EtpSettings.EtpSubProtocolName,
+                subProtocol: etpSubProtocol,
                 cookies: null,
                 customHeaderItems: headerItems,
                 userAgent: application);
@@ -77,7 +78,7 @@ namespace Energistics
             _socket.MessageReceived += OnWebSocketMessageReceived;
             _socket.Error += OnWebSocketError;
 
-            Register<ICoreClient, CoreClientHandler>();
+            RegisterCoreClient(etpSubProtocol);
         }
 
         /// <summary>
@@ -175,7 +176,7 @@ namespace Energistics
         /// Handles the unsupported protocols.
         /// </summary>
         /// <param name="supportedProtocols">The supported protocols.</param>
-        protected override void HandleUnsupportedProtocols(IList<SupportedProtocol> supportedProtocols)
+        protected override void HandleUnsupportedProtocols(IList<ISupportedProtocol> supportedProtocols)
         {
         }
 
@@ -203,10 +204,7 @@ namespace Energistics
         {
             Logger.Debug(Log("[{0}] Socket opened.", SessionId));
 
-            var requestedProtocols = GetSupportedProtocols(true);
-
-            Handler<ICoreClient>()
-                .RequestSession(ApplicationName, ApplicationVersion, requestedProtocols);
+            Adapter.RequestSession(ApplicationName, ApplicationVersion);
         }
 
         /// <summary>

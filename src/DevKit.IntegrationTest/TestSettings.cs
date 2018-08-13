@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,6 +54,11 @@ namespace Energistics
         /// The default ETP version
         /// </summary>
         public static string EtpVersion = Settings.Default.EtpVersion;
+
+        /// <summary>
+        /// The default ETP sub protocol
+        /// </summary>
+        public static string EtpSubProtocol = Settings.Default.EtpSubProtocol;
 
         /// <summary>
         /// The default timeout in milliseconds

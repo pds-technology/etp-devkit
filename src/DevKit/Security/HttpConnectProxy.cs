@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using SuperSocket.ClientEngine;
 
-namespace Energistics.Security
+namespace Energistics.Etp.Security
 {
     public class HttpConnectProxy : ProxyConnectorBase
     {

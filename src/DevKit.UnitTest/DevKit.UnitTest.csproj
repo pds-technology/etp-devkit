@@ -6,7 +6,7 @@
     <ProjectGuid>{BC953158-9584-45CF-BA13-10CE67348759}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Energistics</RootNamespace>
+    <RootNamespace>Energistics.Etp</RootNamespace>
     <AssemblyName>ETP.DevKit.UnitTest</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -40,8 +40,8 @@
       <HintPath>..\packages\Apache.Avro.1.7.7.2\lib\Avro.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ETP.Messages, Version=1.5.0.0, Culture=neutral, PublicKeyToken=c2b7028481fb2795, processorArchitecture=MSIL">
-      <HintPath>..\packages\ETP.1.5.0.0\lib\ETP.Messages.dll</HintPath>
+    <Reference Include="ETP.Messages, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ETP.1.6.0-dev02\lib\net40\ETP.Messages.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
@@ -66,13 +66,13 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
-    <Compile Include="Datatypes\ByteArrayConverterTests.cs" />
-    <Compile Include="Datatypes\ChannelData\StreamingStartIndexConverterTests.cs" />
-    <Compile Include="Datatypes\EtpUriTests.cs" />
-    <Compile Include="Datatypes\EtpContentTypeTests.cs" />
-    <Compile Include="Datatypes\Object\GrowingObjectIndexConverterTests.cs" />
-    <Compile Include="Datatypes\ProtocolRoleAttributeTests.cs" />
-    <Compile Include="Datatypes\NullableAttributeConverterTests.cs" />
+    <Compile Include="Common\Datatypes\ByteArrayConverterTests.cs" />
+    <Compile Include="v11\Datatypes\ChannelData\StreamingStartIndexConverterTests.cs" />
+    <Compile Include="Common\Datatypes\EtpUriTests.cs" />
+    <Compile Include="Common\Datatypes\EtpContentTypeTests.cs" />
+    <Compile Include="v11\Datatypes\Object\GrowingObjectIndexConverterTests.cs" />
+    <Compile Include="Common\Datatypes\ProtocolRoleAttributeTests.cs" />
+    <Compile Include="Common\Datatypes\NullableAttributeConverterTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -86,6 +86,12 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="v12\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="License.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,15 +24,14 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Energistics.Common;
-using Energistics.Protocol.Core;
+using Energistics.Etp.Common;
 
-namespace Energistics
+namespace Energistics.Etp
 {
     /// <summary>
     /// An ETP server session implementation that can be used with .NET WebSockets.
     /// </summary>
-    /// <seealso cref="Energistics.Common.EtpSession" />
+    /// <seealso cref="Energistics.Etp.Common.EtpSession" />
     public class EtpServerHandler : EtpSession
     {
         private const int BufferSize = 4096;
@@ -56,7 +55,7 @@ namespace Energistics
         public EtpServerHandler(WebSocket webSocket, string application, string version, IDictionary<string, string> headers) : base(application, version, headers)
         {
             _socket = webSocket;
-            Register<ICoreServer, CoreServerHandler>();
+            RegisterCoreServer(_socket.SubProtocol);
         }
 
         /// <summary>

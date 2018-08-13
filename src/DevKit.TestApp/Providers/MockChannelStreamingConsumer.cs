@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@
 
 using System;
 using System.Linq;
-using Energistics.Common;
-using Energistics.Datatypes;
-using Energistics.Protocol.ChannelStreaming;
+using Energistics.Etp.Common;
+using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v11.Protocol.ChannelStreaming;
 
-namespace Energistics.Providers
+namespace Energistics.Etp.Providers
 {
     /// <summary>
     /// Custom implementation of <see cref="IChannelStreamingConsumer"/> for connecting to a Simple Producer
     /// </summary>
-    /// <seealso cref="Energistics.Protocol.ChannelStreaming.ChannelStreamingConsumerHandler" />
+    /// <seealso cref="Energistics.Etp.v11.Protocol.ChannelStreaming.ChannelStreamingConsumerHandler" />
     public class MockChannelStreamingConsumer : ChannelStreamingConsumerHandler
     {
         /// <summary>
@@ -35,7 +35,7 @@ namespace Energistics.Providers
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="channelMetadata">The ChannelMetadata message.</param>
-        protected override void HandleChannelMetadata(MessageHeader header, ChannelMetadata channelMetadata)
+        protected override void HandleChannelMetadata(IMessageHeader header, ChannelMetadata channelMetadata)
         {
             Console.WriteLine(string.Join(Environment.NewLine, channelMetadata.Channels.Select(this.Serialize)));
         }
@@ -45,7 +45,7 @@ namespace Energistics.Providers
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="channelData">The ChannelData message.</param>
-        protected override void HandleChannelData(MessageHeader header, ChannelData channelData)
+        protected override void HandleChannelData(IMessageHeader header, ChannelData channelData)
         {
             Console.WriteLine(string.Join(Environment.NewLine, channelData.Data.Select(this.Serialize)));
         }

@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
-// ETP DevKit, 1.1
+// ETP DevKit, 1.2
 //
-// Copyright 2016 Energistics
+// Copyright 2018 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 
 using System;
 using Avro.Specific;
-using Energistics.Datatypes;
+using Energistics.Etp.Common.Datatypes;
 
-namespace Energistics.Common
+namespace Energistics.Etp.Common
 {
     /// <summary>
     /// Provides data for protocol handler events.
@@ -34,7 +34,7 @@ namespace Energistics.Common
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The message body.</param>
-        public ProtocolEventArgs(MessageHeader header, T message)
+        public ProtocolEventArgs(IMessageHeader header, T message)
         {
             Header = header;
             Message = message;
@@ -44,13 +44,13 @@ namespace Energistics.Common
         /// Gets the message header.
         /// </summary>
         /// <value>The message header.</value>
-        public MessageHeader Header { get; private set; }
+        public IMessageHeader Header { get; }
 
         /// <summary>
         /// Gets the message body.
         /// </summary>
         /// <value>The message body.</value>
-        public T Message { get; private set; }
+        public T Message { get; }
 
         /// <summary>
         /// Gets or sets a value indicating whether further processing should be cancelled.
@@ -75,7 +75,7 @@ namespace Energistics.Common
         /// <param name="header">The message header.</param>
         /// <param name="message">The message body.</param>
         /// <param name="context">The additional message context.</param>
-        public ProtocolEventArgs(MessageHeader header, T message, TContext context) : base(header, message)
+        public ProtocolEventArgs(IMessageHeader header, T message, TContext context) : base(header, message)
         {
             Context = context;
         }
@@ -84,6 +84,6 @@ namespace Energistics.Common
         /// Gets the additional message context.
         /// </summary>
         /// <value>The message context.</value>
-        public TContext Context { get; private set; }
+        public TContext Context { get; }
     }
 }
