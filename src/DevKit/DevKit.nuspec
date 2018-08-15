@@ -26,7 +26,7 @@
       <group targetFramework="net452">
         <dependency id="log4net" version="2.0.5" />
         <dependency id="Newtonsoft.Json" version="9.0.1" />
-        <dependency id="ETP" version="1.6.0-dev04" />
+        <dependency id="ETP" version="1.6.0-dev05" />
         <dependency id="WebSocket4Net" version="0.14.1" />
       </group>
     </dependencies>
