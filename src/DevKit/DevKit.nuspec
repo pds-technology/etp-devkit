@@ -7,7 +7,7 @@
     <authors>$author$</authors>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
     <projectUrl>https://bitbucket.org/energistics/etp-devkit</projectUrl>
-    <iconUrl>https://bitbucket-assetroot.s3.amazonaws.com/c/photos/2013/Nov/08/energistics-avatar-2297613920-0.png</iconUrl>
+    <iconUrl>https://bitbucket.org/account/energistics/avatar/</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>
       The ETP DevKit is a .NET library providing a common foundation and the basic infrastructure needed to communicate via the Energistics Transfer Protocol (ETP). The library is written in C# using the .NET Framework version 4.5.2. It is designed to simplify and standardize ETP client and server development by integrating the necessary dependencies and abstracting away the lower level details of communicating via ETP. It builds on the ETP Messages library, which provides .NET definitions for the ETP messages and associated data structures.
@@ -26,7 +26,7 @@
       <group targetFramework="net452">
         <dependency id="log4net" version="2.0.5" />
         <dependency id="Newtonsoft.Json" version="9.0.1" />
-        <dependency id="ETP" version="1.6.0-dev02" />
+        <dependency id="ETP" version="1.6.0-dev03" />
         <dependency id="WebSocket4Net" version="0.14.1" />
       </group>
     </dependencies>
