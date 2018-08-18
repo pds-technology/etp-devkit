@@ -58,7 +58,7 @@ namespace Energistics.Etp.v12
                 ProtocolVersion = new Version
                 {
                     Major = 1,
-                    Minor = 1
+                    Minor = 2
                 },
                 ProtocolCapabilities = handler
                     .GetCapabilities()

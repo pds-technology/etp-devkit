@@ -52,7 +52,7 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.2.0.0")]
 [assembly: AssemblyFileVersion("1.2.0.0")]
-[assembly: AssemblyInformationalVersion("1.2.0-dev05")]
+[assembly: AssemblyInformationalVersion("1.2.0-dev06")]
 
 [assembly: InternalsVisibleTo("ETP.DevKit.CertificationTest")]
 [assembly: InternalsVisibleTo("ETP.DevKit.IntegrationTest")]

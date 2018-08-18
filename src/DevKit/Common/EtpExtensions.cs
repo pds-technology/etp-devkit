@@ -35,6 +35,7 @@ namespace Energistics.Etp.Common
     /// </summary>
     public static class EtpExtensions
     {
+        private static readonly char[] WhiteSpace = Enumerable.Range(0, 20).Select(Convert.ToChar).ToArray();
         private const string GzipEncoding = "gzip";
 
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings()
@@ -228,8 +229,9 @@ namespace Energistics.Etp.Common
         /// <returns>The decoded string.</returns>
         public static string GetString(this IDataObject dataObject)
         {
-            return System.Text.Encoding.UTF8.GetString(dataObject.GetData());
-            //return System.Text.Encoding.Unicode.GetString(dataObject.GetData());
+            //var data = System.Text.Encoding.Unicode.GetString(dataObject.GetData());
+            var data = System.Text.Encoding.UTF8.GetString(dataObject.GetData());
+            return data.Trim(WhiteSpace);
         }
 
         /// <summary>
