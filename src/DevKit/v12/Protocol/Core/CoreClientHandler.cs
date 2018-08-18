@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Avro.IO;
@@ -76,7 +77,8 @@ namespace Energistics.Etp.v12.Protocol.Core
                 ApplicationName = applicationName,
                 ApplicationVersion = applicationVersion,
                 RequestedProtocols = requestedProtocols.Cast<SupportedProtocol>().ToList(),
-                SupportedObjects = new List<string>()
+                SupportedObjects = new List<string>(),
+                SupportedCompression = string.Empty
             };
 
             RequestedProtocols = requestedProtocols;
