@@ -16,41 +16,32 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
-namespace Energistics.Etp.v12.Protocol.StoreNotification
+namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
 {
     /// <summary>
-    /// Defines the interface that must be implemented by the customer role of the store notification protocol.
+    /// Describes the interface that must be implemented by the store role of the DiscoveryQuery protocol.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.StoreNotification, "customer", "store")]
-    public interface IStoreNotificationCustomer : IProtocolHandler
+    /// <seealso cref="IProtocolHandler" />
+    [ProtocolRole((int)Protocols.DiscoveryQuery, "store", "customer")]
+    public interface IDiscoveryQueryStore : IProtocolHandler
     {
         /// <summary>
-        /// Sends a NotificationRequest message to a store.
+        /// Sends a FindResourcesResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
+        /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
+        /// <param name="sortOrder">The sort order.</param>
         /// <returns>The message identifier.</returns>
-        long NotificationRequest(NotificationRequestRecord request);
+        long FindResourcesResponse(IMessageHeader request, IList<Resource> resources, string sortOrder);
 
         /// <summary>
-        /// Sends a CancelNotification message to a store.
+        /// Handles the FindResources event from a customer.
         /// </summary>
-        /// <param name="requestUuid">The request UUID.</param>
-        /// <returns>The message identifier.</returns>
-        long CancelNotification(string requestUuid);
-
-        /// <summary>
-        /// Handles the ChangeNotification event from a store.
-        /// </summary>
-        event ProtocolEventHandler<ChangeNotification> OnChangeNotification;
-
-        /// <summary>
-        /// Handles the DeleteNotification event from a store.
-        /// </summary>
-        event ProtocolEventHandler<DeleteNotification> OnDeleteNotification;
+        event ProtocolEventHandler<FindResources, IList<Resource>> OnFindResources;
     }
 }

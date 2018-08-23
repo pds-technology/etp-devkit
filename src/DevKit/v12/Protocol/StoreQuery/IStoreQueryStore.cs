@@ -16,41 +16,32 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
-namespace Energistics.Etp.v12.Protocol.StoreNotification
+namespace Energistics.Etp.v12.Protocol.StoreQuery
 {
     /// <summary>
-    /// Defines the interface that must be implemented by the customer role of the store notification protocol.
+    /// Describes the interface that must be implemented by the store role of the StoreQuery protocol.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.StoreNotification, "customer", "store")]
-    public interface IStoreNotificationCustomer : IProtocolHandler
+    /// <seealso cref="IProtocolHandler" />
+    [ProtocolRole((int)Protocols.StoreQuery, "store", "customer")]
+    public interface IStoreQueryStore : IProtocolHandler
     {
         /// <summary>
-        /// Sends a NotificationRequest message to a store.
+        /// Sends a FindObjectsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
+        /// <param name="objects">The list of <see cref="DataObject"/> objects.</param>
+        /// <param name="sortOrder">The sort order.</param>
         /// <returns>The message identifier.</returns>
-        long NotificationRequest(NotificationRequestRecord request);
+        long FindObjectsResponse(IMessageHeader request, IList<DataObject> objects, string sortOrder);
 
         /// <summary>
-        /// Sends a CancelNotification message to a store.
+        /// Handles the FindObjects event from a customer.
         /// </summary>
-        /// <param name="requestUuid">The request UUID.</param>
-        /// <returns>The message identifier.</returns>
-        long CancelNotification(string requestUuid);
-
-        /// <summary>
-        /// Handles the ChangeNotification event from a store.
-        /// </summary>
-        event ProtocolEventHandler<ChangeNotification> OnChangeNotification;
-
-        /// <summary>
-        /// Handles the DeleteNotification event from a store.
-        /// </summary>
-        event ProtocolEventHandler<DeleteNotification> OnDeleteNotification;
+        event ProtocolEventHandler<FindObjects, IList<DataObject>> OnFindObjects;
     }
 }

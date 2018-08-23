@@ -20,37 +20,47 @@ using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
-namespace Energistics.Etp.v12.Protocol.StoreNotification
+namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
 {
     /// <summary>
-    /// Defines the interface that must be implemented by the customer role of the store notification protocol.
+    /// Defines the interface that must be implemented by the customer role of the growing object notification protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.StoreNotification, "customer", "store")]
-    public interface IStoreNotificationCustomer : IProtocolHandler
+    [ProtocolRole((int)Protocols.GrowingObjectNotification, "customer", "store")]
+    public interface IGrowingObjectNotificationCustomer : IProtocolHandler
     {
         /// <summary>
         /// Sends a NotificationRequest message to a store.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <returns>The message identifier.</returns>
-        long NotificationRequest(NotificationRequestRecord request);
+        long RequestPartNotification(NotificationRequestRecord request);
 
         /// <summary>
         /// Sends a CancelNotification message to a store.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
         /// <returns>The message identifier.</returns>
-        long CancelNotification(string requestUuid);
+        long CancelPartNotification(string requestUuid);
 
         /// <summary>
-        /// Handles the ChangeNotification event from a store.
+        /// Handles the PartChangeNotification event from a store.
         /// </summary>
-        event ProtocolEventHandler<ChangeNotification> OnChangeNotification;
+        event ProtocolEventHandler<PartChangeNotification> OnPartChangeNotification;
 
         /// <summary>
-        /// Handles the DeleteNotification event from a store.
+        /// Handles the PartDeleteNotification event from a store.
         /// </summary>
-        event ProtocolEventHandler<DeleteNotification> OnDeleteNotification;
+        event ProtocolEventHandler<PartDeleteNotification> OnPartDeleteNotification;
+
+        /// <summary>
+        /// Handles the DeletePartsByRangeNotification event from a store.
+        /// </summary>
+        event ProtocolEventHandler<DeletePartsByRangeNotification> OnDeletePartsByRangeNotification;
+
+        /// <summary>
+        /// Handles the ReplacePartsByRangeNotification event from a store.
+        /// </summary>
+        event ProtocolEventHandler<ReplacePartsByRangeNotification> OnReplacePartsByRangeNotification;
     }
 }

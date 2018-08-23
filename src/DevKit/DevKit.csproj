@@ -38,7 +38,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="ETP.Messages, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ETP.1.6.0-dev05\lib\net40\ETP.Messages.dll</HintPath>
+      <HintPath>..\packages\ETP.1.6.0-dev06\lib\net40\ETP.Messages.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
@@ -161,6 +161,26 @@
     <Compile Include="v12\Protocol\Core\ICoreClient.cs" />
     <Compile Include="v12\Protocol\Core\ICoreServer.cs" />
     <Compile Include="v12\Etp12Adapter.cs" />
+    <Compile Include="v12\Protocol\GrowingObjectQuery\IGrowingObjectQueryCustomer.cs" />
+    <Compile Include="v12\Protocol\GrowingObjectQuery\IGrowingObjectQueryStore.cs" />
+    <Compile Include="v12\Protocol\GrowingObjectQuery\GrowingObjectQueryCustomerHandler.cs" />
+    <Compile Include="v12\Protocol\GrowingObjectQuery\GrowingObjectQueryStoreHandler.cs" />
+    <Compile Include="v12\Protocol\GrowingObject\GrowingObjectCustomerHandler.cs" />
+    <Compile Include="v12\Protocol\GrowingObject\GrowingObjectStoreHandler.cs" />
+    <Compile Include="v12\Protocol\GrowingObject\IGrowingObjectCustomer.cs" />
+    <Compile Include="v12\Protocol\GrowingObject\IGrowingObjectStore.cs" />
+    <Compile Include="v12\Protocol\GrowingObjectNotification\IGrowingObjectNotificationCustomer.cs" />
+    <Compile Include="v12\Protocol\GrowingObjectNotification\IGrowingObjectNotificationStore.cs" />
+    <Compile Include="v12\Protocol\GrowingObjectNotification\GrowingObjectNotificationCustomerHandler.cs" />
+    <Compile Include="v12\Protocol\GrowingObjectNotification\GrowingObjectNotificationStoreHandler.cs" />
+    <Compile Include="v12\Protocol\StoreQuery\StoreQueryCustomerHandler.cs" />
+    <Compile Include="v12\Protocol\StoreQuery\StoreQueryStoreHandler.cs" />
+    <Compile Include="v12\Protocol\StoreQuery\IStoreQueryCustomer.cs" />
+    <Compile Include="v12\Protocol\StoreQuery\IStoreQueryStore.cs" />
+    <Compile Include="v12\Protocol\DiscoveryQuery\DiscoveryQueryCustomerHandler.cs" />
+    <Compile Include="v12\Protocol\DiscoveryQuery\DiscoveryQueryStoreHandler.cs" />
+    <Compile Include="v12\Protocol\DiscoveryQuery\IDiscoveryQueryCustomer.cs" />
+    <Compile Include="v12\Protocol\DiscoveryQuery\IDiscoveryQueryStore.cs" />
     <Compile Include="v12\Protocol\Discovery\DiscoveryCustomerHandler.cs" />
     <Compile Include="v12\Protocol\Discovery\DiscoveryStoreHandler.cs" />
     <Compile Include="v12\Protocol\Discovery\IDiscoveryCustomer.cs" />
