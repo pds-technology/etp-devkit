@@ -38,7 +38,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="ETP.Messages, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ETP.1.6.0-dev07\lib\net40\ETP.Messages.dll</HintPath>
+      <HintPath>..\packages\ETP.1.6.0-dev08\lib\net40\ETP.Messages.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
@@ -152,6 +152,10 @@
     <Compile Include="v12\Protocol\ChannelDataFrame\ChannelDataFrameProducerHandler.cs" />
     <Compile Include="v12\Protocol\ChannelDataFrame\IChannelDataFrameConsumer.cs" />
     <Compile Include="v12\Protocol\ChannelDataFrame\IChannelDataFrameProducer.cs" />
+    <Compile Include="v12\Protocol\ChannelDataLoad\ChannelDataLoadConsumerHandler.cs" />
+    <Compile Include="v12\Protocol\ChannelDataLoad\ChannelDataLoadProducerHandler.cs" />
+    <Compile Include="v12\Protocol\ChannelDataLoad\IChannelDataLoadConsumer.cs" />
+    <Compile Include="v12\Protocol\ChannelDataLoad\IChannelDataLoadProducer.cs" />
     <Compile Include="v12\Protocol\ChannelStreaming\ChannelStreamingConsumerHandler.cs" />
     <Compile Include="v12\Protocol\ChannelStreaming\ChannelStreamingProducerHandler.cs" />
     <Compile Include="v12\Protocol\ChannelStreaming\IChannelStreamingConsumer.cs" />
