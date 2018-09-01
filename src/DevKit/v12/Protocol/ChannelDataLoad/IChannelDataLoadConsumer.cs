@@ -32,14 +32,15 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <summary>
         /// Sends a OpenChannelResponse message to a store.
         /// </summary>
+        /// <param name="request">The request.</param>
         /// <param name="uri">The channel URI.</param>
         /// <param name="id">The channel identifier.</param>
         /// <param name="uuid">The channel UUID.</param>
         /// <param name="lastIndex">The last index.</param>
         /// <param name="infill">if set to <c>true</c> provide infill data.</param>
-        /// <param name="dataChange">if set to <c>true</c> provide channel data changes.</param>
+        /// <param name="dataChanges">if set to <c>true</c> provide channel data changes.</param>
         /// <returns>The message identifier.</returns>
-        long OpenChannelResponse(string uri, long id, Guid uuid, object lastIndex = null, bool infill = true, bool dataChange = true);
+        long OpenChannelResponse(IMessageHeader request, string uri, long id, Guid uuid, object lastIndex = null, bool infill = true, bool dataChanges = true);
 
         /// <summary>
         /// Handles the OpenChannel event from a store.

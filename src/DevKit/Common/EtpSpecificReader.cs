@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections.Concurrent;
 using Avro;
 using Avro.IO;
 using Avro.Specific;
@@ -24,6 +25,7 @@ namespace Energistics.Etp.Common
 {
     public class EtpSpecificReader : SpecificDefaultReader
     {
+        private static readonly ConcurrentDictionary<string, string> Namespaces = new ConcurrentDictionary<string, string>();
         private const string RootNamespace = "Energistics.";
 
         public EtpSpecificReader(Schema writerSchema, Schema readerSchema) : base(writerSchema, readerSchema)
@@ -78,10 +80,16 @@ namespace Energistics.Etp.Common
 
         private string GetTypeName(string typeName)
         {
-            if (typeName.StartsWith(RootNamespace) && !typeName.StartsWith($"{RootNamespace}Etp."))
-                typeName = $"{RootNamespace}Etp.v11.{typeName.Substring(RootNamespace.Length)}";
+            return Namespaces.GetOrAdd(typeName, key =>
+            {
+                var result = key;
 
-            return typeName;
+                // Map legacy namespaces to Etp.v11 namespace
+                if (result.StartsWith(RootNamespace) && !result.StartsWith($"{RootNamespace}Etp."))
+                    result = $"{RootNamespace}Etp.v11.{result.Substring(RootNamespace.Length)}";
+
+                return result;
+            });
         }
     }
 }

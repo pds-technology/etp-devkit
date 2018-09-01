@@ -41,16 +41,17 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <summary>
         /// Sends a OpenChannelResponse message to a store.
         /// </summary>
+        /// <param name="request">The request.</param>
         /// <param name="uri">The channel URI.</param>
         /// <param name="id">The channel identifier.</param>
         /// <param name="uuid">The channel UUID.</param>
         /// <param name="lastIndex">The last index.</param>
         /// <param name="infill">if set to <c>true</c> provide infill data.</param>
-        /// <param name="dataChange">if set to <c>true</c> provide channel data changes.</param>
+        /// <param name="dataChanges">if set to <c>true</c> provide channel data changes.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long OpenChannelResponse(string uri, long id, Guid uuid, object lastIndex = null, bool infill = true, bool dataChange = true)
+        public virtual long OpenChannelResponse(IMessageHeader request, string uri, long id, Guid uuid, object lastIndex = null, bool infill = true, bool dataChanges = true)
         {
-            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelResponse);
+            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelResponse, request.MessageId);
 
             var message = new OpenChannelResponse
             {
@@ -59,7 +60,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
                 Uuid = new Uuid { Value = uuid.ToByteArray() },
                 LastIndex = new IndexValue { Item = lastIndex },
                 Infill = infill,
-                DataChange = dataChange
+                DataChanges = dataChanges
             };
 
             return Session.SendMessage(header, message);
