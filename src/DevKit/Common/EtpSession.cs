@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using Avro.IO;
@@ -77,6 +78,11 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <value>The session identifier.</value>
         public string SessionId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the supported compression type.
+        /// </summary>
+        public string SupportedCompression { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether the underlying websocket connection is open.
@@ -233,7 +239,7 @@ namespace Energistics.Etp.Common
                     }
                     else
                     {
-                        var data = body.Encode(header);
+                        var data = body.Encode(header, SupportedCompression);
                         Send(data, 0, data.Length);
                     }
                 }
@@ -366,8 +372,24 @@ namespace Energistics.Etp.Common
                     Logger.DebugFormat("[{0}] Message received: {1}", SessionId, this.Serialize(header));
                 }
 
-                // call processing action
-                HandleMessage(header, decoder, null);
+                Stream gzip = null;
+
+                try
+                {
+                    // Decompress message body if compression has been negotiated
+                    if (EtpExtensions.GzipEncoding.Equals(SupportedCompression, StringComparison.InvariantCultureIgnoreCase) && header.CanCompressMessageBody())
+                    {
+                        gzip = new GZipStream(inputStream, CompressionMode.Decompress, true);
+                        decoder = new BinaryDecoder(gzip);
+                    }
+
+                    // call processing action
+                    HandleMessage(header, decoder, null);
+                }
+                finally
+                {
+                    gzip?.Dispose();
+                }
             }
         }
 

@@ -42,7 +42,7 @@ namespace Energistics.Etp.v11
             Session.Register<ICoreServer, CoreServerHandler>();
         }
 
-        public void RequestSession(string applicationName, string applicationVersion)
+        public void RequestSession(string applicationName, string applicationVersion, string requestedCompression)
         {
             var requestedProtocols = Session.GetSupportedProtocols(true);
 

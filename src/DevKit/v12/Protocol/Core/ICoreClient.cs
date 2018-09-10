@@ -35,8 +35,9 @@ namespace Energistics.Etp.v12.Protocol.Core
         /// <param name="applicationName">The application name.</param>
         /// <param name="applicationVersion">The application version.</param>
         /// <param name="requestedProtocols">The requested protocols.</param>
+        /// <param name="requestedCompression">The requested compression.</param>
         /// <returns>The message identifier.</returns>
-        long RequestSession(string applicationName, string applicationVersion, IList<ISupportedProtocol> requestedProtocols);
+        long RequestSession(string applicationName, string applicationVersion, IList<ISupportedProtocol> requestedProtocols, string requestedCompression);
 
         /// <summary>
         /// Sends a CloseSession message to a server.

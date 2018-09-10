@@ -27,6 +27,7 @@ using Energistics.Etp.Common.Datatypes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Energistics.Etp.Common.Datatypes.Object;
+using CoreMessageTypes = Energistics.Etp.v11.MessageTypes.Core;
 
 namespace Energistics.Etp.Common
 {
@@ -36,7 +37,7 @@ namespace Energistics.Etp.Common
     public static class EtpExtensions
     {
         private static readonly char[] WhiteSpace = Enumerable.Range(0, 20).Select(Convert.ToChar).ToArray();
-        private const string GzipEncoding = "gzip";
+        public const string GzipEncoding = "gzip";
 
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings()
         {
@@ -54,6 +55,7 @@ namespace Energistics.Etp.Common
                 new v11.Datatypes.Object.GrowingObjectIndexConverter(),
 
                 // TODO: new Etp12.Datatypes.DataValueConverter(),
+                new v12.Datatypes.IndexValueConverter(),
                 new v12.Datatypes.ChannelData.StreamingStartIndexConverter(),
                 // new v12.Datatypes.Object.GrowingObjectIndexConverter()
             }
@@ -65,8 +67,9 @@ namespace Energistics.Etp.Common
         /// <typeparam name="T">The type of the message.</typeparam>
         /// <param name="body">The message body.</param>
         /// <param name="header">The message header.</param>
+        /// <param name="compression">The compression type.</param>
         /// <returns>The encoded byte array containing the message data.</returns>
-        public static byte[] Encode<T>(this T body, IMessageHeader header) where T : ISpecificRecord
+        public static byte[] Encode<T>(this T body, IMessageHeader header, string compression) where T : ISpecificRecord
         {
             using (var stream = new MemoryStream())
             {
@@ -77,9 +80,25 @@ namespace Energistics.Etp.Common
                 var headerWriter = new SpecificWriter<IMessageHeader>(header.Schema);
                 headerWriter.Write(header, encoder);
 
-                // serialize body
-                var bodyWriter = new SpecificWriter<T>(body.Schema);
-                bodyWriter.Write(body, encoder);
+                Stream gzip = null;
+
+                try
+                {
+                    // Compress message body if compression has been negotiated
+                    if (GzipEncoding.Equals(compression, StringComparison.InvariantCultureIgnoreCase) && header.CanCompressMessageBody())
+                    {
+                        gzip = new GZipStream(stream, CompressionMode.Compress, true);
+                        encoder = new BinaryEncoder(gzip);
+                    }
+
+                    // serialize body
+                    var bodyWriter = new SpecificWriter<T>(body.Schema);
+                    bodyWriter.Write(body, encoder);
+                }
+                finally
+                {
+                    gzip?.Dispose();
+                }
 
                 return stream.ToArray();
             }
@@ -103,6 +122,24 @@ namespace Energistics.Etp.Common
             reader.Read(record, decoder);
 
             return record;
+        }
+
+        /// <summary>
+        /// Determines whether the message body can be compressed based on the specified header.
+        /// </summary>
+        /// <param name="header">The header.</param>
+        /// <returns><c>true</c> if the message body can be comressed; otherwise, <c>false</c>.</returns>
+        public static bool CanCompressMessageBody(this IMessageHeader header)
+        {
+            // Never compress RequestSession or OpenSession in Core protocol
+            if (header.Protocol == 0 && (header.MessageType == (int) CoreMessageTypes.RequestSession || header.MessageType == (int) CoreMessageTypes.OpenSession))
+                return false;
+
+            // Don't compress Acknowledge or ProtocolException when sent by any protocol
+            if (header.MessageType == (int) CoreMessageTypes.Acknowledge || header.MessageType == (int) CoreMessageTypes.ProtocolException)
+                return false;
+
+            return true;
         }
 
         /// <summary>

@@ -180,6 +180,36 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
+        /// Sends a <see cref="IProtocolException" /> message for compression not supported.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="requestedCompression">The requested compression.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="IProtocolException" /> message identifier.</returns>
+        public static long CompressionNotSupported(this IProtocolHandler handler, string requestedCompression, long messageId = 0)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.CompressionNotSupported, "Compression Not Supported: " + requestedCompression, messageId);
+        }
+
+        /// <summary>
+        /// Sends a <see cref="IProtocolException"/> message for an invalid object.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="ex">The exception.</param>
+        /// <param name="uri">The URI.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        public static long InvalidObject(this IProtocolHandler handler, Exception ex, string uri, long messageId = 0)
+        {
+            if (ex != null)
+            {
+                (handler as EtpProtocolHandler)?.Logger?.Error(ex);
+            }
+
+            return handler.ProtocolException((int)EtpErrorCodes.InvalidObject, "Invalid Object. URI: " + uri, messageId);
+        }
+
+        /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for an invalid ChannelId.
         /// </summary>
         /// <param name="handler">The protocol handler.</param>
@@ -210,21 +240,21 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
-        /// Sends a <see cref="IProtocolException"/> message for an invalid object.
+        /// Sends a <see cref="IProtocolException"/> message for an invalid object X.
         /// </summary>
         /// <param name="handler">The protocol handler.</param>
         /// <param name="ex">The exception.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long InvalidObject(this IProtocolHandler handler, Exception ex, string uri, long messageId = 0)
+        public static long InvalidObjectX(this IProtocolHandler handler, Exception ex, string uri, long messageId = 0)
         {
             if (ex != null)
             {
                 (handler as EtpProtocolHandler)?.Logger?.Error(ex);
             }
 
-            return handler.ProtocolException((int)EtpErrorCodes.InvalidObject, "Invalid Object. URI: " + uri, messageId);
+            return handler.ProtocolException((int)EtpErrorCodes.InvalidObjectX, "Invalid Object. URI: " + uri, messageId);
         }
 
         /// <summary>
@@ -261,6 +291,29 @@ namespace Energistics.Etp.Common
         public static long GrowingPortionIgnored(this IProtocolHandler handler, string uri, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.GrowingPortionIgnored, "The object is upserted, but the growing portion is ignored. URI: " + uri, messageId);
+        }
+
+        /// <summary>
+        /// Sends a <see cref="IProtocolException"/> message for retention period exceeded.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        public static long RetentionPeriodExceeded(this IProtocolHandler handler, long messageId = 0)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.RetentionPeriodExceeded, "Retention Period Exceeded", messageId);
+        }
+
+        /// <summary>
+        /// Sends a <see cref="IProtocolException"/> message for not growing object.
+        /// </summary>
+        /// <param name="handler">The protocol handler.</param>
+        /// <param name="uri">The URI.</param>
+        /// <param name="messageId">The message identifier.</param>
+        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        public static long NotGrowingObject(this IProtocolHandler handler, string uri, long messageId = 0)
+        {
+            return handler.ProtocolException((int)EtpErrorCodes.NotGrowingObjct, "Not Growing Object. URI: " + uri, messageId);
         }
     }
 }

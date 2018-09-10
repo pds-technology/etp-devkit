@@ -42,6 +42,7 @@ namespace Energistics.Etp
         };
 
         private WebSocket _socket;
+        private string _supportedCompression;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpClient" /> class.
@@ -151,6 +152,15 @@ namespace Energistics.Etp
         }
 
         /// <summary>
+        /// Sets the supported compression type, e.g. gzip.
+        /// </summary>
+        /// <param name="supportedCompression">The supported compression.</param>
+        public void SetSupportedCompression(string supportedCompression)
+        {
+            _supportedCompression = supportedCompression;
+        }
+
+        /// <summary>
         /// Sends the specified data.
         /// </summary>
         /// <param name="data">The data.</param>
@@ -204,7 +214,7 @@ namespace Energistics.Etp
         {
             Logger.Debug(Log("[{0}] Socket opened.", SessionId));
 
-            Adapter.RequestSession(ApplicationName, ApplicationVersion);
+            Adapter.RequestSession(ApplicationName, ApplicationVersion, _supportedCompression);
         }
 
         /// <summary>

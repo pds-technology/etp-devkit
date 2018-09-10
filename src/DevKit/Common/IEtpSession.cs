@@ -53,6 +53,11 @@ namespace Energistics.Etp.Common
         string SessionId { get; set; }
 
         /// <summary>
+        /// Gets or sets the supported compression type.
+        /// </summary>
+        string SupportedCompression { get; set; }
+
+        /// <summary>
         /// Gets or sets the list of supported objects.
         /// </summary>
         /// <value>The supported objects.</value>

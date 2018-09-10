@@ -28,7 +28,7 @@ namespace Energistics.Etp.Common
 
         void RegisterCoreServer(EtpSession session);
 
-        void RequestSession(string applicationName, string applicationVersion);
+        void RequestSession(string applicationName, string applicationVersion, string requestedCompression);
 
         ISupportedProtocol GetSupportedProtocol(IProtocolHandler handler, string role);
 

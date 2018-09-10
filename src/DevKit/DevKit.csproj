@@ -147,6 +147,7 @@
     <Compile Include="Security\Authorization.cs" />
     <Compile Include="Security\HttpConnectProxy.cs" />
     <Compile Include="Security\ProxyConnectorBase.cs" />
+    <Compile Include="v12\Datatypes\IndexValueConverter.cs" />
     <Compile Include="v12\Datatypes\ChannelData\StreamingStartIndexConverter.cs" />
     <Compile Include="v12\Protocol\ChannelDataFrame\ChannelDataFrameConsumerHandler.cs" />
     <Compile Include="v12\Protocol\ChannelDataFrame\ChannelDataFrameProducerHandler.cs" />

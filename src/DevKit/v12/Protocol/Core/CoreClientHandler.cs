@@ -16,7 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Avro.IO;
@@ -62,26 +61,33 @@ namespace Energistics.Etp.v12.Protocol.Core
         public IList<string> ServerObjects { get; private set; }
 
         /// <summary>
+        /// Gets the requested compression type.
+        /// </summary>
+        public string RequestedCompression { get; private set; }
+
+        /// <summary>
         /// Sends a RequestSession message to a server.
         /// </summary>
         /// <param name="applicationName">The application name.</param>
         /// <param name="applicationVersion">The application version.</param>
         /// <param name="requestedProtocols">The requested protocols.</param>
+        /// <param name="requestedCompression">The requested compression.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long RequestSession(string applicationName, string applicationVersion, IList<ISupportedProtocol> requestedProtocols)
+        public virtual long RequestSession(string applicationName, string applicationVersion, IList<ISupportedProtocol> requestedProtocols, string requestedCompression)
         {
             var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.RequestSession);
 
-            var requestSession = new RequestSession()
+            var requestSession = new RequestSession
             {
                 ApplicationName = applicationName,
                 ApplicationVersion = applicationVersion,
                 RequestedProtocols = requestedProtocols.Cast<SupportedProtocol>().ToList(),
                 SupportedObjects = new List<string>(),
-                SupportedCompression = string.Empty
+                SupportedCompression = requestedCompression ?? string.Empty
             };
 
             RequestedProtocols = requestedProtocols;
+            RequestedCompression = requestedCompression;
 
             return Session.SendMessage(header, requestSession);
         }
@@ -95,7 +101,7 @@ namespace Energistics.Etp.v12.Protocol.Core
         {
             var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.CloseSession);
 
-            var closeSession = new CloseSession()
+            var closeSession = new CloseSession
             {
                 Reason = reason ?? "Session closed"
             };
@@ -172,6 +178,7 @@ namespace Energistics.Etp.v12.Protocol.Core
             SupportedProtocols = openSession.SupportedProtocols.Cast<ISupportedProtocol>().ToList();
             ServerObjects = openSession.SupportedObjects;
             Session.SessionId = openSession.SessionId;
+            Session.SupportedCompression = openSession.SupportedCompression;
             Notify(OnOpenSession, header, openSession);
             Session.OnSessionOpened(RequestedProtocols, SupportedProtocols);
         }

@@ -69,13 +69,13 @@ namespace Energistics.Etp.v12.Protocol.Core
         {
             var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.OpenSession, request.MessageId);
 
-            var openSession = new OpenSession()
+            var openSession = new OpenSession
             {
                 ApplicationName = Session.ApplicationName,
                 ApplicationVersion = Session.ApplicationVersion,
                 SupportedProtocols = supportedProtocols.Cast<SupportedProtocol>().ToList(),
                 SupportedObjects = Session.SupportedObjects,
-                SupportedCompression = string.Empty,
+                SupportedCompression = Session.SupportedCompression ?? string.Empty,
                 SessionId = Session.SessionId
             };
 
@@ -100,7 +100,7 @@ namespace Energistics.Etp.v12.Protocol.Core
         {
             var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.CloseSession);
 
-            var closeSession = new CloseSession()
+            var closeSession = new CloseSession
             {
                 Reason = reason ?? "Session closed"
             };
@@ -178,6 +178,19 @@ namespace Energistics.Etp.v12.Protocol.Core
             var supportedProtocols = Session.GetSupportedProtocols()
                 .Where(x => protocols.Any(y => x.Protocol == y.Protocol && string.Equals(x.Role, y.Role, StringComparison.InvariantCultureIgnoreCase)))
                 .ToList();
+
+            // Did the client request compression
+            if (!string.IsNullOrWhiteSpace(requestSession.SupportedCompression))
+            {
+                // Currently, only gzip compression is supported
+                if (!string.Equals(EtpExtensions.GzipEncoding, requestSession.SupportedCompression, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    this.CompressionNotSupported(requestSession.SupportedCompression, header.MessageId);
+                    return;
+                }
+
+                Session.SupportedCompression = EtpExtensions.GzipEncoding;
+            }
 
             OpenSession(header, supportedProtocols);
 
