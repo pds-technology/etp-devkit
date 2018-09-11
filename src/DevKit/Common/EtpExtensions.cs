@@ -74,26 +74,32 @@ namespace Energistics.Etp.Common
             using (var stream = new MemoryStream())
             {
                 // create avro binary encoder to write to memory stream
-                var encoder = new BinaryEncoder(stream);
-
-                // serialize header
-                var headerWriter = new SpecificWriter<IMessageHeader>(header.Schema);
-                headerWriter.Write(header, encoder);
-
+                var headerEncoder = new BinaryEncoder(stream);
+                var bodyEncoder = headerEncoder;
                 Stream gzip = null;
 
                 try
                 {
-                    // Compress message body if compression has been negotiated
-                    if (GzipEncoding.Equals(compression, StringComparison.InvariantCultureIgnoreCase) && header.CanCompressMessageBody())
+                    // compress message body if compression has been negotiated
+                    if (header.CanCompressMessageBody())
                     {
-                        gzip = new GZipStream(stream, CompressionMode.Compress, true);
-                        encoder = new BinaryEncoder(gzip);
+                        if (GzipEncoding.Equals(compression, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            // add Compressed flag to message flags before writing header
+                            header.MessageFlags = (int)((MessageFlags) header.MessageFlags | MessageFlags.Compressed);
+
+                            gzip = new GZipStream(stream, CompressionMode.Compress, true);
+                            bodyEncoder = new BinaryEncoder(gzip);
+                        }
                     }
+
+                    // serialize header
+                    var headerWriter = new SpecificWriter<IMessageHeader>(header.Schema);
+                    headerWriter.Write(header, headerEncoder);
 
                     // serialize body
                     var bodyWriter = new SpecificWriter<T>(body.Schema);
-                    bodyWriter.Write(body, encoder);
+                    bodyWriter.Write(body, bodyEncoder);
                 }
                 finally
                 {
@@ -128,8 +134,9 @@ namespace Energistics.Etp.Common
         /// Determines whether the message body can be compressed based on the specified header.
         /// </summary>
         /// <param name="header">The header.</param>
+        /// <param name="checkMessageFlags">A flag to check the message flags provided in the header.</param>
         /// <returns><c>true</c> if the message body can be comressed; otherwise, <c>false</c>.</returns>
-        public static bool CanCompressMessageBody(this IMessageHeader header)
+        public static bool CanCompressMessageBody(this IMessageHeader header, bool checkMessageFlags = false)
         {
             // Never compress RequestSession or OpenSession in Core protocol
             if (header.Protocol == 0 && (header.MessageType == (int) CoreMessageTypes.RequestSession || header.MessageType == (int) CoreMessageTypes.OpenSession))
@@ -139,7 +146,8 @@ namespace Energistics.Etp.Common
             if (header.MessageType == (int) CoreMessageTypes.Acknowledge || header.MessageType == (int) CoreMessageTypes.ProtocolException)
                 return false;
 
-            return true;
+            // Do the message flags indicate the body was compressed
+            return !checkMessageFlags || ((MessageFlags) header.MessageFlags).HasFlag(MessageFlags.Compressed);
         }
 
         /// <summary>

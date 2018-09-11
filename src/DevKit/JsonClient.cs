@@ -133,16 +133,34 @@ namespace Energistics.Etp
         }
 
         /// <summary>
+        /// Get the list of supported ETP versions using the specified URL.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        public IList<string> GetEtpVersions(string url)
+        {
+            // Append GetVersions=true, if not already in the url
+            if (url.IndexOf(EtpSettings.GetVersionsHeader, StringComparison.InvariantCultureIgnoreCase) < 0)
+            {
+                var delim = url.IndexOf("?", StringComparison.InvariantCultureIgnoreCase) < 0 ? "?" : "&";
+                url = $"{url}{delim}{EtpSettings.GetVersionsHeader}=true";
+            }
+
+            var headers = BearerHeader.Any() ? BearerHeader : BasicHeader;
+            var json = DownloadJson(url, headers);
+
+            return EtpExtensions.Deserialize<List<string>>(json);
+
+        }
+
+        /// <summary>
         /// Gets the server capabilities object using the specified URL.
         /// </summary>
         /// <param name="url">The URL.</param>
         /// <returns>The server capabilities object.</returns>
         public object GetServerCapabilities(string url)
         {
-            var headers = BearerHeader.Any()
-                ? BearerHeader
-                : BasicHeader;
-
+            var headers = BearerHeader.Any() ? BearerHeader : BasicHeader;
             return GetServerCapabilities(url, headers);
         }
 
@@ -154,6 +172,20 @@ namespace Energistics.Etp
         /// <returns>The server capabilities object.</returns>
         private object GetServerCapabilities(string url, IDictionary<string, string> headers)
         {
+            var json = DownloadJson(url, headers);
+            var capServerType = GetServerCapabilitiesType(url);
+
+            return EtpExtensions.Deserialize(capServerType, json);
+        }
+
+        /// <summary>
+        /// Gets a JSON response using the specified URL and authorization header.
+        /// </summary>
+        /// <param name="url">The URL.</param>
+        /// <param name="headers">The authorization header.</param>
+        /// <returns>The JSON response.</returns>
+        private string DownloadJson(string url, IDictionary<string, string> headers)
+        {
             using (var client = new WebClient())
             {
                 client.Proxy = Proxy;
@@ -163,11 +195,7 @@ namespace Energistics.Etp
 
                 client.Headers[HttpRequestHeader.Accept] = JsonContentType;
 
-                var response = client.DownloadString(url);
-                var capServerType = GetServerCapabilitiesType(url);
-                var capServer = EtpExtensions.Deserialize(capServerType, response);
-
-                return capServer;
+                return client.DownloadString(url);
             }
         }
 
@@ -219,17 +247,17 @@ namespace Energistics.Etp
 
         private static Type GetServerCapabilitiesType(string url)
         {
-            var etp11Type = typeof(Etp.v11.Datatypes.ServerCapabilities);
-            var etp12Type = typeof(Etp.v12.Datatypes.ServerCapabilities);
+            var etp11Type = typeof(v11.Datatypes.ServerCapabilities);
+            var etp12Type = typeof(v12.Datatypes.ServerCapabilities);
             var uri = new Uri(url);
 
             if (string.IsNullOrWhiteSpace(uri.Query))
                 return etp11Type;
 
             var queryString = HttpUtility.ParseQueryString(uri.Query);
-            var etpVersion = queryString[EtpSettings.EtpVersionHeader];
+            var etpVersion = queryString[EtpSettings.GetVersionHeader];
 
-            return etpVersion == "1.2" ? etp12Type : etp11Type;
+            return etpVersion == EtpSettings.Etp12SubProtocol ? etp12Type : etp11Type;
         }
     }
 }

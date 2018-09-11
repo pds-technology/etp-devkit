@@ -61,10 +61,19 @@ namespace Energistics.Etp.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("etp-version")]
-        public string EtpVersionHeader {
+        [global::System.Configuration.DefaultSettingValueAttribute("GetVersion")]
+        public string GetVersionHeader {
             get {
-                return ((string)(this["EtpVersionHeader"]));
+                return ((string)(this["GetVersionHeader"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("GetVersions")]
+        public string GetVersionsHeader {
+            get {
+                return ((string)(this["GetVersionsHeader"]));
             }
         }
     }

@@ -44,6 +44,16 @@ namespace Energistics.Etp.Common.Datatypes
         /// <summary>
         /// No data is available.
         /// </summary>
-        NoData = 0x4
+        NoData = 0x4,
+
+        /// <summary>
+        /// The message body is compressed.
+        /// </summary>
+        Compressed = 0x8,
+
+        /// <summary>
+        /// An Acknowledge message is requested by the sender.
+        /// </summary>
+        Acknowledge = 0x10
     }
 }

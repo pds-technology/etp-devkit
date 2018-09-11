@@ -60,11 +60,6 @@ namespace Energistics.Etp.Common
         public static string EtpEncodingHeader = Settings.Default.EtpEncodingHeader;
 
         /// <summary>
-        /// The default ETP version header
-        /// </summary>
-        public static string EtpVersionHeader = Settings.Default.EtpVersionHeader;
-
-        /// <summary>
         /// The binary ETP encoding.
         /// </summary>
         public static string EtpEncodingBinary = Settings.Default.EtpEncodingBinary;
@@ -73,5 +68,15 @@ namespace Energistics.Etp.Common
         /// The JSON ETP encoding.
         /// </summary>
         public static string EtpEncodingJson = Settings.Default.EtpEncodingJson;
+
+        /// <summary>
+        /// The default GetVersion header
+        /// </summary>
+        public static string GetVersionHeader = Settings.Default.GetVersionHeader;
+
+        /// <summary>
+        /// The default GetVersions header
+        /// </summary>
+        public static string GetVersionsHeader = Settings.Default.GetVersionsHeader;
     }
 }

@@ -376,11 +376,14 @@ namespace Energistics.Etp.Common
 
                 try
                 {
-                    // Decompress message body if compression has been negotiated
-                    if (EtpExtensions.GzipEncoding.Equals(SupportedCompression, StringComparison.InvariantCultureIgnoreCase) && header.CanCompressMessageBody())
+                    // decompress message body if compression has been negotiated
+                    if (header.CanCompressMessageBody(true))
                     {
-                        gzip = new GZipStream(inputStream, CompressionMode.Decompress, true);
-                        decoder = new BinaryDecoder(gzip);
+                        if (EtpExtensions.GzipEncoding.Equals(SupportedCompression, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            gzip = new GZipStream(inputStream, CompressionMode.Decompress, true);
+                            decoder = new BinaryDecoder(gzip);
+                        }
                     }
 
                     // call processing action
@@ -428,6 +431,12 @@ namespace Energistics.Etp.Common
 
                 try
                 {
+                    // Handle global Acknowledge request
+                    if (((MessageFlags) header.MessageFlags).HasFlag(MessageFlags.Acknowledge))
+                    {
+                        handler.Acknowledge(header.MessageId);
+                    }
+
                     handler.HandleMessage(header, decoder, body);
                 }
                 catch (Exception ex)
