@@ -130,12 +130,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
         private string GetRequestedUri(IMessageHeader header)
         {
             string uri;
-
-            if (_requests.TryGetValue(header.CorrelationId, out uri) && header.MessageFlags != (int)MessageFlags.MultiPart)
-            {
-                _requests.Remove(header.CorrelationId);
-            }
-
+            _requests.TryGetValue(header.CorrelationId, out uri);
             return uri;
         }
     }
