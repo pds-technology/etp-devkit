@@ -42,6 +42,22 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <summary>
         /// Handles the FindObjects event from a customer.
         /// </summary>
-        event ProtocolEventHandler<FindObjects, IList<DataObject>> OnFindObjects;
+        event ProtocolEventHandler<FindObjects, DataObjectResponse> OnFindObjects;
+    }
+
+    /// <summary>
+    /// Encapsulates the results of a store query.
+    /// </summary>
+    public class DataObjectResponse
+    {
+        /// <summary>
+        /// Gets the collection of data objects.
+        /// </summary>
+        public IList<DataObject> DataObjects { get; } = new List<DataObject>();
+
+        /// <summary>
+        /// Gets or sets the server sort order.
+        /// </summary>
+        public string ServerSortOrder { get; set; }
     }
 }

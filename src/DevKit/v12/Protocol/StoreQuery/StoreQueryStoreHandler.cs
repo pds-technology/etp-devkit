@@ -33,9 +33,9 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
     public class StoreQueryStoreHandler : EtpProtocolHandler, IStoreQueryStore
     {
         /// <summary>
-        /// The MaxGetResourcesResponse protocol capability key.
+        /// The MaxResponseCount protocol capability key.
         /// </summary>
-        public const string MaxGetResourcesResponse = "MaxGetResourcesResponse";
+        public const string MaxResponseCount = "MaxResponseCount";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreQueryStoreHandler"/> class.
@@ -60,7 +60,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
 
             long messageId = 0;
 
-            for (int i=0; i<objects.Count; i++)
+            for (var i=0; i<objects.Count; i++)
             {
                 var messageFlags = i < objects.Count - 1
                     ? MessageFlags.MultiPart
@@ -68,13 +68,14 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
 
                 var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjectsResponse, request.MessageId, messageFlags);
 
-                var findObjectsResponse = new FindObjectsResponse()
+                var findObjectsResponse = new FindObjectsResponse
                 {
                     DataObject = objects[i],
-                    ServerSortOrder = sortOrder
+                    ServerSortOrder = sortOrder ?? string.Empty
                 };
 
                 messageId = Session.SendMessage(header, findObjectsResponse);
+                sortOrder = string.Empty; // Only needs to be set in the first message
             }
 
             return messageId;
@@ -83,7 +84,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <summary>
         /// Handles the FindObjects event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<FindObjects, IList<DataObject>> OnFindObjects;
+        public event ProtocolEventHandler<FindObjects, DataObjectResponse> OnFindObjects;
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
@@ -112,12 +113,12 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <param name="findObjects">The FindObjects message.</param>
         protected virtual void HandleFindObjects(IMessageHeader header, FindObjects findObjects)
         {
-            var args = Notify(OnFindObjects, header, findObjects, new List<DataObject>());
+            var args = Notify(OnFindObjects, header, findObjects, new DataObjectResponse());
             HandleFindObjects(args);
 
             if (!args.Cancel)
             {
-                FindObjectsResponse(header, args.Context, string.Empty);
+                FindObjectsResponse(header, args.Context.DataObjects, args.Context.ServerSortOrder);
             }
         }
 
@@ -125,7 +126,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// Handles the FindObjects message from a customer.
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{FindObjects}"/> instance containing the event data.</param>
-        protected virtual void HandleFindObjects(ProtocolEventArgs<FindObjects, IList<DataObject>> args)
+        protected virtual void HandleFindObjects(ProtocolEventArgs<FindObjects, DataObjectResponse> args)
         {
         }
     }

@@ -42,6 +42,22 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <summary>
         /// Handles the FindResources event from a customer.
         /// </summary>
-        event ProtocolEventHandler<FindResources, IList<Resource>> OnFindResources;
+        event ProtocolEventHandler<FindResources, ResourceResponse> OnFindResources;
+    }
+
+    /// <summary>
+    /// Encapsulates the results of a discovery query.
+    /// </summary>
+    public class ResourceResponse
+    {
+        /// <summary>
+        /// Gets the collection of resources.
+        /// </summary>
+        public IList<Resource> Resources { get; } = new List<Resource>();
+
+        /// <summary>
+        /// Gets or sets the server sort order.
+        /// </summary>
+        public string ServerSortOrder { get; set; }
     }
 }

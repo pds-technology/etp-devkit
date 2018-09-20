@@ -33,9 +33,9 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
     public class DiscoveryQueryStoreHandler : EtpProtocolHandler, IDiscoveryQueryStore
     {
         /// <summary>
-        /// The MaxGetResourcesResponse protocol capability key.
+        /// The MaxResponseCount protocol capability key.
         /// </summary>
-        public const string MaxGetResourcesResponse = "MaxGetResourcesResponse";
+        public const string MaxResponseCount = "MaxResponseCount";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscoveryQueryStoreHandler"/> class.
@@ -60,7 +60,7 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
 
             long messageId = 0;
 
-            for (int i=0; i<resources.Count; i++)
+            for (var i=0; i<resources.Count; i++)
             {
                 var messageFlags = i < resources.Count - 1
                     ? MessageFlags.MultiPart
@@ -68,13 +68,14 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
 
                 var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResourcesResponse, request.MessageId, messageFlags);
 
-                var findResourcesResponse = new FindResourcesResponse()
+                var findResourcesResponse = new FindResourcesResponse
                 {
                     Resource = resources[i],
-                    ServerSortOrder = sortOrder
+                    ServerSortOrder = sortOrder ?? string.Empty
                 };
 
                 messageId = Session.SendMessage(header, findResourcesResponse);
+                sortOrder = string.Empty; // Only needs to be set in the first message
             }
 
             return messageId;
@@ -83,7 +84,7 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <summary>
         /// Handles the FindResources event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<FindResources, IList<Resource>> OnFindResources;
+        public event ProtocolEventHandler<FindResources, ResourceResponse> OnFindResources;
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
@@ -112,12 +113,12 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <param name="findResources">The FindResources message.</param>
         protected virtual void HandleFindResources(IMessageHeader header, FindResources findResources)
         {
-            var args = Notify(OnFindResources, header, findResources, new List<Resource>());
+            var args = Notify(OnFindResources, header, findResources, new ResourceResponse());
             HandleFindResources(args);
 
             if (!args.Cancel)
             {
-                FindResourcesResponse(header, args.Context, string.Empty);
+                FindResourcesResponse(header, args.Context.Resources, args.Context.ServerSortOrder);
             }
         }
 
@@ -125,7 +126,7 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// Handles the FindResources message from a customer.
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{FindResources}"/> instance containing the event data.</param>
-        protected virtual void HandleFindResources(ProtocolEventArgs<FindResources, IList<Resource>> args)
+        protected virtual void HandleFindResources(ProtocolEventArgs<FindResources, ResourceResponse> args)
         {
         }
     }

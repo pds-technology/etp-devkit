@@ -33,9 +33,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
     public class GrowingObjectQueryStoreHandler : EtpProtocolHandler, IGrowingObjectQueryStore
     {
         /// <summary>
-        /// The MaxGetResourcesResponse protocol capability key.
+        /// The MaxResponseCount protocol capability key.
         /// </summary>
-        public const string MaxGetResourcesResponse = "MaxGetResourcesResponse";
+        public const string MaxResponseCount = "MaxResponseCount";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GrowingObjectQueryStoreHandler"/> class.
@@ -60,7 +60,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
 
             long messageId = 0;
 
-            for (int i=0; i<parts.Count; i++)
+            for (var i=0; i<parts.Count; i++)
             {
                 var messageFlags = i < parts.Count - 1
                     ? MessageFlags.MultiPart
@@ -76,10 +76,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
                     Uid = part.Uid,
                     ContentType = part.ContentType,
                     Data = part.Data,
-                    ServerSortOrder = sortOrder
+                    ServerSortOrder = sortOrder ?? string.Empty
                 };
 
                 messageId = Session.SendMessage(header, findPartsResponse);
+                sortOrder = string.Empty; // Only needs to be set in the first message
             }
 
             return messageId;
@@ -88,7 +89,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// <summary>
         /// Handles the FindParts event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<FindParts, IList<ObjectPart>> OnFindParts;
+        public event ProtocolEventHandler<FindParts, ObjectPartResponse> OnFindParts;
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
@@ -117,12 +118,12 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// <param name="findParts">The FindParts message.</param>
         protected virtual void HandleFindParts(IMessageHeader header, FindParts findParts)
         {
-            var args = Notify(OnFindParts, header, findParts, new List<ObjectPart>());
+            var args = Notify(OnFindParts, header, findParts, new ObjectPartResponse());
             HandleFindParts(args);
 
             if (!args.Cancel)
             {
-                FindPartsResponse(header, args.Context, string.Empty);
+                FindPartsResponse(header, args.Context.ObjectParts, args.Context.ServerSortOrder);
             }
         }
 
@@ -130,7 +131,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// Handles the FindParts message from a customer.
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{FindParts}"/> instance containing the event data.</param>
-        protected virtual void HandleFindParts(ProtocolEventArgs<FindParts, IList<ObjectPart>> args)
+        protected virtual void HandleFindParts(ProtocolEventArgs<FindParts, ObjectPartResponse> args)
         {
         }
     }

@@ -42,6 +42,22 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// <summary>
         /// Handles the FindParts event from a customer.
         /// </summary>
-        event ProtocolEventHandler<FindParts, IList<ObjectPart>> OnFindParts;
+        event ProtocolEventHandler<FindParts, ObjectPartResponse> OnFindParts;
+    }
+
+    /// <summary>
+    /// Encapsulates the results of a growing object query.
+    /// </summary>
+    public class ObjectPartResponse
+    {
+        /// <summary>
+        /// Gets the collection of data objects.
+        /// </summary>
+        public IList<ObjectPart> ObjectParts { get; } = new List<ObjectPart>();
+
+        /// <summary>
+        /// Gets or sets the server sort order.
+        /// </summary>
+        public string ServerSortOrder { get; set; }
     }
 }
