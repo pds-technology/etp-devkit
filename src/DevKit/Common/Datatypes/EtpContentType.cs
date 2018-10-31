@@ -27,7 +27,7 @@ namespace Energistics.Etp.Common.Datatypes
     /// </summary>
     public struct EtpContentType
     {
-        private static readonly Regex Pattern = new Regex(@"^application/x\-(witsml|resqml|prodml|eml)\+(xml|json);version=([0-9.]+)((;)?|(;type=((obj_|cs_|part_)?(\w+))(;)?)?)$");
+        private static readonly Regex Pattern = new Regex(@"^application/x\-(witsml|resqml|prodml|eml)\+(xml|json);version=([0-9.]+)((;)?|(;type=((obj_|cs_|part_)?(\w+))(;)?)?)$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly string[] PartSchemas = { "TrajectoryStation", "MudlogReportInterval", "WellboreGeometrySection" };
         private const string BaseFormat = "application/x-{0}+{1};version={2}";
         private const string TypeFormat = ";type={0}";
