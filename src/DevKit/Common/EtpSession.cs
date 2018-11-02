@@ -432,7 +432,7 @@ namespace Energistics.Etp.Common
                 try
                 {
                     // Handle global Acknowledge request
-                    if (((MessageFlags) header.MessageFlags).HasFlag(MessageFlags.Acknowledge))
+                    if (header.IsAcknowledgeRequested())
                     {
                         handler.Acknowledge(header.MessageId);
                     }

@@ -28,6 +28,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Energistics.Etp.Common.Datatypes.Object;
 using CoreMessageTypes = Energistics.Etp.v11.MessageTypes.Core;
+using Energistics.Etp.Common.Protocol.Core;
 
 namespace Energistics.Etp.Common
 {
@@ -128,26 +129,6 @@ namespace Energistics.Etp.Common
             reader.Read(record, decoder);
 
             return record;
-        }
-
-        /// <summary>
-        /// Determines whether the message body can be compressed based on the specified header.
-        /// </summary>
-        /// <param name="header">The header.</param>
-        /// <param name="checkMessageFlags">A flag to check the message flags provided in the header.</param>
-        /// <returns><c>true</c> if the message body can be comressed; otherwise, <c>false</c>.</returns>
-        public static bool CanCompressMessageBody(this IMessageHeader header, bool checkMessageFlags = false)
-        {
-            // Never compress RequestSession or OpenSession in Core protocol
-            if (header.Protocol == 0 && (header.MessageType == (int) CoreMessageTypes.RequestSession || header.MessageType == (int) CoreMessageTypes.OpenSession))
-                return false;
-
-            // Don't compress Acknowledge or ProtocolException when sent by any protocol
-            if (header.MessageType == (int) CoreMessageTypes.Acknowledge || header.MessageType == (int) CoreMessageTypes.ProtocolException)
-                return false;
-
-            // Do the message flags indicate the body was compressed
-            return !checkMessageFlags || ((MessageFlags) header.MessageFlags).HasFlag(MessageFlags.Compressed);
         }
 
         /// <summary>

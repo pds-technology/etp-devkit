@@ -154,6 +154,10 @@ namespace Energistics.Etp.Common
                     this.InvalidMessage(header);
                     break;
             }
+
+            // Additional processing if this message was the final message in response to a request:
+            if (header.IsFinalResponse())
+                HandleFinalResponse(header.CorrelationId);
         }
 
         /// <summary>
@@ -175,6 +179,14 @@ namespace Energistics.Etp.Common
         {
             Notify(OnProtocolException, header, protocolException);
             Logger.ErrorFormat("[{0}] Protocol exception: {1} - {2}", Session.SessionId, protocolException.ErrorCode, protocolException.ErrorMessage);
+        }
+
+        /// <summary>
+        /// Handle any final cleanup related to the final message in response to a request.
+        /// </summary>
+        /// <param name="correlationId">The correlation ID of the request</param>
+        protected virtual void HandleFinalResponse(long correlationId)
+        {
         }
 
         /// <summary>

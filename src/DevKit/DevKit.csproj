@@ -77,6 +77,7 @@
   <ItemGroup>
     <Compile Include="Common\EtpBase.cs" />
     <Compile Include="Common\EtpErrorMessages.cs" />
+    <Compile Include="Common\EtpMessageHeaderExtensions.cs" />
     <Compile Include="Common\EtpExtensions.cs" />
     <Compile Include="Common\EtpProtocolHandler.cs" />
     <Compile Include="Common\EtpSession.cs" />
