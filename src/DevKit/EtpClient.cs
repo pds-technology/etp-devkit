@@ -23,7 +23,6 @@ using System.Net;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Properties;
-using Energistics.Etp.Security;
 using SuperSocket.ClientEngine;
 using WebSocket4Net;
 
@@ -148,7 +147,7 @@ namespace Energistics.Etp
             if (_socket == null) return;
             var endPoint = new DnsEndPoint(host, port);
             var headers = Security.Authorization.Basic(username, password);
-            _socket.Proxy = new HttpConnectProxy(endPoint, headers[Security.Authorization.Header]);
+            _socket.Proxy = new Energistics.Etp.Security.HttpConnectProxy(endPoint, headers[Security.Authorization.Header]);
         }
 
         /// <summary>
