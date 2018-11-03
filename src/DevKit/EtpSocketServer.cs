@@ -104,10 +104,12 @@ namespace Energistics.Etp
         /// </summary>
         public void Start()
         {
+            Logger.Trace($"Starting");
             if (!IsRunning)
             {
                 _server.Start();
             }
+            Logger.Verbose($"Started");
         }
 
         /// <summary>
@@ -115,11 +117,13 @@ namespace Energistics.Etp
         /// </summary>
         public void Stop()
         {
+            Logger.Trace($"Stopping");
             if (IsRunning)
             {
                 CloseSessions();
                 _server.Stop();
             }
+            Logger.Verbose($"Stopped");
         }
 
         /// <summary>

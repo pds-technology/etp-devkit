@@ -85,6 +85,7 @@
     <Compile Include="Common\Datatypes\ByteArrayConverter.cs" />
     <Compile Include="Common\EtpSpecificReader.cs" />
     <Compile Include="Common\IEtpAdapter.cs" />
+    <Compile Include="Log4NetExtensions.cs" />
     <Compile Include="v11\Datatypes\ChannelData\StreamingStartIndexConverter.cs" />
     <Compile Include="Common\Datatypes\NullableAttributeConverter.cs" />
     <Compile Include="v11\Datatypes\DataValueConverter.cs" />

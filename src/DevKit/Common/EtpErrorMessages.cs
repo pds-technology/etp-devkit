@@ -203,7 +203,7 @@ namespace Energistics.Etp.Common
         {
             if (ex != null)
             {
-                (handler as EtpProtocolHandler)?.Logger?.Error(ex);
+                (handler as EtpProtocolHandler)?.Logger?.Debug($"Invalid Object: {uri}", ex);
             }
 
             return handler.ProtocolException((int)EtpErrorCodes.InvalidObject, "Invalid Object. URI: " + uri, messageId);
@@ -233,7 +233,7 @@ namespace Energistics.Etp.Common
         {
             if (ex != null)
             {
-                (handler as EtpProtocolHandler)?.Logger?.Error(ex);
+                (handler as EtpProtocolHandler)?.Logger?.Debug($"Unsupported Object: {uri}", ex);
             }
 
             return handler.ProtocolException((int)EtpErrorCodes.UnsupportedObject, "Data object not supported. URI: " + uri, messageId);
@@ -251,7 +251,7 @@ namespace Energistics.Etp.Common
         {
             if (ex != null)
             {
-                (handler as EtpProtocolHandler)?.Logger?.Error(ex);
+                (handler as EtpProtocolHandler)?.Logger?.Debug($"Invalid Object XML: {uri}", ex);
             }
 
             return handler.ProtocolException((int)EtpErrorCodes.InvalidObjectX, "Invalid Object. URI: " + uri, messageId);

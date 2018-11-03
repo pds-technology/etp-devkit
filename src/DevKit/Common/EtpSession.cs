@@ -140,7 +140,7 @@ namespace Energistics.Etp.Common
                 return (T)handler;
             }
 
-            Logger.Error(Log("[{0}] Protocol handler not registered for {1}.", SessionId, typeof(T).FullName));
+            Logger.Debug(Log("[{0}] Protocol handler not registered for {1}.", SessionId, typeof(T).FullName));
             throw new NotSupportedException($"Protocol handler not registered for { typeof(T).FullName }.");
         }
 
@@ -163,6 +163,7 @@ namespace Energistics.Etp.Common
         /// <param name="supportedProtocols">The supported protocols.</param>
         public override void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols)
         {
+            Logger.Trace($"OnSessionOpened");
             HandleUnsupportedProtocols(supportedProtocols);
 
             // notify protocol handlers about new session
@@ -178,6 +179,7 @@ namespace Energistics.Etp.Common
         /// </summary>
         public override void OnSessionClosed()
         {
+            Logger.Trace($"OnSessionClosed");
             // notify protocol handlers about closed session
             foreach (var item in Handlers)
             {
@@ -222,7 +224,7 @@ namespace Energistics.Etp.Common
                     if (!IsOpen)
                     {
                         Log("Warning: Sending on a session that is not open.");
-                        Logger.Warn("Sending on a session that is not open.");
+                        Logger.Debug("Sending on a session that is not open.");
                         return -1;
                     }
 
@@ -296,6 +298,8 @@ namespace Energistics.Etp.Common
             // Closing sends messages over the websocket so need to ensure no other messages are being sent when closing
             lock (_sendLock)
             {
+                Logger.Trace($"Closing Session: {reason}");
+
                 CloseCore(reason);
             }
         }
@@ -367,9 +371,9 @@ namespace Energistics.Etp.Common
                 var header = Adapter.DecodeMessageHeader(decoder, null);
 
                 // log message metadata
-                if (Logger.IsDebugEnabled)
+                if (Logger.IsVerboseEnabled())
                 {
-                    Logger.DebugFormat("[{0}] Message received: {1}", SessionId, this.Serialize(header));
+                    Logger.VerboseFormat("[{0}] Binary message received: {1}", SessionId, this.Serialize(header));
                 }
 
                 Stream gzip = null;
@@ -408,9 +412,9 @@ namespace Energistics.Etp.Common
             var body = array[1].ToString();
 
             // log message metadata
-            if (Logger.IsDebugEnabled)
+            if (Logger.IsVerboseEnabled())
             {
-                Logger.DebugFormat("[{0}] Message received: {1}", SessionId, header);
+                Logger.VerboseFormat("[{0}] JSON message received: {1}", SessionId, header);
             }
             
             // call processing action
@@ -441,7 +445,7 @@ namespace Energistics.Etp.Common
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex);
+                    Logger.Debug(ex);
                     handler.ProtocolException((int)EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
                 }
             }
@@ -486,7 +490,7 @@ namespace Energistics.Etp.Common
                 return Handlers[protocol];
             }
 
-            Logger.Error(Log("[{0}] Protocol handler not registered for protocol {1}.", SessionId, protocol));
+            Logger.Debug(Log("[{0}] Protocol handler not registered for protocol {1}.", SessionId, protocol));
             throw new NotSupportedException($"Protocol handler not registered for protocol { protocol }.");
         }
 
@@ -523,16 +527,18 @@ namespace Energistics.Etp.Common
         /// <param name="body">The message body.</param>
         protected void Sent<T>(IMessageHeader header, T body)
         {
+            var now = DateTime.Now;
             if (Output != null)
             {
-                Log("[{0}] Message sent at {1}", SessionId, DateTime.Now.ToString(TimestampFormat));
+                Log("[{0}] Message sent at {1}", SessionId, now.ToString(TimestampFormat));
                 Log(this.Serialize(header));
                 Log(this.Serialize(body, true));
             }
 
-            if (Logger.IsDebugEnabled)
+            if (Logger.IsVerboseEnabled())
             {
-                Logger.DebugFormat("[{0}] Message sent: {1}", SessionId, this.Serialize(header));
+                Logger.VerboseFormat("[{0}] Message sent at {1}: {2}{3}{4}",
+                    SessionId, now.ToString(TimestampFormat), this.Serialize(header), Environment.NewLine, this.Serialize(body, true));
             }
         }
 

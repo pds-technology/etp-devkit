@@ -178,7 +178,7 @@ namespace Energistics.Etp.Common
         protected virtual void HandleProtocolException(IMessageHeader header, IProtocolException protocolException)
         {
             Notify(OnProtocolException, header, protocolException);
-            Logger.ErrorFormat("[{0}] Protocol exception: {1} - {2}", Session.SessionId, protocolException.ErrorCode, protocolException.ErrorMessage);
+            Logger.DebugFormat("[{0}] Protocol exception: {1} - {2}", Session.SessionId, protocolException.ErrorCode, protocolException.ErrorMessage);
         }
 
         /// <summary>
