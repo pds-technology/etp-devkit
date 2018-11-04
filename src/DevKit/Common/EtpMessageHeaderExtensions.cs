@@ -88,6 +88,16 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
+        /// Sets the specified <see cref="MessageFlags"/> on the header.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="messageFlag">The ETP message flag to set.</param>
+        private static void SetFlag(this IMessageHeader header, MessageFlags messageFlag)
+        {
+            header.MessageFlags |= (int)messageFlag;
+        }
+
+        /// <summary>
         /// Checks if this header is part of a multi-part message.
         /// </summary>
         /// <param name="header">The message header.</param>
@@ -95,6 +105,15 @@ namespace Energistics.Etp.Common
         public static bool IsMultiPart(this IMessageHeader header)
         {
             return header.HasFlag(MessageFlags.MultiPart);
+        }
+
+        /// <summary>
+        /// Sets the multi-part flag on the message header.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        public static void SetMultiPart(this IMessageHeader header)
+        {
+            header.SetFlag(MessageFlags.MultiPart);
         }
 
         /// <summary>
@@ -108,13 +127,31 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
+        /// Sets the multi-part and final part flags on the message header.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        public static void SetMultiPartAndFinalPart(this IMessageHeader header)
+        {
+            header.SetFlag(MessageFlags.MultiPartAndFinalPart);
+        }
+
+        /// <summary>
         /// Checks if there is no data.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <returns><c>true</c> if there is no data; <c>false</c> otherwise.</returns>
         public static bool IsNoData(this IMessageHeader header)
         {
-            return header.HasFlag(MessageFlags.FinalPart);
+            return header.HasFlag(MessageFlags.NoData);
+        }
+
+        /// <summary>
+        /// Sets the no data flag on the message header.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        public static void SetNoData(this IMessageHeader header)
+        {
+            header.SetFlag(MessageFlags.NoData);
         }
 
         /// <summary>
@@ -128,6 +165,15 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
+        /// Sets the body compressed flag on the message header.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        public static void SetBodyCompressed(this IMessageHeader header)
+        {
+            header.SetFlag(MessageFlags.Compressed);
+        }
+
+        /// <summary>
         /// Checks if an acknowledge message is requested.
         /// </summary>
         /// <param name="header">The message header.</param>
@@ -135,6 +181,15 @@ namespace Energistics.Etp.Common
         public static bool IsAcknowledgeRequested(this IMessageHeader header)
         {
             return header.HasFlag(MessageFlags.Acknowledge);
+        }
+
+        /// <summary>
+        /// Sets the acknowledge requested flag on the message header.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        public static void SetAcknowledgeRequested(this IMessageHeader header)
+        {
+            header.SetFlag(MessageFlags.Acknowledge);
         }
 
         /// <summary>

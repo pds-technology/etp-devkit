@@ -38,7 +38,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long ObjectPart(string uri, string uid, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.FinalPart);
+        long ObjectPart(string uri, string uid, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Sends the metadata describing the list items in a growing object.

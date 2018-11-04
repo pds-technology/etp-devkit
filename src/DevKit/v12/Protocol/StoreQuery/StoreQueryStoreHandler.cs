@@ -64,7 +64,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
             {
                 var messageFlags = i < objects.Count - 1
                     ? MessageFlags.MultiPart
-                    : MessageFlags.FinalPart;
+                    : MessageFlags.MultiPartAndFinalPart;
 
                 var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjectsResponse, request.MessageId, messageFlags);
 

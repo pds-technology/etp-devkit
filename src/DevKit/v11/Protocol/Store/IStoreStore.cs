@@ -36,7 +36,7 @@ namespace Energistics.Etp.v11.Protocol.Store
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long Object(DataObject dataObject, long correlationId, MessageFlags messageFlag = MessageFlags.FinalPart);
+        long Object(DataObject dataObject, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Handles the GetObject event from a customer.

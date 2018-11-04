@@ -37,7 +37,7 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long ObjectFragment(string uri, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.FinalPart);
+        long ObjectFragment(string uri, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Handles the GrowingObjectGet event from a customer.

@@ -43,7 +43,7 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <param name="uri">The URI.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long GetObject(string uri, MessageFlags messageFlag = MessageFlags.FinalPart)
+        public virtual long GetObject(string uri, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetObject, messageFlags: messageFlag);
 

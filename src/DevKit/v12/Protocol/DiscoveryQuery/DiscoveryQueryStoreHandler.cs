@@ -64,7 +64,7 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
             {
                 var messageFlags = i < resources.Count - 1
                     ? MessageFlags.MultiPart
-                    : MessageFlags.FinalPart;
+                    : MessageFlags.MultiPartAndFinalPart;
 
                 var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResourcesResponse, request.MessageId, messageFlags);
 

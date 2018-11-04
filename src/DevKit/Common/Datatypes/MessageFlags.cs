@@ -37,9 +37,14 @@ namespace Energistics.Etp.Common.Datatypes
         MultiPart = 0x1,
 
         /// <summary>
-        /// The final part of a multi-part message, composed of: 0x1 | 0x2.
+        /// The final part of a multi-part message.
         /// </summary>
-        FinalPart = 0x3,
+        FinalPart = 0x2,
+
+        /// <summary>
+        /// Short-hand for both mutli-part and final part: 0x1 | 0x2
+        /// </summary>
+        MultiPartAndFinalPart = 0x3,
 
         /// <summary>
         /// No data is available.

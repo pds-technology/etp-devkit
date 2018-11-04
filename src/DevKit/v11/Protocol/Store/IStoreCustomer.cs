@@ -35,7 +35,7 @@ namespace Energistics.Etp.v11.Protocol.Store
         /// <param name="uri">The URI.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long GetObject(string uri, MessageFlags messageFlag = MessageFlags.FinalPart);
+        long GetObject(string uri, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Sends a PutObject message to a store.

@@ -64,7 +64,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
             {
                 var messageFlags = i < parts.Count - 1
                     ? MessageFlags.MultiPart
-                    : MessageFlags.FinalPart;
+                    : MessageFlags.MultiPartAndFinalPart;
 
                 var header = CreateMessageHeader(Protocols.GrowingObjectQuery, MessageTypes.GrowingObjectQuery.FindPartsResponse, request.MessageId, messageFlags);
 

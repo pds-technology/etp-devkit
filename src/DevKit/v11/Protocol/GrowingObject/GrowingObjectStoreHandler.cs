@@ -45,7 +45,7 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public long ObjectFragment(string uri, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.FinalPart)
+        public long ObjectFragment(string uri, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.ObjectFragment, correlationId, messageFlag);
 
