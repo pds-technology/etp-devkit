@@ -109,7 +109,7 @@
     <Compile Include="Common\EtpSpecificReader.cs" />
     <Compile Include="Common\IEtpAdapter.cs" />
     <Compile Include="Log4NetExtensions.cs" />
-    <Compile Include="Security\HttpConnectProxy.cs" />
+    <Compile Include="WebSocket4Net\HttpConnectProxy.cs" />
     <Compile Include="v11\Datatypes\ChannelData\StreamingStartIndexConverter.cs" />
     <Compile Include="Common\Datatypes\NullableAttributeConverter.cs" />
     <Compile Include="v11\Datatypes\DataValueConverter.cs" />
@@ -121,8 +121,8 @@
     <Compile Include="v11\Datatypes\Object\GrowingObjectIndexConverter.cs" />
     <Compile Include="Common\Datatypes\PrimitiveConverters.cs" />
     <Compile Include="EtpErrorCodes.cs" />
-    <Compile Include="EtpServer.cs" />
-    <Compile Include="EtpServerHandler.cs" />
+    <Compile Include="WebSocket4Net\EtpServer.cs" />
+    <Compile Include="Native\EtpServerHandler.cs" />
     <Compile Include="JsonClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
@@ -166,8 +166,8 @@
     <Compile Include="v11\Protocol\StoreNotification\StoreNotificationStoreHandler.cs" />
     <Compile Include="v11\Protocol\Store\IStoreCustomer.cs" />
     <Compile Include="v11\Protocol\Store\IStoreStore.cs" />
-    <Compile Include="EtpClient.cs" />
-    <Compile Include="EtpSocketServer.cs" />
+    <Compile Include="WebSocket4Net\EtpClient.cs" />
+    <Compile Include="WebSocket4Net\EtpSocketServer.cs" />
     <Compile Include="v11\Protocol\Store\StoreCustomerHandler.cs" />
     <Compile Include="v11\Protocol\Store\StoreStoreHandler.cs" />
     <Compile Include="Security\Authorization.cs" />

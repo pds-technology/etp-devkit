@@ -24,6 +24,7 @@ using Energistics.Etp.v11.Protocol.ChannelStreaming;
 using Energistics.Etp.v11.Protocol.Core;
 using Energistics.Etp.v11.Protocol.Discovery;
 using Energistics.Etp.v11.Protocol.Store;
+using Energistics.Etp.WebSocket4Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Energistics.Etp

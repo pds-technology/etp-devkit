@@ -26,7 +26,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
 
-namespace Energistics.Etp
+namespace Energistics.Etp.Native
 {
     /// <summary>
     /// An ETP server session implementation that can be used with .NET WebSockets.

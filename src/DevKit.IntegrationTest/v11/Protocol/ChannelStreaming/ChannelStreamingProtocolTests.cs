@@ -18,6 +18,7 @@
 
 using System.Linq;
 using System.Threading.Tasks;
+using Energistics.Etp.WebSocket4Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Energistics.Etp.v11.Protocol.ChannelStreaming

@@ -23,6 +23,7 @@ using Energistics.Etp.Providers;
 using Energistics.Etp.v11.Protocol.Discovery;
 using Energistics.Etp.v11.Protocol.ChannelStreaming;
 using log4net.Config;
+using Energistics.Etp.WebSocket4Net;
 
 namespace Energistics.Etp
 {

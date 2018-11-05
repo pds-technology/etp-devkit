@@ -26,7 +26,7 @@ using SuperSocket.SocketBase.Config;
 using SuperWebSocket;
 using SuperWebSocket.SubProtocol;
 
-namespace Energistics.Etp
+namespace Energistics.Etp.WebSocket4Net
 {
     /// <summary>
     /// A wrapper for the SuperWebSocket library providing a base ETP server implementation.

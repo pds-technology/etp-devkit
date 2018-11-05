@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.Security;
 using Energistics.Etp.v11.Datatypes;
+using Energistics.Etp.WebSocket4Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 

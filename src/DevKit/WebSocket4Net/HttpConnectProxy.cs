@@ -10,7 +10,7 @@ using System.Text;
 using SuperSocket.ClientEngine;
 using SuperSocket.ClientEngine.Proxy;
 
-namespace Energistics.Etp.Security
+namespace Energistics.Etp.WebSocket4Net
 {
     public class HttpConnectProxy : ProxyConnectorBase
     {

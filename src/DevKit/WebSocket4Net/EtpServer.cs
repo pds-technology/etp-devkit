@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using SuperWebSocket;
 
-namespace Energistics.Etp
+namespace Energistics.Etp.WebSocket4Net
 {
     /// <summary>
     /// An ETP server session implementation that can be used with SuperWebSocket sessions.
@@ -40,7 +40,7 @@ namespace Energistics.Etp
         public override bool IsOpen => (_session?.Connected ?? false) && (!_session?.InClosing ?? false);
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EtpServer"/> class.
+        /// Initializes a new instance of the <see cref="EtpSessionHandler"/> class.
         /// </summary>
         /// <param name="session">The web socket session.</param>
         /// <param name="application">The serve application name.</param>

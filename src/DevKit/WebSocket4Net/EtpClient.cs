@@ -27,7 +27,7 @@ using Energistics.Etp.Properties;
 using SuperSocket.ClientEngine;
 using WebSocket4Net;
 
-namespace Energistics.Etp
+namespace Energistics.Etp.WebSocket4Net
 {
     /// <summary>
     /// A wrapper for the WebSocket4Net library providing client connectivity to an ETP server.
@@ -257,7 +257,7 @@ namespace Energistics.Etp
             if (_socket == null) return;
             var endPoint = new DnsEndPoint(host, port);
             var headers = Security.Authorization.Basic(username, password);
-            _socket.Proxy = new Energistics.Etp.Security.HttpConnectProxy(endPoint, headers[Security.Authorization.Header]);
+            _socket.Proxy = new Energistics.Etp.WebSocket4Net.HttpConnectProxy(endPoint, headers[Security.Authorization.Header]);
         }
 
         /// <summary>

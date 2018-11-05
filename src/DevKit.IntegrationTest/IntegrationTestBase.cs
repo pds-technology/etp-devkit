@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 using Avro.Specific;
 using Energistics.Etp.Common;
 using Energistics.Etp.Security;
+using Energistics.Etp.WebSocket4Net;
 
 namespace Energistics.Etp
 {

@@ -19,6 +19,7 @@
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.WebSocket4Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Energistics.Etp.v11.Protocol.Discovery

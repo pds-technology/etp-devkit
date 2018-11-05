@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using Energistics.Etp.WebSocket4Net;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
