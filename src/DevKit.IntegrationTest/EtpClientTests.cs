@@ -49,7 +49,7 @@ namespace Energistics.Etp
                 client.Register<IStoreCustomer, StoreCustomerHandler>();
 
                 // Open the connection (uses an async extension method)
-                await client.OpenAsync();
+                await client.OpenAsyncWithTimeout();
 
                 // Assert the current state of the connection
                 Assert.IsTrue(client.IsOpen);
@@ -73,7 +73,7 @@ namespace Energistics.Etp
             using (var client = new EtpClient(TestSettings.ServerUrl, AppName, AppVersion, TestSettings.EtpSubProtocol, headers))
             {
                 // Open the connection (uses an async extension method)
-                await client.OpenAsync();
+                await client.OpenAsyncWithTimeout();
 
                 // Assert the current state of the connection
                 Assert.IsTrue(client.IsOpen);

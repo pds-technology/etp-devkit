@@ -33,14 +33,11 @@ namespace Energistics.Etp
         /// <param name="client">The client.</param>
         /// <param name="milliseconds">The timeout, in milliseconds.</param>
         /// <returns>An awaitable task.</returns>
-        public static async Task<bool> OpenAsync(this EtpClient client, int? milliseconds = null)
+        public static async Task<bool> OpenAsyncWithTimeout(this EtpClient client, int? milliseconds = null)
         {
-            var task = new Task<bool>(() => client.IsOpen);
+            await client.OpenAsync().WaitAsync(milliseconds);
 
-            client.SocketOpened += (s, e) => task.Start();
-            client.Open();
-
-            return await task.WaitAsync(milliseconds);
+            return client.IsOpen;
         }
 
         /// <summary>

@@ -17,7 +17,9 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using SuperSocket.SocketBase;
 using SuperSocket.SocketBase.Config;
@@ -104,18 +106,36 @@ namespace Energistics.Etp
         /// </summary>
         public void Start()
         {
+            StartAsync().Wait();
+        }
+
+        /// <summary>
+        /// Asynchronously starts the WebSocket server.
+        /// </summary>
+        public Task StartAsync()
+        {
             Logger.Trace($"Starting");
             if (!IsRunning)
             {
                 _server.Start();
             }
             Logger.Verbose($"Started");
+
+            return Task.FromResult(true);
         }
 
         /// <summary>
         /// Stops the WebSocket server.
         /// </summary>
         public void Stop()
+        {
+            StopAsync().Wait();
+        }
+
+        /// <summary>
+        /// Asynchronously stops the WebSocket server.
+        /// </summary>
+        public Task StopAsync()
         {
             Logger.Trace($"Stopping");
             if (IsRunning)
@@ -124,6 +144,8 @@ namespace Energistics.Etp
                 _server.Stop();
             }
             Logger.Verbose($"Stopped");
+
+            return Task.FromResult(true);
         }
 
         /// <summary>
@@ -184,9 +206,9 @@ namespace Energistics.Etp
 
                 if (etpSession != null)
                 {
+                    session.Items.Remove(EtpSessionKey);
                     SessionClosed?.Invoke(this, etpSession);
                     etpSession.Dispose();
-                    session.Items[EtpSessionKey] = null;
                 }
             }
         }
@@ -226,7 +248,7 @@ namespace Energistics.Etp
                 foreach (var session in _server.GetAllSessions())
                 {
                     var etpSession = GetEtpSession(session);
-                    session.Items[EtpSessionKey] = null;
+                    session.Items.Remove(EtpSessionKey);
 
                     if (etpSession == null) continue;
     

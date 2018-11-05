@@ -51,7 +51,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
             var onChannelData = HandleAsync<ChannelData>(x => handler.OnChannelData += x);
 
             // Wait for Open connection
-            var isOpen = await _client.OpenAsync();
+            var isOpen = await _client.OpenAsyncWithTimeout();
             Assert.IsTrue(isOpen);
 
             // Send Start message

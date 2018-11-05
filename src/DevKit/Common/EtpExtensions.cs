@@ -87,7 +87,7 @@ namespace Energistics.Etp.Common
                         if (GzipEncoding.Equals(compression, StringComparison.InvariantCultureIgnoreCase))
                         {
                             // add Compressed flag to message flags before writing header
-                            header.MessageFlags = (int)((MessageFlags) header.MessageFlags | MessageFlags.Compressed);
+                            header.SetBodyCompressed();
 
                             gzip = new GZipStream(stream, CompressionMode.Compress, true);
                             bodyEncoder = new BinaryEncoder(gzip);

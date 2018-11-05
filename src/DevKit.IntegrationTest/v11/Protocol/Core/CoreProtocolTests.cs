@@ -66,7 +66,7 @@ namespace Energistics.Etp.v11.Protocol.Core
         {
             var onOpenSession = HandleAsync<OpenSession>(x => _client.Handler<ICoreClient>().OnOpenSession += x);
 
-            var opened = await _client.OpenAsync();
+            var opened = await _client.OpenAsyncWithTimeout();
             Assert.IsTrue(opened, "EtpClient connection not opened");
 
             var args = await onOpenSession.WaitAsync();
@@ -101,7 +101,7 @@ namespace Energistics.Etp.v11.Protocol.Core
 
             var onOpenSession = HandleAsync<OpenSession>(x => _client.Handler<ICoreClient>().OnOpenSession += x);
 
-            var opened = await _client.OpenAsync();
+            var opened = await _client.OpenAsyncWithTimeout();
             Assert.IsTrue(opened, "EtpClient connection not opened");
 
             var args = await onOpenSession.WaitAsync();
@@ -117,7 +117,7 @@ namespace Energistics.Etp.v11.Protocol.Core
         {
             var onProtocolException = HandleAsync<IProtocolException>(x => _client.Handler<ICoreClient>().OnProtocolException += x);
 
-            var opened = await _client.OpenAsync();
+            var opened = await _client.OpenAsyncWithTimeout();
             Assert.IsTrue(opened, "EtpClient connection not opened");
 
             _client.SendMessage(

@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using SuperWebSocket;
 
@@ -52,13 +53,14 @@ namespace Energistics.Etp
         }
 
         /// <summary>
-        /// Closes the WebSocket connection for the specified reason.
+        /// Asynchronously closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        protected override void CloseCore(string reason)
+        protected override Task CloseAsyncCore(string reason)
         {
             CheckDisposed();
             _session.CloseWithHandshake(reason);
+            return Task.FromResult(true);
         }
 
         /// <summary>
@@ -67,20 +69,22 @@ namespace Energistics.Etp
         /// <param name="data">The data.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="length">The length.</param>
-        protected override void Send(byte[] data, int offset, int length)
+        protected override Task SendAsync(byte[] data, int offset, int length)
         {
             CheckDisposed();
             _session.Send(data, offset, length);
+            return Task.FromResult(true);
         }
 
         /// <summary>
         /// Sends the specified messages.
         /// </summary>
         /// <param name="message">The message.</param>
-        protected override void Send(string message)
+        protected override Task SendAsync(string message)
         {
             CheckDisposed();
             _session.Send(message);
+            return Task.FromResult(true);
         }
 
         /// <summary>

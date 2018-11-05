@@ -48,7 +48,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
             var handler = _client.Handler<IDiscoveryCustomer>();
 
             // Wait for Open connection
-            var isOpen = await _client.OpenAsync();
+            var isOpen = await _client.OpenAsyncWithTimeout();
             Assert.IsTrue(isOpen);
 
             // Register event handler for root URI

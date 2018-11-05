@@ -22,11 +22,13 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Avro.IO;
 using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Properties;
 using Newtonsoft.Json.Linq;
+using Nito.AsyncEx;
 
 namespace Energistics.Etp.Common
 {
@@ -39,7 +41,7 @@ namespace Energistics.Etp.Common
     {
         private long _messageId;
         private bool? _isJsonEncoding;
-        private readonly object _sendLock = new object();
+        private readonly AsyncLock _sendLock = new AsyncLock();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpSession"/> class.
@@ -219,7 +221,7 @@ namespace Energistics.Etp.Common
             try
             {
                 // Lock to ensure only one thread at a time attempts to send data and to ensure that messages are sent with sequential IDs
-                lock (_sendLock)
+                using (_sendLock.Lock())
                 {
                     if (!IsOpen)
                     {
@@ -237,12 +239,12 @@ namespace Energistics.Etp.Common
                     if (IsJsonEncoding)
                     {
                         var message = this.Serialize(new object[] {header, body});
-                        Send(message);
+                        SendAsync(message).Wait();
                     }
                     else
                     {
                         var data = body.Encode(header, SupportedCompression);
-                        Send(data, 0, data.Length);
+                        SendAsync(data, 0, data.Length).Wait();
                     }
                 }
             }
@@ -295,12 +297,21 @@ namespace Energistics.Etp.Common
         /// <param name="reason">The reason.</param>
         public void Close(string reason)
         {
+            CloseAsync(reason).Wait();
+        }
+
+        /// <summary>
+        /// Asynchronously closes the WebSocket connection for the specified reason.
+        /// </summary>
+        /// <param name="reason">The reason.</param>
+        public async Task CloseAsync(string reason)
+        {
             // Closing sends messages over the websocket so need to ensure no other messages are being sent when closing
-            lock (_sendLock)
+            using (await _sendLock.LockAsync())
             {
                 Logger.Trace($"Closing Session: {reason}");
 
-                CloseCore(reason);
+                await CloseAsyncCore(reason);
             }
         }
 
@@ -338,10 +349,10 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
-        /// Closes the WebSocket connection for the specified reason.
+        /// Asynchronously closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        protected abstract void CloseCore(string reason);
+        protected abstract Task CloseAsyncCore(string reason);
 
         /// <summary>
         /// Sends the specified data.
@@ -349,13 +360,13 @@ namespace Energistics.Etp.Common
         /// <param name="data">The data.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="length">The length.</param>
-        protected abstract void Send(byte[] data, int offset, int length);
+        protected abstract Task SendAsync(byte[] data, int offset, int length);
 
         /// <summary>
         /// Sends the specified messages.
         /// </summary>
         /// <param name="message">The message.</param>
-        protected abstract void Send(string message);
+        protected abstract Task SendAsync(string message);
 
         /// <summary>
         /// Decodes the specified data.

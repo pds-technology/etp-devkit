@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Properties;
@@ -72,12 +73,6 @@ namespace Energistics.Etp
                 customHeaderItems: headerItems,
                 userAgent: application);
 
-            _socket.Opened += OnWebSocketOpened;
-            _socket.Closed += OnWebSocketClosed;
-            _socket.DataReceived += OnWebSocketDataReceived;
-            _socket.MessageReceived += OnWebSocketMessageReceived;
-            _socket.Error += OnWebSocketError;
-
             RegisterCoreClient(etpSubProtocol);
         }
 
@@ -94,22 +89,137 @@ namespace Energistics.Etp
         /// </summary>
         public void Open()
         {
-            if (!IsOpen)
-            {
-                Logger.Trace(Log("Opening web socket connection..."));
-                _socket.Open();
-            }
+            OpenAsync().Wait();
         }
 
         /// <summary>
-        /// Closes the WebSocket connection for the specified reason.
+        /// Asynchronously opens the WebSocket connection.
+        /// </summary>
+        public Task<bool> OpenAsync()
+        {
+            if (IsOpen) return Task.FromResult(true);
+
+            Logger.Trace(Log("Opening web socket connection..."));
+
+            var tcs = new TaskCompletionSource<bool>();
+
+            EventHandler openHandler = null;
+            EventHandler closedHandler = null;
+            EventHandler<ErrorEventArgs> errorHandler = null;
+            Action clearHandlers = () =>
+            {
+                _socket.Opened -= openHandler;
+                _socket.Closed -= closedHandler;
+                _socket.Error -= errorHandler;
+            };
+
+            bool handled = false;
+
+            openHandler = (s, e) =>
+            {
+                if (!handled)
+                    tcs.TrySetResult(true);
+
+                clearHandlers();
+                handled = true;
+
+                SubscribeToSocketEvents();
+                OnWebSocketOpened();
+            };
+            closedHandler = (s, e) =>
+            {
+                if (!handled)
+                    tcs.TrySetCanceled();
+
+                clearHandlers();
+                handled = true;
+            };
+            errorHandler = (s, e) =>
+            {
+                if (!handled)
+                    tcs.TrySetException(e.Exception);
+
+                clearHandlers();
+                handled = true;
+            };
+
+            _socket.Opened += openHandler;
+            _socket.Closed += closedHandler;
+            _socket.Error += errorHandler;
+            _socket.Open();
+
+            return tcs.Task;
+        }
+
+        /// <summary>
+        /// Subscribes to socket events.
+        /// </summary>
+        private void SubscribeToSocketEvents()
+        {
+            _socket.Closed += OnWebSocketClosed;
+            _socket.DataReceived += OnWebSocketDataReceived;
+            _socket.MessageReceived += OnWebSocketMessageReceived;
+            _socket.Error += OnWebSocketError;
+        }
+
+        /// <summary>
+        /// Unsubscribes from socket events.
+        /// </summary>
+        private void UnsubscribeFromSocketEvents()
+        {
+            _socket.Closed -= OnWebSocketClosed;
+            _socket.DataReceived -= OnWebSocketDataReceived;
+            _socket.MessageReceived -= OnWebSocketMessageReceived;
+            _socket.Error -= OnWebSocketError;
+        }
+
+        /// <summary>
+        /// Asynchronously closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        protected override void CloseCore(string reason)
+        protected override Task CloseAsyncCore(string reason)
         {
-            if (!IsOpen) return;
+            if (!IsOpen) return Task.FromResult(true);
+
             Logger.Trace(Log("Closing web socket connection: {0}", reason));
+
+            var tcs = new TaskCompletionSource<bool>();
+            EventHandler closedHandler = null;
+            EventHandler<ErrorEventArgs> errorHandler = null;
+            Action clearHandlers = () =>
+            {
+                _socket.Closed -= closedHandler;
+                _socket.Error -= errorHandler;
+            };
+
+            bool handled = false;
+
+            closedHandler = (s, e) =>
+            {
+                if (!handled)
+                    tcs.TrySetResult(true);
+
+                clearHandlers();
+                handled = true;
+
+                OnWebSocketClosed(s, e);
+            };
+            errorHandler = (s, e) =>
+            {
+                if (!handled)
+                    tcs.TrySetException(e.Exception);
+
+                clearHandlers();
+                handled = true;
+            };
+
+            _socket.Closed += closedHandler;
+            _socket.Error += errorHandler;
+            UnsubscribeFromSocketEvents();
+
             _socket.Close(reason);
+
+            return tcs.Task;
         }
 
         /// <summary>
@@ -165,20 +275,26 @@ namespace Energistics.Etp
         /// <param name="data">The data.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="length">The length.</param>
-        protected override void Send(byte[] data, int offset, int length)
+        protected override Task SendAsync(byte[] data, int offset, int length)
         {
             CheckDisposed();
+            // Queues message internally.  No way to know when it has actually been sent.
             _socket.Send(data, offset, length);
+
+            return Task.FromResult(true);
         }
 
         /// <summary>
         /// Sends the specified messages.
         /// </summary>
         /// <param name="message">The message.</param>
-        protected override void Send(string message)
+        protected override Task SendAsync(string message)
         {
             CheckDisposed();
+            // Queues message internally.  No way to know when it has actually been sent.
             _socket.Send(message);
+
+            return Task.FromResult(true);
         }
 
         /// <summary>
@@ -209,7 +325,7 @@ namespace Energistics.Etp
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void OnWebSocketOpened(object sender, EventArgs e)
+        private void OnWebSocketOpened()
         {
             Logger.Trace(Log("[{0}] Socket opened.", SessionId));
 
@@ -225,6 +341,7 @@ namespace Energistics.Etp
         {
             Logger.Trace(Log("[{0}] Socket closed.", SessionId));
             SessionId = null;
+            UnsubscribeFromSocketEvents();
         }
 
         /// <summary>

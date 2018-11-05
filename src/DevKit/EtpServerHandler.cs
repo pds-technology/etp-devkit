@@ -73,16 +73,17 @@ namespace Energistics.Etp
         public override bool IsOpen => (_socket?.State ?? WebSocketState.None) == WebSocketState.Open;
 
         /// <summary>
-        /// Closes the WebSocket connection for the specified reason.
+        /// Asynchronously closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        protected override void CloseCore(string reason)
+        protected override async Task CloseAsyncCore(string reason)
         {
-            if (!IsOpen) return;
+            if (!IsOpen)
+                return;
 
             try
             {
-                _socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None);
+                await _socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None);
                 Logger.Debug(Log("[{0}] Socket session closed.", SessionId));
             }
             catch (WebSocketException ex)
@@ -190,25 +191,25 @@ namespace Energistics.Etp
         /// <param name="data">The data.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="length">The length.</param>
-        protected override void Send(byte[] data, int offset, int length)
+        protected override async Task SendAsync(byte[] data, int offset, int length)
         {
             CheckDisposed();
 
             var buffer = new ArraySegment<byte>(data, offset, length);
 
-            _socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None).Wait();
+            await _socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
         }
 
         /// <summary>
         /// Sends the specified messages.
         /// </summary>
         /// <param name="message">The message.</param>
-        protected override void Send(string message)
+        protected override async Task SendAsync(string message)
         {
             CheckDisposed();
 
             var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
-            _socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None).Wait();
+            await _socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
         }
 
         /// <summary>
