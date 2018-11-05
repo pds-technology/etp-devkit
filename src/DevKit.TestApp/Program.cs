@@ -120,7 +120,7 @@ namespace Energistics.Etp
             Console.WriteLine(" D - Discovery - GetResources");
             Console.WriteLine();
 
-            using (var client = new EtpClient(webSocketUri, ClientAppName, AppVersion, EtpSettings.EtpSubProtocolName))
+            using (var client = EtpClientFactory.CreateClient(webSocketUri, ClientAppName, AppVersion, EtpSettings.EtpSubProtocolName))
             {
                 client.Register<IChannelStreamingConsumer, MockChannelStreamingConsumer>();
                 client.Register<IDiscoveryCustomer, DiscoveryCustomerHandler>();

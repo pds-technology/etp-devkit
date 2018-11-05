@@ -19,7 +19,6 @@
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.WebSocket4Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Energistics.Etp.v11.Protocol.Discovery
@@ -27,7 +26,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
     [TestClass]
     public class DiscoveryProtocolTests : IntegrationTestBase
     {
-        private EtpClient _client;
+        private IEtpClient _client;
 
         [TestInitialize]
         public void TestSetUp()
@@ -46,6 +45,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
         {
             // Register protocol handler
             _client.Register<IDiscoveryCustomer, DiscoveryCustomerHandler>();
+
             var handler = _client.Handler<IDiscoveryCustomer>();
 
             // Wait for Open connection

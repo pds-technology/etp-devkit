@@ -208,7 +208,6 @@ namespace Energistics.Etp.Common
 
                 // NOTE: free unmanaged resources (unmanaged objects) and override a finalizer below.
                 // NOTE: set large fields to null.
-                Logger = null;
 
                 _disposedValue = true;
             }

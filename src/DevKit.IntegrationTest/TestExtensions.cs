@@ -16,7 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Energistics.Etp.WebSocket4Net;
+using Energistics.Etp.Common;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,7 +34,7 @@ namespace Energistics.Etp
         /// <param name="client">The client.</param>
         /// <param name="milliseconds">The timeout, in milliseconds.</param>
         /// <returns>An awaitable task.</returns>
-        public static async Task<bool> OpenAsyncWithTimeout(this EtpClient client, int? milliseconds = null)
+        public static async Task<bool> OpenAsyncWithTimeout(this IEtpClient client, int? milliseconds = null)
         {
             await client.OpenAsync().WaitAsync(milliseconds);
 

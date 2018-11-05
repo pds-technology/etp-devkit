@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 
@@ -144,5 +145,11 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="reason">The reason.</param>
         void Close(string reason);
+
+        /// <summary>
+        /// Asynchronously closes the WebSocket connection for the specified reason.
+        /// </summary>
+        /// <param name="reason">The reason.</param>
+        Task CloseAsync(string reason);
     }
 }

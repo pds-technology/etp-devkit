@@ -17,9 +17,9 @@
 //-----------------------------------------------------------------------
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -29,40 +29,33 @@ using Energistics.Etp.Common;
 namespace Energistics.Etp.Native
 {
     /// <summary>
-    /// An ETP server session implementation that can be used with .NET WebSockets.
+    /// A common base implementation for client and server <see cref="EtpSession"/>s using .NET WebSockets.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpSession" />
-    public class EtpServerHandler : EtpSession
+    public class EtpSessionNativeBase : EtpSession
     {
         private const int BufferSize = 4096;
-        private readonly WebSocket _socket;
 
         /// <summary>
-        /// Initializes the <see cref="EtpServerHandler"/> class.
-        /// </summary>
-        static EtpServerHandler()
-        {
-            Clients = new ConcurrentDictionary<string, EtpServerHandler>();
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EtpServerHandler"/> class.
+        /// Initializes a new instance of the <see cref="EtpSessionNativeBase"/> class.
         /// </summary>
         /// <param name="webSocket">The web socket.</param>
         /// <param name="application">The server application name.</param>
         /// <param name="version">The server application version.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
-        public EtpServerHandler(WebSocket webSocket, string application, string version, IDictionary<string, string> headers) : base(application, version, headers)
+        public EtpSessionNativeBase(WebSocket webSocket, string application, string version, IDictionary<string, string> headers) : base(application, version, headers)
         {
-            _socket = webSocket;
-            RegisterCoreServer(_socket.SubProtocol);
+            Socket = webSocket;
         }
 
         /// <summary>
-        /// Gets the collection of active clients.
+        /// The websocket for the session.
         /// </summary>
-        /// <value>The clients.</value>
-        public static ConcurrentDictionary<string, EtpServerHandler> Clients { get; }
+        protected WebSocket Socket { get; private set; }
+
+        /// <summary>
+        /// Cancellation token to use.
+        /// </summary>
+        protected virtual CancellationToken Token { get { return CancellationToken.None; } }
 
         /// <summary>
         /// Gets a value indicating whether the connection is open.
@@ -70,7 +63,7 @@ namespace Energistics.Etp.Native
         /// <value>
         ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
         /// </value>
-        public override bool IsOpen => (_socket?.State ?? WebSocketState.None) == WebSocketState.Open;
+        public override bool IsOpen => (Socket?.State ?? WebSocketState.None) == WebSocketState.Open;
 
         /// <summary>
         /// Asynchronously closes the WebSocket connection for the specified reason.
@@ -83,7 +76,7 @@ namespace Energistics.Etp.Native
 
             try
             {
-                await _socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None);
+                await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, Token);
                 Logger.Debug(Log("[{0}] Socket session closed.", SessionId));
             }
             catch (WebSocketException ex)
@@ -101,29 +94,38 @@ namespace Energistics.Etp.Native
         }
 
         /// <summary>
-        /// Accepts the WebSocket connection represented by the specified context.
+        /// Called to let derived classes register details of a new connection.
         /// </summary>
-        /// <param name="context">The WebSocket context.</param>
-        /// <returns>An awaitable <see cref="Task"/>.</returns>
-        public async Task Accept(WebSocketContext context)
+        protected virtual void RegisterNewConnection()
         {
-            SessionId = Guid.NewGuid().ToString();
+        }
 
-            Logger.Debug(Log("[{0}] Socket session connected.", SessionId));
+        /// <summary>
+        /// Called to let derived classes cleanup after a connection has ended.
+        /// </summary>
+        protected virtual void CleanupAfterConnection()
+        {
+        }
+
+        /// <summary>
+        /// Handles the WebSocket connection represented by the specified context.
+        /// </summary>
+        /// <returns>An awaitable <see cref="Task"/>.</returns>
+        /// <remarks>Runs an infinite loop to handle communication until the connection is closed.</remarks>
+        public async Task HandleConnection()
+        {
+            var token = Token;
 
             try
             {
-                // keep track of connected clients
-                Clients.AddOrUpdate(SessionId, this, (id, client) => this);
+                RegisterNewConnection();
 
                 using (var stream = new MemoryStream())
                 {
-                    var token = new CancellationToken();
-
-                    while (_socket.State == WebSocketState.Open)
+                    while (Socket.State == WebSocketState.Open)
                     {
                         var buffer = new ArraySegment<byte>(new byte[BufferSize]);
-                        var result = await _socket.ReceiveAsync(buffer, token);
+                        var result = await Socket.ReceiveAsync(buffer, token);
 
                         // transfer received data to MemoryStream
                         stream.Write(buffer.Array, 0, result.Count);
@@ -150,6 +152,9 @@ namespace Energistics.Etp.Native
                     }
                 }
             }
+            catch (OperationCanceledException)
+            {
+            }
             catch (WebSocketException ex)
             {
                 if (ExceptionMeansClientClosedConnection(ex))
@@ -172,16 +177,7 @@ namespace Energistics.Etp.Native
             }
             finally
             {
-                EtpServerHandler item;
-
-                // remove client after connection ends
-                if (Clients.TryRemove(SessionId, out item))
-                {
-                    if (item != this)
-                    {
-                        Clients.AddOrUpdate(item.SessionId, item, (id, client) => item);
-                    }
-                }
+                CleanupAfterConnection();
             }
         }
 
@@ -197,7 +193,7 @@ namespace Energistics.Etp.Native
 
             var buffer = new ArraySegment<byte>(data, offset, length);
 
-            await _socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
+            await Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, Token);
         }
 
         /// <summary>
@@ -209,7 +205,7 @@ namespace Energistics.Etp.Native
             CheckDisposed();
 
             var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
-            await _socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+            await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, Token);
         }
 
         /// <summary>
@@ -221,7 +217,16 @@ namespace Energistics.Etp.Native
         {
             if ((uint)ex.ErrorCode == 0x800703e3 || //  The I/O operation has been aborted because of either a thread exit or application request
                 (uint)ex.ErrorCode == 0x800704cd || // The remote host closed the connection
-                (uint)ex.ErrorCode == 0x80070026)   // Reached the end-of-file
+                (uint)ex.ErrorCode == 0x80070026 || // Reached the end-of-file
+                ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely ||
+                ex.WebSocketErrorCode == WebSocketError.InvalidState) 
+            {
+                return true;
+            }
+
+            var socketEx = ex.InnerException as SocketException;
+            if (socketEx != null &&
+                socketEx.SocketErrorCode == SocketError.ConnectionReset) // An existing connection was forcibly closed by the remote host
             {
                 return true;
             }

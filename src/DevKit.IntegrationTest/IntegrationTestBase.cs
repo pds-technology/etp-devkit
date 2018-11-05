@@ -31,17 +31,17 @@ namespace Energistics.Etp
     public abstract class IntegrationTestBase
     {
         /// <summary>
-        /// Creates an <see cref="EtpClient"/> instance configurated with the
+        /// Creates an <see cref="IEtpClient"/> instance configurated with the
         /// current connection and authorization parameters.
         /// </summary>
         /// <returns></returns>
-        protected EtpClient CreateClient()
+        protected IEtpClient CreateClient()
         {
             var version = GetType().Assembly.GetName().Version.ToString();
             var headers = Authorization.Basic(TestSettings.Username, TestSettings.Password);
             var etpSubProtocol = TestSettings.EtpSubProtocol;
 
-            return new EtpClient(TestSettings.ServerUrl, GetType().AssemblyQualifiedName, version, etpSubProtocol, headers);
+            return EtpClientFactory.CreateClient(TestSettings.ServerUrl, GetType().AssemblyQualifiedName, version, etpSubProtocol, headers);
         }
 
         /// <summary>

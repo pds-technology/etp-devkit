@@ -20,5 +20,8 @@
     <Setting Name="GetVersionsHeader" Type="System.String" Scope="Application">
       <Value Profile="(Default)">GetVersions</Value>
     </Setting>
+    <Setting Name="DefaultWebSocketType" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Native</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

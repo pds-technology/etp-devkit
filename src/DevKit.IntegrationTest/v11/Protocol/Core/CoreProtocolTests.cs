@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System.Threading.Tasks;
+using Energistics.Etp.Common;
 using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.Security;
 using Energistics.Etp.v11.Datatypes;
@@ -29,7 +30,7 @@ namespace Energistics.Etp.v11.Protocol.Core
     [TestClass]
     public class CoreProtocolTests : IntegrationTestBase
     {
-        private EtpClient _client;
+        private IEtpClient _client;
 
         [TestInitialize]
         public void TestSetUp()
@@ -49,14 +50,7 @@ namespace Energistics.Etp.v11.Protocol.Core
         {
             var task = new Task<bool>(() => _client.IsOpen);
 
-            _client.SocketOpened += (s, e) =>
-            {
-                task.Start();
-            };
-
-            _client.Open();
-
-            var result = await task.WaitAsync();
+            var result = await _client.OpenAsync().WaitAsync();
 
             Assert.IsTrue(result, "EtpClient connection not opened");
         }

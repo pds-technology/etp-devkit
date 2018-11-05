@@ -18,7 +18,7 @@
 
 using System.Linq;
 using System.Threading.Tasks;
-using Energistics.Etp.WebSocket4Net;
+using Energistics.Etp.Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Energistics.Etp.v11.Protocol.ChannelStreaming
@@ -26,7 +26,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
     [TestClass]
     public class ChannelStreamingProtocolTests : IntegrationTestBase
     {
-        private EtpClient _client;
+        private IEtpClient _client;
 
         [TestInitialize]
         public void TestSetUp()
@@ -45,6 +45,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         {
             // Register protocol handler
             _client.Register<IChannelStreamingConsumer, ChannelStreamingConsumerHandler>();
+
             var handler = _client.Handler<IChannelStreamingConsumer>();
 
             // Register event handlers

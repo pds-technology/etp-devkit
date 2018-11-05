@@ -90,6 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInitializer.cs" />
+    <Compile Include="ClientServerStressTest.cs" />
     <Compile Include="IntegrationTestBase.cs" />
     <Compile Include="JsonClientTests.cs" />
     <Compile Include="Properties\Settings.Designer.cs">

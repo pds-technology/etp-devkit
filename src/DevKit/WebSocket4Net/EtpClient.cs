@@ -33,7 +33,7 @@ namespace Energistics.Etp.WebSocket4Net
     /// A wrapper for the WebSocket4Net library providing client connectivity to an ETP server.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.EtpSession" />
-    public class EtpClient : EtpSession
+    public class EtpClient : EtpSession, IEtpClient
     {
         private static readonly IDictionary<string, string> EmptyHeaders = new Dictionary<string, string>();
         private static readonly IDictionary<string, string> BinaryHeaders = new Dictionary<string, string>()

@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using Energistics.Etp.Common.Datatypes;
 using Energistics.IntegrationTest;
 
 namespace Energistics
@@ -66,6 +67,11 @@ namespace Energistics
         public static int DefaultTimeoutInMilliseconds = 5000;
 
         /// <summary>
+        /// The websocket type.
+        /// </summary>
+        public static WebSocketType WebSocketType = Etp.Properties.Settings.Default.DefaultWebSocketType;
+
+        /// <summary>
         /// Resets any modified test settings.
         /// </summary>
         public static void Reset()
@@ -77,6 +83,8 @@ namespace Energistics
             Password = Settings.Default.Password;
             EtpVersion = Settings.Default.EtpVersion;
             DefaultTimeoutInMilliseconds = 5000;
+
+            WebSocketType = Etp.Properties.Settings.Default.DefaultWebSocketType;
         }
     }
 }

@@ -21,7 +21,6 @@ using Energistics.Etp.Common;
 using Energistics.Etp.Properties;
 using Energistics.Etp.Security;
 using Energistics.Etp.v11.Protocol.ChannelStreaming;
-using Energistics.Etp.v11.Protocol.Core;
 using Energistics.Etp.v11.Protocol.Discovery;
 using Energistics.Etp.v11.Protocol.Store;
 using Energistics.Etp.WebSocket4Net;
@@ -42,7 +41,7 @@ namespace Energistics.Etp
             var auth = Authorization.Basic(TestSettings.Username, TestSettings.Password);
 
             // Initialize an EtpClient with a valid Uri, app name and version, and auth header
-            using (var client = new EtpClient(TestSettings.ServerUrl, AppName, AppVersion, TestSettings.EtpSubProtocol, auth))
+            using (var client = EtpClientFactory.CreateClient(TestSettings.ServerUrl, AppName, AppVersion, TestSettings.EtpSubProtocol, auth))
             {
                 // Register protocol handlers to be used in later tests
                 client.Register<IChannelStreamingConsumer, ChannelStreamingConsumerHandler>();
@@ -71,7 +70,7 @@ namespace Energistics.Etp
             headers[EtpSettings.EtpEncodingHeader] = Settings.Default.EtpEncodingJson;
 
             // Initialize an EtpClient with a valid Uri, app name and version, and headers
-            using (var client = new EtpClient(TestSettings.ServerUrl, AppName, AppVersion, TestSettings.EtpSubProtocol, headers))
+            using (var client = EtpClientFactory.CreateClient(TestSettings.ServerUrl, AppName, AppVersion, TestSettings.EtpSubProtocol, headers))
             {
                 // Open the connection (uses an async extension method)
                 await client.OpenAsyncWithTimeout();

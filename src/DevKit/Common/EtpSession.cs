@@ -236,6 +236,9 @@ namespace Energistics.Etp.Common
                     // Must be invoked before sending to ensure the response is not asynchronously processed before this method returns.
                     onBeforeSend?.Invoke(header);
 
+                    // Log message just before it gets sent if needed.
+                    Sending(header, body);
+
                     if (IsJsonEncoding)
                     {
                         var message = this.Serialize(new object[] {header, body});
@@ -253,8 +256,6 @@ namespace Energistics.Etp.Common
                 return Handler(header.Protocol)
                     .ProtocolException((int) EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
             }
-
-            Sent(header, body);
 
             return header.MessageId;
         }
@@ -536,19 +537,19 @@ namespace Energistics.Etp.Common
         /// <typeparam name="T">The type of message.</typeparam>
         /// <param name="header">The header.</param>
         /// <param name="body">The message body.</param>
-        protected void Sent<T>(IMessageHeader header, T body)
+        protected void Sending<T>(IMessageHeader header, T body)
         {
             var now = DateTime.Now;
             if (Output != null)
             {
-                Log("[{0}] Message sent at {1}", SessionId, now.ToString(TimestampFormat));
+                Log("[{0}] Sending message at {1}", SessionId, now.ToString(TimestampFormat));
                 Log(this.Serialize(header));
                 Log(this.Serialize(body, true));
             }
 
             if (Logger.IsVerboseEnabled())
             {
-                Logger.VerboseFormat("[{0}] Message sent at {1}: {2}{3}{4}",
+                Logger.VerboseFormat("[{0}] Sending message at {1}: {2}{3}{4}",
                     SessionId, now.ToString(TimestampFormat), this.Serialize(header), Environment.NewLine, this.Serialize(body, true));
             }
         }
