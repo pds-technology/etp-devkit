@@ -38,7 +38,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="ETP.Messages, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ETP.1.6.0-dev12\lib\net40\ETP.Messages.dll</HintPath>
+      <HintPath>..\packages\ETP.1.6.0-dev16\lib\net40\ETP.Messages.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
@@ -148,7 +148,6 @@
     <Compile Include="Security\HttpConnectProxy.cs" />
     <Compile Include="Security\ProxyConnectorBase.cs" />
     <Compile Include="v12\Datatypes\IndexValueConverter.cs" />
-    <Compile Include="v12\Datatypes\ChannelData\StreamingStartIndexConverter.cs" />
     <Compile Include="v12\Protocol\ChannelDataFrame\ChannelDataFrameConsumerHandler.cs" />
     <Compile Include="v12\Protocol\ChannelDataFrame\ChannelDataFrameProducerHandler.cs" />
     <Compile Include="v12\Protocol\ChannelDataFrame\IChannelDataFrameConsumer.cs" />
@@ -161,6 +160,10 @@
     <Compile Include="v12\Protocol\ChannelStreaming\ChannelStreamingProducerHandler.cs" />
     <Compile Include="v12\Protocol\ChannelStreaming\IChannelStreamingConsumer.cs" />
     <Compile Include="v12\Protocol\ChannelStreaming\IChannelStreamingProducer.cs" />
+    <Compile Include="v12\Protocol\ChannelSubscribe\ChannelSubscribeConsumerHandler.cs" />
+    <Compile Include="v12\Protocol\ChannelSubscribe\ChannelSubscribeProducerHandler.cs" />
+    <Compile Include="v12\Protocol\ChannelSubscribe\IChannelSubscribeConsumer.cs" />
+    <Compile Include="v12\Protocol\ChannelSubscribe\IChannelSubscribeProducer.cs" />
     <Compile Include="v12\Protocol\Core\CoreClientHandler.cs" />
     <Compile Include="v12\Protocol\Core\CoreServerHandler.cs" />
     <Compile Include="v12\Protocol\Core\ICoreClient.cs" />

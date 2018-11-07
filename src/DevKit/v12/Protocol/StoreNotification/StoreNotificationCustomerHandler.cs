@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -59,13 +60,13 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
         /// <returns>The message identifier.</returns>
-        public long CancelNotification(string requestUuid)
+        public long CancelNotification(Guid requestUuid)
         {
             var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.CancelNotification);
 
             var cancelNotification = new CancelNotification()
             {
-                RequestUuid = requestUuid
+                RequestUuid = requestUuid.ToUuid()
             };
 
             return Session.SendMessage(header, cancelNotification);

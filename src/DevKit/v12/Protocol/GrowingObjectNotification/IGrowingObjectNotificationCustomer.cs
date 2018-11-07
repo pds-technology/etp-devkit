@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -41,7 +42,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
         /// <returns>The message identifier.</returns>
-        long CancelPartNotification(string requestUuid);
+        long CancelPartNotification(Guid requestUuid);
 
         /// <summary>
         /// Handles the PartChangeNotification event from a store.

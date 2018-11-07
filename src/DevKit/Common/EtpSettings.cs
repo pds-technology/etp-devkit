@@ -27,14 +27,9 @@ namespace Energistics.Etp.Common
     public static class EtpSettings
     {
         /// <summary>
-        /// The legacy ETP sub protocol name
-        /// </summary>
-        public const string LegacySubProtocol = "energistics-tp";
-
-        /// <summary>
         /// The ETP v1.1 sub protocol name
         /// </summary>
-        public const string Etp11SubProtocol = "etp11.energistics.org";
+        public const string Etp11SubProtocol = "energistics-tp";
 
         /// <summary>
         /// The ETP v1.2 sub protocol name
@@ -46,7 +41,7 @@ namespace Energistics.Etp.Common
         /// </summary>
         public static readonly List<string> EtpSubProtocols = new List<string>
         {
-            Etp12SubProtocol, Etp11SubProtocol, LegacySubProtocol
+            Etp12SubProtocol, Etp11SubProtocol
         };
 
         /// <summary>
@@ -78,5 +73,25 @@ namespace Energistics.Etp.Common
         /// The default GetVersions header
         /// </summary>
         public static string GetVersionsHeader = Settings.Default.GetVersionsHeader;
+
+        /// <summary>
+        /// The MaxGetResourcesResponse protocol capability key.
+        /// </summary>
+        public const string MaxDataItemsKey = "MaxDataItems";
+
+        /// <summary>
+        /// The default maximum data items
+        /// </summary>
+        public static int DefaultMaxDataItems = Settings.Default.DefaultMaxDataItems;
+
+        /// <summary>
+        /// The MaxGetResourcesResponse protocol capability key.
+        /// </summary>
+        public const string MaxResponseCountKey = "MaxResponseCount";
+
+        /// <summary>
+        /// The default maximum response count
+        /// </summary>
+        public static int DefaultMaxResponseCount = Settings.Default.DefaultMaxResponseCount;
     }
 }

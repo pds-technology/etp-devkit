@@ -16,9 +16,10 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes.ChannelData;
 
 namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
 {
@@ -33,14 +34,10 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// Sends a OpenChannelResponse message to a store.
         /// </summary>
         /// <param name="request">The request.</param>
-        /// <param name="uri">The channel URI.</param>
-        /// <param name="id">The channel identifier.</param>
-        /// <param name="uuid">The channel UUID.</param>
-        /// <param name="lastIndex">The last index.</param>
-        /// <param name="infill">if set to <c>true</c> provide infill data.</param>
-        /// <param name="dataChanges">if set to <c>true</c> provide channel data changes.</param>
+        /// <param name="channels">The channels.</param>
+        /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long OpenChannelResponse(IMessageHeader request, string uri, long id, Guid uuid, object lastIndex = null, bool infill = true, bool dataChanges = true);
+        long OpenChannelResponse(IMessageHeader request, IList<OpenChannelInfo> channels, MessageFlags messageFlag = MessageFlags.FinalPart);
 
         /// <summary>
         /// Handles the OpenChannel event from a store.
@@ -58,13 +55,13 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         event ProtocolEventHandler<RealtimeData> OnRealtimeData;
 
         /// <summary>
-        /// Handles the InfillRealtimeData event from a store.
+        /// Handles the InfillData event from a store.
         /// </summary>
-        event ProtocolEventHandler<InfillRealtimeData> OnInfillRealtimeData;
+        event ProtocolEventHandler<InfillData> OnInfillData;
 
         /// <summary>
-        /// Handles the ChannelDataChange event from a store.
+        /// Handles the ChangedData event from a store.
         /// </summary>
-        event ProtocolEventHandler<ChannelDataChange> OnChannelDataChange;
+        event ProtocolEventHandler<ChangedData> OnChangedData;
     }
 }

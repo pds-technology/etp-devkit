@@ -49,7 +49,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="changeKind">The change kind.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        public long PartChangeNotification(IMessageHeader request, string uri, string uid, string contentType, byte[] data, ObjectChangeKinds changeKind, long changeTime)
+        public long PartChangeNotification(IMessageHeader request, string uri, string uid, string contentType, byte[] data, ObjectChangeKind changeKind, long changeTime)
         {
             var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartChangeNotification, request.MessageId);
 

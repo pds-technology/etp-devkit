@@ -76,5 +76,23 @@ namespace Energistics.Etp.Properties {
                 return ((string)(this["GetVersionsHeader"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("50000")]
+        public int DefaultMaxDataItems {
+            get {
+                return ((int)(this["DefaultMaxDataItems"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10000")]
+        public int DefaultMaxResponseCount {
+            get {
+                return ((int)(this["DefaultMaxResponseCount"]));
+            }
+        }
     }
 }
