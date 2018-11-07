@@ -199,6 +199,7 @@ namespace Energistics.Etp.Common
         {
             if (!_disposedValue)
             {
+                Logger.Trace($"Disposing {GetType().Name}");
                 if (disposing)
                 {
                     // NOTE: dispose managed state (managed objects).

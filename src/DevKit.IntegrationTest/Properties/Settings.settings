@@ -21,7 +21,7 @@
       <Value Profile="(Default)">1.1</Value>
     </Setting>
     <Setting Name="EtpSubProtocol" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">energitics-tp</Value>
+      <Value Profile="(Default)">energistics-tp</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -1,9 +1,14 @@
-﻿using System;
+﻿// Originally from:
+// https://github.com/kerryjiang/SuperSocket.ClientEngine
+// Modified to support authorization headers and HTTP 1.0 responses.
+
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using SuperSocket.ClientEngine;
+using SuperSocket.ClientEngine.Proxy;
 
 namespace Energistics.Etp.Security
 {
@@ -44,13 +49,19 @@ namespace Energistics.Etp.Security
         }
 #else
         public HttpConnectProxy(EndPoint proxyEndPoint, string authorization = null)
-            : this(proxyEndPoint, 128, authorization)
+            : this(proxyEndPoint, 128, null, authorization)
         {
 
         }
 
-        public HttpConnectProxy(EndPoint proxyEndPoint, int receiveBufferSize, string authorization = null)
-            : base(proxyEndPoint)
+        public HttpConnectProxy(EndPoint proxyEndPoint, string targetHostName, string authorization = null)
+            : this(proxyEndPoint, 128, targetHostName, authorization)
+        {
+
+        }
+
+        public HttpConnectProxy(EndPoint proxyEndPoint, int receiveBufferSize, string targetHostName, string authorization = null)
+            : base(proxyEndPoint, targetHostName)
         {
             m_ReceiveBufferSize = receiveBufferSize;
             m_Authorizaton = authorization;
@@ -72,7 +83,7 @@ namespace Energistics.Etp.Security
 #elif WINDOWS_PHONE
                 ProxyEndPoint.ConnectAsync(ProcessConnect, remoteEndPoint);
 #else
-                ProxyEndPoint.ConnectAsync(ProcessConnect, remoteEndPoint);
+                ProxyEndPoint.ConnectAsync(null, ProcessConnect, remoteEndPoint);
 #endif
             }
             catch (Exception e)
@@ -81,8 +92,14 @@ namespace Energistics.Etp.Security
             }
         }
 
-        protected override void ProcessConnect(Socket socket, object targetEndPoint, SocketAsyncEventArgs e)
+        protected override void ProcessConnect(Socket socket, object targetEndPoint, SocketAsyncEventArgs e, Exception exception)
         {
+            if (exception != null)
+            {
+                OnException(exception);
+                return;
+            }
+
             if (e != null)
             {
                 if (!ValidateAsyncResult(e))
@@ -154,7 +171,7 @@ namespace Energistics.Etp.Security
             {
                 int total = e.Offset + e.BytesTransferred;
 
-                if (total >= m_ReceiveBufferSize)
+                if(total >= m_ReceiveBufferSize)
                 {
                     OnException("receive buffer size has been exceeded");
                     return;
@@ -216,7 +233,7 @@ namespace Energistics.Etp.Security
                 return;
             }
 
-            OnCompleted(new ProxyEventArgs(context.Socket));
+            OnCompleted(new ProxyEventArgs(context.Socket, TargetHostHame));
         }
     }
 }

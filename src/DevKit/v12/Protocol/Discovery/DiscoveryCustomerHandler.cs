@@ -87,19 +87,12 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         }
 
         /// <summary>
-        /// Handles the Acknowledge message.
+        /// Handle any final cleanup related to the final message in response to a request.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="acknowledge">The Acknowledge message.</param>
-        protected override void HandleAcknowledge(IMessageHeader header, IAcknowledge acknowledge)
+        /// <param name="correlationId">The correlation ID of the request</param>
+        protected override void HandleFinalResponse(long correlationId)
         {
-            // Handle case when "No Data" Acknowledge message was received
-            if (header.MessageFlags == (int)MessageFlags.NoData)
-            {
-                GetRequestedUri(header);
-            }
-
-            base.HandleAcknowledge(header, acknowledge);
+            _requests.Remove(correlationId);
         }
 
         /// <summary>

@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System.Threading.Tasks;
+using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -77,7 +78,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
 
             Assert.IsNotNull(argsChild);
 
-            if (argsChild.Header.MessageFlags == (int) MessageFlags.NoData)
+            if (argsChild.Header.IsNoData())
             {
                 Assert.IsNull(argsChild.Message.Resource);
             }

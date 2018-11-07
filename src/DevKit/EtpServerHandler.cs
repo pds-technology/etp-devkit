@@ -90,7 +90,7 @@ namespace Energistics.Etp
                 if (ExceptionMeansClientClosedConnection(ex))
                 {
                     Log("Warning: Exception caught when closing a websocket connection: {0}", ex.Message);
-                    Logger.WarnFormat("Exception caught when closing a websocket connection: {0}", ex);
+                    Logger.VerboseFormat("Exception caught when closing a websocket connection: {0}", ex);
                 }
                 else
                 {
@@ -154,19 +154,19 @@ namespace Energistics.Etp
                 if (ExceptionMeansClientClosedConnection(ex))
                 {
                     Log("Warning: {0}", ex.Message);
-                    Logger.Warn(ex);
+                    Logger.Verbose(ex);
                 }
                 else
                 {
                     Log("Error: {0}", ex.Message);
-                    Logger.Error(ex);
+                    Logger.Debug(ex);
                     throw;
                 }
             }
             catch (Exception ex)
             {
                 Log("Error: {0}", ex.Message);
-                Logger.Error(ex);
+                Logger.Debug(ex);
                 throw;
             }
             finally

@@ -23,7 +23,6 @@ using System.Net;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Properties;
-using Energistics.Etp.Security;
 using SuperSocket.ClientEngine;
 using WebSocket4Net;
 
@@ -97,7 +96,7 @@ namespace Energistics.Etp
         {
             if (!IsOpen)
             {
-                Logger.Debug(Log("Opening web socket connection..."));
+                Logger.Trace(Log("Opening web socket connection..."));
                 _socket.Open();
             }
         }
@@ -109,7 +108,7 @@ namespace Energistics.Etp
         protected override void CloseCore(string reason)
         {
             if (!IsOpen) return;
-            Logger.Debug(Log("Closing web socket connection: {0}", reason));
+            Logger.Trace(Log("Closing web socket connection: {0}", reason));
             _socket.Close(reason);
         }
 
@@ -148,7 +147,7 @@ namespace Energistics.Etp
             if (_socket == null) return;
             var endPoint = new DnsEndPoint(host, port);
             var headers = Security.Authorization.Basic(username, password);
-            _socket.Proxy = new HttpConnectProxy(endPoint, headers[Security.Authorization.Header]);
+            _socket.Proxy = new Energistics.Etp.Security.HttpConnectProxy(endPoint, headers[Security.Authorization.Header]);
         }
 
         /// <summary>
@@ -212,7 +211,7 @@ namespace Energistics.Etp
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private void OnWebSocketOpened(object sender, EventArgs e)
         {
-            Logger.Debug(Log("[{0}] Socket opened.", SessionId));
+            Logger.Trace(Log("[{0}] Socket opened.", SessionId));
 
             Adapter.RequestSession(ApplicationName, ApplicationVersion, _supportedCompression);
         }
@@ -224,7 +223,7 @@ namespace Energistics.Etp
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private void OnWebSocketClosed(object sender, EventArgs e)
         {
-            Logger.Debug(Log("[{0}] Socket closed.", SessionId));
+            Logger.Trace(Log("[{0}] Socket closed.", SessionId));
             SessionId = null;
         }
 
@@ -255,7 +254,7 @@ namespace Energistics.Etp
         /// <param name="e">The <see cref="ErrorEventArgs"/> instance containing the event data.</param>
         private void OnWebSocketError(object sender, ErrorEventArgs e)
         {
-            Logger.Error(Log("[{0}] Socket error: {1}", SessionId, e.Exception.Message), e.Exception);
+            Logger.Debug(Log("[{0}] Socket error: {1}", SessionId, e.Exception.Message), e.Exception);
             SocketError?.Invoke(this, e.Exception);
         }
     }
