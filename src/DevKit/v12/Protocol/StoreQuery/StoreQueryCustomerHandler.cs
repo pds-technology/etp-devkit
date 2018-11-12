@@ -28,9 +28,9 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
     /// <summary>
     /// Base implementation of the <see cref="IStoreQueryCustomer"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.StoreQuery.IStoreQueryCustomer" />
-    public class StoreQueryCustomerHandler : EtpProtocolHandler, IStoreQueryCustomer
+    public class StoreQueryCustomerHandler : Etp12ProtocolHandler, IStoreQueryCustomer
     {
         private readonly IDictionary<long, string> _requests;
 

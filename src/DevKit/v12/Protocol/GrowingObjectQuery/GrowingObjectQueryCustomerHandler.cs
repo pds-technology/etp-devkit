@@ -28,9 +28,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
     /// <summary>
     /// Base implementation of the <see cref="IGrowingObjectQueryCustomer"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.GrowingObjectQuery.IGrowingObjectQueryCustomer" />
-    public class GrowingObjectQueryCustomerHandler : EtpProtocolHandler, IGrowingObjectQueryCustomer
+    public class GrowingObjectQueryCustomerHandler : Etp12ProtocolHandler, IGrowingObjectQueryCustomer
     {
         private readonly IDictionary<long, string> _requests;
 

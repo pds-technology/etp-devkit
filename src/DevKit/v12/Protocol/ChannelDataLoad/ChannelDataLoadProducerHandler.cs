@@ -28,9 +28,9 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
     /// <summary>
     /// Base implementation of the <see cref="IChannelDataLoadProducer"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelDataLoad.IChannelDataLoadProducer" />
-    public class ChannelDataLoadProducerHandler : EtpProtocolHandler, IChannelDataLoadProducer
+    public class ChannelDataLoadProducerHandler : Etp12ProtocolHandler, IChannelDataLoadProducer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelDataLoadProducerHandler"/> class.

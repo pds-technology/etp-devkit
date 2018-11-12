@@ -29,9 +29,9 @@ namespace Energistics.Etp.v12.Protocol.Core
     /// <summary>
     /// Base implementation of the <see cref="ICoreServer"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.Core.ICoreServer" />
-    public class CoreServerHandler : EtpProtocolHandler, ICoreServer
+    public class CoreServerHandler : Etp12ProtocolHandler, ICoreServer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CoreServerHandler"/> class.

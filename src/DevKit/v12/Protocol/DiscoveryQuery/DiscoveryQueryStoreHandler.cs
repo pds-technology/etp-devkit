@@ -28,9 +28,9 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
     /// <summary>
     /// Base implementation of the <see cref="IDiscoveryQueryStore"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.DiscoveryQuery.IDiscoveryQueryStore" />
-    public class DiscoveryQueryStoreHandler : EtpProtocolHandler, IDiscoveryQueryStore
+    public class DiscoveryQueryStoreHandler : Etp12ProtocolHandler, IDiscoveryQueryStore
     {
         /// <summary>
         /// The MaxResponseCount protocol capability key.

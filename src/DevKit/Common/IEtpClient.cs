@@ -27,11 +27,13 @@ namespace Energistics.Etp.Common
     public interface IEtpClient : IEtpSession
     {
         /// <summary>
-        /// Registers a protocol handler for the specified contract type.
+        /// Sets the proxy server host name and port number.
         /// </summary>
-        /// <typeparam name="TContract">The type of the contract.</typeparam>
-        /// <typeparam name="THandler">The type of the handler.</typeparam>
-        void Register<TContract, THandler>() where TContract : IProtocolHandler where THandler : TContract;
+        /// <param name="host">The host name.</param>
+        /// <param name="port">The port number.</param>
+        /// <param name="username">The username.</param>
+        /// <param name="password">The password.</param>
+        void SetProxy(string host, int port, string username = null, string password = null);
 
         /// <summary>
         /// Gets a value indicating whether the connection is open.

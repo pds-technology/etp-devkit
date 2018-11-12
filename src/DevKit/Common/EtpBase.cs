@@ -39,7 +39,7 @@ namespace Energistics.Etp.Common
             Logger = LogManager.GetLogger(GetType());
             SupportedObjects = new List<string>();
             RegisteredHandlers = new Dictionary<Type, Type>();
-            RegisteredFactories = new Dictionary<Type, Func<object>>();
+            RegisteredFactories = new Dictionary<Type, Func<IProtocolHandler>>();
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace Energistics.Etp.Common
         /// Gets the collection of registered protocol handler factories.
         /// </summary>
         /// <value>The registered protocol handler factories.</value>
-        protected IDictionary<Type, Func<object>> RegisteredFactories { get; }
+        protected IDictionary<Type, Func<IProtocolHandler>> RegisteredFactories { get; }
 
         /// <summary>
         /// Logs the specified message using the Output delegate, if available.
@@ -127,7 +127,7 @@ namespace Energistics.Etp.Common
         /// <param name="factory">The factory.</param>
         public virtual void Register<TContract>(Func<TContract> factory) where TContract : IProtocolHandler
         {
-            RegisteredFactories[typeof(TContract)] = () => factory();
+            RegisteredFactories[typeof(TContract)] = factory as Func<IProtocolHandler>;
             Register(typeof(TContract), typeof(TContract));
         }
 
@@ -204,6 +204,7 @@ namespace Energistics.Etp.Common
                 {
                     // NOTE: dispose managed state (managed objects).
                     RegisteredHandlers.Clear();
+                    RegisteredFactories.Clear();
                 }
 
                 // NOTE: free unmanaged resources (unmanaged objects) and override a finalizer below.

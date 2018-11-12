@@ -29,9 +29,9 @@ namespace Energistics.Etp.v11.Protocol.Core
     /// <summary>
     /// Base implementation of the <see cref="ICoreServer"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp11ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v11.Protocol.Core.ICoreServer" />
-    public class CoreServerHandler : EtpProtocolHandler, ICoreServer
+    public class CoreServerHandler : Etp11ProtocolHandler, ICoreServer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CoreServerHandler"/> class.
@@ -80,7 +80,11 @@ namespace Energistics.Etp.v11.Protocol.Core
 
             SupportedProtocols = supportedProtocols;
 
+            Logger.Verbose($"[{Session.SessionId}] Sending open session");
+
             var messageId = Session.SendMessage(header, openSession);
+
+            Logger.Verbose($"[{Session.SessionId}] Received {header.MessageId} and Sent {messageId}");
 
             if (messageId == header.MessageId)
             {

@@ -31,9 +31,19 @@ namespace Energistics.Etp.Common
     public interface IEtpSession : IDisposable
     {
         /// <summary>
+        /// Gets the ETP version supported by this session.
+        /// </summary>
+        EtpVersion SupportedVersion { get; }
+
+        /// <summary>
         /// Gets the version specific ETP adapter.
         /// </summary>
         IEtpAdapter Adapter { get; }
+
+        /// <summary>
+        /// Gets whether or not this is the client side of the session.
+        /// </summary>
+        bool IsClient { get; }
 
         /// <summary>
         /// Gets the name of the application.
@@ -122,9 +132,8 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Gets the supported protocols.
         /// </summary>
-        /// <param name="isSender">if set to <c>true</c> the current session is the sender.</param>
         /// <returns>A list of supported protocols.</returns>
-        IList<ISupportedProtocol> GetSupportedProtocols(bool isSender = false);
+        IList<ISupportedProtocol> GetSupportedProtocols();
 
         /// <summary>
         /// Gets the registered protocol handler for the specified ETP interface.
@@ -151,5 +160,19 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="reason">The reason.</param>
         Task CloseAsync(string reason);
+
+        /// <summary>
+        /// Registers a protocol handler for the specified contract type.
+        /// </summary>
+        /// <typeparam name="TContract">The type of the contract.</typeparam>
+        /// <typeparam name="THandler">The type of the handler.</typeparam>
+        void Register<TContract, THandler>() where TContract : IProtocolHandler where THandler : TContract;
+
+        /// <summary>
+        /// Registers a protocol handler factory for the specified contract type.
+        /// </summary>
+        /// <typeparam name="TContract">The type of the contract.</typeparam>
+        /// <param name="factory">The factory.</param>
+        void Register<TContract>(Func<TContract> factory) where TContract : IProtocolHandler;
     }
 }

@@ -26,9 +26,9 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
     /// <summary>
     /// Base implementation of the <see cref="IStoreNotificationStore"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.StoreNotification.IStoreNotificationStore" />
-    public class StoreNotificationStoreHandler : EtpProtocolHandler, IStoreNotificationStore
+    public class StoreNotificationStoreHandler : Etp12ProtocolHandler, IStoreNotificationStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreNotificationStoreHandler"/> class.

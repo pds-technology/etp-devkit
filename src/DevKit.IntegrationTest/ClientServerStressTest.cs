@@ -17,126 +17,203 @@
 //-----------------------------------------------------------------------
 
 using System;
-using System.Net;
-using System.Net.Sockets;
 using Energistics.Etp.Common;
-using Energistics.Etp.v11.Protocol.ChannelStreaming;
-using Energistics.Etp.v11.Protocol.Discovery;
-using Energistics.Etp.v11.Protocol.Store;
-using Energistics.Etp.WebSocket4Net;
+using Energistics.Etp.Common.Datatypes;
+using log4net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Energistics.Etp
 {
     [TestClass]
-    public class ClientServerStressTest
+    public class ClientServerStressTest : IntegrationTestBase
     {
         private const string AppName = "EtpClientTests";
         private const string AppVersion = "1.0";
 
-        private IEtpClient _client;
-        private EtpSocketServer _server;
+        private readonly ILog Logger = log4net.LogManager.GetLogger(typeof(ClientServerStressTest));
 
-        /// <summary>
-        /// Creates an <see cref="EtpSocketServer"/> instance.
-        /// </summary>
-        /// <param name="port">The port number.</param>
-        /// <returns>A new <see cref="EtpSocketServer"/> instance.</returns>
-        protected EtpSocketServer CreateServer(int port)
+        private const int nativeIterations = 1000;
+        private const int webSocket4NetIterations = 10;
+
+        protected void SetUp(WebSocketType webSocketType)
         {
-            var server = new EtpSocketServer(port, AppName, AppVersion);
-
-            return server;
+            SetUp(webSocketType, EtpSettings.LegacySubProtocol);
         }
 
-        /// <summary>
-        /// Creates an <see cref="EtpClient"/> instance configurated with the
-        /// current connection and authorization parameters.
-        /// </summary>
-        /// <param name="url">The WebSocket URL.</param>
-        /// <returns>A new <see cref="IEtpClient"/> instance.</returns>
-        protected IEtpClient CreateClient(string url)
+        protected void SetupStart(WebSocketType webSocketType)
         {
-            var version = GetType().Assembly.GetName().Version.ToString();
-            var headers = Security.Authorization.Basic(TestSettings.Username, TestSettings.Password);
-            var etpSubProtocol = EtpSettings.LegacySubProtocol;
-
-            var client = EtpClientFactory.CreateClient(url, AppName, AppVersion, etpSubProtocol, headers);
-
-            return client;
+            SetUp(webSocketType, EtpSettings.LegacySubProtocol);
+            _server.Start();
         }
 
-        /// <summary>
-        /// Initializes common resources.
-        /// </summary>
-        protected void SetUp()
+        protected void SetupStartOpen(WebSocketType webSocketType)
         {
-            // Clean up any remaining resources
-            _client?.Dispose();
-            _server?.Dispose();
-
-            // Get next available port number
-            var listener = new TcpListener(IPAddress.Loopback, 0);
-            listener.Start();
-            var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-            listener.Stop();
-
-            // Update EtpServerUrl setting
-            var uri = new Uri($"ws://localhost:{port}");
-
-            // Create server and client instances
-            _client = CreateClient(uri.ToString());
-            _client.Register<IChannelStreamingConsumer, ChannelStreamingConsumerHandler>();
-            _client.Register<IDiscoveryCustomer, DiscoveryCustomerHandler>();
-            _client.Register<IStoreCustomer, StoreCustomerHandler>();
-
-            _server = CreateServer(port);
-            _server.Register<IChannelStreamingProducer, ChannelStreamingProducerHandler>();
-            _server.Register<IDiscoveryStore, DiscoveryStoreHandler>();
-            _server.Register<IStoreStore, StoreStoreHandler>();
-        }
-
-        /// <summary>
-        /// Disposes common resources.
-        /// </summary>
-        protected void CleanUp()
-        {
-            _client?.Dispose();
-            _server?.Dispose();
-            _client = null;
-            _server = null;
-
-            TestSettings.Reset();
-        }
-
-        [TestInitialize]
-        public void InitializeTest()
-        {
-            SetUp();
+            SetUp(webSocketType, EtpSettings.LegacySubProtocol);
             _server.Start();
             _client.Open();
         }
 
-        [TestCleanup]
-        public void CleanupTest()
+        protected void StopCleanUp()
         {
             _server?.Stop();
             CleanUp();
         }
 
-        [TestMethod]
-        public void ClientServerStressTest_Initialize_And_Clean_Up_10_Times()
+        protected void CloseStopCleanUp()
         {
-            CleanupTest();
+            _client?.Close("Closing");
+            _server?.Stop();
+            CleanUp();
+        }
 
-            for (int i = 0; i < 10; i++)
+        protected void StopCloseCleanUp()
+        {
+            _server?.Stop();
+            _client?.Close("Closing");
+            CleanUp();
+        }
+
+        protected void DisposeCloseCleanUp()
+        {
+            _server?.Dispose();
+            _server = null;
+
+            _client?.Close("Closing");
+            CleanUp();
+        }
+
+        protected void SetUpOnceCleanUpTwice(WebSocketType webSocketType)
+        {
+            SetupStartOpen(webSocketType);
+
+            _server?.Stop();
+            CleanUp();
+
+            _server?.Stop();
+            CleanUp();
+        }
+
+        protected void RunStressTest(WebSocketType webSocketType, Action<WebSocketType> setup, Action cleanup)
+        {
+            int iterations = webSocketType == WebSocketType.Native ? nativeIterations : webSocket4NetIterations;
+
+            for (int i = 0; i < iterations; i++)
             {
-                InitializeTest();
+                Logger.Debug($"Starting iteration {i}");
+                setup(webSocketType);
 
-                CleanupTest();
+                cleanup();
             }
+        }
 
-            CleanupTest();
+        [TestMethod]
+        public void ClientServerStressTest_Setup_Once_Cleanup_Twice_Native()
+        {
+            SetUpOnceCleanUpTwice(WebSocketType.Native);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_Setup_Once_Cleanup_Twice_WebSocket4Net()
+        {
+            SetUpOnceCleanUpTwice(WebSocketType.WebSocket4Net);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_Setup_Cleanup_Native()
+        {
+            RunStressTest(WebSocketType.Native,
+                SetUp, CleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_Setup_Cleanup_WebSocket4Net()
+        {
+            RunStressTest(WebSocketType.WebSocket4Net,
+                SetUp, CleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_SetupStart_Cleanup_Native()
+        {
+            RunStressTest(WebSocketType.Native,
+                SetupStart, CleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_SetupStart_Cleanup_WebSocket4Net()
+        {
+            RunStressTest(WebSocketType.WebSocket4Net,
+                SetupStart, CleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_SetupStart_StopCleanup_Native()
+        {
+            RunStressTest(WebSocketType.Native,
+                SetupStart, StopCleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_SetupStart_StopCleanup_WebSocket4Net()
+        {
+            RunStressTest(WebSocketType.WebSocket4Net,
+                SetupStart, StopCleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_SetupStartOpen_StopCleanup_Native()
+        {
+            RunStressTest(WebSocketType.Native,
+                SetupStartOpen, StopCleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_SetupStartOpen_StopCleanup_WebSocket4Net()
+        {
+            RunStressTest(WebSocketType.WebSocket4Net,
+                SetupStartOpen, StopCleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_SetupStartOpen_StopCloseCleanup_Native()
+        {
+            RunStressTest(WebSocketType.Native,
+                SetupStartOpen, StopCloseCleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_SetupStartOpen_StopCloseCleanup_WebSocket4Net()
+        {
+            RunStressTest(WebSocketType.WebSocket4Net,
+                SetupStartOpen, StopCloseCleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_SetupStartOpen_CoseStopCleanup_Native()
+        {
+            RunStressTest(WebSocketType.Native,
+                SetupStartOpen, CloseStopCleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_SetupStartOpen_CloseStopCleanup_WebSocket4Net()
+        {
+            RunStressTest(WebSocketType.WebSocket4Net,
+                SetupStartOpen, CloseStopCleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_SetupStartOpen_DisposeCloseCleanup_Native()
+        {
+            RunStressTest(WebSocketType.Native,
+                SetupStartOpen, DisposeCloseCleanUp);
+        }
+
+        [TestMethod]
+        public void ClientServerStressTest_SetupStartOpen_DisposeCloseCleanup_WebSocket4Net()
+        {
+            RunStressTest(WebSocketType.WebSocket4Net,
+                SetupStartOpen, DisposeCloseCleanUp);
         }
     }
 }

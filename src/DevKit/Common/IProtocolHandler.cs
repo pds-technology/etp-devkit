@@ -16,7 +16,9 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Avro.IO;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
@@ -26,8 +28,13 @@ namespace Energistics.Etp.Common
     /// <summary>
     /// Defines properties and methods that can be used to handle ETP messages.
     /// </summary>
-    public interface IProtocolHandler
+    public interface IProtocolHandler : IDisposable
     {
+        /// <summary>
+        /// The ETP version supported by this handler.
+        /// </summary>
+        EtpVersion SupportedVersion { get; }
+
         /// <summary>
         /// Gets or sets the ETP session.
         /// </summary>

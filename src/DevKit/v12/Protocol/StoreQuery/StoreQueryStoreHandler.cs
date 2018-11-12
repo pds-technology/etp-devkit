@@ -28,9 +28,9 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
     /// <summary>
     /// Base implementation of the <see cref="IStoreQueryStore"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.StoreQuery.IStoreQueryStore" />
-    public class StoreQueryStoreHandler : EtpProtocolHandler, IStoreQueryStore
+    public class StoreQueryStoreHandler : Etp12ProtocolHandler, IStoreQueryStore
     {
         /// <summary>
         /// The MaxResponseCount protocol capability key.

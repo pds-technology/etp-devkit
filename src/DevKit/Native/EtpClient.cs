@@ -26,7 +26,6 @@ using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Properties;
-using SuperSocket.ClientEngine;
 
 namespace Energistics.Etp.Native
 {
@@ -46,7 +45,6 @@ namespace Energistics.Etp.Native
         private Task _connectionHandlingTask;
 
         private CancellationTokenSource _source;
-        private CancellationToken _token = CancellationToken.None;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpClient" /> class.
@@ -68,7 +66,7 @@ namespace Energistics.Etp.Native
         /// <param name="etpSubProtocol">The ETP sub protocol.</param>
         /// <param name="headers">The WebSocket headers.</param>
         public EtpClient(string uri, string application, string version, string etpSubProtocol, IDictionary<string, string> headers)
-            : base(new ClientWebSocket(), application, version, headers)
+            : base(EtpWebSocketValidation.GetEtpVersion(etpSubProtocol), new ClientWebSocket(), application, version, headers, true)
         {
             var headerItems = Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList();
 
@@ -78,15 +76,9 @@ namespace Energistics.Etp.Native
 
             Uri = new Uri(uri);
 
-            // TODO: Set the user agent.
-
-            RegisterCoreClient(etpSubProtocol);
+            // NOTE: User-Agent cannot be set on a .NET Framework ClientWebSocket:
+            // https://github.com/dotnet/corefx/issues/26627
         }
-
-        /// <summary>
-        /// Cancellation token to use.
-        /// </summary>
-        protected override CancellationToken Token { get { return _token; } }
 
         /// <summary>
         /// The client websocket.
@@ -117,26 +109,29 @@ namespace Energistics.Etp.Native
             Logger.Trace(Log("Opening web socket connection..."));
 
             _source = new CancellationTokenSource();
-            _token = _source.Token;
+            var token = _source.Token;
 
             try
             {
-                await ClientSocket.ConnectAsync(Uri, Token);
+                await ClientSocket.ConnectAsync(Uri, token);
+                Logger.Verbose($"Connected to {Uri}");
             }
             catch (OperationCanceledException)
             {
+                Logger.Verbose($"Connection to {Uri} cancelled.");
                 return false;
             }
 
             if (!IsOpen)
                 return false;
 
-            if (Token.IsCancellationRequested)
+            if (token.IsCancellationRequested)
                 return false;
 
-            _connectionHandlingTask = Task.Factory.StartNew(async () => await HandleConnection(), Token, TaskCreationOptions.LongRunning, TaskScheduler.Current);
+            _connectionHandlingTask = Task.Run(async () => await HandleConnection(token), token);
 
-            Adapter.RequestSession(ApplicationName, ApplicationVersion, _supportedCompression);
+            Logger.Trace(Log("Requesting session..."));
+            Adapter.RequestSession(this, ApplicationName, ApplicationVersion, _supportedCompression);
 
             return true;
         }
@@ -147,19 +142,12 @@ namespace Energistics.Etp.Native
         /// <param name="reason">The reason.</param>
         protected override async Task CloseAsyncCore(string reason)
         {
-            if (!IsOpen) return;
-
             _source?.Cancel();
-            _token = CancellationToken.None;
-
-            await base.CloseAsyncCore(reason);
 
             try
             {
                 if (_connectionHandlingTask != null)
-                {
                     await _connectionHandlingTask;
-                }
             }
             catch (OperationCanceledException)
             {
@@ -168,7 +156,11 @@ namespace Energistics.Etp.Native
             {
                 _connectionHandlingTask = null;
                 _source?.Dispose();
+                _source = null;
             }
+
+            if (IsOpen)
+                await base.CloseAsyncCore(reason);
         }
 
         /// <summary>
@@ -241,20 +233,9 @@ namespace Energistics.Etp.Native
         {
             if (disposing)
             {
-                CloseAsync("Shutting down").Wait();
-
-                _source = null;
+                Close("Shutting down");
 
                 Socket?.Dispose();
-
-                try
-                {
-                }
-                catch
-                {
-                }
-
-                _connectionHandlingTask = null;
             }
 
             base.Dispose(disposing);

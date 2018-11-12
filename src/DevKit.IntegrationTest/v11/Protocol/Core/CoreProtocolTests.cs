@@ -21,7 +21,6 @@ using Energistics.Etp.Common;
 using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.Security;
 using Energistics.Etp.v11.Datatypes;
-using Energistics.Etp.WebSocket4Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 
@@ -30,18 +29,17 @@ namespace Energistics.Etp.v11.Protocol.Core
     [TestClass]
     public class CoreProtocolTests : IntegrationTestBase
     {
-        private IEtpClient _client;
-
         [TestInitialize]
         public void TestSetUp()
         {
-            _client = CreateClient();
+            SetUp(TestSettings.WebSocketType, EtpSettings.LegacySubProtocol);
+            _server.Start();
         }
 
         [TestCleanup]
         public void TestTearDown()
         {
-            _client.Dispose();
+            CleanUp();
         }
 
         [TestMethod]
@@ -92,7 +90,7 @@ namespace Energistics.Etp.v11.Protocol.Core
             }
 
             _client.Dispose();
-            _client = new EtpClient(TestSettings.ServerUrl, _client.ApplicationName, _client.ApplicationVersion, etpSubProtocol, Authorization.Bearer(token));
+            _client = CreateClient(TestSettings.WebSocketType, etpSubProtocol, _server.Uri.ToWebSocketUri().ToString(), Authorization.Bearer(token));
 
             var onOpenSession = HandleAsync<OpenSession>(x => _client.Handler<ICoreClient>().OnOpenSession += x);
 

@@ -28,9 +28,9 @@ namespace Energistics.Etp.v12.Protocol.Discovery
     /// <summary>
     /// Base implementation of the <see cref="IDiscoveryStore"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.Discovery.IDiscoveryStore" />
-    public class DiscoveryStoreHandler : EtpProtocolHandler, IDiscoveryStore
+    public class DiscoveryStoreHandler : Etp12ProtocolHandler, IDiscoveryStore
     {
         /// <summary>
         /// The MaxGetResourcesResponse protocol capability key.

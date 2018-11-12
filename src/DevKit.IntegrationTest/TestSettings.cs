@@ -72,6 +72,16 @@ namespace Energistics
         public static WebSocketType WebSocketType = Etp.Properties.Settings.Default.DefaultWebSocketType;
 
         /// <summary>
+        /// The username for the proxy.
+        /// </summary>
+        public static string ProxyUsername = Settings.Default.ProxyUsername;
+
+        /// <summary>
+        /// The password for the proxy.
+        /// </summary>
+        public static string ProxyPassword = Settings.Default.ProxyPassword;
+
+        /// <summary>
         /// Resets any modified test settings.
         /// </summary>
         public static void Reset()
@@ -83,6 +93,8 @@ namespace Energistics
             Password = Settings.Default.Password;
             EtpVersion = Settings.Default.EtpVersion;
             DefaultTimeoutInMilliseconds = 5000;
+            ProxyUsername = Settings.Default.ProxyUsername;
+            ProxyPassword = Settings.Default.ProxyPassword;
 
             WebSocketType = Etp.Properties.Settings.Default.DefaultWebSocketType;
         }

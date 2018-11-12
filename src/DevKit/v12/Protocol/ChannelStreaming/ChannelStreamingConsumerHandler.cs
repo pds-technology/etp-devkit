@@ -27,9 +27,9 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
     /// <summary>
     /// Base implementation of the <see cref="IChannelStreamingConsumer"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelStreaming.IChannelStreamingConsumer" />
-    public class ChannelStreamingConsumerHandler : EtpProtocolHandler, IChannelStreamingConsumer
+    public class ChannelStreamingConsumerHandler : Etp12ProtocolHandler, IChannelStreamingConsumer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelStreamingConsumerHandler"/> class.

@@ -28,9 +28,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
     /// <summary>
     /// Base implementation of the <see cref="IGrowingObjectQueryStore"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.GrowingObjectQuery.IGrowingObjectQueryStore" />
-    public class GrowingObjectQueryStoreHandler : EtpProtocolHandler, IGrowingObjectQueryStore
+    public class GrowingObjectQueryStoreHandler : Etp12ProtocolHandler, IGrowingObjectQueryStore
     {
         /// <summary>
         /// The MaxResponseCount protocol capability key.

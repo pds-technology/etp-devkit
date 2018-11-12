@@ -28,30 +28,28 @@ namespace Energistics.Etp.v11
 {
     public class Etp11Adapter : IEtpAdapter
     {
-        private EtpSession Session { get; set; }
+        public EtpVersion SupportedVersion { get { return EtpVersion.v11; } }
 
-        public void RegisterCoreClient(EtpSession session)
+        public void RegisterCore(IEtpSession session)
         {
-            Session = session;
-            Session.Register<ICoreClient, CoreClientHandler>();
+            if (session.IsClient)
+                session.Register<ICoreClient, CoreClientHandler>();
+            else
+                session.Register<ICoreServer, CoreServerHandler>();
         }
 
-        public void RegisterCoreServer(EtpSession session)
+        public void RequestSession(IEtpSession session, string applicationName, string applicationVersion, string requestedCompression)
         {
-            Session = session;
-            Session.Register<ICoreServer, CoreServerHandler>();
-        }
+            var requestedProtocols = session.GetSupportedProtocols();
 
-        public void RequestSession(string applicationName, string applicationVersion, string requestedCompression)
-        {
-            var requestedProtocols = Session.GetSupportedProtocols(true);
-
-            Session.Handler<ICoreClient>()
-                .RequestSession(applicationName, applicationVersion, requestedProtocols);
+            session.Handler<ICoreClient>().RequestSession(applicationName, applicationVersion, requestedProtocols);
         }
 
         public ISupportedProtocol GetSupportedProtocol(IProtocolHandler handler, string role)
         {
+            if (handler.SupportedVersion != SupportedVersion)
+                return null;
+
             return new SupportedProtocol
             {
                 Protocol = handler.Protocol,
@@ -81,7 +79,7 @@ namespace Energistics.Etp.v11
 
         public IMessageHeader DeserializeMessageHeader(string content)
         {
-            return Session.Deserialize<MessageHeader>(content);
+            return EtpExtensions.Deserialize<MessageHeader>(content);
         }
 
         public IAcknowledge CreateAcknowledge()
@@ -96,7 +94,7 @@ namespace Energistics.Etp.v11
 
         public IAcknowledge DeserializeAcknowledge(string content)
         {
-            return Session.Deserialize<Acknowledge>(content);
+            return EtpExtensions.Deserialize<Acknowledge>(content);
         }
 
         public IProtocolException CreateProtocolException()
@@ -111,7 +109,7 @@ namespace Energistics.Etp.v11
 
         public IProtocolException DeserializeProtocolException(string content)
         {
-            return Session.Deserialize<ProtocolException>(content);
+            return EtpExtensions.Deserialize<ProtocolException>(content);
         }
     }
 }

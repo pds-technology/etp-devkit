@@ -26,9 +26,9 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
     /// <summary>
     /// Base implementation of the <see cref="IGrowingObjectCustomer"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp11ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v11.Protocol.GrowingObject.IGrowingObjectCustomer" />
-    public class GrowingObjectCustomerHandler : EtpProtocolHandler, IGrowingObjectCustomer
+    public class GrowingObjectCustomerHandler : Etp11ProtocolHandler, IGrowingObjectCustomer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="GrowingObjectCustomerHandler"/> class.

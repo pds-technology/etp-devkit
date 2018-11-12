@@ -28,9 +28,9 @@ namespace Energistics.Etp.v11.Protocol.Discovery
     /// <summary>
     /// Base implementation of the <see cref="IDiscoveryCustomer"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp11ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v11.Protocol.Discovery.IDiscoveryCustomer" />
-    public class DiscoveryCustomerHandler : EtpProtocolHandler, IDiscoveryCustomer
+    public class DiscoveryCustomerHandler : Etp11ProtocolHandler, IDiscoveryCustomer
     {
         private readonly IDictionary<long, string> _requests;
 

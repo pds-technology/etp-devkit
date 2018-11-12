@@ -19,19 +19,19 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
+using Energistics.Etp.Common.Datatypes;
 
 namespace Energistics.Etp.Native
 {
     /// <summary>
     /// A common base implementation for client and server <see cref="EtpSession"/>s using .NET WebSockets.
     /// </summary>
-    public class EtpSessionNativeBase : EtpSession
+    public abstract class EtpSessionNativeBase : EtpSession
     {
         private const int BufferSize = 4096;
 
@@ -39,10 +39,13 @@ namespace Energistics.Etp.Native
         /// Initializes a new instance of the <see cref="EtpSessionNativeBase"/> class.
         /// </summary>
         /// <param name="webSocket">The web socket.</param>
+        /// <param name="etpVersion">The ETP version.</param>
         /// <param name="application">The server application name.</param>
         /// <param name="version">The server application version.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
-        public EtpSessionNativeBase(WebSocket webSocket, string application, string version, IDictionary<string, string> headers) : base(application, version, headers)
+        /// <param name="isClient">Whether or not this is the client-side of the session.</param>
+        public EtpSessionNativeBase(EtpVersion etpVersion, WebSocket webSocket, string application, string version, IDictionary<string, string> headers, bool isClient)
+            : base(etpVersion, application, version, headers, isClient)
         {
             Socket = webSocket;
         }
@@ -51,11 +54,6 @@ namespace Energistics.Etp.Native
         /// The websocket for the session.
         /// </summary>
         protected WebSocket Socket { get; private set; }
-
-        /// <summary>
-        /// Cancellation token to use.
-        /// </summary>
-        protected virtual CancellationToken Token { get { return CancellationToken.None; } }
 
         /// <summary>
         /// Gets a value indicating whether the connection is open.
@@ -76,18 +74,15 @@ namespace Energistics.Etp.Native
 
             try
             {
-                await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, Token);
+                await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None);
                 Logger.Debug(Log("[{0}] Socket session closed.", SessionId));
             }
-            catch (WebSocketException ex)
+            catch (Exception ex)
             {
-                if (ExceptionMeansClientClosedConnection(ex))
+                if (!ex.ExceptionMeansConnectionTerminated())
                 {
-                    Log("Warning: Exception caught when closing a websocket connection: {0}", ex.Message);
-                    Logger.VerboseFormat("Exception caught when closing a websocket connection: {0}", ex);
-                }
-                else
-                {
+                    Log("Error: Exception caught when closing a websocket connection: {0}", ex.Message);
+                    Logger.DebugFormat("Exception caught when closing a websocket connection: {0}", ex);
                     throw;
                 }
             }
@@ -110,12 +105,11 @@ namespace Energistics.Etp.Native
         /// <summary>
         /// Handles the WebSocket connection represented by the specified context.
         /// </summary>
+        /// <param name="token">The cancellation token.</param>
         /// <returns>An awaitable <see cref="Task"/>.</returns>
         /// <remarks>Runs an infinite loop to handle communication until the connection is closed.</remarks>
-        public async Task HandleConnection()
+        public async Task HandleConnection(CancellationToken token)
         {
-            var token = Token;
-
             try
             {
                 RegisterNewConnection();
@@ -155,25 +149,14 @@ namespace Energistics.Etp.Native
             catch (OperationCanceledException)
             {
             }
-            catch (WebSocketException ex)
+            catch (Exception ex)
             {
-                if (ExceptionMeansClientClosedConnection(ex))
-                {
-                    Log("Warning: {0}", ex.Message);
-                    Logger.Verbose(ex);
-                }
-                else
+                if (!ex.ExceptionMeansConnectionTerminated())
                 {
                     Log("Error: {0}", ex.Message);
                     Logger.Debug(ex);
                     throw;
                 }
-            }
-            catch (Exception ex)
-            {
-                Log("Error: {0}", ex.Message);
-                Logger.Debug(ex);
-                throw;
             }
             finally
             {
@@ -193,7 +176,7 @@ namespace Energistics.Etp.Native
 
             var buffer = new ArraySegment<byte>(data, offset, length);
 
-            await Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, Token);
+            await Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
         }
 
         /// <summary>
@@ -205,33 +188,7 @@ namespace Energistics.Etp.Native
             CheckDisposed();
 
             var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
-            await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, Token);
-        }
-
-        /// <summary>
-        /// Checks if a <see cref="WebSocketException"/> is due to various low-level errors indicating the client terminated the connection.
-        /// </summary>
-        /// <param name="ex">The exception.</param>
-        /// <returns><c>true</c> if the exception indicates the client closed the connection; <c>false</c> otherwise.</returns>
-        private bool ExceptionMeansClientClosedConnection(WebSocketException ex)
-        {
-            if ((uint)ex.ErrorCode == 0x800703e3 || //  The I/O operation has been aborted because of either a thread exit or application request
-                (uint)ex.ErrorCode == 0x800704cd || // The remote host closed the connection
-                (uint)ex.ErrorCode == 0x80070026 || // Reached the end-of-file
-                ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely ||
-                ex.WebSocketErrorCode == WebSocketError.InvalidState) 
-            {
-                return true;
-            }
-
-            var socketEx = ex.InnerException as SocketException;
-            if (socketEx != null &&
-                socketEx.SocketErrorCode == SocketError.ConnectionReset) // An existing connection was forcibly closed by the remote host
-            {
-                return true;
-            }
-
-            return false;
+            await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
         }
     }
 }

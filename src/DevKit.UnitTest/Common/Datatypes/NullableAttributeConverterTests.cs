@@ -36,7 +36,7 @@ namespace Energistics.Etp.Common.Datatypes
             };
 
             const string expected = "\"uuid\":{\"string\":\"" + UuidValue + "\"}";
-            var json = EtpExtensions.Serialize(null, resource);
+            var json = EtpExtensions.Serialize(resource);
 
             Assert.IsTrue(json.Contains(expected));
         }
@@ -45,7 +45,7 @@ namespace Energistics.Etp.Common.Datatypes
         public void NullableStringConverter_ReadJson_deserializes_Resource_uuid_with_value()
         {
             const string json = "{\"uuid\":{\"string\":\"" + UuidValue + "\"}}";
-            var resource = EtpExtensions.Deserialize<v11.Datatypes.Object.Resource>(null, json);
+            var resource = EtpExtensions.Deserialize<v11.Datatypes.Object.Resource>(json);
 
             Assert.IsNotNull(resource.Uuid);
             Assert.AreEqual(UuidValue, resource.Uuid);
@@ -60,7 +60,7 @@ namespace Energistics.Etp.Common.Datatypes
             };
 
             const string expected = "\"uuid\":{\"string\":\"\"}";
-            var json = EtpExtensions.Serialize(null, resource);
+            var json = EtpExtensions.Serialize(resource);
 
             Assert.IsTrue(json.Contains(expected));
         }
@@ -69,7 +69,7 @@ namespace Energistics.Etp.Common.Datatypes
         public void NullableStringConverter_ReadJson_deserializes_Resource_uuid_with_empty_string()
         {
             const string json = "{\"uuid\":{\"string\":\"\"}}";
-            var resource = EtpExtensions.Deserialize<v11.Datatypes.Object.Resource>(null, json);
+            var resource = EtpExtensions.Deserialize<v11.Datatypes.Object.Resource>(json);
 
             Assert.IsNotNull(resource.Uuid);
             Assert.AreEqual(string.Empty, resource.Uuid);
@@ -84,7 +84,7 @@ namespace Energistics.Etp.Common.Datatypes
             };
 
             const string expected = "\"uuid\":null";
-            var json = EtpExtensions.Serialize(null, resource);
+            var json = EtpExtensions.Serialize(resource);
 
             Assert.IsTrue(json.Contains(expected));
         }
@@ -93,7 +93,7 @@ namespace Energistics.Etp.Common.Datatypes
         public void NullableStringConverter_ReadJson_deserializes_Resource_uuid_with_null_value()
         {
             const string json = "{\"uuid\":null}";
-            var resource = EtpExtensions.Deserialize<v11.Datatypes.Object.Resource>(null, json);
+            var resource = EtpExtensions.Deserialize<v11.Datatypes.Object.Resource>(json);
 
             Assert.IsNull(resource.Uuid);
         }

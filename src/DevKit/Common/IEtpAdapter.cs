@@ -24,11 +24,11 @@ namespace Energistics.Etp.Common
 {
     public interface IEtpAdapter
     {
-        void RegisterCoreClient(EtpSession session);
+        EtpVersion SupportedVersion { get; }
 
-        void RegisterCoreServer(EtpSession session);
+        void RegisterCore(IEtpSession session);
 
-        void RequestSession(string applicationName, string applicationVersion, string requestedCompression);
+        void RequestSession(IEtpSession session, string applicationName, string applicationVersion, string requestedCompression);
 
         ISupportedProtocol GetSupportedProtocol(IProtocolHandler handler, string role);
 

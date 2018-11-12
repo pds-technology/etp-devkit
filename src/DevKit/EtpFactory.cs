@@ -26,10 +26,11 @@ using System.Collections.Generic;
 namespace Energistics.Etp
 {
     /// <summary>
-    /// Provides a factory to create ETP Clients.
+    /// Provides a factory to create ETP Clients and WebServers.
     /// </summary>
-    public static class EtpClientFactory
+    public static class EtpFactory
     {
+        #region IEtpClient
         private static readonly IDictionary<string, string> EmptyHeaders = new Dictionary<string, string>();
 
         /// <summary>
@@ -48,6 +49,7 @@ namespace Energistics.Etp
         /// <summary>
         /// Creates an <see cref="IEtpClient"/> using the specified WebSocket type.
         /// </summary>
+        /// <param name="webSocketType">The specified WebSocket type.</param>
         /// <param name="uri">The ETP server URI.</param>
         /// <param name="application">The client application name.</param>
         /// <param name="version">The client application version.</param>
@@ -75,6 +77,7 @@ namespace Energistics.Etp
         /// <summary>
         /// Creates an <see cref="IEtpClient"/> using the specified WebSocket type.
         /// </summary>
+        /// <param name="webSocketType">The specified WebSocket type.</param>
         /// <param name="uri">The ETP server URI.</param>
         /// <param name="application">The client application name.</param>
         /// <param name="version">The client application version.</param>
@@ -94,5 +97,42 @@ namespace Energistics.Etp
                     throw new ArgumentException($"Unrecognized WebSocket type: {webSocketType}", "webSocketType");
             }
         }
+        #endregion
+
+        #region IEtpSelfHostedWebServer
+        /// <summary>
+        /// Creates an <see cref="IEtpSelfHostedWebServer"/> using the default WebSocket type.
+        /// </summary>
+        /// <param name="port">The port.</param>
+        /// <param name="application">The server application name.</param>
+        /// <param name="version">The server application version.</param>
+        /// <returns>The <see cref="IEtpSelfHostedWebServer"/></returns>
+        public static IEtpSelfHostedWebServer CreateSelfHostedWebServer(int port, string application, string version)
+        {
+            return CreateSelfHostedWebServer(Settings.Default.DefaultWebSocketType, port, application, version);
+        }
+
+        /// <summary>
+        /// Creates an <see cref="IEtpSelfHostedWebServer"/> using the specified WebSocket type.
+        /// </summary>
+        /// <param name="webSocketType">The specified WebSocket type.</param>
+        /// <param name="port">The port.</param>
+        /// <param name="application">The server application name.</param>
+        /// <param name="version">The server application version.</param>
+        /// <returns>The <see cref="IEtpSelfHostedWebServer"/></returns>
+        public static IEtpSelfHostedWebServer CreateSelfHostedWebServer(WebSocketType webSocketType, int port, string application, string version)
+        {
+            switch (webSocketType)
+            {
+                case WebSocketType.Native:
+                    return new Native.EtpSelfHostedWebServer(port, application, version);
+                case WebSocketType.WebSocket4Net:
+                    return new WebSocket4Net.EtpSelfHostedWebServer(port, application, version);
+
+                default:
+                    throw new ArgumentException($"Unrecognized WebSocket type: {webSocketType}", "webSocketType");
+            }
+        }
+        #endregion
     }
 }

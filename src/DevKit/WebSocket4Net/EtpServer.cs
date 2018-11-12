@@ -27,7 +27,7 @@ namespace Energistics.Etp.WebSocket4Net
     /// An ETP server session implementation that can be used with SuperWebSocket sessions.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.EtpSession" />
-    public class EtpServer : EtpSession
+    public class EtpServer : EtpSession, IEtpServer
     {
         private WebSocketSession _session;
 
@@ -40,13 +40,14 @@ namespace Energistics.Etp.WebSocket4Net
         public override bool IsOpen => (_session?.Connected ?? false) && (!_session?.InClosing ?? false);
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EtpSessionHandler"/> class.
+        /// Initializes a new instance of the <see cref="EtpServer"/> class.
         /// </summary>
         /// <param name="session">The web socket session.</param>
         /// <param name="application">The serve application name.</param>
         /// <param name="version">The server application version.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
-        public EtpServer(WebSocketSession session, string application, string version, IDictionary<string, string> headers) : base(application, version, headers)
+        public EtpServer(WebSocketSession session, string application, string version, IDictionary<string, string> headers)
+            : base(EtpWebSocketValidation.GetEtpVersion(session.SubProtocol.Name), application, version, headers, false)
         {
             SessionId = session.SessionID;
             _session = session;
@@ -95,11 +96,13 @@ namespace Energistics.Etp.WebSocket4Net
         {
             if (disposing)
             {
+                Close("Shutting down");
                 _session?.Close();
             }
 
-            _session = null;
             base.Dispose(disposing);
+
+            _session = null;
         }
     }
 }

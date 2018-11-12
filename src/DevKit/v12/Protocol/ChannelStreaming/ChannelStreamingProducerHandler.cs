@@ -28,9 +28,9 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
     /// <summary>
     /// Base implementation of the <see cref="IChannelStreamingProducer"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelStreaming.IChannelStreamingProducer" />
-    public class ChannelStreamingProducerHandler : EtpProtocolHandler, IChannelStreamingProducer
+    public class ChannelStreamingProducerHandler : Etp12ProtocolHandler, IChannelStreamingProducer
     {
         /// <summary>
         /// The SimpleStreamer protocol capability key.

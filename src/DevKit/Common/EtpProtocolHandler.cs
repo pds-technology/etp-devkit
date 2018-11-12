@@ -35,21 +35,28 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpProtocolHandler"/> class.
         /// </summary>
+        /// <param name="version">The ETP version.</param>
         /// <param name="protocol">The protocol.</param>
         /// <param name="role">The role.</param>
         /// <param name="requestedRole">The requested role.</param>
-        protected EtpProtocolHandler(int protocol, string role, string requestedRole)
+        protected EtpProtocolHandler(EtpVersion version, int protocol, string role, string requestedRole)
         {
+            SupportedVersion = version;
             Protocol = protocol;
             Role = role;
             RequestedRole = requestedRole;
         }
 
         /// <summary>
+        /// The ETP version supported by this handler.
+        /// </summary>
+        public EtpVersion SupportedVersion { get; }
+
+        /// <summary>
         /// Gets or sets the ETP session.
         /// </summary>
         /// <value>The session.</value>
-        public virtual IEtpSession Session { get; set; }
+        public IEtpSession Session { get; set; }
 
         /// <summary>
         /// Gets the protocol.
@@ -233,8 +240,8 @@ namespace Energistics.Etp.Common
         {
             if (Session?.Output == null) return;
             Session.Log("[{0}] Message received at {1}", Session.SessionId, DateTime.Now.ToString(TimestampFormat));
-            Session.Log(this.Serialize(header));
-            Session.Log(this.Serialize(message, true));
+            Session.Log(EtpExtensions.Serialize(header));
+            Session.Log(EtpExtensions.Serialize(message, true));
         }
 
         /// <summary>

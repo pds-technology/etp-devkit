@@ -74,7 +74,7 @@ namespace Energistics.Etp
             Console.WriteLine(" X - exit");
             Console.WriteLine();
 
-            using (var server = new EtpSocketServer(WebSocketPort, ServerAppName, AppVersion))
+            using (var server = new EtpSelfHostedWebServer(WebSocketPort, ServerAppName, AppVersion))
             {
                 // Register protocol handlers
                 server.Register<IDiscoveryStore, MockResourceProvider>();
@@ -120,7 +120,7 @@ namespace Energistics.Etp
             Console.WriteLine(" D - Discovery - GetResources");
             Console.WriteLine();
 
-            using (var client = EtpClientFactory.CreateClient(webSocketUri, ClientAppName, AppVersion, EtpSettings.EtpSubProtocolName))
+            using (var client = EtpFactory.CreateClient(webSocketUri, ClientAppName, AppVersion, EtpSettings.EtpSubProtocolName))
             {
                 client.Register<IChannelStreamingConsumer, MockChannelStreamingConsumer>();
                 client.Register<IDiscoveryCustomer, DiscoveryCustomerHandler>();
@@ -170,7 +170,7 @@ namespace Energistics.Etp
 
         private static void OnGetResourcesResponse(object sender, ProtocolEventArgs<GetResourcesResponse> e)
         {
-            Console.WriteLine(((EtpBase)sender).Serialize(e.Message.Resource, true));
+            Console.WriteLine(EtpExtensions.Serialize(e.Message.Resource, true));
         }
 
         private static bool IsKey(ConsoleKeyInfo info, string key)

@@ -28,9 +28,9 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
     /// <summary>
     /// Base implementation of the <see cref="IChannelStreamingProducer"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp11ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v11.Protocol.ChannelStreaming.IChannelStreamingProducer" />
-    public class ChannelStreamingProducerHandler : EtpProtocolHandler, IChannelStreamingProducer
+    public class ChannelStreamingProducerHandler : Etp11ProtocolHandler, IChannelStreamingProducer
     {
         /// <summary>
         /// The SimpleStreamer protocol capability key.
@@ -286,7 +286,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         }
 
         /// <summary>
-        /// Handles the DhannelDescribe message from a consumer.
+        /// Handles the ChannelDescribe message from a consumer.
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{ChannelDescribe}"/> instance containing the event data.</param>
         protected virtual void HandleChannelDescribe(ProtocolEventArgs<ChannelDescribe, IList<ChannelMetadataRecord>> args)

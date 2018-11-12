@@ -28,9 +28,9 @@ namespace Energistics.Etp.v11.Protocol.Core
     /// <summary>
     /// Base implementation of the <see cref="ICoreClient"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp11ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v11.Protocol.Core.ICoreClient" />
-    public class CoreClientHandler : EtpProtocolHandler, ICoreClient
+    public class CoreClientHandler : Etp11ProtocolHandler, ICoreClient
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CoreClientHandler"/> class.

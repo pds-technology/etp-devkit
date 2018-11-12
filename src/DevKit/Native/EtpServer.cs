@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using Energistics.Etp.Common;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -27,10 +28,10 @@ namespace Energistics.Etp.Native
     /// An ETP server session implementation that can be used with .NET WebSockets.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.EtpSession" />
-    public class EtpServer : EtpSessionNativeBase
+    public class EtpServer : EtpSessionNativeBase, IEtpServer
     {
         /// <summary>
-        /// Initializes the <see cref="EtpServerHandler"/> class.
+        /// Initializes the <see cref="EtpServer"/> class.
         /// </summary>
         static EtpServer()
         {
@@ -38,15 +39,18 @@ namespace Energistics.Etp.Native
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EtpServerHandler"/> class.
+        /// Initializes a new instance of the <see cref="EtpServer"/> class.
         /// </summary>
         /// <param name="webSocket">The web socket.</param>
         /// <param name="application">The server application name.</param>
         /// <param name="version">The server application version.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
-        public EtpServer(WebSocket webSocket, string application, string version, IDictionary<string, string> headers) : base(webSocket, application, version, headers)
+        public EtpServer(WebSocket webSocket, string application, string version, IDictionary<string, string> headers)
+            : base(EtpWebSocketValidation.GetEtpVersion(webSocket.SubProtocol), webSocket, application, version, headers, false)
         {
-            RegisterCoreServer(Socket.SubProtocol);
+            var etpVersion = EtpWebSocketValidation.GetEtpVersion(Socket.SubProtocol);
+
+            SessionId = Guid.NewGuid().ToString();
         }
 
         /// <summary>
@@ -60,8 +64,6 @@ namespace Energistics.Etp.Native
         /// </summary>
         protected override void RegisterNewConnection()
         {
-            SessionId = Guid.NewGuid().ToString();
-
             Logger.Debug(Log("[{0}] Socket session connected.", SessionId));
 
             // keep track of connected clients

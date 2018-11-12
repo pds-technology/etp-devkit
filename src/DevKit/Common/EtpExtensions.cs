@@ -27,8 +27,6 @@ using Energistics.Etp.Common.Datatypes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Energistics.Etp.Common.Datatypes.Object;
-using CoreMessageTypes = Energistics.Etp.v11.MessageTypes.Core;
-using Energistics.Etp.Common.Protocol.Core;
 
 namespace Energistics.Etp.Common
 {
@@ -61,6 +59,22 @@ namespace Energistics.Etp.Common
                 // new v12.Datatypes.Object.GrowingObjectIndexConverter()
             }
         };
+
+        /// <summary>
+        /// Converts an HTTP / HTTPS URI to a WebSocket URI.
+        /// </summary>
+        /// <param name="uri">The URI to convert.</param>
+        /// <returns>A WebSocket URI.</returns>
+        public static Uri ToWebSocketUri(this Uri uri)
+        {
+            if (uri.Scheme == "ws" || uri.Scheme == "wss")
+                return uri;
+            if (uri.Scheme != "http" && uri.Scheme != "https")
+                throw new ArgumentException("Not an HTTP / HTTPS or WS / WSS URI", "uri");
+
+            var scheme = uri.Scheme == "https" ? "wss" : "ws";
+            return new Uri(scheme + uri.ToString().Substring(uri.Scheme.Length));
+        }
 
         /// <summary>
         /// Encodes the specified message header and body.
@@ -121,7 +135,7 @@ namespace Energistics.Etp.Common
         public static T Decode<T>(this Decoder decoder, string body) where T : ISpecificRecord
         {
             if (!string.IsNullOrWhiteSpace(body))
-                return Deserialize<T>(null, body);
+                return Deserialize<T>(body);
 
             var record = Activator.CreateInstance<T>();
             var reader = new SpecificReader<T>(new EtpSpecificReader(record.Schema, record.Schema));
@@ -134,29 +148,6 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Serializes the specified object instance.
         /// </summary>
-        /// <param name="etpBase">The ETP base object.</param>
-        /// <param name="instance">The object to serialize.</param>
-        /// <returns>The serialized JSON string.</returns>
-        public static string Serialize(this EtpBase etpBase, object instance)
-        {
-            return Serialize(instance);
-        }
-
-        /// <summary>
-        /// Serializes the specified object instance.
-        /// </summary>
-        /// <param name="etpBase">The ETP base object.</param>
-        /// <param name="instance">The object to serialize.</param>
-        /// <param name="indent">if set to <c>true</c> the JSON output should be indented; otherwise, <c>false</c>.</param>
-        /// <returns>The serialized JSON string.</returns>
-        public static string Serialize(this EtpBase etpBase, object instance, bool indent)
-        {
-            return Serialize(instance, indent);
-        }
-
-        /// <summary>
-        /// Serializes the specified object instance.
-        /// </summary>
         /// <param name="instance">The object to serialize.</param>
         /// <param name="indent">if set to <c>true</c> the JSON output should be indented; otherwise, <c>false</c>.</param>
         /// <returns>The serialized JSON string.</returns>
@@ -164,18 +155,6 @@ namespace Energistics.Etp.Common
         {
             var formatting = indent ? Formatting.Indented : Formatting.None;
             return JsonConvert.SerializeObject(instance, formatting, JsonSettings);
-        }
-
-        /// <summary>
-        /// Deserializes the specified JSON string.
-        /// </summary>
-        /// <typeparam name="T">The type of object.</typeparam>
-        /// <param name="etpBase">The ETP base object.</param>
-        /// <param name="json">The JSON string.</param>
-        /// <returns></returns>
-        public static T Deserialize<T>(this EtpBase etpBase, string json)
-        {
-            return Deserialize<T>(json);
         }
 
         /// <summary>
@@ -336,6 +315,33 @@ namespace Energistics.Etp.Common
 
             dataObject.ContentEncoding = encoding;
             dataObject.Data = data;
+        }
+
+        /// <summary>
+        /// Gets a list of protocols supported by the specified <see cref="IProtocolHandler"/>s.
+        /// </summary>
+        /// <param name="adapter">The ETP adapter.</param>
+        /// <param name="handlers">The <see cref="IProtocolHandler"/>s.</param>
+        /// <param name="isClient">Whether the client or server roles should be checked in the protocol handlers.</param>
+        /// <returns>The list of supported protocols.</returns>
+        public static IList<ISupportedProtocol> GetSupportedProtocols(this IEtpAdapter adapter, IEnumerable<IProtocolHandler> handlers, bool isClient)
+        {
+            var supportedProtocols = new List<ISupportedProtocol>();
+
+            // Skip Core protocol (0)
+            foreach (var handler in handlers.Where(x => x.Protocol > 0))
+            {
+                var role = isClient ? handler.RequestedRole : handler.Role;
+
+                if (supportedProtocols.Contains(handler.Protocol, role))
+                    continue;
+
+                var supportedProtocol = adapter.GetSupportedProtocol(handler, role);
+                if (supportedProtocol != null)
+                    supportedProtocols.Add(supportedProtocol);
+            }
+
+            return supportedProtocols;
         }
     }
 }

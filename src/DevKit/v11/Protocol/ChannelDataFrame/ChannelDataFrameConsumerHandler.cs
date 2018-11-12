@@ -25,9 +25,9 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
     /// <summary>
     /// Base implementation of the <see cref="IChannelDataFrameConsumer"/> interface.
     /// </summary>
-    /// <seealso cref="EtpProtocolHandler" />
+    /// <seealso cref="Etp11ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v11.Protocol.ChannelDataFrame.IChannelDataFrameConsumer" />
-    public class ChannelDataFrameConsumerHandler : EtpProtocolHandler, IChannelDataFrameConsumer
+    public class ChannelDataFrameConsumerHandler : Etp11ProtocolHandler, IChannelDataFrameConsumer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelDataFrameConsumerHandler"/> class.

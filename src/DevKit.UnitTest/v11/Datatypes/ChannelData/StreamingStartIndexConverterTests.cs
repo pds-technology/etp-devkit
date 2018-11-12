@@ -34,7 +34,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
             };
 
             const string expected = "{\"item\":{\"int\":2}}";
-            var json = EtpExtensions.Serialize(null, index);
+            var json = EtpExtensions.Serialize(index);
 
             Assert.AreEqual(expected, json);
         }
@@ -43,7 +43,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
         public void StreamingStartIndexConverter_ReadJson_deserializes_int_value()
         {
             const string json = "{\"item\":{\"int\":2}}";
-            var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
+            var index = EtpExtensions.Deserialize<StreamingStartIndex>(json);
 
             Assert.IsTrue(index.Item is int);
             Assert.AreEqual(2, (int) index.Item);
@@ -58,7 +58,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
             };
 
             var expected = "{\"item\":{\"long\":10}}";
-            var json = EtpExtensions.Serialize(null, index);
+            var json = EtpExtensions.Serialize(index);
 
             Assert.AreEqual(expected, json);
         }
@@ -67,7 +67,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
         public void StreamingStartIndexConverter_ReadJson_deserializes_long_value()
         {
             const string json = "{\"item\":{\"long\":10}}";
-            var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
+            var index = EtpExtensions.Deserialize<StreamingStartIndex>(json);
 
             Assert.IsTrue(index.Item is long);
             Assert.AreEqual(10L, (long) index.Item);
@@ -82,7 +82,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
             };
 
             const string expected = "{\"item\":null}";
-            var json = EtpExtensions.Serialize(null, index);
+            var json = EtpExtensions.Serialize(index);
 
             Assert.AreEqual(expected, json);
         }
@@ -91,7 +91,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
         public void StreamingStartIndexConverter_ReadJson_deserializes_null_value()
         {
             const string json = "{\"item\":null,\"value\":null}";
-            var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
+            var index = EtpExtensions.Deserialize<StreamingStartIndex>(json);
 
             Assert.IsNull(index.Item);
         }
@@ -100,7 +100,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
         public void StreamingStartIndexConverter_WriteJson_serializes_null_object()
         {
             const string expected = "null";
-            var json = EtpExtensions.Serialize(null, null);
+            var json = EtpExtensions.Serialize(null);
 
             Assert.AreEqual(expected, json);
         }
@@ -109,7 +109,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
         public void StreamingStartIndexConverter_ReadJson_deserializes_null_object()
         {
             const string json = "null";
-            var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
+            var index = EtpExtensions.Deserialize<StreamingStartIndex>(json);
 
             Assert.IsNull(index);
         }
@@ -118,7 +118,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
         public void StreamingStartIndexConverter_ReadJson_deserializes_default_value()
         {
             const string json = "{\"item\":1}";
-            var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
+            var index = EtpExtensions.Deserialize<StreamingStartIndex>(json);
 
             Assert.IsTrue(index.Item is long);
             Assert.AreEqual(1L, (long) index.Item);
@@ -128,7 +128,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
         public void StreamingStartIndexConverter_ReadJson_deserializes_string_value()
         {
             const string json = "{\"item\":\"5\"}";
-            var index = EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
+            var index = EtpExtensions.Deserialize<StreamingStartIndex>(json);
 
             Assert.IsTrue(index.Item is long);
             Assert.AreEqual(5L, (long) index.Item);
@@ -146,7 +146,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
 
             try
             {
-                EtpExtensions.Serialize(null, index);
+                EtpExtensions.Serialize(index);
             }
             catch (JsonSerializationException)
             {
@@ -164,7 +164,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
 
             try
             {
-                EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
+                EtpExtensions.Deserialize<StreamingStartIndex>(json);
             }
             catch (JsonSerializationException)
             {
@@ -182,7 +182,7 @@ namespace Energistics.Etp.v11.Datatypes.ChannelData
 
             try
             {
-                EtpExtensions.Deserialize<StreamingStartIndex>(null, json);
+                EtpExtensions.Deserialize<StreamingStartIndex>(json);
             }
             catch (JsonSerializationException)
             {

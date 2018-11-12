@@ -27,9 +27,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
     /// <summary>
     /// Base implementation of the <see cref="IGrowingObjectNotificationStore"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.GrowingObjectNotification.IGrowingObjectNotificationStore" />
-    public class GrowingObjectNotificationStoreHandler : EtpProtocolHandler, IGrowingObjectNotificationStore
+    public class GrowingObjectNotificationStoreHandler : Etp12ProtocolHandler, IGrowingObjectNotificationStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="GrowingObjectNotificationStoreHandler"/> class.

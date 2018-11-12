@@ -26,9 +26,9 @@ namespace Energistics.Etp.v11.Protocol.Store
     /// <summary>
     /// Base implementation of the <see cref="IStoreStore"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp11ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v11.Protocol.Store.IStoreStore" />
-    public class StoreStoreHandler : EtpProtocolHandler, IStoreStore
+    public class StoreStoreHandler : Etp11ProtocolHandler, IStoreStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreStoreHandler"/> class.

@@ -26,26 +26,26 @@ namespace Energistics.Etp.v11.Protocol.Discovery
     [TestClass]
     public class DiscoveryProtocolTests : IntegrationTestBase
     {
-        private IEtpClient _client;
-
         [TestInitialize]
         public void TestSetUp()
         {
-            _client = CreateClient();
+            SetUp(TestSettings.WebSocketType, EtpSettings.LegacySubProtocol);
+
+            // Register protocol handler
+            _server.Register<IDiscoveryStore, DiscoveryStore11MockHandler>();
+
+            _server.Start();
         }
 
         [TestCleanup]
         public void TestTearDown()
         {
-            _client.Dispose();
+            CleanUp();
         }
 
         [TestMethod]
         public async Task IDiscoveryCustomer_GetResource_Request_Default_Uri()
         {
-            // Register protocol handler
-            _client.Register<IDiscoveryCustomer, DiscoveryCustomerHandler>();
-
             var handler = _client.Handler<IDiscoveryCustomer>();
 
             // Wait for Open connection

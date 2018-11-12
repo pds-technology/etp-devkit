@@ -63,7 +63,8 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="version">The client application version.</param>
         /// <param name="etpSubProtocol">The ETP sub protocol.</param>
         /// <param name="headers">The WebSocket headers.</param>
-        public EtpClient(string uri, string application, string version, string etpSubProtocol, IDictionary<string, string> headers) : base(application, version, headers)
+        public EtpClient(string uri, string application, string version, string etpSubProtocol, IDictionary<string, string> headers)
+            : base(EtpWebSocketValidation.GetEtpVersion(etpSubProtocol), application, version, headers, true)
         {
             var headerItems = Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList();
 
@@ -72,8 +73,6 @@ namespace Energistics.Etp.WebSocket4Net
                 cookies: null,
                 customHeaderItems: headerItems,
                 userAgent: application);
-
-            RegisterCoreClient(etpSubProtocol);
         }
 
         /// <summary>
@@ -95,13 +94,15 @@ namespace Energistics.Etp.WebSocket4Net
         /// <summary>
         /// Asynchronously opens the WebSocket connection.
         /// </summary>
-        public Task<bool> OpenAsync()
+        public async Task<bool> OpenAsync()
         {
-            if (IsOpen) return Task.FromResult(true);
+            if (IsOpen) return true;
 
             Logger.Trace(Log("Opening web socket connection..."));
 
-            var tcs = new TaskCompletionSource<bool>();
+            bool result = false;
+            Exception ex = null;
+            var task = new Task<bool>(() => { if (ex != null) { throw ex; } return result; });
 
             EventHandler openHandler = null;
             EventHandler closedHandler = null;
@@ -118,29 +119,40 @@ namespace Energistics.Etp.WebSocket4Net
             openHandler = (s, e) =>
             {
                 if (!handled)
-                    tcs.TrySetResult(true);
+                {
+                    handled = true;
 
-                clearHandlers();
-                handled = true;
+                    clearHandlers();
 
-                SubscribeToSocketEvents();
-                OnWebSocketOpened();
+                    SubscribeToSocketEvents();
+                    OnWebSocketOpened();
+
+                    result = true;
+                    task.Start();
+                }
             };
             closedHandler = (s, e) =>
             {
                 if (!handled)
-                    tcs.TrySetCanceled();
+                {
+                    handled = true;
+                    clearHandlers();
 
-                clearHandlers();
-                handled = true;
+                    task.Start();
+                }
             };
             errorHandler = (s, e) =>
             {
                 if (!handled)
-                    tcs.TrySetException(e.Exception);
+                {
+                    handled = true;
 
-                clearHandlers();
-                handled = true;
+                    clearHandlers();
+                    handled = true;
+
+                    ex = e.Exception;
+                    task.Start();
+                }
             };
 
             _socket.Opened += openHandler;
@@ -148,7 +160,7 @@ namespace Energistics.Etp.WebSocket4Net
             _socket.Error += errorHandler;
             _socket.Open();
 
-            return tcs.Task;
+            return await task;
         }
 
         /// <summary>
@@ -177,13 +189,16 @@ namespace Energistics.Etp.WebSocket4Net
         /// Asynchronously closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        protected override Task CloseAsyncCore(string reason)
+        protected override async Task CloseAsyncCore(string reason)
         {
-            if (!IsOpen) return Task.FromResult(true);
+            if (!IsOpen) return;
 
             Logger.Trace(Log("Closing web socket connection: {0}", reason));
 
-            var tcs = new TaskCompletionSource<bool>();
+            bool result = false;
+            Exception ex = null;
+            var task = new Task<bool>(() => { if (ex != null) { throw ex; } return result; });
+
             EventHandler closedHandler = null;
             EventHandler<ErrorEventArgs> errorHandler = null;
             Action clearHandlers = () =>
@@ -197,20 +212,33 @@ namespace Energistics.Etp.WebSocket4Net
             closedHandler = (s, e) =>
             {
                 if (!handled)
-                    tcs.TrySetResult(true);
+                {
+                    handled = true;
 
-                clearHandlers();
-                handled = true;
+                    clearHandlers();
+                    handled = true;
 
-                OnWebSocketClosed(s, e);
+                    OnWebSocketClosed(s, e);
+
+                    result = true;
+                    task.Start();
+                }
             };
             errorHandler = (s, e) =>
             {
                 if (!handled)
-                    tcs.TrySetException(e.Exception);
+                {
+                    handled = true;
 
-                clearHandlers();
-                handled = true;
+                    clearHandlers();
+
+                    if (e.Exception.ExceptionMeansConnectionTerminated())
+                        result = true;
+                    else
+                        ex = e.Exception;
+
+                    task.Start();
+                }
             };
 
             _socket.Closed += closedHandler;
@@ -219,7 +247,7 @@ namespace Energistics.Etp.WebSocket4Net
 
             _socket.Close(reason);
 
-            return tcs.Task;
+            await task;
         }
 
         /// <summary>
@@ -313,11 +341,14 @@ namespace Energistics.Etp.WebSocket4Net
         {
             if (disposing)
             {
+                UnsubscribeFromSocketEvents();
+                Close("Shutting down");
                 _socket?.Dispose();
             }
 
-            _socket = null;
             base.Dispose(disposing);
+
+            _socket = null;
         }
 
         /// <summary>
@@ -329,7 +360,7 @@ namespace Energistics.Etp.WebSocket4Net
         {
             Logger.Trace(Log("[{0}] Socket opened.", SessionId));
 
-            Adapter.RequestSession(ApplicationName, ApplicationVersion, _supportedCompression);
+            Adapter.RequestSession(this, ApplicationName, ApplicationVersion, _supportedCompression);
         }
 
         /// <summary>
@@ -341,7 +372,6 @@ namespace Energistics.Etp.WebSocket4Net
         {
             Logger.Trace(Log("[{0}] Socket closed.", SessionId));
             SessionId = null;
-            UnsubscribeFromSocketEvents();
         }
 
         /// <summary>

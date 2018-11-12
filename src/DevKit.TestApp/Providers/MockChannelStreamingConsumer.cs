@@ -37,7 +37,7 @@ namespace Energistics.Etp.Providers
         /// <param name="channelMetadata">The ChannelMetadata message.</param>
         protected override void HandleChannelMetadata(IMessageHeader header, ChannelMetadata channelMetadata)
         {
-            Console.WriteLine(string.Join(Environment.NewLine, channelMetadata.Channels.Select(this.Serialize)));
+            Console.WriteLine(string.Join(Environment.NewLine, channelMetadata.Channels.Select(d => EtpExtensions.Serialize(d))));
         }
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace Energistics.Etp.Providers
         /// <param name="channelData">The ChannelData message.</param>
         protected override void HandleChannelData(IMessageHeader header, ChannelData channelData)
         {
-            Console.WriteLine(string.Join(Environment.NewLine, channelData.Data.Select(this.Serialize)));
+            Console.WriteLine(string.Join(Environment.NewLine, channelData.Data.Select(d => EtpExtensions.Serialize(d))));
         }
     }
 }

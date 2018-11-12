@@ -31,8 +31,8 @@ namespace Energistics.Etp.WebSocket4Net
     /// <summary>
     /// A wrapper for the SuperWebSocket library providing a base ETP server implementation.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpBase" />
-    public class EtpSocketServer : EtpBase
+    /// <seealso cref="Energistics.Etp.Common.EtpWebServerBase" />
+    public class EtpSelfHostedWebServer : EtpWebServerBase, IEtpSelfHostedWebServer
     {
         private static readonly object EtpSessionKey = typeof(IEtpSession);
         private readonly object _sync = new object();
@@ -44,7 +44,8 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="port">The port.</param>
         /// <param name="application">The server application name.</param>
         /// <param name="version">The server application version.</param>
-        public EtpSocketServer(int port, string application, string version)
+        public EtpSelfHostedWebServer(int port, string application, string version)
+            : base(application, version)
         {
             _server = new WebSocketServer(EtpSettings.EtpSubProtocols.Select(p => new BasicSubProtocol(p)));
 
@@ -60,21 +61,13 @@ namespace Energistics.Etp.WebSocket4Net
             _server.NewDataReceived += OnNewDataReceived;
             _server.SessionClosed += OnSessionClosed;
 
-            ApplicationName = application;
-            ApplicationVersion = version;
+            Uri = new Uri($"http://localhost:{port}");
         }
 
         /// <summary>
-        /// Gets the name of the application.
+        /// The root URL for the server.
         /// </summary>
-        /// <value>The name of the application.</value>
-        public string ApplicationName { get; private set; }
-
-        /// <summary>
-        /// Gets the application version.
-        /// </summary>
-        /// <value>The application version.</value>
-        public string ApplicationVersion { get; private set; }
+        public Uri Uri { get; private set; }
 
         /// <summary>
         /// Gets a value indicating whether the WebSocket server is running.
@@ -92,17 +85,7 @@ namespace Energistics.Etp.WebSocket4Net
         }
 
         /// <summary>
-        /// Occurs when an ETP session is connected.
-        /// </summary>
-        public event EventHandler<IEtpSession> SessionConnected;
-
-        /// <summary>
-        /// Occurs when an ETP session is closed.
-        /// </summary>
-        public event EventHandler<IEtpSession> SessionClosed;
-
-        /// <summary>
-        /// Starts the WebSocket server.
+        /// Starts the web server.
         /// </summary>
         public void Start()
         {
@@ -110,7 +93,7 @@ namespace Energistics.Etp.WebSocket4Net
         }
 
         /// <summary>
-        /// Asynchronously starts the WebSocket server.
+        /// Asynchronously starts the web server.
         /// </summary>
         public Task StartAsync()
         {
@@ -125,7 +108,7 @@ namespace Energistics.Etp.WebSocket4Net
         }
 
         /// <summary>
-        /// Stops the WebSocket server.
+        /// Stops the web server.
         /// </summary>
         public void Stop()
         {
@@ -133,7 +116,7 @@ namespace Energistics.Etp.WebSocket4Net
         }
 
         /// <summary>
-        /// Asynchronously stops the WebSocket server.
+        /// Asynchronously stops the web server.
         /// </summary>
         public Task StopAsync()
         {
@@ -180,14 +163,17 @@ namespace Energistics.Etp.WebSocket4Net
 
             lock (_sync)
             {
-                var etpServer = new EtpServer(session, ApplicationName, ApplicationVersion, null);
-                etpServer.SupportedObjects = SupportedObjects;
+                var headers = new Dictionary<string, string>();
+                foreach (var item in session.Items)
+                    headers[item.Key.ToString()] = item.Value.ToString();
 
-                etpServer.RegisterCoreServer(session.SubProtocol.Name);
-                RegisterAll(etpServer);
+                var server = new EtpServer(session, ApplicationName, ApplicationVersion, headers);
+                server.SupportedObjects = SupportedObjects;
 
-                session.Items[EtpSessionKey] = etpServer;
-                SessionConnected?.Invoke(this, etpServer);
+                RegisterAll(server);
+
+                session.Items[EtpSessionKey] = server;
+                InvokeSessionConnected(server);
             }
         }
 
@@ -207,7 +193,7 @@ namespace Energistics.Etp.WebSocket4Net
                 if (etpSession != null)
                 {
                     session.Items.Remove(EtpSessionKey);
-                    SessionClosed?.Invoke(this, etpSession);
+                    InvokeSessionClosed(etpSession);
                     etpSession.Dispose();
                 }
             }
@@ -251,8 +237,8 @@ namespace Energistics.Etp.WebSocket4Net
                     session.Items.Remove(EtpSessionKey);
 
                     if (etpSession == null) continue;
-    
-                    SessionClosed?.Invoke(this, etpSession);
+
+                    InvokeSessionClosed(etpSession);
                     etpSession.Close(reason);
                     etpSession.Dispose();
                 }

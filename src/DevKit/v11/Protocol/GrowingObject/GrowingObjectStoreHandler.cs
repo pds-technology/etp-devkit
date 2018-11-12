@@ -25,9 +25,9 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
     /// <summary>
     /// Base implementation of the <see cref="IGrowingObjectStore"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp11ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v11.Protocol.GrowingObject.IGrowingObjectStore" />
-    public class GrowingObjectStoreHandler : EtpProtocolHandler, IGrowingObjectStore
+    public class GrowingObjectStoreHandler : Etp11ProtocolHandler, IGrowingObjectStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="GrowingObjectStoreHandler"/> class.

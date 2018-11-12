@@ -27,9 +27,9 @@ namespace Energistics.Etp.v11.Protocol.DataArray
     /// <summary>
     /// Base implementation of the <see cref="IDataArrayStore"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Etp11ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v11.Protocol.DataArray.IDataArrayStore" />
-    public class DataArrayStoreHandler : EtpProtocolHandler, IDataArrayStore
+    public class DataArrayStoreHandler : Etp11ProtocolHandler, IDataArrayStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DataArrayStoreHandler"/> class.
