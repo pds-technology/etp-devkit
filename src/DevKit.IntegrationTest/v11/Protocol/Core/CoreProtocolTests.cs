@@ -46,8 +46,6 @@ namespace Energistics.Etp.v11.Protocol.Core
         [Description("EtpClient connects to web socket server")]
         public async Task EtpClient_Open_Connects_To_WebSocket_Server()
         {
-            var task = new Task<bool>(() => _client.IsOpen);
-
             var result = await _client.OpenAsync().WaitAsync();
 
             Assert.IsTrue(result, "EtpClient connection not opened");

@@ -32,7 +32,7 @@ namespace Energistics.Etp
 
         private readonly ILog Logger = log4net.LogManager.GetLogger(typeof(ClientServerStressTest));
 
-        private const int nativeIterations = 1000;
+        private readonly int nativeIterations = EtpFactory.IsNativeSupported ? 1000 : 10;
         private const int webSocket4NetIterations = 10;
 
         protected void SetUp(WebSocketType webSocketType)
