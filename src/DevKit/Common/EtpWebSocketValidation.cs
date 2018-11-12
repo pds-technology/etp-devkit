@@ -217,7 +217,6 @@ namespace Energistics.Etp.Common
         {
             switch (socketErrorCode)
             {
-                case 6: // ERROR_INVALID_HANDLE:
                 case (int)SocketError.ConnectionAborted:
                 case (int)SocketError.ConnectionReset:
                 case (int)SocketError.NotConnected:
