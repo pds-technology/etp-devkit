@@ -28,13 +28,13 @@ namespace Energistics.Etp.Common.Datatypes
         /// <summary>
         /// ETP version 1.1
         /// </summary>
-        [Description("etp11.energistics.org")]
+        [Description(EtpSettings.Etp11SubProtocol)]
         v11,
 
         /// <summary>
         /// ETP version 1.2
         /// </summary>
-        [Description("etp12.energistics.org")]
+        [Description(EtpSettings.Etp12SubProtocol)]
         v12,
     }
 }
