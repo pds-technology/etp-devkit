@@ -55,7 +55,6 @@ namespace Energistics.Etp.Common
 
                 // TODO: new Etp12.Datatypes.DataValueConverter(),
                 new v12.Datatypes.IndexValueConverter(),
-                new v12.Datatypes.ChannelData.StreamingStartIndexConverter(),
                 // new v12.Datatypes.Object.GrowingObjectIndexConverter()
             }
         };
@@ -225,6 +224,29 @@ namespace Energistics.Etp.Common
                         .Cast<IDataValue>()
                         .Any(dataValue => Convert.ToBoolean(dataValue.Item));
                 });
+        }
+
+        /// <summary>
+        /// Converts the <see cref="Guid"/> to a UUID instance.
+        /// </summary>
+        /// <param name="guid">The unique identifier.</param>
+        /// <returns>A new UUID instance.</returns>
+        public static v12.Datatypes.Uuid ToUuid(this Guid guid)
+        {
+            return new v12.Datatypes.Uuid
+            {
+                Value = guid.ToByteArray()
+            };
+        }
+
+        /// <summary>
+        /// Converts the UUID to a <see cref="Guid"/> instance.
+        /// </summary>
+        /// <param name="uuid">The UUID.</param>
+        /// <returns>A new <see cref="Guid"/> instance.</returns>
+        public static Guid ToGuid(this v12.Datatypes.Uuid uuid)
+        {
+            return new Guid(uuid.Value);
         }
 
         /// <summary>

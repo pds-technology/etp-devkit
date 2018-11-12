@@ -33,46 +33,17 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
     public class ChannelStreamingProducerHandler : Etp12ProtocolHandler, IChannelStreamingProducer
     {
         /// <summary>
-        /// The SimpleStreamer protocol capability key.
-        /// </summary>
-        public const string SimpleStreamer = "SimpleStreamer";
-        /// <summary>
-        /// The DefaultUri protocol capability key.
-        /// </summary>
-        public const string DefaultUri = "DefaultUri";
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="ChannelStreamingProducerHandler"/> class.
         /// </summary>
         public ChannelStreamingProducerHandler() : base((int)Protocols.ChannelStreaming, "producer", "consumer")
         {
+            MaxDataItems = EtpSettings.DefaultMaxDataItems;
         }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether this instance is a Simple Streamer.
-        /// </summary>
-        /// <value>
-        /// <c>true</c> if this instance is a Simple Streamer; otherwise, <c>false</c>.
-        /// </value>
-        public bool IsSimpleStreamer { get; set; }
-
-        /// <summary>
-        /// Gets or sets the default describe URI.
-        /// </summary>
-        /// <value>The default describe URI.</value>
-        public string DefaultDescribeUri { get; set; }
 
         /// <summary>
         /// Gets the maximum data items.
         /// </summary>
-        /// <value>The maximum data items.</value>
-        public int MaxDataItems { get; private set; }
-
-        /// <summary>
-        /// Gets the minimum message interval.
-        /// </summary>
-        /// <value>The minimum message interval.</value>
-        public int MinMessageInterval { get; private set; }
+        public int MaxDataItems { get; set; }
 
         /// <summary>
         /// Gets the capabilities supported by the protocol handler.
@@ -82,11 +53,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         {
             var capabilities = base.GetCapabilities();
 
-            if (IsSimpleStreamer)
-                capabilities[SimpleStreamer] = new DataValue { Item = true };
-
-            if (!string.IsNullOrWhiteSpace(DefaultDescribeUri))
-                capabilities[DefaultUri] = new DataValue { Item = DefaultDescribeUri };
+            capabilities[EtpSettings.MaxDataItemsKey] = new DataValue { Item = MaxDataItems };
 
             return capabilities;
         }
@@ -102,7 +69,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelMetadata, request.MessageId, messageFlag);
 
-            var channelMetadata = new ChannelMetadata()
+            var channelMetadata = new ChannelMetadata
             {
                 Channels = channelMetadataRecords
             };
@@ -119,15 +86,9 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// <returns>The message identifier.</returns>
         public virtual long ChannelData(IMessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart)
         {
-            var correlationId = 0L;
+            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelData, messageFlags: messageFlag);
 
-            // NOTE: CorrelationId is only specified when responding to a ChannelRangeRequest message
-            if (request != null && request.MessageType == (int)MessageTypes.ChannelStreaming.ChannelRangeRequest)
-                correlationId = request.MessageId;
-
-            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelData, correlationId, messageFlag);
-
-            var channelData = new ChannelData()
+            var channelData = new ChannelData
             {
                 Data = dataItems
             };
@@ -136,90 +97,14 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         }
 
         /// <summary>
-        /// Sends a ChannelDataChange message to a consumer.
+        /// Handles the StartStreaming event from a consumer.
         /// </summary>
-        /// <param name="channelId">The channel identifier.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="dataItems">The data items.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long ChannelDataChange(long channelId, long startIndex, long endIndex, IList<DataItem> dataItems)
-        {
-            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelDataChange);
-
-            var channelDataChange = new ChannelDataChange()
-            {
-                ChannelId = channelId,
-                StartIndex = startIndex,
-                EndIndex = endIndex,
-                Data = dataItems
-            };
-
-            return Session.SendMessage(header, channelDataChange);
-        }
+        public event ProtocolEventHandler<StartStreaming> OnStartStreaming;
 
         /// <summary>
-        /// Sends a ChannelStatusChange message to a consumer.
+        /// Handles the StopStreaming event from a consumer.
         /// </summary>
-        /// <param name="channelId">The channel identifier.</param>
-        /// <param name="status">The channel status.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long ChannelStatusChange(long channelId, ChannelStatuses status)
-        {
-            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelStatusChange);
-
-            var channelStatusChange = new ChannelStatusChange()
-            {
-                ChannelId = channelId,
-                Status = status
-            };
-
-            return Session.SendMessage(header, channelStatusChange);
-        }
-
-        /// <summary>
-        /// Sends a ChannelRemove message to a consumer.
-        /// </summary>
-        /// <param name="channelId">The channel identifier.</param>
-        /// <param name="reason">The reason.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long ChannelRemove(long channelId, string reason = null)
-        {
-            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelRemove);
-
-            var channelRemove = new ChannelRemove()
-            {
-                ChannelId = channelId,
-                RemoveReason = reason
-            };
-
-            return Session.SendMessage(header, channelRemove);
-        }
-
-        /// <summary>
-        /// Handles the Start event from a consumer.
-        /// </summary>
-        public event ProtocolEventHandler<Start> OnStart;
-
-        /// <summary>
-        /// Handles the ChannelDescribe event from a consumer.
-        /// </summary>
-        public event ProtocolEventHandler<ChannelDescribe, IList<ChannelMetadataRecord>> OnChannelDescribe;
-
-        /// <summary>
-        /// Handles the ChannelStreamingStart event from a consumer.
-        /// </summary>
-        public event ProtocolEventHandler<ChannelStreamingStart> OnChannelStreamingStart;
-
-        /// <summary>
-        /// Handles the ChannelStreamingStop event from a consumer.
-        /// </summary>
-        public event ProtocolEventHandler<ChannelStreamingStop> OnChannelStreamingStop;
-
-        /// <summary>
-        /// Handles the ChannelRangeRequest event from a consumer.
-        /// </summary>
-        public event ProtocolEventHandler<ChannelRangeRequest> OnChannelRangeRequest;
+        public event ProtocolEventHandler<StopStreaming> OnStopStreaming;
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
@@ -231,24 +116,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         {
             switch (header.MessageType)
             {
-                case (int)MessageTypes.ChannelStreaming.Start:
-                    HandleStart(header, decoder.Decode<Start>(body));
+                case (int)MessageTypes.ChannelStreaming.StartStreaming:
+                    HandleStartStreaming(header, decoder.Decode<StartStreaming>(body));
                     break;
 
-                case (int)MessageTypes.ChannelStreaming.ChannelDescribe:
-                    HandleChannelDescribe(header, decoder.Decode<ChannelDescribe>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelStreaming.ChannelStreamingStart:
-                    HandleChannelStreamingStart(header, decoder.Decode<ChannelStreamingStart>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelStreaming.ChannelStreamingStop:
-                    HandleChannelStreamingStop(header, decoder.Decode<ChannelStreamingStop>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelStreaming.ChannelRangeRequest:
-                    HandleChannelRangeRequest(header, decoder.Decode<ChannelRangeRequest>(body));
+                case (int)MessageTypes.ChannelStreaming.StopStreaming:
+                    HandleStopStreaming(header, decoder.Decode<StopStreaming>(body));
                     break;
 
                 default:
@@ -258,69 +131,23 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         }
 
         /// <summary>
-        /// Handles the Start message from a consumer.
+        /// Handles the StartStreaming message from a consumer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="start">The Start message.</param>
-        protected virtual void HandleStart(IMessageHeader header, Start start)
+        /// <param name="startStreaming">The StartStreaming message.</param>
+        protected virtual void HandleStartStreaming(IMessageHeader header, StartStreaming startStreaming)
         {
-            MaxDataItems = start.MaxDataItems;
-            MinMessageInterval = start.MinMessageInterval;
-            Notify(OnStart, header, start);
+            Notify(OnStartStreaming, header, startStreaming);
         }
 
         /// <summary>
-        /// Handles the ChannelDescribe message from a consumer.
+        /// Handles the StopStreaming message from a consumer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="channelDescribe">The ChannelDescribe message.</param>
-        protected virtual void HandleChannelDescribe(IMessageHeader header, ChannelDescribe channelDescribe)
+        /// <param name="stopStreaming">The StopStreaming message.</param>
+        protected virtual void HandleStopStreaming(IMessageHeader header, StopStreaming stopStreaming)
         {
-            var args = Notify(OnChannelDescribe, header, channelDescribe, new List<ChannelMetadataRecord>());
-            HandleChannelDescribe(args);
-
-            if (!args.Cancel)
-            {
-                ChannelMetadata(header, args.Context);
-            }
-        }
-
-        /// <summary>
-        /// Handles the DhannelDescribe message from a consumer.
-        /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{ChannelDescribe}"/> instance containing the event data.</param>
-        protected virtual void HandleChannelDescribe(ProtocolEventArgs<ChannelDescribe, IList<ChannelMetadataRecord>> args)
-        {
-        }
-
-        /// <summary>
-        /// Handles the ChannelStreamingStart message from a consumer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="channelStreamingStart">The ChannelStreamingStart message.</param>
-        protected virtual void HandleChannelStreamingStart(IMessageHeader header, ChannelStreamingStart channelStreamingStart)
-        {
-            Notify(OnChannelStreamingStart, header, channelStreamingStart);
-        }
-
-        /// <summary>
-        /// Handles the ChannelStreamingStop message from a consumer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="channelStreamingStop">The ChannelStreamingStop message.</param>
-        protected virtual void HandleChannelStreamingStop(IMessageHeader header, ChannelStreamingStop channelStreamingStop)
-        {
-            Notify(OnChannelStreamingStop, header, channelStreamingStop);
-        }
-
-        /// <summary>
-        /// Handles the ChannelRangeRequest message from a consumer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="channelRangeRequest">The ChannelRangeRequest message.</param>
-        protected virtual void HandleChannelRangeRequest(IMessageHeader header, ChannelRangeRequest channelRangeRequest)
-        {
-            Notify(OnChannelRangeRequest, header, channelRangeRequest);
+            Notify(OnStopStreaming, header, stopStreaming);
         }
     }
 }

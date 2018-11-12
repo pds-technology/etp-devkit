@@ -33,10 +33,9 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <summary>
         /// Sends a OpenChannel message to a store.
         /// </summary>
-        /// <param name="uri">The channel URI.</param>
-        /// <param name="id">The channel identifier.</param>
+        /// <param name="channels">The channels.</param>
         /// <returns>The message identifier.</returns>
-        long OpenChannel(string uri, long id);
+        long OpenChannel(IList<ChannelMetadataRecord> channels);
 
         /// <summary>
         /// Sends a CloseChannel message to a store.
@@ -49,26 +48,28 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <summary>
         /// Sends a RealtimeData message to a store.
         /// </summary>
-        /// <param name="dataPoints">The data points.</param>
+        /// <param name="dataItems">The data items.</param>
         /// <returns>The message identifier.</returns>
-        long RealtimeData(IList<DataPoint> dataPoints);
+        long RealtimeData(IList<DataItem> dataItems);
 
         /// <summary>
-        /// Sends a InfillRealtimeData message to a store.
+        /// Sends a InfillData message to a store.
         /// </summary>
-        /// <param name="dataPoints">The data points.</param>
+        /// <param name="dataItems">The data items.</param>
         /// <returns>The message identifier.</returns>
-        long InfillRealtimeData(IList<DataPoint> dataPoints);
+        long InfillData(IList<DataItem> dataItems);
 
         /// <summary>
-        /// Sends a ChannelDataChange message to a store.
+        /// Sends a ChangedData message to a store.
         /// </summary>
         /// <param name="id">The channel identifier.</param>
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
-        /// <param name="dataPoints">The data points.</param>
+        /// <param name="depthDatum">The depth datum.</param>
+        /// <param name="uom">The unit of measure.</param>
+        /// <param name="dataItems">The data items.</param>
         /// <returns>The message identifier.</returns>
-        long ChannelDataChange(long id, object startIndex, object endIndex, IList<DataPoint> dataPoints);
+        long ChangedData(long id, object startIndex, object endIndex, string depthDatum, string uom, IList<DataItem> dataItems);
 
         /// <summary>
         /// Handles the OpenChannelResponse event from a store.

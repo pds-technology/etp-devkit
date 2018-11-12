@@ -21,6 +21,7 @@ using System.Linq;
 using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.Discovery
@@ -33,15 +34,29 @@ namespace Energistics.Etp.v12.Protocol.Discovery
     public class DiscoveryStoreHandler : Etp12ProtocolHandler, IDiscoveryStore
     {
         /// <summary>
-        /// The MaxGetResourcesResponse protocol capability key.
-        /// </summary>
-        public const string MaxGetResourcesResponse = "MaxGetResourcesResponse";
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="DiscoveryStoreHandler"/> class.
         /// </summary>
         public DiscoveryStoreHandler() : base((int)Protocols.Discovery, "store", "customer")
         {
+            MaxResponseCount = EtpSettings.DefaultMaxResponseCount;
+        }
+
+        /// <summary>
+        /// Gets the maximum response count.
+        /// </summary>
+        public int MaxResponseCount { get; set; }
+
+        /// <summary>
+        /// Gets the capabilities supported by the protocol handler.
+        /// </summary>
+        /// <returns>A collection of protocol capabilities.</returns>
+        public override IDictionary<string, IDataValue> GetCapabilities()
+        {
+            var capabilities = base.GetCapabilities();
+
+            capabilities[EtpSettings.MaxResponseCountKey] = new DataValue { Item = MaxResponseCount };
+
+            return capabilities;
         }
 
         /// <summary>

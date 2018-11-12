@@ -16,10 +16,8 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.v12.Datatypes.ChannelData;
 
 namespace Energistics.Etp.v12.Protocol.ChannelStreaming
 {
@@ -31,40 +29,16 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
     public interface IChannelStreamingConsumer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a Start message to a producer with the specified throttling parameters.
+        /// Sends a StartStreaming message to a producer.
         /// </summary>
-        /// <param name="maxDataItems">The maximum data items.</param>
-        /// <param name="minMessageInterval">The minimum message interval.</param>
         /// <returns>The message identifier.</returns>
-        long Start(int maxDataItems = 10000, int minMessageInterval = 1000);
+        long StartStreaming();
 
         /// <summary>
-        /// Sends a ChannelDescribe message to a producer with the specified URIs.
+        /// Sends a StopStreaming message to a producer.
         /// </summary>
-        /// <param name="uris">The list of URIs.</param>
         /// <returns>The message identifier.</returns>
-        long ChannelDescribe(IList<string> uris);
-
-        /// <summary>
-        /// Sends a ChannelStreamingStart message to a producer.
-        /// </summary>
-        /// <param name="channelStreamingInfos">The list of <see cref="ChannelStreamingInfo"/> objects.</param>
-        /// <returns>The message identifier.</returns>
-        long ChannelStreamingStart(IList<ChannelStreamingInfo> channelStreamingInfos);
-
-        /// <summary>
-        /// Sends a ChannelStreamingStop message to a producer.
-        /// </summary>
-        /// <param name="channelIds">The list of channel identifiers.</param>
-        /// <returns>The message identifier.</returns>
-        long ChannelStreamingStop(IList<long> channelIds);
-
-        /// <summary>
-        /// Sends a ChannelRangeRequest message to a producer.
-        /// </summary>
-        /// <param name="channelRangeInfos">The list of <see cref="ChannelRangeInfo"/> objects.</param>
-        /// <returns>The message identifier.</returns>
-        long ChannelRangeRequest(IList<ChannelRangeInfo> channelRangeInfos);
+        long StopStreaming();
 
         /// <summary>
         /// Handles the ChannelMetadata event from a producer.
@@ -75,20 +49,5 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// Handles the ChannelData event from a producer.
         /// </summary>
         event ProtocolEventHandler<ChannelData> OnChannelData;
-
-        /// <summary>
-        /// Handles the ChannelDataChange event from a producer.
-        /// </summary>
-        event ProtocolEventHandler<ChannelDataChange> OnChannelDataChange;
-
-        /// <summary>
-        /// Handles the ChannelStatusChange event from a producer.
-        /// </summary>
-        event ProtocolEventHandler<ChannelStatusChange> OnChannelStatusChange;
-
-        /// <summary>
-        /// Handles the ChannelRemove event from a producer.
-        /// </summary>
-        event ProtocolEventHandler<ChannelRemove> OnChannelRemove;
     }
 }

@@ -16,11 +16,11 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
+using System.Collections.Generic;
 using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.v12.Datatypes;
+using Energistics.Etp.v12.Datatypes.ChannelData;
 
 namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
 {
@@ -42,25 +42,16 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// Sends a OpenChannelResponse message to a store.
         /// </summary>
         /// <param name="request">The request.</param>
-        /// <param name="uri">The channel URI.</param>
-        /// <param name="id">The channel identifier.</param>
-        /// <param name="uuid">The channel UUID.</param>
-        /// <param name="lastIndex">The last index.</param>
-        /// <param name="infill">if set to <c>true</c> provide infill data.</param>
-        /// <param name="dataChanges">if set to <c>true</c> provide channel data changes.</param>
+        /// <param name="channels">The channels.</param>
+        /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long OpenChannelResponse(IMessageHeader request, string uri, long id, Guid uuid, object lastIndex = null, bool infill = true, bool dataChanges = true)
+        public virtual long OpenChannelResponse(IMessageHeader request, IList<OpenChannelInfo> channels, MessageFlags messageFlag = MessageFlags.FinalPart)
         {
-            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelResponse, request.MessageId);
+            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelResponse, request.MessageId, messageFlag);
 
             var message = new OpenChannelResponse
             {
-                Uri = uri,
-                Id = id,
-                Uuid = new Uuid { Value = uuid.ToByteArray() },
-                LastIndex = new IndexValue { Item = lastIndex },
-                Infill = infill,
-                DataChanges = dataChanges
+                Channels = channels
             };
 
             return Session.SendMessage(header, message);
@@ -82,14 +73,14 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         public event ProtocolEventHandler<RealtimeData> OnRealtimeData;
 
         /// <summary>
-        /// Handles the InfillRealtimeData event from a store.
+        /// Handles the InfillData event from a store.
         /// </summary>
-        public event ProtocolEventHandler<InfillRealtimeData> OnInfillRealtimeData;
+        public event ProtocolEventHandler<InfillData> OnInfillData;
 
         /// <summary>
-        /// Handles the ChannelDataChange event from a store.
+        /// Handles the ChangedData event from a store.
         /// </summary>
-        public event ProtocolEventHandler<ChannelDataChange> OnChannelDataChange;
+        public event ProtocolEventHandler<ChangedData> OnChangedData;
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
@@ -113,12 +104,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
                     HandleRealtimeData(header, decoder.Decode<RealtimeData>(body));
                     break;
 
-                case (int)MessageTypes.ChannelDataLoad.InfillRealtimeData:
-                    HandleInfillRealtimeData(header, decoder.Decode<InfillRealtimeData>(body));
+                case (int)MessageTypes.ChannelDataLoad.InfillData:
+                    HandleInfillData(header, decoder.Decode<InfillData>(body));
                     break;
 
-                case (int)MessageTypes.ChannelDataLoad.ChannelDataChange:
-                    HandleChannelDataChange(header, decoder.Decode<ChannelDataChange>(body));
+                case (int)MessageTypes.ChannelDataLoad.ChangedData:
+                    HandleChangedData(header, decoder.Decode<ChangedData>(body));
                     break;
 
                 default:
@@ -158,23 +149,23 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Handles the InfillRealtimeData message from a customer.
+        /// Handles the InfillData message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The InfillRealtimeData message.</param>
-        protected virtual void HandleInfillRealtimeData(IMessageHeader header, InfillRealtimeData message)
+        /// <param name="message">The InfillData message.</param>
+        protected virtual void HandleInfillData(IMessageHeader header, InfillData message)
         {
-            Notify(OnInfillRealtimeData, header, message);
+            Notify(OnInfillData, header, message);
         }
 
         /// <summary>
-        /// Handles the ChannelDataChange message from a customer.
+        /// Handles the ChangedData message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The ChannelDataChange message.</param>
-        protected virtual void HandleChannelDataChange(IMessageHeader header, ChannelDataChange message)
+        /// <param name="message">The ChangedData message.</param>
+        protected virtual void HandleChangedData(IMessageHeader header, ChangedData message)
         {
-            Notify(OnChannelDataChange, header, message);
+            Notify(OnChangedData, header, message);
         }
     }
 }

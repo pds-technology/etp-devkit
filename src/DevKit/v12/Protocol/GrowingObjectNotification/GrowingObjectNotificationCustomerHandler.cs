@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -59,13 +60,13 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
         /// <returns>The message identifier.</returns>
-        public long CancelPartNotification(string requestUuid)
+        public long CancelPartNotification(Guid requestUuid)
         {
             var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.CancelPartNotification);
 
             var cancelNotification = new CancelPartNotification
             {
-                RequestUuid = requestUuid
+                RequestUuid = requestUuid.ToUuid()
             };
 
             return Session.SendMessage(header, cancelNotification);

@@ -79,6 +79,24 @@ namespace Energistics.Etp.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("50000")]
+        public int DefaultMaxDataItems {
+            get {
+                return ((int)(this["DefaultMaxDataItems"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10000")]
+        public int DefaultMaxResponseCount {
+            get {
+                return ((int)(this["DefaultMaxResponseCount"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Native")]
         public Energistics.Etp.Common.Datatypes.WebSocketType DefaultWebSocketType {
             get {

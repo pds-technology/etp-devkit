@@ -22,6 +22,7 @@ using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.ChannelData;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
 {
@@ -42,17 +43,15 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <summary>
         /// Sends a OpenChannel message to a store.
         /// </summary>
-        /// <param name="uri">The channel URI.</param>
-        /// <param name="id">The channel identifier.</param>
+        /// <param name="channels">The channels.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long OpenChannel(string uri, long id)
+        public virtual long OpenChannel(IList<ChannelMetadataRecord> channels)
         {
             var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannel);
 
             var message = new OpenChannel
             {
-                Uri = uri,
-                Id = id
+                Channels = channels
             };
 
             return Session.SendMessage(header, message);
@@ -80,55 +79,61 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <summary>
         /// Sends a RealtimeData message to a store.
         /// </summary>
-        /// <param name="dataPoints">The data points.</param>
+        /// <param name="dataItems">The data items.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long RealtimeData(IList<DataPoint> dataPoints)
+        public virtual long RealtimeData(IList<DataItem> dataItems)
         {
             var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.RealtimeData);
 
             var message = new RealtimeData
             {
-                Data = dataPoints
+                Data = dataItems
             };
 
             return Session.SendMessage(header, message);
         }
 
         /// <summary>
-        /// Sends a InfillRealtimeData message to a store.
+        /// Sends a InfillData message to a store.
         /// </summary>
-        /// <param name="dataPoints">The data points.</param>
+        /// <param name="dataItems">The data items.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long InfillRealtimeData(IList<DataPoint> dataPoints)
+        public virtual long InfillData(IList<DataItem> dataItems)
         {
-            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.InfillRealtimeData);
+            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.InfillData);
 
-            var message = new InfillRealtimeData
+            var message = new InfillData
             {
-                Data = dataPoints
+                Data = dataItems
             };
 
             return Session.SendMessage(header, message);
         }
 
         /// <summary>
-        /// Sends a ChannelDataChange message to a store.
+        /// Sends a ChangedData message to a store.
         /// </summary>
         /// <param name="id">The channel identifier.</param>
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
-        /// <param name="dataPoints">The data points.</param>
+        /// <param name="depthDatum">The depth datum.</param>
+        /// <param name="uom">The unit of measure.</param>
+        /// <param name="dataItems">The data items.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long ChannelDataChange(long id, object startIndex, object endIndex, IList<DataPoint> dataPoints)
+        public virtual long ChangedData(long id, object startIndex, object endIndex, string depthDatum, string uom, IList<DataItem> dataItems)
         {
-            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ChannelDataChange);
+            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ChangedData);
 
-            var message = new ChannelDataChange
+            var message = new ChangedData
             {
-                Id = id,
-                StartIndex = new IndexValue { Item = startIndex },
-                EndIndex = new IndexValue { Item = endIndex },
-                Data = dataPoints
+                ChangedInterval = new IndexInterval
+                {
+                    StartIndex = new IndexValue { Item = startIndex },
+                    EndIndex = new IndexValue { Item = endIndex },
+                    DepthDatum = depthDatum,
+                    Uom = uom
+                },
+                Data = dataItems
             };
 
             return Session.SendMessage(header, message);

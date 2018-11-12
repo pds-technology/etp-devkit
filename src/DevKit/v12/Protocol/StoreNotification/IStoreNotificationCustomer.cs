@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -41,7 +42,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
         /// <returns>The message identifier.</returns>
-        long CancelNotification(string requestUuid);
+        long CancelNotification(Guid requestUuid);
 
         /// <summary>
         /// Handles the ChangeNotification event from a store.
