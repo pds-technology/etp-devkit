@@ -67,7 +67,7 @@ namespace Energistics.Etp.Common
             string encoding;
 
             // Validate etp-encoding header is either binary, json or not specified
-            if (!requestHeaders.TryGetValue(EtpSettings.EtpEncodingHeader, out encoding)) return false;
+            if (!requestHeaders.TryGetValue(EtpSettings.EtpEncodingHeader, out encoding)) return true;
 
             if (string.IsNullOrWhiteSpace(encoding)) return false;
             if (encoding.Equals("binary", StringComparison.InvariantCultureIgnoreCase)) return true;
