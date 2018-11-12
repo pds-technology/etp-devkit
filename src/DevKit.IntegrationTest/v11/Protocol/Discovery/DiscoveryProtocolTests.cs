@@ -29,7 +29,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
         [TestInitialize]
         public void TestSetUp()
         {
-            SetUp(TestSettings.WebSocketType, EtpSettings.LegacySubProtocol);
+            SetUp(TestSettings.WebSocketType, EtpSettings.Etp11SubProtocol);
 
             // Register protocol handler
             _server.Register<IDiscoveryStore, DiscoveryStore11MockHandler>();

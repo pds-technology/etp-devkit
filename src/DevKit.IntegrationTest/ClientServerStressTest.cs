@@ -37,18 +37,18 @@ namespace Energistics.Etp
 
         protected void SetUp(WebSocketType webSocketType)
         {
-            SetUp(webSocketType, EtpSettings.LegacySubProtocol);
+            SetUp(webSocketType, EtpSettings.Etp11SubProtocol);
         }
 
         protected void SetupStart(WebSocketType webSocketType)
         {
-            SetUp(webSocketType, EtpSettings.LegacySubProtocol);
+            SetUp(webSocketType, EtpSettings.Etp11SubProtocol);
             _server.Start();
         }
 
         protected void SetupStartOpen(WebSocketType webSocketType)
         {
-            SetUp(webSocketType, EtpSettings.LegacySubProtocol);
+            SetUp(webSocketType, EtpSettings.Etp11SubProtocol);
             _server.Start();
             _client.Open();
         }

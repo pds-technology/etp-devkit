@@ -32,7 +32,7 @@ namespace Energistics.Etp.v11.Protocol.Core
         [TestInitialize]
         public void TestSetUp()
         {
-            SetUp(TestSettings.WebSocketType, EtpSettings.LegacySubProtocol);
+            SetUp(TestSettings.WebSocketType, EtpSettings.Etp11SubProtocol);
             _server.Start();
         }
 

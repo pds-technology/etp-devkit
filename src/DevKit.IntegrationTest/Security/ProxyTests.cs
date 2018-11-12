@@ -29,7 +29,7 @@ namespace Energistics.Etp.Security
         [Description("Native EtpClient connects to web socket server")]
         public async Task ProxyTests_EtpClient_Connects_To_WebSocket_Server_Through_Proxy_Native()
         {
-            SetUpWithProxy(Common.Datatypes.WebSocketType.Native, EtpSettings.LegacySubProtocol);
+            SetUpWithProxy(Common.Datatypes.WebSocketType.Native, EtpSettings.Etp11SubProtocol);
             _server.Start();
 
             var proxyServer = _server as EtpSelfHostedProxyWebServer;
@@ -50,7 +50,7 @@ namespace Energistics.Etp.Security
         [Description("Native EtpClient connects to web socket server")]
         public async Task ProxyTests_EtpClient_Connects_To_WebSocket_Server_Through_Proxy_WebSocket4Net()
         {
-            SetUpWithProxy(Common.Datatypes.WebSocketType.WebSocket4Net, EtpSettings.LegacySubProtocol);
+            SetUpWithProxy(Common.Datatypes.WebSocketType.WebSocket4Net, EtpSettings.Etp11SubProtocol);
             _server.Start();
 
             var proxyServer = _server as EtpSelfHostedProxyWebServer;

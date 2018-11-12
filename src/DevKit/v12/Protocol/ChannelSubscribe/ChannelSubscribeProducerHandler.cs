@@ -1,4 +1,4 @@
-﻿//----------------------------------------------------------------------- 
+//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
 // Copyright 2018 Energistics
@@ -29,9 +29,9 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
     /// <summary>
     /// Base implementation of the <see cref="IChannelSubscribeProducer"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.EtpProtocolHandler" />
+    /// <seealso cref="Energistics.Etp.Common.Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelSubscribe.IChannelSubscribeProducer" />
-    public class ChannelSubscribeProducerHandler : EtpProtocolHandler, IChannelSubscribeProducer
+    public class ChannelSubscribeProducerHandler : Etp12ProtocolHandler, IChannelSubscribeProducer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelSubscribeProducerHandler"/> class.
