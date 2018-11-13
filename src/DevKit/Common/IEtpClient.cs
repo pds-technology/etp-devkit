@@ -23,7 +23,7 @@ namespace Energistics.Etp.Common
     /// <summary>
     /// Defines the properties and methods needed to manage an ETP client.
     /// </summary>
-    /// <seealso cref="System.IEtpSession" />
+    /// <seealso cref="IEtpSession" />
     public interface IEtpClient : IEtpSession
     {
         /// <summary>

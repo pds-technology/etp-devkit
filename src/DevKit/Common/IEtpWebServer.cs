@@ -111,7 +111,6 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Registers an ETP version-specific protocol handler factory for the specified contract type.
         /// </summary>
-        /// <param name="version">The ETP version.</param>
         /// <typeparam name="TContract">The type of the contract.</typeparam>
         /// <param name="factory">The factory.</param>
         void Register<TContract>(Func<TContract> factory) where TContract : IProtocolHandler;

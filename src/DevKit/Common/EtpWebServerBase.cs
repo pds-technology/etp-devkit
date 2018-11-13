@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Energistics.Etp.Common.Datatypes;
 
 namespace Energistics.Etp.Common
@@ -43,7 +42,7 @@ namespace Energistics.Etp.Common
             ApplicationName = application;
             ApplicationVersion = version;
 
-            SupportedEncodings = new List<string>() { "binary", "JSON" };
+            SupportedEncodings = new List<string> { "binary", "JSON" };
             SupportedCompression = "gzip";
 
             DummyHandlers = new Dictionary<Type, IProtocolHandler>();

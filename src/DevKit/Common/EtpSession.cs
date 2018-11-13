@@ -72,7 +72,7 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Gets the ETP version supported by this session.
         /// </summary>
-        public EtpVersion SupportedVersion {  get { return Adapter.SupportedVersion; } }
+        public EtpVersion SupportedVersion => Adapter.SupportedVersion;
 
         /// <summary>
         /// Gets the version specific ETP adapter.
@@ -393,7 +393,7 @@ namespace Energistics.Etp.Common
         /// <returns>A new <see cref="IEtpAdapter"/> instance.</returns>
         private static IEtpAdapter ResolveEtpAdapter(EtpVersion version)
         {
-            return version == EtpVersion.v12 ? (IEtpAdapter)new v12.Etp12Adapter() : (IEtpAdapter)new v11.Etp11Adapter();
+            return version == EtpVersion.v12 ? (IEtpAdapter) new v12.Etp12Adapter() : new v11.Etp11Adapter();
         }
 
         /// <summary>
@@ -488,10 +488,9 @@ namespace Energistics.Etp.Common
         /// <param name="body">The body.</param>
         protected void HandleMessage(IMessageHeader header, Decoder decoder, string body)
         {
-            IProtocolHandler handler = null;
-
             try
             {
+                IProtocolHandler handler;
                 _handlersLock.TryEnterReadLock(-1);
 
                 HandlersByProtocol.TryGetValue(header.Protocol, out handler);
@@ -505,8 +504,9 @@ namespace Energistics.Etp.Common
                         Logger.Trace($"Ignoring message on closed session: {EtpExtensions.Serialize(header)}");
                         return;
                     }
+
                     var message = $"Protocol handler not registered for protocol { header.Protocol }.";
-                    handler?.ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, message, header.MessageId);
+                    handler.ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, message, header.MessageId);
 
                     return;
                 }

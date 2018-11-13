@@ -39,7 +39,7 @@ namespace Energistics.Etp.WebSocket4Net
         private WebSocketServer _server;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EtpSocketServer"/> class.
+        /// Initializes a new instance of the <see cref="EtpSelfHostedWebServer"/> class.
         /// </summary>
         /// <param name="port">The port.</param>
         /// <param name="application">The server application name.</param>

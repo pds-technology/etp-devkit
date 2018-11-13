@@ -48,8 +48,7 @@ namespace Energistics.Etp.Native
         public EtpServer(WebSocket webSocket, string application, string version, IDictionary<string, string> headers)
             : base(EtpWebSocketValidation.GetEtpVersion(webSocket.SubProtocol), webSocket, application, version, headers, false)
         {
-            var etpVersion = EtpWebSocketValidation.GetEtpVersion(Socket.SubProtocol);
-
+            //var etpVersion = EtpWebSocketValidation.GetEtpVersion(Socket.SubProtocol);
             SessionId = Guid.NewGuid().ToString();
         }
 

@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Avro.IO;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;

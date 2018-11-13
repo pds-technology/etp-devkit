@@ -167,7 +167,7 @@ namespace Energistics.Etp.Common
         {
             if (RegisteredFactories.ContainsKey(contractType))
             {
-                return RegisteredFactories[contractType]() as IProtocolHandler;
+                return RegisteredFactories[contractType]();
             }
 
             var handlerType = RegisteredHandlers[contractType];

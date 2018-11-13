@@ -16,14 +16,12 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Threading.Tasks;
-
 namespace Energistics.Etp.Common
 {
     /// <summary>
     /// Defines the properties and methods needed to manage an ETP server.
     /// </summary>
-    /// <seealso cref="System.IEtpSession" />
+    /// <seealso cref="IEtpSession" />
     public interface IEtpServer : IEtpSession
     {
         /// <summary>

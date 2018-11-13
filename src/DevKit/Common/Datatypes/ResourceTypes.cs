@@ -24,9 +24,9 @@ namespace Energistics.Etp.Common.Datatypes
     public enum ResourceTypes
     {
         /// <summary>
-        /// The URI protocol resource type.
+        /// The data object resource type.
         /// </summary>
-        UriProtocol,
+        DataObject,
 
         /// <summary>
         /// The folder resource type.
@@ -34,8 +34,13 @@ namespace Energistics.Etp.Common.Datatypes
         Folder,
 
         /// <summary>
-        /// The data object resource type.
+        /// The URI protocol resource type.
         /// </summary>
-        DataObject
+        UriProtocol,
+
+        /// <summary>
+        /// The data space resource type.
+        /// </summary>
+        DataSpace
     }
 }
