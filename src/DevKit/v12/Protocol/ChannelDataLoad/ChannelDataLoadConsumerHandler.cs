@@ -45,7 +45,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <param name="channels">The channels.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long OpenChannelResponse(IMessageHeader request, IList<OpenChannelInfo> channels, MessageFlags messageFlag = MessageFlags.FinalPart)
+        public virtual long OpenChannelResponse(IMessageHeader request, IList<OpenChannelInfo> channels, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
         {
             var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelResponse, request.MessageId, messageFlag);
 

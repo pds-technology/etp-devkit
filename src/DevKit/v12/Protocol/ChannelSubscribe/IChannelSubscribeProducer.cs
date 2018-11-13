@@ -37,7 +37,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long GetChannelMetadataResponse(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.FinalPart);
+        long GetChannelMetadataResponse(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Sends a RealtimeData message to a consumer.
@@ -73,7 +73,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <param name="channelIds">The channel identifiers.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long SubscriptionStopped(IList<long> channelIds, MessageFlags messageFlag = MessageFlags.FinalPart);
+        long SubscriptionStopped(IList<long> channelIds, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Sends a GetRangeResponse message to a consumer.

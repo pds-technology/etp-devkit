@@ -37,7 +37,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <param name="channels">The channels.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long OpenChannelResponse(IMessageHeader request, IList<OpenChannelInfo> channels, MessageFlags messageFlag = MessageFlags.FinalPart);
+        long OpenChannelResponse(IMessageHeader request, IList<OpenChannelInfo> channels, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Handles the OpenChannel event from a store.
