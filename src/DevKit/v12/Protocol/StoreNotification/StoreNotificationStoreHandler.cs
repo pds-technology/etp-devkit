@@ -38,16 +38,16 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         }
 
         /// <summary>
-        /// Sends a ChangeNotification message to a customer.
+        /// Sends an ObjectChanged message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="change">The object change.</param>
         /// <returns>The message identifier.</returns>
-        public long ChangeNotification(IMessageHeader request, ObjectChange change)
+        public long ObjectChanged(IMessageHeader request, ObjectChange change)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ChangeNotification, request.MessageId);
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectChanged, request.MessageId);
 
-            var notification = new ChangeNotification()
+            var notification = new ObjectChanged
             {
                 Change = change
             };
@@ -56,17 +56,17 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         }
 
         /// <summary>
-        /// Sends a NotificationRequestDeleteNotification message to a customer.
+        /// Sends a ObjectDeleted message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        public long DeleteNotification(IMessageHeader request, string uri, long changeTime)
+        public long ObjectDeleted(IMessageHeader request, string uri, long changeTime)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.DeleteNotification, request.MessageId);
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectDeleted, request.MessageId);
 
-            var notification = new DeleteNotification()
+            var notification = new ObjectDeleted
             {
                 Uri = uri,
                 ChangeTime = changeTime
@@ -76,14 +76,39 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         }
 
         /// <summary>
-        /// Handles the NotificationRequest event from a customer.
+        /// Sends a ObjectAccessRevoked message to a customer.
         /// </summary>
-        public event ProtocolEventHandler<NotificationRequest> OnNotificationRequest;
+        /// <param name="request">The request.</param>
+        /// <param name="uri">The URI.</param>
+        /// <param name="changeTime">The change time.</param>
+        /// <returns>The message identifier.</returns>
+        public long ObjectAccessRevoked(IMessageHeader request, string uri, long changeTime)
+        {
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectAccessRevoked, request.MessageId);
+
+            var notification = new ObjectAccessRevoked
+            {
+                Uri = uri,
+                ChangeTime = changeTime
+            };
+
+            return Session.SendMessage(header, notification);
+        }
 
         /// <summary>
-        /// Handles the CancelNotification event from a customer.
+        /// Handles the SubscribeNotification event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<CancelNotification> OnCancelNotification;
+        public event ProtocolEventHandler<SubscribeNotification> OnSubscribeNotification;
+
+        /// <summary>
+        /// Handles the SubscribeNotification event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<SubscribeNotification2> OnSubscribeNotification2;
+
+        /// <summary>
+        /// Handles the UnsubscribeNotification event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<UnsubscribeNotification> OnUnsubscribeNotification;
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
@@ -95,12 +120,16 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         {
             switch (header.MessageType)
             {
-                case (int)MessageTypes.StoreNotification.NotificationRequest:
-                    HandleNotificationRequest(header, decoder.Decode<NotificationRequest>(body));
+                case (int)MessageTypes.StoreNotification.SubscribeNotification:
+                    HandleSubscribeNotification(header, decoder.Decode<SubscribeNotification>(body));
                     break;
 
-                case (int)MessageTypes.StoreNotification.CancelNotification:
-                    HandleCancelNotification(header, decoder.Decode<CancelNotification>(body));
+                case (int)MessageTypes.StoreNotification.SubscribeNotification2:
+                    HandleSubscribeNotification2(header, decoder.Decode<SubscribeNotification2>(body));
+                    break;
+
+                case (int)MessageTypes.StoreNotification.UnsubscribeNotification:
+                    HandleUnsubscribeNotification(header, decoder.Decode<UnsubscribeNotification>(body));
                     break;
 
                 default:
@@ -110,23 +139,33 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         }
 
         /// <summary>
-        /// Handles the NotificationRequest message from a customer.
+        /// Handles the SubscribeNotification message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="request">The NotificationRequest message.</param>
-        protected virtual void HandleNotificationRequest(IMessageHeader header, NotificationRequest request)
+        /// <param name="request">The SubscribeNotification message.</param>
+        protected virtual void HandleSubscribeNotification(IMessageHeader header, SubscribeNotification request)
         {
-            Notify(OnNotificationRequest, header, request);
+            Notify(OnSubscribeNotification, header, request);
         }
 
         /// <summary>
-        /// Handles the CancelNotification message from a customer.
+        /// Handles the SubscribeNotification message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="request">The CancelNotification message.</param>
-        protected virtual void HandleCancelNotification(IMessageHeader header, CancelNotification request)
+        /// <param name="request">The SubscribeNotification message.</param>
+        protected virtual void HandleSubscribeNotification2(IMessageHeader header, SubscribeNotification2 request)
         {
-            Notify(OnCancelNotification, header, request);
+            Notify(OnSubscribeNotification2, header, request);
+        }
+
+        /// <summary>
+        /// Handles the UnsubscribeNotification message from a customer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="request">The UnsubscribeNotification message.</param>
+        protected virtual void HandleUnsubscribeNotification(IMessageHeader header, UnsubscribeNotification request)
+        {
+            Notify(OnUnsubscribeNotification, header, request);
         }
     }
 }

@@ -31,27 +31,39 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
     public interface IStoreNotificationCustomer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a NotificationRequest message to a store.
+        /// Sends a SubscribeNotification message to a store.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="subscriptionInfo">The subscription information.</param>
         /// <returns>The message identifier.</returns>
-        long NotificationRequest(NotificationRequestRecord request);
+        long SubscribeNotification(SubscriptionInfo subscriptionInfo);
 
         /// <summary>
-        /// Sends a CancelNotification message to a store.
+        /// Sends a SubscribeNotification message to a store.
+        /// </summary>
+        /// <param name="subscriptionInfo">The subscription information.</param>
+        /// <returns>The message identifier.</returns>
+        long SubscribeNotification2(SubscriptionInfo2 subscriptionInfo);
+
+        /// <summary>
+        /// Sends a UnsubscribeNotification message to a store.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
         /// <returns>The message identifier.</returns>
-        long CancelNotification(Guid requestUuid);
+        long UnsubscribeNotification(Guid requestUuid);
 
         /// <summary>
-        /// Handles the ChangeNotification event from a store.
+        /// Handles the ObjectChanged event from a store.
         /// </summary>
-        event ProtocolEventHandler<ChangeNotification> OnChangeNotification;
+        event ProtocolEventHandler<ObjectChanged> OnObjectChanged;
 
         /// <summary>
-        /// Handles the DeleteNotification event from a store.
+        /// Handles the ObjectDeleted event from a store.
         /// </summary>
-        event ProtocolEventHandler<DeleteNotification> OnDeleteNotification;
+        event ProtocolEventHandler<ObjectDeleted> OnObjectDeleted;
+
+        /// <summary>
+        /// Handles the ObjectAccessRevoked event from a store.
+        /// </summary>
+        event ProtocolEventHandler<ObjectAccessRevoked> OnObjectAccessRevoked;
     }
 }

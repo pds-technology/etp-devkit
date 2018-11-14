@@ -30,30 +30,44 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
     public interface IStoreNotificationStore : IProtocolHandler
     {
         /// <summary>
-        /// Sends a ChangeNotification message to a customer.
+        /// Sends an ObjectChanged message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="change">The object change.</param>
         /// <returns>The message identifier.</returns>
-        long ChangeNotification(IMessageHeader request, ObjectChange change);
+        long ObjectChanged(IMessageHeader request, ObjectChange change);
 
         /// <summary>
-        /// Sends a NotificationRequestDeleteNotification message to a customer.
+        /// Sends an ObjectDeleted message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        long DeleteNotification(IMessageHeader request, string uri, long changeTime);
+        long ObjectDeleted(IMessageHeader request, string uri, long changeTime);
 
         /// <summary>
-        /// Handles the NotificationRequest event from a customer.
+        /// Sends an ObjectAccessRevoked message to a customer.
         /// </summary>
-        event ProtocolEventHandler<NotificationRequest> OnNotificationRequest;
+        /// <param name="request">The request.</param>
+        /// <param name="uri">The URI.</param>
+        /// <param name="changeTime">The change time.</param>
+        /// <returns>The message identifier.</returns>
+        long ObjectAccessRevoked(IMessageHeader request, string uri, long changeTime);
 
         /// <summary>
-        /// Handles the CancelNotification event from a customer.
+        /// Handles the SubscribeNotification event from a customer.
         /// </summary>
-        event ProtocolEventHandler<CancelNotification> OnCancelNotification;
+        event ProtocolEventHandler<SubscribeNotification> OnSubscribeNotification;
+
+        /// <summary>
+        /// Handles the SubscribeNotification event from a customer.
+        /// </summary>
+        event ProtocolEventHandler<SubscribeNotification2> OnSubscribeNotification2;
+
+        /// <summary>
+        /// Handles the UnsubscribeNotification event from a customer.
+        /// </summary>
+        event ProtocolEventHandler<UnsubscribeNotification> OnUnsubscribeNotification;
     }
 }

@@ -39,32 +39,49 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
-        /// Sends a RequestPartNotification message to a store.
+        /// Sends a SubscribePartNotification message to a store.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="subscriptionInfo">The subscription information.</param>
         /// <returns>The message identifier.</returns>
-        public long RequestPartNotification(NotificationRequestRecord request)
+        public long SubscribePartNotification(SubscriptionInfo subscriptionInfo)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.RequestPartNotification);
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotification);
 
-            var notificationRequest = new RequestPartNotification
+            var notificationRequest = new SubscribePartNotification
             {
-                Request = request
+                Request = subscriptionInfo
             };
 
             return Session.SendMessage(header, notificationRequest);
         }
 
         /// <summary>
-        /// Sends a CancelPartNotification message to a store.
+        /// Sends a SubscribePartNotification message to a store.
+        /// </summary>
+        /// <param name="subscriptionInfo">The subscription information.</param>
+        /// <returns>The message identifier.</returns>
+        public long SubscribePartNotification2(SubscriptionInfo2 subscriptionInfo)
+        {
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotification2);
+
+            var notificationRequest = new SubscribePartNotification2
+            {
+                Request = subscriptionInfo
+            };
+
+            return Session.SendMessage(header, notificationRequest);
+        }
+
+        /// <summary>
+        /// Sends an UnsubscribePartNotification message to a store.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
         /// <returns>The message identifier.</returns>
-        public long CancelPartNotification(Guid requestUuid)
+        public long UnsubscribePartNotification(Guid requestUuid)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.CancelPartNotification);
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsubscribePartNotification);
 
-            var cancelNotification = new CancelPartNotification
+            var cancelNotification = new UnsubscribePartNotification
             {
                 RequestUuid = requestUuid.ToUuid()
             };
@@ -73,24 +90,24 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
-        /// Handles the PartChangeNotification event from a store.
+        /// Handles the PartChanged event from a store.
         /// </summary>
-        public event ProtocolEventHandler<PartChangeNotification> OnPartChangeNotification;
+        public event ProtocolEventHandler<PartChanged> OnPartChanged;
 
         /// <summary>
-        /// Handles the PartDeleteNotification event from a store.
+        /// Handles the PartDeleted event from a store.
         /// </summary>
-        public event ProtocolEventHandler<PartDeleteNotification> OnPartDeleteNotification;
+        public event ProtocolEventHandler<PartDeleted> OnPartDeleted;
 
         /// <summary>
-        /// Handles the DeletePartsByRangeNotification event from a store.
+        /// Handles the PartsDeletedByRange event from a store.
         /// </summary>
-        public event ProtocolEventHandler<DeletePartsByRangeNotification> OnDeletePartsByRangeNotification;
+        public event ProtocolEventHandler<PartsDeletedByRange> OnPartsDeletedByRange;
 
         /// <summary>
-        /// Handles the ReplacePartsByRangeNotification event from a store.
+        /// Handles the PartsReplacedByRange event from a store.
         /// </summary>
-        public event ProtocolEventHandler<ReplacePartsByRangeNotification> OnReplacePartsByRangeNotification;
+        public event ProtocolEventHandler<PartsReplacedByRange> OnPartsReplacedByRange;
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
@@ -102,20 +119,20 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         {
             switch (header.MessageType)
             {
-                case (int)MessageTypes.GrowingObjectNotification.PartChangeNotification:
-                    HandlePartChangeNotification(header, decoder.Decode<PartChangeNotification>(body));
+                case (int)MessageTypes.GrowingObjectNotification.PartChanged:
+                    HandlePartChanged(header, decoder.Decode<PartChanged>(body));
                     break;
 
-                case (int)MessageTypes.GrowingObjectNotification.PartDeleteNotification:
-                    HandlePartDeleteNotification(header, decoder.Decode<PartDeleteNotification>(body));
+                case (int)MessageTypes.GrowingObjectNotification.PartDeleted:
+                    HandlePartDeleted(header, decoder.Decode<PartDeleted>(body));
                     break;
 
-                case (int)MessageTypes.GrowingObjectNotification.DeletePartsByRangeNotification:
-                    HandleDeletePartsByRangeNotification(header, decoder.Decode<DeletePartsByRangeNotification>(body));
+                case (int)MessageTypes.GrowingObjectNotification.PartsDeletedByRange:
+                    HandlePartsDeletedByRange(header, decoder.Decode<PartsDeletedByRange>(body));
                     break;
 
-                case (int)MessageTypes.GrowingObjectNotification.ReplacePartsByRangeNotification:
-                    HandleReplacePartsByRangeNotification(header, decoder.Decode<ReplacePartsByRangeNotification>(body));
+                case (int)MessageTypes.GrowingObjectNotification.PartsReplacedByRange:
+                    HandlePartsReplacedByRange(header, decoder.Decode<PartsReplacedByRange>(body));
                     break;
 
                 default:
@@ -125,43 +142,43 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
-        /// Handles the PartChangeNotification message from a store.
+        /// Handles the PartChanged message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="notification">The PartChangeNotification message.</param>
-        protected virtual void HandlePartChangeNotification(IMessageHeader header, PartChangeNotification notification)
+        /// <param name="notification">The PartChanged message.</param>
+        protected virtual void HandlePartChanged(IMessageHeader header, PartChanged notification)
         {
-            Notify(OnPartChangeNotification, header, notification);
+            Notify(OnPartChanged, header, notification);
         }
 
         /// <summary>
-        /// Handles the PartDeleteNotification message from a store.
+        /// Handles the PartDeleted message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="notification">The PartDeleteNotification message.</param>
-        protected virtual void HandlePartDeleteNotification(IMessageHeader header, PartDeleteNotification notification)
+        /// <param name="notification">The PartDeleted message.</param>
+        protected virtual void HandlePartDeleted(IMessageHeader header, PartDeleted notification)
         {
-            Notify(OnPartDeleteNotification, header, notification);
+            Notify(OnPartDeleted, header, notification);
         }
 
         /// <summary>
-        /// Handles the DeletePartsByRangeNotification message from a store.
+        /// Handles the PartsDeletedByRange message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="notification">The DeletePartsByRangeNotification message.</param>
-        protected virtual void HandleDeletePartsByRangeNotification(IMessageHeader header, DeletePartsByRangeNotification notification)
+        /// <param name="notification">The PartsDeletedByRange message.</param>
+        protected virtual void HandlePartsDeletedByRange(IMessageHeader header, PartsDeletedByRange notification)
         {
-            Notify(OnDeletePartsByRangeNotification, header, notification);
+            Notify(OnPartsDeletedByRange, header, notification);
         }
 
         /// <summary>
-        /// Handles the ReplacePartsByRangeNotification message from a store.
+        /// Handles the PartsReplacedByRange message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="notification">The ReplacePartsByRangeNotification message.</param>
-        protected virtual void HandleReplacePartsByRangeNotification(IMessageHeader header, ReplacePartsByRangeNotification notification)
+        /// <param name="notification">The PartsReplacedByRange message.</param>
+        protected virtual void HandlePartsReplacedByRange(IMessageHeader header, PartsReplacedByRange notification)
         {
-            Notify(OnReplacePartsByRangeNotification, header, notification);
+            Notify(OnPartsReplacedByRange, header, notification);
         }
     }
 }

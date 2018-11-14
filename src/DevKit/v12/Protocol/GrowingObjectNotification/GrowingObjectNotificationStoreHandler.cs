@@ -39,7 +39,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
-        /// Sends a PartChangeNotification message to a customer.
+        /// Sends a PartChanged message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="uri">The URI.</param>
@@ -49,11 +49,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="changeKind">The change kind.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        public long PartChangeNotification(IMessageHeader request, string uri, string uid, string contentType, byte[] data, ObjectChangeKind changeKind, long changeTime)
+        public long PartChanged(IMessageHeader request, string uri, string uid, string contentType, byte[] data, ObjectChangeKind changeKind, long changeTime)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartChangeNotification, request.MessageId);
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartChanged, request.MessageId);
 
-            var message = new PartChangeNotification
+            var message = new PartChanged
             {
                 Uri = uri,
                 Uid = uid,
@@ -67,18 +67,18 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
-        /// Sends a PartDeleteNotification message to a customer.
+        /// Sends a PartDeleted message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="uid">The UID.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        public long PartDeleteNotification(IMessageHeader request, string uri, string uid, long changeTime)
+        public long PartDeleted(IMessageHeader request, string uri, string uid, long changeTime)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartDeleteNotification, request.MessageId);
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartDeleted, request.MessageId);
 
-            var message = new PartDeleteNotification
+            var message = new PartDeleted
             {
                 Uri = uri,
                 Uid = uid,
@@ -89,7 +89,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
-        /// Sends a DeletePartsByRangeNotification message to a customer.
+        /// Sends a PartsDeletedByRange message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="uri">The URI.</param>
@@ -100,11 +100,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        public long DeletePartsByRangeNotification(IMessageHeader request, string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime)
+        public long PartsDeletedByRange(IMessageHeader request, string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartDeleteNotification, request.MessageId);
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsDeletedByRange, request.MessageId);
 
-            var message = new DeletePartsByRangeNotification
+            var message = new PartsDeletedByRange
             {
                 Uri = uri,
                 DeletedInterval = new IndexInterval
@@ -122,7 +122,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
-        /// Sends a ReplacePartsByRangeNotification message to a customer.
+        /// Sends a PartsReplacedByRange message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="uri">The URI.</param>
@@ -136,11 +136,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        public long ReplacePartsByRangeNotification(IMessageHeader request, string uri, string uid, string contentType, byte[] data, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime)
+        public long PartsReplacedByRange(IMessageHeader request, string uri, string uid, string contentType, byte[] data, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartDeleteNotification, request.MessageId);
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsReplacedByRange, request.MessageId);
 
-            var message = new ReplacePartsByRangeNotification
+            var message = new PartsReplacedByRange
             {
                 Uri = uri,
                 Uid = uid,
@@ -161,14 +161,19 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
-        /// Handles the RequestPartNotification event from a customer.
+        /// Handles the SubscribePartNotification event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<RequestPartNotification> OnRequestPartNotification;
+        public event ProtocolEventHandler<SubscribePartNotification> OnSubscribePartNotification;
 
         /// <summary>
-        /// Handles the CancelPartNotification event from a customer.
+        /// Handles the SubscribePartNotification event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<CancelPartNotification> OnCancelPartNotification;
+        public event ProtocolEventHandler<SubscribePartNotification2> OnSubscribePartNotification2;
+
+        /// <summary>
+        /// Handles the UnsubscribePartNotification event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<UnsubscribePartNotification> OnUnsubscribePartNotification;
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
@@ -180,12 +185,16 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         {
             switch (header.MessageType)
             {
-                case (int)MessageTypes.GrowingObjectNotification.RequestPartNotification:
-                    HandleRequestPartNotification(header, decoder.Decode<RequestPartNotification>(body));
+                case (int)MessageTypes.GrowingObjectNotification.SubscribePartNotification:
+                    HandleSubscribePartNotification(header, decoder.Decode<SubscribePartNotification>(body));
                     break;
 
-                case (int)MessageTypes.GrowingObjectNotification.CancelPartNotification:
-                    HandleCancelPartNotification(header, decoder.Decode<CancelPartNotification>(body));
+                case (int)MessageTypes.GrowingObjectNotification.SubscribePartNotification2:
+                    HandleSubscribePartNotification2(header, decoder.Decode<SubscribePartNotification2>(body));
+                    break;
+
+                case (int)MessageTypes.GrowingObjectNotification.UnsubscribePartNotification:
+                    HandleUnsubscribePartNotification(header, decoder.Decode<UnsubscribePartNotification>(body));
                     break;
 
                 default:
@@ -195,23 +204,33 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
-        /// Handles the RequestPartNotification message from a customer.
+        /// Handles the SubscribePartNotification message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="request">The RequestPartNotification message.</param>
-        protected virtual void HandleRequestPartNotification(IMessageHeader header, RequestPartNotification request)
+        /// <param name="request">The SubscribePartNotification message.</param>
+        protected virtual void HandleSubscribePartNotification(IMessageHeader header, SubscribePartNotification request)
         {
-            Notify(OnRequestPartNotification, header, request);
+            Notify(OnSubscribePartNotification, header, request);
         }
 
         /// <summary>
-        /// Handles the CancelPartNotification message from a customer.
+        /// Handles the SubscribePartNotification message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="request">The CancelPartNotification message.</param>
-        protected virtual void HandleCancelPartNotification(IMessageHeader header, CancelPartNotification request)
+        /// <param name="request">The SubscribePartNotification message.</param>
+        protected virtual void HandleSubscribePartNotification2(IMessageHeader header, SubscribePartNotification2 request)
         {
-            Notify(OnCancelPartNotification, header, request);
+            Notify(OnSubscribePartNotification2, header, request);
+        }
+
+        /// <summary>
+        /// Handles the UnsubscribePartNotification message from a customer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="request">The UnsubscribePartNotification message.</param>
+        protected virtual void HandleUnsubscribePartNotification(IMessageHeader header, UnsubscribePartNotification request)
+        {
+            Notify(OnUnsubscribePartNotification, header, request);
         }
     }
 }

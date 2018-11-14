@@ -173,7 +173,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
                     HandleSubscriptionStopped(header, decoder.Decode<SubscriptionStopped>(body));
                     break;
 
-                case (int)MessageTypes.ChannelSubscribe.GetRangeReponse:
+                case (int)MessageTypes.ChannelSubscribe.GetRangeResponse:
                     HandleGetRangeResponse(header, decoder.Decode<GetRangeResponse>(body));
                     break;
 

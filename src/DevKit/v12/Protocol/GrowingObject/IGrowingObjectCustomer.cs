@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 
@@ -28,6 +29,13 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
     [ProtocolRole((int)Protocols.GrowingObject, "customer", "store")]
     public interface IGrowingObjectCustomer : IProtocolHandler
     {
+        /// <summary>
+        /// Gets the metadata for growing object parts.
+        /// </summary>
+        /// <param name="uris">The collection of growing object URIs.</param>
+        /// <returns>The message identifier.</returns>
+        long GetPartsMetadata(IList<string> uris);
+
         /// <summary>
         /// Gets a single list item in a growing object, by its ID.
         /// </summary>
@@ -94,20 +102,13 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         long ReplacePartsByRange(string uri, string uid, string contentType, byte[] data, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals);
 
         /// <summary>
-        /// Gets the metadata for all list items in a growing object.
-        /// </summary>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <returns>The message identifier.</returns>
-        long DescribeParts(string uri);
-
-        /// <summary>
         /// Handles the ObjectPart event from a store.
         /// </summary>
         event ProtocolEventHandler<ObjectPart> OnObjectPart;
 
         /// <summary>
-        /// Handles the PartsMetadata event from a store.
+        /// Handles the GetPartsMetadataResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<PartsMetadata> OnPartsMetadata;
+        event ProtocolEventHandler<GetPartsMetadataResponse> OnGetPartsMetadataResponse;
     }
 }

@@ -16,8 +16,11 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.GrowingObject
 {
@@ -41,12 +44,13 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         long ObjectPart(string uri, string uid, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
-        /// Sends the metadata describing the list items in a growing object.
+        /// Sends the metadata describing the list items in the requested growing objects.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="metadata">The parts metadata.</param>
+        /// <param name="errors">The errors.</param>
         /// <returns>The message identifier.</returns>
-        long PartsMetadata(IMessageHeader request, PartsMetadata metadata);
+        long GetPartsMetadataResponse(IMessageHeader request, IList<PartsMetadataInfo> metadata, IList<ErrorInfo> errors);
 
         /// <summary>
         /// Handles the GetPart event from a customer.
@@ -79,8 +83,8 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         event ProtocolEventHandler<ReplacePartsByRange> OnReplacePartsByRange;
 
         /// <summary>
-        /// Handles the DescribeParts event from a customer.
+        /// Handles the GetPartsMetadata event from a customer.
         /// </summary>
-        event ProtocolEventHandler<DescribeParts, PartsMetadata> OnDescribeParts;
+        event ProtocolEventHandler<GetPartsMetadata> OnGetPartsMetadata;
     }
 }

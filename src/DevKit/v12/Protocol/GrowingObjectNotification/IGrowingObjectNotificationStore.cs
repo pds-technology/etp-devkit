@@ -30,7 +30,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
     public interface IGrowingObjectNotificationStore : IProtocolHandler
     {
         /// <summary>
-        /// Sends a PartChangeNotification message to a customer.
+        /// Sends a PartChanged message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="uri">The URI.</param>
@@ -40,20 +40,20 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="changeKind">The change kind.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        long PartChangeNotification(IMessageHeader request, string uri, string uid, string contentType, byte[] data, ObjectChangeKind changeKind, long changeTime);
+        long PartChanged(IMessageHeader request, string uri, string uid, string contentType, byte[] data, ObjectChangeKind changeKind, long changeTime);
 
         /// <summary>
-        /// Sends a PartDeleteNotification message to a customer.
+        /// Sends a PartDeleted message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="uid">The UID.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        long PartDeleteNotification(IMessageHeader request, string uri, string uid, long changeTime);
+        long PartDeleted(IMessageHeader request, string uri, string uid, long changeTime);
 
         /// <summary>
-        /// Sends a DeletePartsByRangeNotification message to a customer.
+        /// Sends a PartsDeletedByRange message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="uri">The URI.</param>
@@ -64,10 +64,10 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        long DeletePartsByRangeNotification(IMessageHeader request, string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime);
+        long PartsDeletedByRange(IMessageHeader request, string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime);
 
         /// <summary>
-        /// Sends a ReplacePartsByRangeNotification message to a customer.
+        /// Sends a PartsReplacedByRange message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="uri">The URI.</param>
@@ -81,16 +81,21 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        long ReplacePartsByRangeNotification(IMessageHeader request, string uri, string uid, string contentType, byte[] data, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime);
+        long PartsReplacedByRange(IMessageHeader request, string uri, string uid, string contentType, byte[] data, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime);
 
         /// <summary>
-        /// Handles the RequestPartNotification event from a customer.
+        /// Handles the SubscribePartNotification event from a customer.
         /// </summary>
-        event ProtocolEventHandler<RequestPartNotification> OnRequestPartNotification;
+        event ProtocolEventHandler<SubscribePartNotification> OnSubscribePartNotification;
 
         /// <summary>
-        /// Handles the CancelPartNotification event from a customer.
+        /// Handles the SubscribePartNotification event from a customer.
         /// </summary>
-        event ProtocolEventHandler<CancelPartNotification> OnCancelPartNotification;
+        event ProtocolEventHandler<SubscribePartNotification2> OnSubscribePartNotification2;
+
+        /// <summary>
+        /// Handles the UnsubscribePartNotification event from a customer.
+        /// </summary>
+        event ProtocolEventHandler<UnsubscribePartNotification> OnUnsubscribePartNotification;
     }
 }

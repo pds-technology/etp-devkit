@@ -21,6 +21,7 @@ using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.GrowingObject
 {
@@ -64,19 +65,32 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
-        /// Sends the metadata describing the list items in a growing object.
+        /// Sends the metadata describing the list items in the requested growing objects.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="metadata">The parts metadata.</param>
+        /// <param name="errors">The errors.</param>
         /// <returns>The message identifier.</returns>
-        public long PartsMetadata(IMessageHeader request, PartsMetadata metadata)
+        public long GetPartsMetadataResponse(IMessageHeader request, IList<PartsMetadataInfo> metadata, IList<ErrorInfo> errors)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.PartsMetadata, request.MessageId);
+            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadataResponse, request.MessageId);
 
-            if (metadata.CustomData == null)
-                metadata.CustomData = new Dictionary<string, DataValue>();
+            if (metadata != null)
+            {
+                foreach (var info in metadata)
+                {
+                    if (info.CustomData == null)
+                        info.CustomData = new Dictionary<string, DataValue>();
+                }
+            }
 
-            return Session.SendMessage(header, metadata);
+            var message = new GetPartsMetadataResponse
+            {
+                Metadata = metadata ?? new List<PartsMetadataInfo>(),
+                Errors = errors ?? new List<ErrorInfo>()
+            };
+
+            return Session.SendMessage(header, message);
         }
 
         /// <summary>
@@ -110,9 +124,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         public event ProtocolEventHandler<ReplacePartsByRange> OnReplacePartsByRange;
 
         /// <summary>
-        /// Handles the DescribeParts event from a customer.
+        /// Handles the GetPartsMetadata event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<DescribeParts, PartsMetadata> OnDescribeParts;
+        public event ProtocolEventHandler<GetPartsMetadata> OnGetPartsMetadata;
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
@@ -148,8 +162,8 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
                     HandleReplacePartsByRange(header, decoder.Decode<ReplacePartsByRange>(body));
                     break;
 
-                case (int)MessageTypes.GrowingObject.DescribeParts:
-                    HandleDescribeParts(header, decoder.Decode<DescribeParts>(body));
+                case (int)MessageTypes.GrowingObject.GetPartsMetadata:
+                    HandleGetPartsMetadata(header, decoder.Decode<GetPartsMetadata>(body));
                     break;
 
                 default:
@@ -219,26 +233,31 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
-        /// Handles the DescribeParts message from a store.
+        /// Handles the GetPartsMetadata message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The DeletePartsByRange message.</param>
-        protected virtual void HandleDescribeParts(IMessageHeader header, DescribeParts message)
+        /// <param name="message">The GetPartsMetadata message.</param>
+        protected virtual void HandleGetPartsMetadata(IMessageHeader header, GetPartsMetadata message)
         {
-            var args = Notify(OnDescribeParts, header, message, new PartsMetadata());
-            HandleDescribeParts(args);
+            var args = Notify(OnGetPartsMetadata, header, message);
+            var metadata = new List<PartsMetadataInfo>();
+            var errors = new List<ErrorInfo>();
+
+            HandleGetPartsMetadata(args, metadata, errors);
 
             if (!args.Cancel)
             {
-                PartsMetadata(header, args.Context);
+                GetPartsMetadataResponse(header, metadata, errors);
             }
         }
 
         /// <summary>
-        /// Handles the DescribeParts message from a store.
+        /// Handles the GetPartsMetadata message from a store.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{DescribeParts, PartsMetadata}"/> instance containing the event data.</param>
-        protected virtual void HandleDescribeParts(ProtocolEventArgs<DescribeParts, PartsMetadata> args)
+        /// <param name="args">The <see cref="ProtocolEventArgs{GetPartsMetadata}" /> instance containing the event data.</param>
+        /// <param name="metadata">The metadata.</param>
+        /// <param name="errors">The errors.</param>
+        protected virtual void HandleGetPartsMetadata(ProtocolEventArgs<GetPartsMetadata> args, IList<PartsMetadataInfo> metadata, IList<ErrorInfo> errors)
         {
         }
     }

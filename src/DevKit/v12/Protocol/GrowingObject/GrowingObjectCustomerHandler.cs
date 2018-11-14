@@ -16,6 +16,8 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -36,12 +38,36 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// </summary>
         public GrowingObjectCustomerHandler() : base((int)Protocols.GrowingObject, "customer", "store")
         {
+            Metadata = new ConcurrentBag<PartsMetadataInfo>();
+            Errors = new ConcurrentBag<ErrorInfo>();
         }
 
         /// <summary>
-        /// Gets or sets the parts metadata.
+        /// Gets the collection of parts metadata infos.
         /// </summary>
-        protected PartsMetadata Metadata { get; set; }
+        protected ConcurrentBag<PartsMetadataInfo> Metadata { get; }
+
+        /// <summary>
+        /// Gets the collection of errors.
+        /// </summary>
+        protected ConcurrentBag<ErrorInfo> Errors { get; }
+
+        /// <summary>
+        /// Gets the metadata for growing object parts.
+        /// </summary>
+        /// <param name="uris">The collection of growing object URIs.</param>
+        /// <returns>The message identifier.</returns>
+        public long GetPartsMetadata(IList<string> uris)
+        {
+            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadata);
+
+            var message = new GetPartsMetadata
+            {
+                Uris = uris
+            };
+
+            return Session.SendMessage(header, message);
+        }
 
         /// <summary>
         /// Gets a single list item in a growing object, by its ID.
@@ -201,31 +227,14 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
-        /// Gets the metadata for all list items in a growing object.
-        /// </summary>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <returns>The message identifier.</returns>
-        public long DescribeParts(string uri)
-        {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.DescribeParts);
-
-            var message = new DescribeParts
-            {
-                Uri = uri
-            };
-
-            return Session.SendMessage(header, message);
-        }
-
-        /// <summary>
         /// Handles the ObjectPart event from a store.
         /// </summary>
         public event ProtocolEventHandler<ObjectPart> OnObjectPart;
 
         /// <summary>
-        /// Handles the PartsMetadata event from a store.
+        /// Handles the GetPartsMetadataResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<PartsMetadata> OnPartsMetadata;
+        public event ProtocolEventHandler<GetPartsMetadataResponse> OnGetPartsMetadataResponse;
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
@@ -241,8 +250,8 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
                     HandleObjectPart(header, decoder.Decode<ObjectPart>(body));
                     break;
 
-                case (int)MessageTypes.GrowingObject.PartsMetadata:
-                    HandlePartsMetadata(header, decoder.Decode<PartsMetadata>(body));
+                case (int)MessageTypes.GrowingObject.GetPartsMetadataResponse:
+                    HandleGetPartsMetadataResponse(header, decoder.Decode<GetPartsMetadataResponse>(body));
                     break;
 
                 default:
@@ -262,14 +271,19 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
-        /// Handles the PartsMetadata message from a store.
+        /// Handles the GetPartsMetadataResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The PartsMetadata message.</param>
-        protected virtual void HandlePartsMetadata(IMessageHeader header, PartsMetadata message)
+        /// <param name="message">The GetPartsMetadataResponse message.</param>
+        protected virtual void HandleGetPartsMetadataResponse(IMessageHeader header, GetPartsMetadataResponse message)
         {
-            Metadata = message;
-            Notify(OnPartsMetadata, header, message);
+            foreach (var metadata in message.Metadata)
+                Metadata.Add(metadata);
+
+            foreach (var error in message.Errors)
+                Errors.Add(error);
+
+            Notify(OnGetPartsMetadataResponse, header, message);
         }
     }
 }

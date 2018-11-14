@@ -151,7 +151,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <returns>The message identifier.</returns>
         public virtual long GetRangeResponse(IMessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart)
         {
-            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRangeReponse, request.MessageId, messageFlag);
+            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRangeResponse, request.MessageId, messageFlag);
 
             var channelData = new GetRangeResponse
             {
