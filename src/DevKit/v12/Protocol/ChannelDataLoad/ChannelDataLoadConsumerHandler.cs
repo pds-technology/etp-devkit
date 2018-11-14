@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.ChannelData;
 
 namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
@@ -43,15 +44,17 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="channels">The channels.</param>
+        /// <param name="errors">The errors.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long OpenChannelResponse(IMessageHeader request, IList<OpenChannelInfo> channels, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        public virtual long OpenChannelResponse(IMessageHeader request, IList<OpenChannelInfo> channels, IList<ErrorInfo> errors, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
         {
             var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelResponse, request.MessageId, messageFlag);
 
             var message = new OpenChannelResponse
             {
-                Channels = channels
+                Channels = channels ?? new List<OpenChannelInfo>(),
+                Errors = errors ?? new List<ErrorInfo>()
             };
 
             return Session.SendMessage(header, message);
@@ -125,7 +128,26 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <param name="message">The OpenChannel message.</param>
         protected virtual void HandleOpenChannel(IMessageHeader header, OpenChannel message)
         {
-            Notify(OnOpenChannel, header, message);
+            var args = Notify(OnOpenChannel, header, message);
+            var channels = new List<OpenChannelInfo>();
+            var errors = new List<ErrorInfo>();
+
+            HandleOpenChannel(args, channels, errors);
+
+            if (!args.Cancel)
+            {
+                OpenChannelResponse(header, channels, errors);
+            }
+        }
+
+        /// <summary>
+        /// Handles the OpenChannel message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="ProtocolEventArgs{OpenChannel}"/> instance containing the event data.</param>
+        /// <param name="channels">The channels.</param>
+        /// <param name="errors">The errors.</param>
+        protected virtual void HandleOpenChannel(ProtocolEventArgs<OpenChannel> args, List<OpenChannelInfo> channels, List<ErrorInfo> errors)
+        {
         }
 
         /// <summary>

@@ -45,15 +45,17 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
+        /// <param name="errors">The errors.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long GetChannelMetadataResponse(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        public virtual long GetChannelMetadataResponse(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, IList<ErrorInfo> errors, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
         {
             var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetChannelMetadataResponse, request.MessageId, messageFlag);
 
             var channelMetadata = new GetChannelMetadataResponse
             {
-                Metadata = channelMetadataRecords
+                Metadata = channelMetadataRecords ?? new List<ChannelMetadataRecord>(),
+                Errors = errors ?? new List<ErrorInfo>()
             };
 
             return Session.SendMessage(header, channelMetadata);
@@ -164,7 +166,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Handles the GetChannelMetadata event from a consumer.
         /// </summary>
-        public event ProtocolEventHandler<GetChannelMetadata, IList<ChannelMetadataRecord>> OnGetChannelMetadata;
+        public event ProtocolEventHandler<GetChannelMetadata> OnGetChannelMetadata;
 
         /// <summary>
         /// Handles the SubscribeChannels event from a consumer.
@@ -220,20 +222,25 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <param name="getChannelMetadata">The GetChannelMetadata message.</param>
         protected virtual void HandleGetChannelMetadata(IMessageHeader header, GetChannelMetadata getChannelMetadata)
         {
-            var args = Notify(OnGetChannelMetadata, header, getChannelMetadata, new List<ChannelMetadataRecord>());
-            HandleGetChannelMetadata(args);
+            var args = Notify(OnGetChannelMetadata, header, getChannelMetadata);
+            var metadata = new List<ChannelMetadataRecord>();
+            var errors = new List<ErrorInfo>();
+
+            HandleGetChannelMetadata(args, metadata, errors);
 
             if (!args.Cancel)
             {
-                GetChannelMetadataResponse(header, args.Context);
+                GetChannelMetadataResponse(header, metadata, errors);
             }
         }
 
         /// <summary>
-        /// Handles the DhannelDescribe message from a consumer.
+        /// Handles the GetChannelMetadata message from a consumer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{GetChannelMetadata}"/> instance containing the event data.</param>
-        protected virtual void HandleGetChannelMetadata(ProtocolEventArgs<GetChannelMetadata, IList<ChannelMetadataRecord>> args)
+        /// <param name="args">The <see cref="ProtocolEventArgs{GetChannelMetadata}" /> instance containing the event data.</param>
+        /// <param name="metadata">The metadata.</param>
+        /// <param name="errors">The errors.</param>
+        protected virtual void HandleGetChannelMetadata(ProtocolEventArgs<GetChannelMetadata> args, IList<ChannelMetadataRecord> metadata, IList<ErrorInfo> errors)
         {
         }
 

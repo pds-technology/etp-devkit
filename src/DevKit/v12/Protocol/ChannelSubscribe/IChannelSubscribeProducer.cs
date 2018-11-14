@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.ChannelData;
 
 namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
@@ -35,9 +36,10 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
+        /// <param name="errors">The errors.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long GetChannelMetadataResponse(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        long GetChannelMetadataResponse(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, IList<ErrorInfo> errors, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Sends a RealtimeData message to a consumer.
@@ -87,7 +89,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Handles the GetChannelMetadata event from a consumer.
         /// </summary>
-        event ProtocolEventHandler<GetChannelMetadata, IList<ChannelMetadataRecord>> OnGetChannelMetadata;
+        event ProtocolEventHandler<GetChannelMetadata> OnGetChannelMetadata;
 
         /// <summary>
         /// Handles the SubscribeChannels event from a consumer.

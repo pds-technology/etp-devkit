@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.ChannelData;
 
 namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
@@ -35,9 +36,10 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="channels">The channels.</param>
+        /// <param name="errors">The errors.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long OpenChannelResponse(IMessageHeader request, IList<OpenChannelInfo> channels, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        long OpenChannelResponse(IMessageHeader request, IList<OpenChannelInfo> channels, IList<ErrorInfo> errors, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Handles the OpenChannel event from a store.
