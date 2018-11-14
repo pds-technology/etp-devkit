@@ -34,6 +34,7 @@ namespace Energistics.Etp.Native
     public abstract class EtpSessionNativeBase : EtpSession
     {
         private const int BufferSize = 4096;
+        private int _socketOpenedEventCount = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpSessionNativeBase"/> class.
@@ -56,6 +57,21 @@ namespace Energistics.Etp.Native
         protected WebSocket Socket { get; private set; }
 
         /// <summary>
+        /// Occurs when the WebSocket is opened.
+        /// </summary>
+        public event EventHandler SocketOpened;
+
+        /// <summary>
+        /// Occurs when the WebSocket is closed.
+        /// </summary>
+        public event EventHandler SocketClosed;
+
+        /// <summary>
+        /// Occurs when the WebSocket has an error.
+        /// </summary>
+        public event EventHandler<Exception> SocketError;
+
+        /// <summary>
         /// Gets a value indicating whether the connection is open.
         /// </summary>
         /// <value>
@@ -76,13 +92,19 @@ namespace Energistics.Etp.Native
             {
                 await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None);
                 Logger.Debug(Log("[{0}] Socket session closed.", SessionId));
+                InvokeSocketClosed();
             }
             catch (Exception ex)
             {
-                if (!ex.ExceptionMeansConnectionTerminated())
+                if (ex.ExceptionMeansConnectionTerminated())
+                {
+                    InvokeSocketClosed();
+                }
+                else
                 {
                     Log("Error: Exception caught when closing a websocket connection: {0}", ex.Message);
                     Logger.DebugFormat("Exception caught when closing a websocket connection: {0}", ex);
+                    InvokeSocketError(ex);
                     throw;
                 }
             }
@@ -151,10 +173,15 @@ namespace Energistics.Etp.Native
             }
             catch (Exception ex)
             {
-                if (!ex.ExceptionMeansConnectionTerminated())
+                if (ex.ExceptionMeansConnectionTerminated())
+                {
+                    InvokeSocketClosed();
+                }
+                else
                 {
                     Log("Error: {0}", ex.Message);
                     Logger.Debug(ex);
+                    InvokeSocketError(ex);
                     throw;
                 }
             }
@@ -176,7 +203,24 @@ namespace Energistics.Etp.Native
 
             var buffer = new ArraySegment<byte>(data, offset, length);
 
-            await Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
+            try
+            {
+                await Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                if (ex.ExceptionMeansConnectionTerminated())
+                {
+                    InvokeSocketClosed();
+                }
+                else
+                {
+                    Log("Error: {0}", ex.Message);
+                    Logger.Debug(ex);
+                    InvokeSocketError(ex);
+                }
+                throw;
+            }
         }
 
         /// <summary>
@@ -188,7 +232,59 @@ namespace Energistics.Etp.Native
             CheckDisposed();
 
             var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
-            await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+
+            try
+            {
+                await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                if (ex.ExceptionMeansConnectionTerminated())
+                {
+                    InvokeSocketClosed();
+                }
+                else
+                {
+                    Log("Error: {0}", ex.Message);
+                    Logger.Debug(ex);
+                    InvokeSocketError(ex);
+                }
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Raises the SocketOpened event.
+        /// </summary>
+        protected void InvokeSocketOpened()
+        {
+            var prevSocketOpenedEventCount = Interlocked.CompareExchange(ref _socketOpenedEventCount, 1, 0);
+
+            if (prevSocketOpenedEventCount == 0)
+                SocketOpened?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Raises the SocketClosed event.
+        /// </summary>
+        protected void InvokeSocketClosed()
+        {
+            var prevSocketOpenedEventCount = Interlocked.CompareExchange(ref _socketOpenedEventCount, 0, 1);
+
+            if (prevSocketOpenedEventCount == 1)
+                SocketClosed?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Raises the SocketError event.
+        /// </summary>
+        /// <param name="ex">The socket exception.</param>
+        protected void InvokeSocketError(Exception ex)
+        {
+            var prevSocketOpenedEventCount = Interlocked.CompareExchange(ref _socketOpenedEventCount, 0, 1);
+
+            if (prevSocketOpenedEventCount == 1)
+                SocketError?.Invoke(this, ex);
         }
     }
 }

@@ -65,6 +65,8 @@ namespace Energistics.Etp.Native
         {
             Logger.Debug(Log("[{0}] Socket session connected.", SessionId));
 
+            InvokeSocketOpened();
+
             // keep track of connected clients
             Clients.AddOrUpdate(SessionId, this, (id, client) => this);
         }

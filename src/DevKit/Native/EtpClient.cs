@@ -134,6 +134,8 @@ namespace Energistics.Etp.Native
             Logger.Trace(Log("Requesting session..."));
             Adapter.RequestSession(this, ApplicationName, ApplicationVersion, _supportedCompression);
 
+            InvokeSocketOpened();
+
             return true;
         }
 
@@ -163,21 +165,6 @@ namespace Energistics.Etp.Native
             if (IsOpen)
                 await base.CloseAsyncCore(reason);
         }
-
-        /// <summary>
-        /// Occurs when the WebSocket is opened.
-        /// </summary>
-        public event EventHandler SocketOpened;
-
-        /// <summary>
-        /// Occurs when the WebSocket is closed.
-        /// </summary>
-        public event EventHandler SocketClosed;
-
-        /// <summary>
-        /// Occurs when the WebSocket has an error.
-        /// </summary>
-        public event EventHandler<Exception> SocketError;
 
         /// <summary>
         /// Sets the proxy server host name and port number.
