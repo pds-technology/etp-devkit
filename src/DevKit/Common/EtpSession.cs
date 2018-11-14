@@ -625,6 +625,7 @@ namespace Energistics.Etp.Common
         protected void Sending<T>(IMessageHeader header, T body)
         {
             var now = DateTime.Now;
+
             if (Output != null)
             {
                 Log("[{0}] Sending message at {1}", SessionId, now.ToString(TimestampFormat));

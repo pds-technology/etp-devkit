@@ -238,10 +238,20 @@ namespace Energistics.Etp.Common
         /// <param name="message">The message body.</param>
         protected void Received<T>(IMessageHeader header, T message)
         {
-            if (Session?.Output == null) return;
-            Session.Log("[{0}] Message received at {1}", Session.SessionId, DateTime.Now.ToString(TimestampFormat));
-            Session.Log(EtpExtensions.Serialize(header));
-            Session.Log(EtpExtensions.Serialize(message, true));
+            var now = DateTime.Now;
+
+            if (Session.Output != null)
+            {
+                Session.Log("[{0}] Message received at {1}", Session.SessionId, now.ToString(TimestampFormat));
+                Session.Log(EtpExtensions.Serialize(header));
+                Session.Log(EtpExtensions.Serialize(message, true));
+            }
+
+            if (Logger.IsVerboseEnabled())
+            {
+                Logger.VerboseFormat("[{0}] Message received at {1}: {2}{3}{4}",
+                    Session.SessionId, now.ToString(TimestampFormat), EtpExtensions.Serialize(header), Environment.NewLine, EtpExtensions.Serialize(message, true));
+            }
         }
 
         /// <summary>
