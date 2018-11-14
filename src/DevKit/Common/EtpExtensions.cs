@@ -24,9 +24,9 @@ using System.Linq;
 using Avro.IO;
 using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Datatypes.Object;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Energistics.Etp.Common.Datatypes.Object;
 
 namespace Energistics.Etp.Common
 {

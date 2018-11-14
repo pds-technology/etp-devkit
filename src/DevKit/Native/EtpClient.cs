@@ -71,6 +71,7 @@ namespace Energistics.Etp.Native
             var headerItems = Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList();
 
             ClientSocket.Options.AddSubProtocol(etpSubProtocol);
+
             foreach (var item in headerItems)
                 ClientSocket.Options.SetRequestHeader(item.Key, item.Value);
 
@@ -83,7 +84,7 @@ namespace Energistics.Etp.Native
         /// <summary>
         /// The client websocket.
         /// </summary>
-        private ClientWebSocket ClientSocket { get { return Socket as ClientWebSocket; } }
+        private ClientWebSocket ClientSocket => Socket as ClientWebSocket;
 
         /// <summary>
         /// The URI.
@@ -162,6 +163,21 @@ namespace Energistics.Etp.Native
             if (IsOpen)
                 await base.CloseAsyncCore(reason);
         }
+
+        /// <summary>
+        /// Occurs when the WebSocket is opened.
+        /// </summary>
+        public event EventHandler SocketOpened;
+
+        /// <summary>
+        /// Occurs when the WebSocket is closed.
+        /// </summary>
+        public event EventHandler SocketClosed;
+
+        /// <summary>
+        /// Occurs when the WebSocket has an error.
+        /// </summary>
+        public event EventHandler<Exception> SocketError;
 
         /// <summary>
         /// Sets the proxy server host name and port number.
