@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.Common.Protocol.Core;
 
 namespace Energistics.Etp.v12.Protocol.Discovery
 {

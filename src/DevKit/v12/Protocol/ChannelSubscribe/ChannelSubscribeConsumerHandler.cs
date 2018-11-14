@@ -27,7 +27,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
     /// <summary>
     /// Base implementation of the <see cref="IChannelSubscribeConsumer"/> interface.
     /// </summary>
-    /// <seealso cref="Energistics.Etp.Common.Etp12ProtocolHandler" />
+    /// <seealso cref="Energistics.Etp.v12.Protocol.Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelSubscribe.IChannelSubscribeConsumer" />
     public class ChannelSubscribeConsumerHandler : Etp12ProtocolHandler, IChannelSubscribeConsumer
     {
