@@ -160,7 +160,7 @@ namespace Energistics.Etp.WebSocket4Net
             _socket.Error += errorHandler;
             _socket.Open();
 
-            return await task;
+            return await task.ConfigureAwait(false);
         }
 
         /// <summary>
@@ -247,7 +247,7 @@ namespace Energistics.Etp.WebSocket4Net
 
             _socket.Close(reason);
 
-            await task;
+            await task.ConfigureAwait(false);
         }
 
         /// <summary>

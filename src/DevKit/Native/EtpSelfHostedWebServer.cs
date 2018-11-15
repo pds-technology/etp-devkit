@@ -96,7 +96,10 @@ namespace Energistics.Etp.Native
                 _httpListener.Prefixes.Add($"http://{Dns.GetHostName()}:{Uri.Port}/");
                 _httpListener.Start();
                 _source = new CancellationTokenSource();
-                _listenerTask = Task.Run(async () => await HandleListener(_source.Token), _source.Token);
+                _listenerTask = Task.Factory.StartNew(
+                    async () => await HandleListener(_source.Token).ConfigureAwait(false), _source.Token,
+                    TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning,
+                    TaskScheduler.Default).Unwrap();
             }
             Logger.Verbose($"Started");
 
@@ -121,12 +124,12 @@ namespace Energistics.Etp.Native
             {
                 _source.Cancel();
 
-                await CleanUpServers();
+                await CleanUpServers().ConfigureAwait(false);
 
                 _httpListener.Stop();
                 try
                 {
-                    await _listenerTask;
+                    await _listenerTask.ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -152,7 +155,7 @@ namespace Energistics.Etp.Native
                 if (_serverTasks.TryRemove(key, out task))
                     tasks.Add(task);
             }
-            try { await Task.WhenAll(tasks); } catch (OperationCanceledException) { }
+            try { await Task.WhenAll(tasks).ConfigureAwait(false); } catch (OperationCanceledException) { }
 
             // Close sockets...
             tasks.Clear();
@@ -165,7 +168,7 @@ namespace Energistics.Etp.Native
                     servers.Add(server);
                 }
             }
-            try { await Task.WhenAll(tasks); } catch (OperationCanceledException) { }
+            try { await Task.WhenAll(tasks).ConfigureAwait(false); } catch (OperationCanceledException) { }
 
             foreach (var server in servers)
                 server.Dispose();
@@ -207,7 +210,7 @@ namespace Energistics.Etp.Native
             try
             {
                 // TODO: Handle server cap URL
-                HttpListenerContext context = await _httpListener.GetContextAsync();
+                HttpListenerContext context = await _httpListener.GetContextAsync().ConfigureAwait(false);
                 if (token.IsCancellationRequested)
                 {
                     CleanUpContext(context);
@@ -246,7 +249,7 @@ namespace Energistics.Etp.Native
                     return;
                 }
 
-                HttpListenerWebSocketContext webSocketContext = await context.AcceptWebSocketAsync(preferredProtocol);
+                HttpListenerWebSocketContext webSocketContext = await context.AcceptWebSocketAsync(preferredProtocol).ConfigureAwait(false);
                 if (token.IsCancellationRequested)
                 {
                     webSocketContext.WebSocket.Dispose();
@@ -260,12 +263,12 @@ namespace Energistics.Etp.Native
                 RegisterAll(server);
 
                 _servers[server.SessionId] = server;
-                _serverTasks[server.SessionId] = Task.Run(async () =>
+                _serverTasks[server.SessionId] = Task.Factory.StartNew(async () =>
                 {
                     try
                     {
                         InvokeSessionConnected(server);
-                        await server.HandleConnection(token);
+                        await server.HandleConnection(token).ConfigureAwait(false);
                     }
                     finally
                     {
@@ -274,7 +277,9 @@ namespace Energistics.Etp.Native
                         webSocketContext.WebSocket.Dispose();
                         CleanUpContext(context);
                     }
-                }, token);
+                }, token,
+                    TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning,
+                    TaskScheduler.Default).Unwrap();
             }
             catch (Exception ex)
             {

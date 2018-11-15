@@ -90,7 +90,7 @@ namespace Energistics.Etp.Native
 
             try
             {
-                await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None);
+                await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None).ConfigureAwait(false);
                 Logger.Debug(Log("[{0}] Socket session closed.", SessionId));
                 InvokeSocketClosed();
             }
@@ -141,7 +141,7 @@ namespace Energistics.Etp.Native
                     while (Socket.State == WebSocketState.Open)
                     {
                         var buffer = new ArraySegment<byte>(new byte[BufferSize]);
-                        var result = await Socket.ReceiveAsync(buffer, token);
+                        var result = await Socket.ReceiveAsync(buffer, token).ConfigureAwait(false);
 
                         // transfer received data to MemoryStream
                         stream.Write(buffer.Array, 0, result.Count);
@@ -205,7 +205,7 @@ namespace Energistics.Etp.Native
 
             try
             {
-                await Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
+                await Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -235,7 +235,7 @@ namespace Energistics.Etp.Native
 
             try
             {
-                await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+                await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

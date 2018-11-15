@@ -38,7 +38,7 @@ namespace Energistics.Etp.Security
 
             var task = new Task<bool>(() => _client.IsOpen);
 
-            var result = await _client.OpenAsync();//.WaitAsync();
+            var result = await _client.OpenAsync().WaitAsync();
 
             Assert.IsTrue(result, "EtpClient connection not opened");
             Assert.IsTrue(proxyServer.ProxyAuthenticationSuccessful, "Failed to authenticate with proxy");
@@ -59,7 +59,7 @@ namespace Energistics.Etp.Security
 
             var task = new Task<bool>(() => _client.IsOpen);
 
-            var result = await _client.OpenAsync();//.WaitAsync();
+            var result = await _client.OpenAsync().WaitAsync();
 
             Assert.IsTrue(result, "EtpClient connection not opened");
             Assert.IsTrue(proxyServer.ProxyAuthenticationSuccessful, "Failed to authenticate with proxy");

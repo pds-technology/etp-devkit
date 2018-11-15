@@ -272,21 +272,35 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
-        /// Sends the message.
+        /// Synchronously sends the message.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="header">The header.</param>
         /// <param name="body">The body.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The message identifier.</returns>
-        public long SendMessage<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null) where T : ISpecificRecord
+        public long SendMessage<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null)
+            where T : ISpecificRecord
+        {
+            return SendMessageAsync(header, body, onBeforeSend).Result;
+        }
+
+        /// <summary>
+        /// Asynchronously sends the message.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="header">The header.</param>
+        /// <param name="body">The body.</param>
+        /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
+        /// <returns>The message identifier.</returns>
+        public async Task<long> SendMessageAsync<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null) where T : ISpecificRecord
         {
             try
             {
                 // Lock to ensure only one thread at a time attempts to send data and to ensure that messages are sent with sequential IDs
                 try
                 {
-                    _sendLock.Wait();
+                    await _sendLock.WaitAsync().ConfigureAwait(false);
 
                     if (!IsOpen)
                     {
@@ -307,12 +321,12 @@ namespace Energistics.Etp.Common
                     if (IsJsonEncoding)
                     {
                         var message = EtpExtensions.Serialize(new object[] {header, body});
-                        SendAsync(message).Wait();
+                        await SendAsync(message).ConfigureAwait(false);
                     }
                     else
                     {
                         var data = body.Encode(header, SupportedCompression);
-                        SendAsync(data, 0, data.Length).Wait();
+                        await SendAsync(data, 0, data.Length).ConfigureAwait(false);
                     }
                 }
                 finally
@@ -375,10 +389,10 @@ namespace Energistics.Etp.Common
             // Closing sends messages over the websocket so need to ensure no other messages are being sent when closing
             try
             {
-                await _sendLock.WaitAsync();
+                await _sendLock.WaitAsync().ConfigureAwait(false);
                 Logger.Trace($"Closing Session: {reason}");
 
-                await CloseAsyncCore(reason);
+                await CloseAsyncCore(reason).ConfigureAwait(false);
             }
             finally
             {

@@ -163,7 +163,7 @@ namespace Energistics.Etp
                     task.Start();
             });
 
-            return await task.WaitAsync();
+            return await task.WaitAsync().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -188,7 +188,7 @@ namespace Energistics.Etp
                     task.Start();
             });
 
-            return await task.WaitAsync();
+            return await task.WaitAsync().ConfigureAwait(false);
         }
     }
 }

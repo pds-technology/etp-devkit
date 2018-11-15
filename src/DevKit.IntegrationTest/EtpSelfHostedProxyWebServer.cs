@@ -67,7 +67,7 @@ namespace Energistics.Etp
         public async Task StartAsync()
         {
             _proxyServer.Start();
-            await _proxiedServer.StartAsync();
+            await _proxiedServer.StartAsync().ConfigureAwait(false);
         }
 
         private Task<bool> HandleBasicAuthentication(SessionEventArgsBase session, string username, string password)
@@ -89,7 +89,7 @@ namespace Energistics.Etp
         public async Task StopAsync()
         {
             _proxyServer.Stop();
-            await _proxiedServer.StopAsync();
+            await _proxiedServer.StopAsync().ConfigureAwait(false);
         }
 
         #region Redirects to Proxied Server

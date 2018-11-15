@@ -114,7 +114,7 @@ namespace Energistics.Etp.Native
 
             try
             {
-                await ClientSocket.ConnectAsync(Uri, token);
+                await ClientSocket.ConnectAsync(Uri, token).ConfigureAwait(false);
                 Logger.Verbose($"Connected to {Uri}");
             }
             catch (OperationCanceledException)
@@ -129,7 +129,10 @@ namespace Energistics.Etp.Native
             if (token.IsCancellationRequested)
                 return false;
 
-            _connectionHandlingTask = Task.Run(async () => await HandleConnection(token), token);
+            _connectionHandlingTask = Task.Factory.StartNew(
+                async () => await HandleConnection(token).ConfigureAwait(false), token,
+                TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach,
+                TaskScheduler.Default).Unwrap();
 
             Logger.Trace(Log("Requesting session..."));
             Adapter.RequestSession(this, ApplicationName, ApplicationVersion, _supportedCompression);
@@ -150,7 +153,7 @@ namespace Energistics.Etp.Native
             try
             {
                 if (_connectionHandlingTask != null)
-                    await _connectionHandlingTask;
+                    await _connectionHandlingTask.ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -163,7 +166,7 @@ namespace Energistics.Etp.Native
             }
 
             if (IsOpen)
-                await base.CloseAsyncCore(reason);
+                await base.CloseAsyncCore(reason).ConfigureAwait(false);
         }
 
         /// <summary>

@@ -46,7 +46,7 @@ namespace Energistics.Etp
             using (_client = CreateClient(TestSettings.WebSocketType, TestSettings.EtpSubProtocol, _server.Uri.ToWebSocketUri().ToString(), headers))
             {
                 // Open the connection (uses an async extension method)
-                await _client.OpenAsyncWithTimeout();
+                await _client.OpenAsyncWithTimeout().ConfigureAwait(false);
 
                 // Assert the current state of the connection
                 Assert.IsTrue(_client.IsOpen);
