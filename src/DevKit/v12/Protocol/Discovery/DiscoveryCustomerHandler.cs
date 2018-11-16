@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.Discovery
 {
@@ -50,7 +51,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         {
             var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResources);
 
-            var getResources = new GetResources()
+            var getResources = new GetResources
             {
                 Uri = uri
             };
@@ -61,9 +62,33 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         }
 
         /// <summary>
+        /// Sends a GetResources message to a store.
+        /// </summary>
+        /// <param name="contextInfo">The context information.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long GetResources2(ContextInfo contextInfo)
+        {
+            var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResources2);
+
+            var getResources = new GetResources2
+            {
+                Context = contextInfo
+            };
+
+            return Session.SendMessage(header, getResources,
+                h => _requests[h.MessageId] = contextInfo.Uri // Cache requested URIs by message ID
+            );
+        }
+
+        /// <summary>
         /// Handles the GetResourcesResponse event from a store.
         /// </summary>
         public event ProtocolEventHandler<GetResourcesResponse, string> OnGetResourcesResponse;
+
+        /// <summary>
+        /// Handles the GetResourcesResponse event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<GetResourcesResponse2, string> OnGetResourcesResponse2;
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
@@ -77,6 +102,10 @@ namespace Energistics.Etp.v12.Protocol.Discovery
             {
                 case (int)MessageTypes.Discovery.GetResourcesResponse:
                     HandleGetResourcesResponse(header, decoder.Decode<GetResourcesResponse>(body));
+                    break;
+
+                case (int)MessageTypes.Discovery.GetResourcesResponse2:
+                    HandleGetResourcesResponse2(header, decoder.Decode<GetResourcesResponse2>(body));
                     break;
 
                 default:
@@ -111,6 +140,26 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{GetResourcesResponse}"/> instance containing the event data.</param>
         protected virtual void HandleGetResourcesResponse(ProtocolEventArgs<GetResourcesResponse, string> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GetResourcesResponse message from a store.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="getResourcesResponse">The GetResourcesResponse message.</param>
+        protected virtual void HandleGetResourcesResponse2(IMessageHeader header, GetResourcesResponse2 getResourcesResponse)
+        {
+            var uri = GetRequestedUri(header);
+            var args = Notify(OnGetResourcesResponse2, header, getResourcesResponse, uri);
+            HandleGetResourcesResponse2(args);
+        }
+
+        /// <summary>
+        /// Handles the GetResourcesResponse message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="ProtocolEventArgs{GetResourcesResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleGetResourcesResponse2(ProtocolEventArgs<GetResourcesResponse2, string> args)
         {
         }
 

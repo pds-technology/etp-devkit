@@ -28,7 +28,7 @@ namespace Energistics.Etp.v12
 {
     public class Etp12Adapter : IEtpAdapter
     {
-        public EtpVersion SupportedVersion { get { return EtpVersion.v12; } }
+        public EtpVersion SupportedVersion => EtpVersion.v12;
 
         public void RegisterCore(IEtpSession session)
         {

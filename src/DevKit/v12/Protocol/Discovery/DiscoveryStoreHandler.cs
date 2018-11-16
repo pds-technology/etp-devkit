@@ -82,9 +82,43 @@ namespace Energistics.Etp.v12.Protocol.Discovery
 
                 var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse, request.MessageId, messageFlags);
 
-                var getResourcesResponse = new GetResourcesResponse()
+                var getResourcesResponse = new GetResourcesResponse
                 {
                     Resource = resources[i]
+                };
+
+                messageId = Session.SendMessage(header, getResourcesResponse);
+            }
+
+            return messageId;
+        }
+
+        /// <summary>
+        /// Sends a GetResourcesResponse message to a customer.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="resources">The list of <see cref="Resource" /> objects.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long GetResourcesResponse2(IMessageHeader request, IList<Resource2> resources)
+        {
+            if (!resources.Any())
+            {
+                return Acknowledge(request.MessageId, MessageFlags.NoData);
+            }
+
+            long messageId = 0;
+
+            for (int i = 0; i < resources.Count; i++)
+            {
+                var messageFlags = i < resources.Count - 1
+                    ? MessageFlags.MultiPart
+                    : MessageFlags.MultiPartAndFinalPart;
+
+                var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse2, request.MessageId, messageFlags);
+
+                var getResourcesResponse = new GetResourcesResponse2
+                {
+                    Resource = resources
                 };
 
                 messageId = Session.SendMessage(header, getResourcesResponse);
@@ -99,6 +133,11 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         public event ProtocolEventHandler<GetResources, IList<Resource>> OnGetResources;
 
         /// <summary>
+        /// Handles the GetResources event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<GetResources2, IList<Resource2>> OnGetResources2;
+
+        /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
         /// </summary>
         /// <param name="header">The message header.</param>
@@ -110,6 +149,10 @@ namespace Energistics.Etp.v12.Protocol.Discovery
             {
                 case (int)MessageTypes.Discovery.GetResources:
                     HandleGetResources(header, decoder.Decode<GetResources>(body));
+                    break;
+
+                case (int)MessageTypes.Discovery.GetResources2:
+                    HandleGetResources2(header, decoder.Decode<GetResources2>(body));
                     break;
 
                 default:
@@ -139,6 +182,30 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{GetResources}"/> instance containing the event data.</param>
         protected virtual void HandleGetResources(ProtocolEventArgs<GetResources, IList<Resource>> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GetResources message from a customer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="getResources">The GetResources message.</param>
+        protected virtual void HandleGetResources2(IMessageHeader header, GetResources2 getResources)
+        {
+            var args = Notify(OnGetResources2, header, getResources, new List<Resource2>());
+            HandleGetResources2(args);
+
+            if (!args.Cancel)
+            {
+                GetResourcesResponse2(header, args.Context);
+            }
+        }
+
+        /// <summary>
+        /// Handles the GetResources message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="ProtocolEventArgs{GetResources}"/> instance containing the event data.</param>
+        protected virtual void HandleGetResources2(ProtocolEventArgs<GetResources2, IList<Resource2>> args)
         {
         }
     }

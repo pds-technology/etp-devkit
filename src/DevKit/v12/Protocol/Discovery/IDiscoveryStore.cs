@@ -39,8 +39,21 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         long GetResourcesResponse(IMessageHeader request, IList<Resource> resources);
 
         /// <summary>
+        /// Sends a GetResourcesResponse message to a customer.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
+        /// <returns>The message identifier.</returns>
+        long GetResourcesResponse2(IMessageHeader request, IList<Resource2> resources);
+
+        /// <summary>
         /// Handles the GetResources event from a customer.
         /// </summary>
         event ProtocolEventHandler<GetResources, IList<Resource>> OnGetResources;
+
+        /// <summary>
+        /// Handles the GetResources event from a customer.
+        /// </summary>
+        event ProtocolEventHandler<GetResources2, IList<Resource2>> OnGetResources2;
     }
 }

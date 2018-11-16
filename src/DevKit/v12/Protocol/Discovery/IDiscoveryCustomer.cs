@@ -18,6 +18,7 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.Discovery
 {
@@ -36,8 +37,20 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         long GetResources(string uri);
 
         /// <summary>
+        /// Sends a GetResources message to a store.
+        /// </summary>
+        /// <param name="contextInfo">The context information.</param>
+        /// <returns>The message identifier.</returns>
+        long GetResources2(ContextInfo contextInfo);
+
+        /// <summary>
         /// Handles the GetResourcesResponse event from a store.
         /// </summary>
         event ProtocolEventHandler<GetResourcesResponse, string> OnGetResourcesResponse;
+
+        /// <summary>
+        /// Handles the GetResourcesResponse event from a store.
+        /// </summary>
+        event ProtocolEventHandler<GetResourcesResponse2, string> OnGetResourcesResponse2;
     }
 }
