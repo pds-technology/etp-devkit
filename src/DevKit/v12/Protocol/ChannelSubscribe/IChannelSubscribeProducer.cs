@@ -105,5 +105,10 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// Handles the GetRange event from a consumer.
         /// </summary>
         event ProtocolEventHandler<GetRange> OnGetRange;
+
+        /// <summary>
+        /// Handles the CancelGetRange event from a consumer.
+        /// </summary>
+        event ProtocolEventHandler<CancelGetRange> OnCancelGetRange;
     }
 }

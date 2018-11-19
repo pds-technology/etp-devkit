@@ -47,7 +47,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <summary>
         /// Sends a UnsubscribeNotification message to a store.
         /// </summary>
-        /// <param name="requestUuid">The request UUID.</param>
+        /// <param name="requestUuid">The request identifier.</param>
         /// <returns>The message identifier.</returns>
         long UnsubscribeNotification(Guid requestUuid);
 

@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -54,9 +55,17 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Sends a GetRange message to a producer.
         /// </summary>
-        /// <param name="channelRangeInfos">The list of <see cref="ChannelRangeInfo"/> objects.</param>
+        /// <param name="requestUuid">The request identifier.</param>
+        /// <param name="channelRangeInfos">The list of <see cref="ChannelRangeInfo" /> objects.</param>
         /// <returns>The message identifier.</returns>
-        long GetRange(IList<ChannelRangeInfo> channelRangeInfos);
+        long GetRange(Guid requestUuid, IList<ChannelRangeInfo> channelRangeInfos);
+
+        /// <summary>
+        /// Sends a CancelGetRange message to a producer.
+        /// </summary>
+        /// <param name="requestUuid">The request identifier.</param>
+        /// <returns>The message identifier.</returns>
+        long CancelGetRange(Guid requestUuid);
 
         /// <summary>
         /// Handles the GetChannelMetadataResponse event from a producer.

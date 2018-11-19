@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -105,18 +106,37 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Sends a GetRange message to a producer.
         /// </summary>
+        /// <param name="requestUuid">The request identifier.</param>
         /// <param name="channelRangeInfos">The list of <see cref="ChannelRangeInfo" /> objects.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long GetRange(IList<ChannelRangeInfo> channelRangeInfos)
+        public virtual long GetRange(Guid requestUuid, IList<ChannelRangeInfo> channelRangeInfos)
         {
             var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRange);
 
             var channelRangeRequest = new GetRange
             {
+                RequestUuid = requestUuid.ToUuid(),
                 ChannelRanges = channelRangeInfos
             };
 
             return Session.SendMessage(header, channelRangeRequest);
+        }
+
+        /// <summary>
+        /// Sends a CancelGetRange message to a producer.
+        /// </summary>
+        /// <param name="requestUuid">The request identifier.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long CancelGetRange(Guid requestUuid)
+        {
+            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.CancelGetRange);
+
+            var cancelGetRange = new CancelGetRange
+            {
+                RequestUuid = requestUuid.ToUuid()
+            };
+
+            return Session.SendMessage(header, cancelGetRange);
         }
 
         /// <summary>

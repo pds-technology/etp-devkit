@@ -41,6 +41,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
             RegisterMessageHandler<SubscribeChannels>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.SubscribeChannels, HandleSubscribeChannels);
             RegisterMessageHandler<UnsubscribeChannels>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.UnsubscribeChannels, HandleUnsubscribeChannels);
             RegisterMessageHandler<GetRange>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRange, HandleGetRange);
+            RegisterMessageHandler<CancelGetRange>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.CancelGetRange, HandleCancelGetRange);
         }
 
         /// <summary>
@@ -187,6 +188,11 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         public event ProtocolEventHandler<GetRange> OnGetRange;
 
         /// <summary>
+        /// Handles the CancelGetRange event from a consumer.
+        /// </summary>
+        public event ProtocolEventHandler<CancelGetRange> OnCancelGetRange;
+
+        /// <summary>
         /// Handles the GetChannelMetadata message from a consumer.
         /// </summary>
         /// <param name="header">The message header.</param>
@@ -243,6 +249,16 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         protected virtual void HandleGetRange(IMessageHeader header, GetRange getRange)
         {
             Notify(OnGetRange, header, getRange);
+        }
+
+        /// <summary>
+        /// Handles the CancelGetRange message from a consumer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="cancelGetRange">The CancelGetRange message.</param>
+        protected virtual void HandleCancelGetRange(IMessageHeader header, CancelGetRange cancelGetRange)
+        {
+            Notify(OnCancelGetRange, header, cancelGetRange);
         }
     }
 }
