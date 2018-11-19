@@ -109,7 +109,7 @@ namespace Energistics.Etp
             _server = new EtpSelfHostedProxyWebServer(GetAvailablePort(), proxiedServer);
             
             // Use hostname so .NET will connect through the proxy.
-            var uri = new UriBuilder(proxiedServer.Uri.Scheme, Dns.GetHostName(), proxiedServer.Uri.Port, proxiedServer.Uri.AbsolutePath, proxiedServer.Uri.Query).Uri;
+            var uri = new UriBuilder(proxiedServer.Uri.Scheme, "vcap.me", proxiedServer.Uri.Port, proxiedServer.Uri.AbsolutePath, proxiedServer.Uri.Query).Uri;
 
             _client = CreateClient(webSocketType, etpSubProtocol, uri.ToWebSocketUri().ToString());
         }

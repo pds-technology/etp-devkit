@@ -110,6 +110,11 @@
     <Compile Include="TestExtensions.cs" />
     <Compile Include="EtpClientTests.cs" />
     <Compile Include="TestSettings.cs" />
+    <Compile Include="v12\Protocol\ChannelStreaming\ChannelStreamingProducer12MockHandler.cs" />
+    <Compile Include="v12\Protocol\ChannelStreaming\ChannelStreamingProtocolTests.cs" />
+    <Compile Include="v12\Protocol\Core\CoreProtocolTests.cs" />
+    <Compile Include="v12\Protocol\Discovery\DiscoveryProtocolTests.cs" />
+    <Compile Include="v12\Protocol\Discovery\DiscoveryStore12MockHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">
@@ -135,9 +140,7 @@
       <Name>DevKit</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="v12\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

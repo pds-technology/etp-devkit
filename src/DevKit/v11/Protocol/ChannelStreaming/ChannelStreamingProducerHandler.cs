@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes;
@@ -46,6 +45,11 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// </summary>
         public ChannelStreamingProducerHandler() : base((int)Protocols.ChannelStreaming, "producer", "consumer")
         {
+            RegisterMessageHandler<Start>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.Start, HandleStart);
+            RegisterMessageHandler<ChannelDescribe>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelDescribe, HandleChannelDescribe);
+            RegisterMessageHandler<ChannelStreamingStart>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelStreamingStart, HandleChannelStreamingStart);
+            RegisterMessageHandler<ChannelStreamingStop>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelStreamingStop, HandleChannelStreamingStop);
+            RegisterMessageHandler<ChannelRangeRequest>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelRangeRequest, HandleChannelRangeRequest);
         }
 
         /// <summary>
@@ -220,42 +224,6 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// Handles the ChannelRangeRequest event from a consumer.
         /// </summary>
         public event ProtocolEventHandler<ChannelRangeRequest> OnChannelRangeRequest;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.ChannelStreaming.Start:
-                    HandleStart(header, decoder.Decode<Start>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelStreaming.ChannelDescribe:
-                    HandleChannelDescribe(header, decoder.Decode<ChannelDescribe>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelStreaming.ChannelStreamingStart:
-                    HandleChannelStreamingStart(header, decoder.Decode<ChannelStreamingStart>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelStreaming.ChannelStreamingStop:
-                    HandleChannelStreamingStop(header, decoder.Decode<ChannelStreamingStop>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelStreaming.ChannelRangeRequest:
-                    HandleChannelRangeRequest(header, decoder.Decode<ChannelRangeRequest>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the Start message from a consumer.

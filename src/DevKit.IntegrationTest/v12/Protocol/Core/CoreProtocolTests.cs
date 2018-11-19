@@ -20,11 +20,11 @@ using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.Security;
-using Energistics.Etp.v11.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 
-namespace Energistics.Etp.v11.Protocol.Core
+namespace Energistics.Etp.v12.Protocol.Core
 {
     [TestClass]
     public class CoreProtocolTests : IntegrationTestBase
@@ -32,7 +32,7 @@ namespace Energistics.Etp.v11.Protocol.Core
         [TestInitialize]
         public void TestSetUp()
         {
-            SetUp(TestSettings.WebSocketType, EtpSettings.Etp11SubProtocol);
+            SetUp(TestSettings.WebSocketType, EtpSettings.Etp12SubProtocol);
             _server.Start();
         }
 
@@ -44,7 +44,7 @@ namespace Energistics.Etp.v11.Protocol.Core
 
         [TestMethod]
         [Description("EtpClient connects to web socket server")]
-        public async Task EtpClient_v11_Open_Connects_To_WebSocket_Server()
+        public async Task EtpClient_v12_Open_Connects_To_WebSocket_Server()
         {
             var result = await _client.OpenAsync().WaitAsync();
 
@@ -53,7 +53,7 @@ namespace Energistics.Etp.v11.Protocol.Core
 
         [TestMethod]
         [Description("EtpClient sends RequestSession and receives OpenSession with a valid Session ID")]
-        public async Task EtpClient_v11_RequestSession_Receive_OpenSession_After_Requesting_No_Protocols()
+        public async Task EtpClient_v12_RequestSession_Receive_OpenSession_After_Requesting_No_Protocols()
         {
             var onOpenSession = HandleAsync<OpenSession>(x => _client.Handler<ICoreClient>().OnOpenSession += x);
 
@@ -70,10 +70,10 @@ namespace Energistics.Etp.v11.Protocol.Core
         //[Ignore]
         [TestMethod]
         [Description("EtpClient authenticates using JWT retrieved from supported token provider")]
-        public async Task EtpClient_v11_OpenSession_Can_Authenticate_Using_Json_Web_Token()
+        public async Task EtpClient_v12_OpenSession_Can_Authenticate_Using_Json_Web_Token()
         {
             var headers = Authorization.Basic(TestSettings.Username, TestSettings.Password);
-            var etpSubProtocol = EtpSettings.Etp11SubProtocol;
+            var etpSubProtocol = EtpSettings.Etp12SubProtocol;
             string token;
 
             using (var client = new System.Net.WebClient())
@@ -104,7 +104,7 @@ namespace Energistics.Etp.v11.Protocol.Core
 
         [TestMethod]
         [Description("EtpClient sends an invalid message and receives ProtocolException with the correct error code")]
-        public async Task EtpClient_v11_SendMessage_Receive_Protocol_Exception_After_Sending_Invalid_Message()
+        public async Task EtpClient_v12_SendMessage_Receive_Protocol_Exception_After_Sending_Invalid_Message()
         {
             var onProtocolException = HandleAsync<IProtocolException>(x => _client.Handler<ICoreClient>().OnProtocolException += x);
 

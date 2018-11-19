@@ -18,7 +18,6 @@
 
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -40,6 +39,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         {
             Metadata = new ConcurrentBag<PartsMetadataInfo>();
             Errors = new ConcurrentBag<ErrorInfo>();
+
+            RegisterMessageHandler<ObjectPart>(Protocols.GrowingObject, MessageTypes.GrowingObject.ObjectPart, HandleObjectPart);
+            RegisterMessageHandler<GetPartsMetadataResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadataResponse, HandleGetPartsMetadataResponse);
         }
 
         /// <summary>
@@ -235,30 +237,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// Handles the GetPartsMetadataResponse event from a store.
         /// </summary>
         public event ProtocolEventHandler<GetPartsMetadataResponse> OnGetPartsMetadataResponse;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.GrowingObject.ObjectPart:
-                    HandleObjectPart(header, decoder.Decode<ObjectPart>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObject.GetPartsMetadataResponse:
-                    HandleGetPartsMetadataResponse(header, decoder.Decode<GetPartsMetadataResponse>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the ObjectPart message from a store.

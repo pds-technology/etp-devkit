@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.ChannelData;
@@ -37,6 +36,13 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         public ChannelSubscribeConsumerHandler() : base((int)Protocols.ChannelSubscribe, "consumer", "producer")
         {
             ChannelMetadataRecords = new List<ChannelMetadataRecord>(0);
+
+            RegisterMessageHandler<GetChannelMetadataResponse>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetChannelMetadataResponse, HandleGetChannelMetadataResponse);
+            RegisterMessageHandler<RealtimeData>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.RealtimeData, HandleRealtimeData);
+            RegisterMessageHandler<InfillData>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.InfillData, HandleInfillData);
+            RegisterMessageHandler<ChangedData>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.ChangedData, HandleChangedData);
+            RegisterMessageHandler<SubscriptionStopped>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.SubscriptionStopped, HandleSubscriptionStopped);
+            RegisterMessageHandler<GetRangeResponse>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRangeResponse, HandleGetRangeResponse);
         }
 
         /// <summary>
@@ -142,46 +148,6 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// Handles the GetRangeResponse event from a producer.
         /// </summary>
         public event ProtocolEventHandler<GetRangeResponse> OnGetRangeResponse;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.ChannelSubscribe.GetChannelMetadataResponse:
-                    HandleGetChannelMetadataResponse(header, decoder.Decode<GetChannelMetadataResponse>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelSubscribe.RealtimeData:
-                    HandleRealtimeData(header, decoder.Decode<RealtimeData>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelSubscribe.InfillData:
-                    HandleInfillData(header, decoder.Decode<InfillData>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelSubscribe.ChangedData:
-                    HandleChangedData(header, decoder.Decode<ChangedData>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelSubscribe.SubscriptionStopped:
-                    HandleSubscriptionStopped(header, decoder.Decode<SubscriptionStopped>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelSubscribe.GetRangeResponse:
-                    HandleGetRangeResponse(header, decoder.Decode<GetRangeResponse>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the GetChannelMetadataResponse message from a producer.

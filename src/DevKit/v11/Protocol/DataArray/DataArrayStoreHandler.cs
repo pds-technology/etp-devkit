@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes;
@@ -36,6 +35,10 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// </summary>
         public DataArrayStoreHandler() : base((int)Protocols.DataArray, "store", "customer")
         {
+            RegisterMessageHandler<GetDataArray>(Protocols.DataArray, MessageTypes.DataArray.GetDataArray, HandleGetDataArray);
+            RegisterMessageHandler<GetDataArraySlice>(Protocols.DataArray, MessageTypes.DataArray.GetDataArraySlice, HandleGetDataArraySlice);
+            RegisterMessageHandler<PutDataArray>(Protocols.DataArray, MessageTypes.DataArray.PutDataArray, HandlePutDataArray);
+            RegisterMessageHandler<PutDataArraySlice>(Protocols.DataArray, MessageTypes.DataArray.PutDataArraySlice, HandlePutDataArraySlice);
         }
 
         /// <summary>
@@ -76,38 +79,6 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// Handles the PutDataArraySlice event from a store.
         /// </summary>
         public event ProtocolEventHandler<PutDataArraySlice> OnPutDataArraySlice;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.DataArray.GetDataArray:
-                    HandleGetDataArray(header, decoder.Decode<GetDataArray>(body));
-                    break;
-
-                case (int)MessageTypes.DataArray.GetDataArraySlice:
-                    HandleGetDataArraySlice(header, decoder.Decode<GetDataArraySlice>(body));
-                    break;
-
-                case (int)MessageTypes.DataArray.PutDataArray:
-                    HandlePutDataArray(header, decoder.Decode<PutDataArray>(body));
-                    break;
-
-                case (int)MessageTypes.DataArray.PutDataArraySlice:
-                    HandlePutDataArraySlice(header, decoder.Decode<PutDataArraySlice>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the GetDataArray message from a store.

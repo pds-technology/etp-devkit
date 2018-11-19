@@ -1,4 +1,4 @@
-﻿//----------------------------------------------------------------------- 
+//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
 // Copyright 2018 Energistics
@@ -18,7 +18,6 @@
 
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -40,6 +39,9 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         public DiscoveryCustomerHandler() : base((int)Protocols.Discovery, "customer", "store")
         {
             _requests = new ConcurrentDictionary<long, string>();
+
+            RegisterMessageHandler<GetResourcesResponse>(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse, HandleGetResourcesResponse);
+            RegisterMessageHandler<GetResourcesResponse2>(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse2, HandleGetResourcesResponse2);
         }
 
         /// <summary>
@@ -89,30 +91,6 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// Handles the GetResourcesResponse event from a store.
         /// </summary>
         public event ProtocolEventHandler<GetResourcesResponse2, string> OnGetResourcesResponse2;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.Discovery.GetResourcesResponse:
-                    HandleGetResourcesResponse(header, decoder.Decode<GetResourcesResponse>(body));
-                    break;
-
-                case (int)MessageTypes.Discovery.GetResourcesResponse2:
-                    HandleGetResourcesResponse2(header, decoder.Decode<GetResourcesResponse2>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handle any final cleanup related to the final message in response to a request.

@@ -83,6 +83,7 @@
   <ItemGroup>
     <Compile Include="Common\Datatypes\EtpVersion.cs" />
     <Compile Include="Common\Datatypes\WebSocketType.cs" />
+    <Compile Include="Common\EtpAdapterBase.cs" />
     <Compile Include="Common\EtpWebServerBase.cs" />
     <Compile Include="Common\EtpBase.cs" />
     <Compile Include="Common\EtpWebSocketValidation.cs" />

@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes.ChannelData;
@@ -36,6 +35,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// </summary>
         public ChannelDataFrameProducerHandler() : base((int)Protocols.ChannelDataFrame, "producer", "consumer")
         {
+            RegisterMessageHandler<RequestChannelData>(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.RequestChannelData, HandleRequestChannelData);
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// <returns>The message identifier.</returns>
         public virtual long ChannelMetadata(ChannelMetadata channelMetadata)
         {
-            var header = CreateMessageHeader((int)Protocols.ChannelDataFrame, (int)MessageTypes.ChannelDataFrame.ChannelMetadata);
+            var header = CreateMessageHeader(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.ChannelMetadata);
 
             return Session.SendMessage(header, channelMetadata);
         }
@@ -58,7 +58,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// <returns>The message identifier.</returns>
         public virtual long ChannelDataFrameSet(IList<long> channelIds, IList<DataFrame> dataFrames)
         {
-            var header = CreateMessageHeader((int)Protocols.ChannelDataFrame, (int)MessageTypes.ChannelDataFrame.ChannelDataFrameSet);
+            var header = CreateMessageHeader(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.ChannelDataFrameSet);
 
             var channelDataFrameSet = new ChannelDataFrameSet()
             {
@@ -73,26 +73,6 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// Handles the RequestChannelData event from a customer.
         /// </summary>
         public event ProtocolEventHandler<RequestChannelData, ChannelMetadata> OnRequestChannelData;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.ChannelDataFrame.RequestChannelData:
-                    HandleRequestChannelData(header, decoder.Decode<RequestChannelData>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the RequestChannelData message from a customer.

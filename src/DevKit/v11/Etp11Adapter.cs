@@ -16,19 +16,22 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Linq;
 using Avro.IO;
+using Avro.Specific;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.v11.Datatypes;
 using Energistics.Etp.v11.Protocol.Core;
+using System.Linq;
 
 namespace Energistics.Etp.v11
 {
-    public class Etp11Adapter : IEtpAdapter
+    public class Etp11Adapter : EtpAdapterBase, IEtpAdapter
     {
-        public EtpVersion SupportedVersion => EtpVersion.v11;
+        public Etp11Adapter() : base(EtpVersion.v11)
+        {
+        }
 
         public void RegisterCore(IEtpSession session)
         {
@@ -87,14 +90,9 @@ namespace Energistics.Etp.v11
             return new Acknowledge();
         }
 
-        public IAcknowledge DecodeAcknowledge(Decoder decoder, string content)
+        public IAcknowledge DecodeAcknowledge(ISpecificRecord body)
         {
-            return decoder.Decode<Acknowledge>(content);
-        }
-
-        public IAcknowledge DeserializeAcknowledge(string content)
-        {
-            return EtpExtensions.Deserialize<Acknowledge>(content);
+            return (Acknowledge)body;
         }
 
         public IProtocolException CreateProtocolException()
@@ -102,14 +100,9 @@ namespace Energistics.Etp.v11
             return new ProtocolException();
         }
 
-        public IProtocolException DecodeProtocolException(Decoder decoder, string content)
+        public IProtocolException DecodeProtocolException(ISpecificRecord body)
         {
-            return decoder.Decode<ProtocolException>(content);
-        }
-
-        public IProtocolException DeserializeProtocolException(string content)
-        {
-            return EtpExtensions.Deserialize<ProtocolException>(content);
+            return (ProtocolException)body;
         }
     }
 }

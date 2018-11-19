@@ -91,10 +91,19 @@ namespace Energistics.Etp.Native
             Logger.Trace($"Starting");
             if (!IsRunning)
             {
-                _httpListener.Prefixes.Add(Uri.ToString());
-                _httpListener.Prefixes.Add($"http://127.0.0.1:{Uri.Port}/");
-                _httpListener.Prefixes.Add($"http://{Dns.GetHostName()}:{Uri.Port}/");
-                _httpListener.Start();
+                try
+                {
+                    _httpListener.Prefixes.Add($"http://+:{Uri.Port}/");
+                    _httpListener.Start();
+                }
+                catch (HttpListenerException) // Will happen when not run as administrator...
+                {
+                    Logger.Debug($"Could not listen on all addresses for port {Uri.Port}.  Falling back to listening on loopback addresses.  Run as administrator to listen on all addresses.");
+                    _httpListener = new HttpListener();
+                    _httpListener.Prefixes.Add(Uri.ToString());
+                    _httpListener.Prefixes.Add($"http://127.0.0.1:{Uri.Port}/");
+                    _httpListener.Start();
+                }
                 _source = new CancellationTokenSource();
                 _listenerTask = Task.Factory.StartNew(
                     async () => await HandleListener(_source.Token).ConfigureAwait(false), _source.Token,

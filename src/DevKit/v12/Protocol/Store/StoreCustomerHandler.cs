@@ -16,7 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -35,6 +34,7 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// </summary>
         public StoreCustomerHandler() : base((int)Protocols.Store, "customer", "store")
         {
+            RegisterMessageHandler<Object>(Protocols.Store, MessageTypes.Store.Object, HandleObject);
         }
 
         /// <summary>
@@ -93,26 +93,6 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// Handles the Object event from a store.
         /// </summary>
         public event ProtocolEventHandler<Object> OnObject;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.Store.Object:
-                    HandleObject(header, decoder.Decode<Object>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the Object message from a store.

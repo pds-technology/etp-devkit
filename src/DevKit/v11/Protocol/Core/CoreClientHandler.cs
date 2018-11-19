@@ -18,7 +18,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes;
@@ -40,6 +39,9 @@ namespace Energistics.Etp.v11.Protocol.Core
             RequestedProtocols = new List<ISupportedProtocol>(0);
             SupportedProtocols = new List<ISupportedProtocol>(0);
             ServerObjects = new List<string>(0);
+
+            RegisterMessageHandler<OpenSession>(Protocols.Core, MessageTypes.Core.OpenSession, HandleOpenSession);
+            RegisterMessageHandler<CloseSession>(Protocols.Core, MessageTypes.Core.CloseSession, HandleCloseSession);
         }
 
         /// <summary>
@@ -135,30 +137,6 @@ namespace Energistics.Etp.v11.Protocol.Core
         /// Handles the CloseSession event from a server.
         /// </summary>
         public event ProtocolEventHandler<CloseSession> OnCloseSession;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.Core.OpenSession:
-                    HandleOpenSession(header, decoder.Decode<OpenSession>(body));
-                    break;
-
-                case (int)MessageTypes.Core.CloseSession:
-                    HandleCloseSession(header, decoder.Decode<CloseSession>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the OpenSession message from the server.

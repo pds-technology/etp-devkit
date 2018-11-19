@@ -19,10 +19,10 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
-using Energistics.Etp.v11.Protocol.Core;
+using Energistics.Etp.v12.Protocol.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Energistics.Etp.v11.Protocol.ChannelStreaming
+namespace Energistics.Etp.v12.Protocol.ChannelStreaming
 {
     [TestClass]
     public class ChannelStreamingProtocolTests : IntegrationTestBase
@@ -30,10 +30,10 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         [TestInitialize]
         public void TestSetUp()
         {
-            SetUp(TestSettings.WebSocketType, EtpSettings.Etp11SubProtocol);
+            SetUp(TestSettings.WebSocketType, EtpSettings.Etp12SubProtocol);
 
             // Register protocol handler
-            _server.Register<IChannelStreamingProducer, ChannelStreamingProducer11MockHandler>();
+            _server.Register<IChannelStreamingProducer, ChannelStreamingProducer12MockHandler>();
 
             _server.Start();
         }
@@ -45,26 +45,24 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         }
 
         [TestMethod]
-        public async Task IChannelStreamingConsumer_v11_Start_Connected_To_Simple_Producer()
+        public async Task IChannelStreamingConsumer_v12_Start_Connected_To_Simple_Producer()
         {
-            _client.Register<IChannelStreamingConsumer, ChannelStreamingConsumer11MockHandler>();
-            var handler = _client.Handler<IChannelStreamingConsumer>() as ChannelStreamingConsumer11MockHandler;
+            var handler = _client.Handler<IChannelStreamingConsumer>();
 
             // Register event handlers
             var onChannelMetadata = HandleAsync<ChannelMetadata>(x => handler.OnChannelMetadata += x);
             var onChannelData = HandleAsync<ChannelData>(x => handler.OnChannelData += x);
-            var onOpenSession = HandleAsync<OpenSession>(x => handler.OnOpenSession += x);
+            var onOpenSession = HandleAsync<OpenSession>(x => _client.Handler<ICoreClient>().OnOpenSession += x);
 
             // Wait for Open connection
             var isOpen = await _client.OpenAsyncWithTimeout();
             Assert.IsTrue(isOpen);
 
-            // Wait for OpenSession to check if the producer is a simple streamer
+            // Wait for OpenSession
             await onOpenSession.WaitAsync();
-            Assert.IsTrue(handler.ProducerIsSimpleStreamer);
 
             // Send Start message
-            handler.Start();
+            handler.StartStreaming();
 
             // Wait for ChannelMetadata message
             var argsMetadata = await onChannelMetadata.WaitAsync();

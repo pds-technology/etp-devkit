@@ -120,7 +120,7 @@ namespace Energistics.Etp.Common
         void OnMessageReceived(string message);
 
         /// <summary>
-        /// Sends the message.
+        /// Synchronously sends the message.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="header">The header.</param>
@@ -128,6 +128,16 @@ namespace Energistics.Etp.Common
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The message identifier.</returns>
         long SendMessage<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null) where T : ISpecificRecord;
+
+        /// <summary>
+        /// Asynchronously sends the message.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="header">The header.</param>
+        /// <param name="body">The body.</param>
+        /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
+        /// <returns>The message identifier.</returns>
+        Task<long> SendMessageAsync<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null) where T : ISpecificRecord;
 
         /// <summary>
         /// Gets the supported protocols.

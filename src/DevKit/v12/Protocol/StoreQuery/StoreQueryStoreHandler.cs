@@ -18,7 +18,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -39,6 +38,8 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         public StoreQueryStoreHandler() : base((int)Protocols.StoreQuery, "store", "customer")
         {
             MaxResponseCount = EtpSettings.DefaultMaxResponseCount;
+
+            RegisterMessageHandler<FindObjects>(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjects, HandleFindObjects);
         }
 
         /// <summary>
@@ -100,26 +101,6 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// Handles the FindObjects event from a customer.
         /// </summary>
         public event ProtocolEventHandler<FindObjects, DataObjectResponse> OnFindObjects;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.StoreQuery.FindObjects:
-                    HandleFindObjects(header, decoder.Decode<FindObjects>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the FindObjects message from a customer.

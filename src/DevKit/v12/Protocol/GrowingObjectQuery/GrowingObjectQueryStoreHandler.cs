@@ -18,7 +18,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -39,6 +38,8 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         public GrowingObjectQueryStoreHandler() : base((int)Protocols.GrowingObjectQuery, "store", "customer")
         {
             MaxResponseCount = EtpSettings.DefaultMaxResponseCount;
+
+            RegisterMessageHandler<FindParts>(Protocols.GrowingObjectQuery, MessageTypes.GrowingObjectQuery.FindParts, HandleFindParts);
         }
 
         /// <summary>
@@ -105,26 +106,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// Handles the FindParts event from a customer.
         /// </summary>
         public event ProtocolEventHandler<FindParts, ObjectPartResponse> OnFindParts;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.GrowingObjectQuery.FindParts:
-                    HandleFindParts(header, decoder.Decode<FindParts>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the FindParts message from a customer.

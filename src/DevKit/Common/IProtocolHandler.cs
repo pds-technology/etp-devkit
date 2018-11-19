@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using Avro.IO;
+using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
 
@@ -97,9 +98,8 @@ namespace Energistics.Etp.Common
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
         /// <param name="body">The message body.</param>
-        void HandleMessage(IMessageHeader header, Decoder decoder, string body);
+        void HandleMessage(IMessageHeader header, ISpecificRecord body);
 
         /// <summary>
         /// Occurs when an Acknowledge message is received for the current protocol.

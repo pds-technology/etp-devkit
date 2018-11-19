@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -36,6 +35,9 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// </summary>
         public StoreNotificationCustomerHandler() : base((int)Protocols.StoreNotification, "customer", "store")
         {
+            RegisterMessageHandler<ObjectChanged>(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectChanged, HandleObjectChanged);
+            RegisterMessageHandler<ObjectDeleted>(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectDeleted, HandleObjectDeleted);
+            RegisterMessageHandler<ObjectAccessRevoked>(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectAccessRevoked, HandleObjectAccessRevoked);
         }
 
         /// <summary>
@@ -103,34 +105,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// Handles the ObjectAccessRevoked event from a store.
         /// </summary>
         public event ProtocolEventHandler<ObjectAccessRevoked> OnObjectAccessRevoked;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.StoreNotification.ObjectChanged:
-                    HandleObjectChanged(header, decoder.Decode<ObjectChanged>(body));
-                    break;
-
-                case (int)MessageTypes.StoreNotification.ObjectDeleted:
-                    HandleObjectDeleted(header, decoder.Decode<ObjectDeleted>(body));
-                    break;
-
-                case (int)MessageTypes.StoreNotification.ObjectAccessRevoked:
-                    HandleObjectAccessRevoked(header, decoder.Decode<ObjectAccessRevoked>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the ObjectChanged message from a store.

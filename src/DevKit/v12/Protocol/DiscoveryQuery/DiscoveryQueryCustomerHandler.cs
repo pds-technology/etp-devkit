@@ -18,7 +18,6 @@
 
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 
@@ -39,6 +38,8 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         public DiscoveryQueryCustomerHandler() : base((int)Protocols.DiscoveryQuery, "customer", "store")
         {
             _requests = new ConcurrentDictionary<long, string>();
+
+            RegisterMessageHandler<FindResourcesResponse>(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResourcesResponse, HandleFindResourcesResponse);
         }
 
         /// <summary>
@@ -64,26 +65,6 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// Handles the FindResourcesResponse event from a store.
         /// </summary>
         public event ProtocolEventHandler<FindResourcesResponse, string> OnFindResourcesResponse;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.DiscoveryQuery.FindResourcesResponse:
-                    HandleFindResourcesResponse(header, decoder.Decode<FindResourcesResponse>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handle any final cleanup related to the final message in response to a request.

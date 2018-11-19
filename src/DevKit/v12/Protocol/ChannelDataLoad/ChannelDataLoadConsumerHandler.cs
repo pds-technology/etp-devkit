@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -37,6 +36,11 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// </summary>
         public ChannelDataLoadConsumerHandler() : base((int)Protocols.ChannelDataLoad, "consumer", "producer")
         {
+            RegisterMessageHandler<OpenChannel>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannel, HandleOpenChannel);
+            RegisterMessageHandler<CloseChannel>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.CloseChannel, HandleCloseChannel);
+            RegisterMessageHandler<RealtimeData>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.RealtimeData, HandleRealtimeData);
+            RegisterMessageHandler<InfillData>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.InfillData, HandleInfillData);
+            RegisterMessageHandler<ChangedData>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ChangedData, HandleChangedData);
         }
 
         /// <summary>
@@ -84,42 +88,6 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// Handles the ChangedData event from a store.
         /// </summary>
         public event ProtocolEventHandler<ChangedData> OnChangedData;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.ChannelDataLoad.OpenChannel:
-                    HandleOpenChannel(header, decoder.Decode<OpenChannel>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelDataLoad.CloseChannel:
-                    HandleCloseChannel(header, decoder.Decode<CloseChannel>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelDataLoad.RealtimeData:
-                    HandleRealtimeData(header, decoder.Decode<RealtimeData>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelDataLoad.InfillData:
-                    HandleInfillData(header, decoder.Decode<InfillData>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelDataLoad.ChangedData:
-                    HandleChangedData(header, decoder.Decode<ChangedData>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the OpenChannel message from a customer.

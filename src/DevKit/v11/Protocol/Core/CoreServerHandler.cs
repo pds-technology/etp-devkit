@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes;
@@ -39,6 +38,10 @@ namespace Energistics.Etp.v11.Protocol.Core
         public CoreServerHandler() : base((int)Protocols.Core, "server", "client")
         {
             RequestedProtocols = new List<ISupportedProtocol>(0);
+
+            RegisterMessageHandler<RequestSession>(Protocols.Core, MessageTypes.Core.RequestSession, HandleRequestSession);
+            RegisterMessageHandler<CloseSession>(Protocols.Core, MessageTypes.Core.CloseSession, HandleCloseSession);
+            RegisterMessageHandler<RenewSecurityToken>(Protocols.Core, MessageTypes.Core.RenewSecurityToken, HandleRenewSecurityToken);
         }
 
         /// <summary>
@@ -133,34 +136,6 @@ namespace Energistics.Etp.v11.Protocol.Core
         /// Handles the RenewSecurityToken event from a client.
         /// </summary>
         public event ProtocolEventHandler<RenewSecurityToken> OnRenewSecurityToken;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.Core.RequestSession:
-                    HandleRequestSession(header, decoder.Decode<RequestSession>(body));
-                    break;
-
-                case (int)MessageTypes.Core.CloseSession:
-                    HandleCloseSession(header, decoder.Decode<CloseSession>(body));
-                    break;
-
-                case (int)MessageTypes.Core.RenewSecurityToken:
-                    HandleRenewSecurityToken(header, decoder.Decode<RenewSecurityToken>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the RequestSession message from a client.

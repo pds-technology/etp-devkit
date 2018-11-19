@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.ChannelData;
@@ -37,6 +36,9 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         public ChannelStreamingConsumerHandler() : base((int)Protocols.ChannelStreaming, "consumer", "producer")
         {
             ChannelMetadataRecords = new List<ChannelMetadataRecord>();
+
+            RegisterMessageHandler<ChannelMetadata>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelMetadata, HandleChannelMetadata);
+            RegisterMessageHandler<ChannelData>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelData, HandleChannelData);
         }
 
         /// <summary>
@@ -81,30 +83,6 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// Handles the ChannelData event from a producer.
         /// </summary>
         public event ProtocolEventHandler<ChannelData> OnChannelData;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.ChannelStreaming.ChannelMetadata:
-                    HandleChannelMetadata(header, decoder.Decode<ChannelMetadata>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelStreaming.ChannelData:
-                    HandleChannelData(header, decoder.Decode<ChannelData>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the ChannelMetadata message from a producer.

@@ -16,7 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -35,6 +34,9 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// </summary>
         public StoreNotificationStoreHandler() : base((int)Protocols.StoreNotification, "store", "customer")
         {
+            RegisterMessageHandler<SubscribeNotification>(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotification, HandleSubscribeNotification);
+            RegisterMessageHandler<SubscribeNotification2>(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotification2, HandleSubscribeNotification2);
+            RegisterMessageHandler<UnsubscribeNotification>(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsubscribeNotification, HandleUnsubscribeNotification);
         }
 
         /// <summary>
@@ -109,34 +111,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// Handles the UnsubscribeNotification event from a customer.
         /// </summary>
         public event ProtocolEventHandler<UnsubscribeNotification> OnUnsubscribeNotification;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.StoreNotification.SubscribeNotification:
-                    HandleSubscribeNotification(header, decoder.Decode<SubscribeNotification>(body));
-                    break;
-
-                case (int)MessageTypes.StoreNotification.SubscribeNotification2:
-                    HandleSubscribeNotification2(header, decoder.Decode<SubscribeNotification2>(body));
-                    break;
-
-                case (int)MessageTypes.StoreNotification.UnsubscribeNotification:
-                    HandleUnsubscribeNotification(header, decoder.Decode<UnsubscribeNotification>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the SubscribeNotification message from a customer.

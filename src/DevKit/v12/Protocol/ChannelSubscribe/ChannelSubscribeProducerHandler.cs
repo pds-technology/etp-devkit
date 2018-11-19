@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -38,6 +37,10 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// </summary>
         public ChannelSubscribeProducerHandler() : base((int)Protocols.ChannelSubscribe, "producer", "consumer")
         {
+            RegisterMessageHandler<GetChannelMetadata>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetChannelMetadata, HandleGetChannelMetadata);
+            RegisterMessageHandler<SubscribeChannels>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.SubscribeChannels, HandleSubscribeChannels);
+            RegisterMessageHandler<UnsubscribeChannels>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.UnsubscribeChannels, HandleUnsubscribeChannels);
+            RegisterMessageHandler<GetRange>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRange, HandleGetRange);
         }
 
         /// <summary>
@@ -182,38 +185,6 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// Handles the GetRange event from a consumer.
         /// </summary>
         public event ProtocolEventHandler<GetRange> OnGetRange;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.ChannelSubscribe.GetChannelMetadata:
-                    HandleGetChannelMetadata(header, decoder.Decode<GetChannelMetadata>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelSubscribe.SubscribeChannels:
-                    HandleSubscribeChannels(header, decoder.Decode<SubscribeChannels>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelSubscribe.UnsubscribeChannels:
-                    HandleUnsubscribeChannels(header, decoder.Decode<UnsubscribeChannels>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelSubscribe.GetRange:
-                    HandleGetRange(header, decoder.Decode<GetRange>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the GetChannelMetadata message from a consumer.

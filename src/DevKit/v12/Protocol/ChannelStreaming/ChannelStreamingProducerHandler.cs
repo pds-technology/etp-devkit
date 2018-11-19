@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -38,6 +37,9 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         public ChannelStreamingProducerHandler() : base((int)Protocols.ChannelStreaming, "producer", "consumer")
         {
             MaxDataItems = EtpSettings.DefaultMaxDataItems;
+
+            RegisterMessageHandler<StartStreaming>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.StartStreaming, HandleStartStreaming);
+            RegisterMessageHandler<StopStreaming>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.StopStreaming, HandleStopStreaming);
         }
 
         /// <summary>
@@ -105,30 +107,6 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// Handles the StopStreaming event from a consumer.
         /// </summary>
         public event ProtocolEventHandler<StopStreaming> OnStopStreaming;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.ChannelStreaming.StartStreaming:
-                    HandleStartStreaming(header, decoder.Decode<StartStreaming>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelStreaming.StopStreaming:
-                    HandleStopStreaming(header, decoder.Decode<StopStreaming>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the StartStreaming message from a consumer.

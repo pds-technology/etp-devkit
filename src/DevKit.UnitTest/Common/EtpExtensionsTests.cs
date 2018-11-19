@@ -49,5 +49,65 @@ namespace Energistics.Etp.Common
         {
             var ftp = new Uri("ftp://localhost:8080/api/etp").ToWebSocketUri();
         }
+
+        [TestMethod]
+        public void EtpExtensions_CreateMessageKey_Creates_Core_Key()
+        {
+            long expectedKey, actualKey;
+
+            expectedKey = 1L;
+            actualKey = EtpExtensions.CreateMessageKey((int)v11.Protocols.Core, (int)v11.MessageTypes.Core.RequestSession);
+            Assert.AreEqual(expectedKey, actualKey);
+
+            expectedKey = 1L;
+            actualKey = EtpExtensions.CreateMessageKey((int)v12.Protocols.Core, (int)v12.MessageTypes.Core.RequestSession);
+            Assert.AreEqual(expectedKey, actualKey);
+
+            expectedKey = 1000L;
+            actualKey = EtpExtensions.CreateMessageKey((int)v11.Protocols.Core, (int)v11.MessageTypes.Core.ProtocolException);
+            Assert.AreEqual(expectedKey, actualKey);
+
+            expectedKey = 1000L;
+            actualKey = EtpExtensions.CreateMessageKey((int)v12.Protocols.Core, (int)v12.MessageTypes.Core.ProtocolException);
+            Assert.AreEqual(expectedKey, actualKey);
+
+            expectedKey = 1001L;
+            actualKey = EtpExtensions.CreateMessageKey((int)v11.Protocols.Core, (int)v11.MessageTypes.Core.Acknowledge);
+            Assert.AreEqual(expectedKey, actualKey);
+
+            expectedKey = 1001L;
+            actualKey = EtpExtensions.CreateMessageKey((int)v12.Protocols.Core, (int)v12.MessageTypes.Core.Acknowledge);
+            Assert.AreEqual(expectedKey, actualKey);
+        }
+
+        [TestMethod]
+        public void EtpExtensions_CreateMessageKey_Creates_Discovery_Key()
+        {
+            long expectedKey, actualKey;
+
+            expectedKey = (3L << 32) + 1;
+            actualKey = EtpExtensions.CreateMessageKey((int)v11.Protocols.Discovery, (int)v11.MessageTypes.Discovery.GetResources);
+            Assert.AreEqual(expectedKey, actualKey);
+
+            expectedKey = (3L << 32) + 1;
+            actualKey = EtpExtensions.CreateMessageKey((int)v12.Protocols.Discovery, (int)v12.MessageTypes.Discovery.GetResources);
+            Assert.AreEqual(expectedKey, actualKey);
+            
+            expectedKey = 1000L;
+            actualKey = EtpExtensions.CreateMessageKey((int)v11.Protocols.Discovery, (int)v11.MessageTypes.Core.ProtocolException);
+            Assert.AreEqual(expectedKey, actualKey);
+
+            expectedKey = 1000L;
+            actualKey = EtpExtensions.CreateMessageKey((int)v12.Protocols.Discovery, (int)v12.MessageTypes.Core.ProtocolException);
+            Assert.AreEqual(expectedKey, actualKey);
+
+            expectedKey = 1001L;
+            actualKey = EtpExtensions.CreateMessageKey((int)v11.Protocols.Discovery, (int)v11.MessageTypes.Core.Acknowledge);
+            Assert.AreEqual(expectedKey, actualKey);
+
+            expectedKey = 1001L;
+            actualKey = EtpExtensions.CreateMessageKey((int)v12.Protocols.Discovery, (int)v12.MessageTypes.Core.Acknowledge);
+            Assert.AreEqual(expectedKey, actualKey);
+        }
     }
 }

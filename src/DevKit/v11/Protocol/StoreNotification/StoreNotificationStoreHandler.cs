@@ -16,7 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes.Object;
@@ -35,6 +34,8 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         /// </summary>
         public StoreNotificationStoreHandler() : base((int)Protocols.StoreNotification, "store", "customer")
         {
+            RegisterMessageHandler<NotificationRequest>(Protocols.StoreNotification, MessageTypes.StoreNotification.NotificationRequest, HandleNotificationRequest);
+            RegisterMessageHandler<CancelNotification>(Protocols.StoreNotification, MessageTypes.StoreNotification.CancelNotification, HandleCancelNotification);
         }
 
         /// <summary>
@@ -82,30 +83,6 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         /// Handles the CancelNotification event from a customer.
         /// </summary>
         public event ProtocolEventHandler<CancelNotification> OnCancelNotification;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.StoreNotification.NotificationRequest:
-                    HandleNotificationRequest(header, decoder.Decode<NotificationRequest>(body));
-                    break;
-
-                case (int)MessageTypes.StoreNotification.CancelNotification:
-                    HandleCancelNotification(header, decoder.Decode<CancelNotification>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the NotificationRequest message from a customer.

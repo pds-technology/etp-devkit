@@ -16,7 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -36,6 +35,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// </summary>
         public GrowingObjectNotificationStoreHandler() : base((int)Protocols.GrowingObjectNotification, "store", "customer")
         {
+            RegisterMessageHandler<SubscribePartNotification>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotification, HandleSubscribePartNotification);
+            RegisterMessageHandler<SubscribePartNotification2>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotification2, HandleSubscribePartNotification2);
+            RegisterMessageHandler<UnsubscribePartNotification>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsubscribePartNotification, HandleUnsubscribePartNotification);
         }
 
         /// <summary>
@@ -174,34 +176,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// Handles the UnsubscribePartNotification event from a customer.
         /// </summary>
         public event ProtocolEventHandler<UnsubscribePartNotification> OnUnsubscribePartNotification;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.GrowingObjectNotification.SubscribePartNotification:
-                    HandleSubscribePartNotification(header, decoder.Decode<SubscribePartNotification>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObjectNotification.SubscribePartNotification2:
-                    HandleSubscribePartNotification2(header, decoder.Decode<SubscribePartNotification2>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObjectNotification.UnsubscribePartNotification:
-                    HandleUnsubscribePartNotification(header, decoder.Decode<UnsubscribePartNotification>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the SubscribePartNotification message from a customer.

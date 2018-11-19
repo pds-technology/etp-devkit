@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -37,6 +36,13 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// </summary>
         public GrowingObjectStoreHandler() : base((int)Protocols.GrowingObject, "store", "customer")
         {
+            RegisterMessageHandler<GetPart>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPart, HandleGetPart);
+            RegisterMessageHandler<GetPartsByRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRange, HandleGetPartsByRange);
+            RegisterMessageHandler<PutPart>(Protocols.GrowingObject, MessageTypes.GrowingObject.PutPart, HandlePutPart);
+            RegisterMessageHandler<DeletePart>(Protocols.GrowingObject, MessageTypes.GrowingObject.DeletePart, HandleDeletePart);
+            RegisterMessageHandler<DeletePartsByRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.DeletePartsByRange, HandleDeletePartsByRange);
+            RegisterMessageHandler<ReplacePartsByRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.ReplacePartsByRange, HandleReplacePartsByRange);
+            RegisterMessageHandler<GetPartsMetadata>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadata, HandleGetPartsMetadata);
         }
 
         /// <summary>
@@ -127,50 +133,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// Handles the GetPartsMetadata event from a customer.
         /// </summary>
         public event ProtocolEventHandler<GetPartsMetadata> OnGetPartsMetadata;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.GrowingObject.GetPart:
-                    HandleGetPart(header, decoder.Decode<GetPart>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObject.GetPartsByRange:
-                    HandleGetPartsByRange(header, decoder.Decode<GetPartsByRange>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObject.PutPart:
-                    HandlePutPart(header, decoder.Decode<PutPart>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObject.DeletePart:
-                    HandleDeletePart(header, decoder.Decode<DeletePart>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObject.DeletePartsByRange:
-                    HandleDeletePartsByRange(header, decoder.Decode<DeletePartsByRange>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObject.ReplacePartsByRange:
-                    HandleReplacePartsByRange(header, decoder.Decode<ReplacePartsByRange>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObject.GetPartsMetadata:
-                    HandleGetPartsMetadata(header, decoder.Decode<GetPartsMetadata>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the GetPart message from a store.

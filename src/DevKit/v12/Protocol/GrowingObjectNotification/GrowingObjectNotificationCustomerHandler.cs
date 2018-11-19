@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -36,6 +35,10 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// </summary>
         public GrowingObjectNotificationCustomerHandler() : base((int)Protocols.GrowingObjectNotification, "customer", "store")
         {
+            RegisterMessageHandler<PartChanged>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartChanged, HandlePartChanged);
+            RegisterMessageHandler<PartDeleted>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartDeleted, HandlePartDeleted);
+            RegisterMessageHandler<PartsDeletedByRange>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsDeletedByRange, HandlePartsDeletedByRange);
+            RegisterMessageHandler<PartsReplacedByRange>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsReplacedByRange, HandlePartsReplacedByRange);
         }
 
         /// <summary>
@@ -108,38 +111,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// Handles the PartsReplacedByRange event from a store.
         /// </summary>
         public event ProtocolEventHandler<PartsReplacedByRange> OnPartsReplacedByRange;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.GrowingObjectNotification.PartChanged:
-                    HandlePartChanged(header, decoder.Decode<PartChanged>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObjectNotification.PartDeleted:
-                    HandlePartDeleted(header, decoder.Decode<PartDeleted>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObjectNotification.PartsDeletedByRange:
-                    HandlePartsDeletedByRange(header, decoder.Decode<PartsDeletedByRange>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObjectNotification.PartsReplacedByRange:
-                    HandlePartsReplacedByRange(header, decoder.Decode<PartsReplacedByRange>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the PartChanged message from a store.

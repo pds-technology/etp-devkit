@@ -21,7 +21,7 @@ using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Energistics.Etp.v11.Protocol.Discovery
+namespace Energistics.Etp.v12.Protocol.Discovery
 {
     [TestClass]
     public class DiscoveryProtocolTests : IntegrationTestBase
@@ -29,10 +29,10 @@ namespace Energistics.Etp.v11.Protocol.Discovery
         [TestInitialize]
         public void TestSetUp()
         {
-            SetUp(TestSettings.WebSocketType, EtpSettings.Etp11SubProtocol);
+            SetUp(TestSettings.WebSocketType, EtpSettings.Etp12SubProtocol);
 
             // Register protocol handler
-            _server.Register<IDiscoveryStore, DiscoveryStore11MockHandler>();
+            _server.Register<IDiscoveryStore, DiscoveryStore12MockHandler>();
 
             _server.Start();
         }
@@ -44,7 +44,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
         }
 
         [TestMethod]
-        public async Task IDiscoveryCustomer_v11_GetResource_Request_Default_Uri()
+        public async Task IDiscoveryCustomer_v12_GetResource_Request_Default_Uri()
         {
             var handler = _client.Handler<IDiscoveryCustomer>();
 

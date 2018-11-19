@@ -16,7 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 
@@ -34,6 +33,11 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         /// </summary>
         public GrowingObjectStoreHandler() : base((int)Protocols.GrowingObject, "store", "customer")
         {
+            RegisterMessageHandler<GrowingObjectGet>(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectGet, HandleGrowingObjectGet);
+            RegisterMessageHandler<GrowingObjectGetRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectGetRange, HandleGrowingObjectGetRange);
+            RegisterMessageHandler<GrowingObjectPut>(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectPut, HandleGrowingObjectPut);
+            RegisterMessageHandler<GrowingObjectDelete>(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectDelete, HandleGrowingObjectDelete);
+            RegisterMessageHandler<GrowingObjectDeleteRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectDeleteRange, HandleGrowingObjectDeleteRange);
         }
 
         /// <summary>
@@ -84,42 +88,6 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         /// Handles the GrowingObjectDeleteRange event from a customer.
         /// </summary>
         public event ProtocolEventHandler<GrowingObjectDeleteRange> OnGrowingObjectDeleteRange;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.GrowingObject.GrowingObjectGet:
-                    HandleGrowingObjectGet(header, decoder.Decode<GrowingObjectGet>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObject.GrowingObjectGetRange:
-                    HandleGrowingObjectGetRange(header, decoder.Decode<GrowingObjectGetRange>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObject.GrowingObjectPut:
-                    HandleGrowingObjectPut(header, decoder.Decode<GrowingObjectPut>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObject.GrowingObjectDelete:
-                    HandleGrowingObjectDelete(header, decoder.Decode<GrowingObjectDelete>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObject.GrowingObjectDeleteRange:
-                    HandleGrowingObjectDeleteRange(header, decoder.Decode<GrowingObjectDeleteRange>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the GrowingObjectGet message from a store.

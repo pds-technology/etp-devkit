@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -38,6 +37,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// </summary>
         public ChannelDataLoadProducerHandler() : base((int)Protocols.ChannelDataLoad, "producer", "consumer")
         {
+            RegisterMessageHandler<OpenChannelResponse>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelResponse, HandleOpenChannelResponse);
         }
 
         /// <summary>
@@ -143,26 +143,6 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// Handles the OpenChannelResponse event from a store.
         /// </summary>
         public event ProtocolEventHandler<OpenChannelResponse> OnOpenChannelResponse;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.ChannelDataLoad.OpenChannelResponse:
-                    HandleOpenChannelResponse(header, decoder.Decode<OpenChannelResponse>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the OpenChannelResponse message from a customer.

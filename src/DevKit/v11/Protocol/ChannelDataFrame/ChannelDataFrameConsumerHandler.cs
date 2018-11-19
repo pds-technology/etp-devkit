@@ -16,7 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 
@@ -34,6 +33,8 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// </summary>
         public ChannelDataFrameConsumerHandler() : base((int)Protocols.ChannelDataFrame, "consumer", "producer")
         {
+            RegisterMessageHandler<ChannelMetadata>(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.ChannelMetadata, HandleChannelMetadata);
+            RegisterMessageHandler<ChannelDataFrameSet>(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.ChannelDataFrameSet, HandleChannelDataFrameSet);
         }
 
         /// <summary>
@@ -45,7 +46,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// <returns>The message identifier.</returns>
         public virtual long RequestChannelData(string uri, long? fromIndex = null, long? toIndex = null)
         {
-            var header = CreateMessageHeader((int)Protocols.ChannelDataFrame, (int)MessageTypes.ChannelDataFrame.RequestChannelData);
+            var header = CreateMessageHeader(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.RequestChannelData);
 
             var requestChannelData = new RequestChannelData
             {
@@ -66,30 +67,6 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// Handles the ChannelDataFrameSet event from a producer.
         /// </summary>
         public event ProtocolEventHandler<ChannelDataFrameSet> OnChannelDataFrameSet;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.ChannelDataFrame.ChannelMetadata:
-                    HandleChannelMetadata(header, decoder.Decode<ChannelMetadata>(body));
-                    break;
-
-                case (int)MessageTypes.ChannelDataFrame.ChannelDataFrameSet:
-                    HandleChannelDataFrameSet(header, decoder.Decode<ChannelDataFrameSet>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the ChannelMetadata message from a producer.

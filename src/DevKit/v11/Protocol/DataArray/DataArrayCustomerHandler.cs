@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes;
@@ -36,6 +35,7 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// </summary>
         public DataArrayCustomerHandler() : base((int)Protocols.DataArray, "customer", "store")
         {
+            RegisterMessageHandler<DataArray>(Protocols.DataArray, MessageTypes.DataArray.DataArray, HandleDataArray);
         }
 
         /// <summary>
@@ -130,26 +130,6 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// Handles the DataArray event from a store.
         /// </summary>
         public event ProtocolEventHandler<DataArray> OnDataArray;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.DataArray.DataArray:
-                    HandleDataArray(header, decoder.Decode<DataArray>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the DataArray message from a store.

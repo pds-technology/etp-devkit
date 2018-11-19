@@ -519,11 +519,20 @@ namespace Energistics.Etp.Common
                         return;
                     }
 
-                    var message = $"Protocol handler not registered for protocol { header.Protocol }.";
-                    handler.ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, message, header.MessageId);
+                    var msg = $"Protocol handler not registered for protocol { header.Protocol }.";
+                    handler.ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, msg, header.MessageId);
 
                     return;
                 }
+
+                var message = Adapter.DecodeMessage(header.Protocol, header.MessageType, decoder, body);
+                if (message == null)
+                {
+                    handler.InvalidMessage(header);
+                    return;
+                }
+
+                Received(header, message);
 
                 try
                 {
@@ -533,12 +542,7 @@ namespace Energistics.Etp.Common
                         handler.Acknowledge(header.MessageId);
                     }
 
-                    if (Logger.IsVerboseEnabled())
-                    {
-                        Logger.Verbose($"[{SessionId}] Handling message with {handler.GetType()}; Message: {EtpExtensions.Serialize(header)}");
-                    }
-
-                    handler.HandleMessage(header, decoder, body);
+                    handler.HandleMessage(header, message);
                 }
                 catch (Exception ex)
                 {
@@ -651,6 +655,29 @@ namespace Energistics.Etp.Common
             {
                 Logger.VerboseFormat("[{0}] Sending message at {1}: {2}{3}{4}",
                     SessionId, now.ToString(TimestampFormat), EtpExtensions.Serialize(header), Environment.NewLine, EtpExtensions.Serialize(body, true));
+            }
+        }
+
+        /// <summary>
+        /// Logs the specified message header and body.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message body.</param>
+        protected void Received(IMessageHeader header, ISpecificRecord message)
+        {
+            var now = DateTime.Now;
+
+            if (Output != null)
+            {
+                Log("[{0}] Message received at {1}", SessionId, now.ToString(TimestampFormat));
+                Log(EtpExtensions.Serialize(header));
+                Log(EtpExtensions.Serialize(message, true));
+            }
+
+            if (Logger.IsVerboseEnabled())
+            {
+                Logger.VerboseFormat("[{0}] Message received at {1}: {2}{3}{4}",
+                    SessionId, now.ToString(TimestampFormat), EtpExtensions.Serialize(header), Environment.NewLine, EtpExtensions.Serialize(message, true));
             }
         }
 

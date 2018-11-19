@@ -16,7 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes.Object;
@@ -35,6 +34,8 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         /// </summary>
         public StoreNotificationCustomerHandler() : base((int)Protocols.StoreNotification, "customer", "store")
         {
+            RegisterMessageHandler<ChangeNotification>(Protocols.StoreNotification, MessageTypes.StoreNotification.ChangeNotification, HandleChangeNotification);
+            RegisterMessageHandler<DeleteNotification>(Protocols.StoreNotification, MessageTypes.StoreNotification.DeleteNotification, HandleDeleteNotification);
         }
 
         /// <summary>
@@ -80,30 +81,6 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         /// Handles the DeleteNotification event from a store.
         /// </summary>
         public event ProtocolEventHandler<DeleteNotification> OnDeleteNotification;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.StoreNotification.ChangeNotification:
-                    HandleChangeNotification(header, decoder.Decode<ChangeNotification>(body));
-                    break;
-
-                case (int)MessageTypes.StoreNotification.DeleteNotification:
-                    HandleDeleteNotification(header, decoder.Decode<DeleteNotification>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the ChangeNotification message from a store.

@@ -38,6 +38,21 @@ namespace Energistics.Etp.Common
         private static readonly char[] WhiteSpace = Enumerable.Range(0, 20).Select(Convert.ToChar).ToArray();
         public const string GzipEncoding = "gzip";
 
+        /// <summary>
+        /// Converts a protocol and message type to a unique message key combination
+        /// </summary>
+        /// <param name="protocol">The message protocol.</param>
+        /// <param name="messageType">The message type.</param>
+        /// <returns>The message key.</returns>
+        public static long CreateMessageKey(int protocol, int messageType)
+        {
+            // Special handling for Acknowledge and ProtocolException
+            if (messageType == (int)v11.MessageTypes.Core.Acknowledge || messageType == (int)v11.MessageTypes.Core.ProtocolException)
+                protocol = (int)v11.Protocols.Core;
+
+            return (((long)protocol) << 32) + messageType;
+        }
+
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings()
         {
             ContractResolver = new EtpContractResolver(),

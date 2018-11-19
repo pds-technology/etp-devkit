@@ -16,7 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes.Object;
@@ -35,6 +34,9 @@ namespace Energistics.Etp.v11.Protocol.Store
         /// </summary>
         public StoreStoreHandler() : base((int)Protocols.Store, "store", "customer")
         {
+            RegisterMessageHandler<GetObject>(Protocols.Store, MessageTypes.Store.GetObject, HandleGetObject);
+            RegisterMessageHandler<PutObject>(Protocols.Store, MessageTypes.Store.PutObject, HandlePutObject);
+            RegisterMessageHandler<DeleteObject>(Protocols.Store, MessageTypes.Store.DeleteObject, HandleDeleteObject);
         }
 
         /// <summary>
@@ -70,34 +72,6 @@ namespace Energistics.Etp.v11.Protocol.Store
         /// Handles the DeleteObject event from a customer.
         /// </summary>
         public event ProtocolEventHandler<DeleteObject> OnDeleteObject;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.Store.GetObject:
-                    HandleGetObject(header, decoder.Decode<GetObject>(body));
-                    break;
-
-                case (int)MessageTypes.Store.PutObject:
-                    HandlePutObject(header, decoder.Decode<PutObject>(body));
-                    break;
-
-                case (int)MessageTypes.Store.DeleteObject:
-                    HandleDeleteObject(header, decoder.Decode<DeleteObject>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
 
         /// <summary>
         /// Handles the GetObject message from a customer.

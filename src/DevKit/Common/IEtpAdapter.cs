@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using Avro.IO;
+using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
 
@@ -38,16 +39,22 @@ namespace Energistics.Etp.Common
 
         IMessageHeader DeserializeMessageHeader(string body);
 
+        void RegisterMessageDecoder<T>(object protocol, object messageType) where T : ISpecificRecord;
+
+        bool IsMessageDecoderRegistered(object protocol, object messageType);
+
+        bool IsMessageDecoderRegistered<T>() where T : ISpecificRecord;
+
+        ISpecificRecord DecodeMessage(int protocol, int messageType, Decoder decoder, string body);
+
+        T DecodeMessage<T>(Decoder decoder, string body) where T : ISpecificRecord;
+
         IAcknowledge CreateAcknowledge();
 
-        IAcknowledge DecodeAcknowledge(Decoder decoder, string body);
-
-        IAcknowledge DeserializeAcknowledge(string body);
+        IAcknowledge DecodeAcknowledge(ISpecificRecord body);
 
         IProtocolException CreateProtocolException();
 
-        IProtocolException DecodeProtocolException(Decoder decoder, string body);
-
-        IProtocolException DeserializeProtocolException(string body);
+        IProtocolException DecodeProtocolException(ISpecificRecord body);
     }
 }

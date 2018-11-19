@@ -1,4 +1,4 @@
-﻿//----------------------------------------------------------------------- 
+//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
 // Copyright 2018 Energistics
@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Avro.IO;
 using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
@@ -32,6 +31,8 @@ namespace Energistics.Etp.Common
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
     public abstract class EtpProtocolHandler : EtpBase, IProtocolHandler
     {
+        private readonly Dictionary<long, Action<IMessageHeader, ISpecificRecord>> MessageHandlers = new Dictionary<long, Action<IMessageHeader, ISpecificRecord>>();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpProtocolHandler"/> class.
         /// </summary>
@@ -45,6 +46,9 @@ namespace Energistics.Etp.Common
             Protocol = protocol;
             Role = role;
             RequestedRole = requestedRole;
+
+            RegisterMessageHandler<IProtocolException>(v11.Protocols.Core, v11.MessageTypes.Core.ProtocolException, HandleProtocolException);
+            RegisterMessageHandler<IAcknowledge>(v11.Protocols.Core, v11.MessageTypes.Core.Acknowledge, HandleAcknowledge);
         }
 
         /// <summary>
@@ -93,7 +97,7 @@ namespace Energistics.Etp.Common
         /// <returns>The message identifier.</returns>
         public virtual long Acknowledge(long correlationId, MessageFlags messageFlag = MessageFlags.None)
         {
-            var header = CreateMessageHeader(Protocol, (int)v11.MessageTypes.Core.Acknowledge, correlationId, messageFlag);
+            var header = CreateMessageHeader(Protocol, v11.MessageTypes.Core.Acknowledge, correlationId, messageFlag);
             var acknowledge = Session.Adapter.CreateAcknowledge();
 
             return Session.SendMessage(header, acknowledge);
@@ -108,7 +112,7 @@ namespace Energistics.Etp.Common
         /// <returns>The message identifier.</returns>
         public virtual long ProtocolException(int errorCode, string errorMessage, long correlationId = 0)
         {
-            var header = CreateMessageHeader(Protocol, (int)v11.MessageTypes.Core.ProtocolException, correlationId);
+            var header = CreateMessageHeader(Protocol, v11.MessageTypes.Core.ProtocolException, correlationId);
 
             var error = Session.Adapter.CreateProtocolException();
 
@@ -132,35 +136,11 @@ namespace Energistics.Etp.Common
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
         /// <param name="body">The message body.</param>
-        void IProtocolHandler.HandleMessage(IMessageHeader header, Decoder decoder, string body)
+        public void HandleMessage(IMessageHeader header, ISpecificRecord body)
         {
-            HandleMessage(header, decoder, body);
-        }
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected virtual void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)v11.MessageTypes.Core.ProtocolException:
-                    HandleProtocolException(header, Session.Adapter.DecodeProtocolException(decoder, body));
-                    break;
-
-                case (int)v11.MessageTypes.Core.Acknowledge:
-                    HandleAcknowledge(header, Session.Adapter.DecodeAcknowledge(decoder, body));
-                    break;
-
-                default:
-                    this.InvalidMessage(header);
-                    break;
-            }
+            if (!InvokeMessageHandler(header, body))
+                this.InvalidMessage(header);
 
             // Additional processing if this message was the final message in response to a request:
             if (header.IsFinalResponse())
@@ -207,7 +187,6 @@ namespace Energistics.Etp.Common
         protected ProtocolEventArgs<T> Notify<T>(ProtocolEventHandler<T> handler, IMessageHeader header, T message) where T : ISpecificRecord
         {
             var args = new ProtocolEventArgs<T>(header, message);
-            Received(header, message);
             handler?.Invoke(this, args);
             return args;
         }
@@ -225,33 +204,8 @@ namespace Energistics.Etp.Common
         protected ProtocolEventArgs<T, TContext> Notify<T, TContext>(ProtocolEventHandler<T, TContext> handler, IMessageHeader header, T message, TContext context) where T : ISpecificRecord
         {
             var args = new ProtocolEventArgs<T, TContext>(header, message, context);
-            Received(header, message);
             handler?.Invoke(this, args);
             return args;
-        }
-
-        /// <summary>
-        /// Logs the specified message header and body.
-        /// </summary>
-        /// <typeparam name="T">The type of the message.</typeparam>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message body.</param>
-        protected void Received<T>(IMessageHeader header, T message)
-        {
-            var now = DateTime.Now;
-
-            if (Session.Output != null)
-            {
-                Session.Log("[{0}] Message received at {1}", Session.SessionId, now.ToString(TimestampFormat));
-                Session.Log(EtpExtensions.Serialize(header));
-                Session.Log(EtpExtensions.Serialize(message, true));
-            }
-
-            if (Logger.IsVerboseEnabled())
-            {
-                Logger.VerboseFormat("[{0}] Message received at {1}: {2}{3}{4}",
-                    Session.SessionId, now.ToString(TimestampFormat), EtpExtensions.Serialize(header), Environment.NewLine, EtpExtensions.Serialize(message, true));
-            }
         }
 
         /// <summary>
@@ -302,6 +256,42 @@ namespace Energistics.Etp.Common
             header.CorrelationId = correlationId;
 
             return header;
+        }
+
+        /// <summary>
+        /// Invokes the message handler for the specified message type.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="body">The message body.</param>
+        /// <returns><c>true</c> if a handler for the message was invoked; <c>false</c> otherwise.</returns>
+        public bool InvokeMessageHandler(IMessageHeader header, ISpecificRecord body)
+        {
+            if (header == null)
+                return false;
+
+            var messageKey = EtpExtensions.CreateMessageKey(header.Protocol, header.MessageType);
+
+            Action<IMessageHeader, ISpecificRecord> messageHandler;
+            if (!MessageHandlers.TryGetValue(messageKey, out messageHandler))
+                return false;
+
+            messageHandler(header, body);
+            return true;
+        }
+
+        /// <summary>
+        /// Registers a handler for the specific protocol message.
+        /// </summary>
+        /// <typeparam name="T">The message type.</typeparam>
+        /// <param name="protocol">The message protocol.</param>
+        /// <param name="messageType">The type of the message.</param>
+        /// <param name="messageHandler">The protocol message handler.</param>
+        /// <remarks>If more than one handler is registered for the same protocol message, the last registered handler will be used.</remarks>
+        public void RegisterMessageHandler<T>(object protocol, object messageType, Action<IMessageHeader, T> messageHandler) where T : ISpecificRecord
+        {
+            var messageKey = EtpExtensions.CreateMessageKey(Convert.ToInt32(protocol), Convert.ToInt32(messageType));
+
+            MessageHandlers[messageKey] = (h, b) => messageHandler(h, (T)b);
         }
     }
 }
