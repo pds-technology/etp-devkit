@@ -173,11 +173,7 @@ namespace Energistics.Etp.Native
             }
             catch (Exception ex)
             {
-                if (ex.ExceptionMeansConnectionTerminated())
-                {
-                    InvokeSocketClosed();
-                }
-                else
+                if (!ex.ExceptionMeansConnectionTerminated())
                 {
                     Log("Error: {0}", ex.Message);
                     Logger.Debug(ex);
@@ -187,6 +183,7 @@ namespace Energistics.Etp.Native
             }
             finally
             {
+                InvokeSocketClosed();
                 CleanupAfterConnection();
             }
         }
