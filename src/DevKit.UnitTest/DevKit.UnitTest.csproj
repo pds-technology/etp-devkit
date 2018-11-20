@@ -66,6 +66,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="Common\Datatypes\ByteArrayConverterTests.cs" />
+    <Compile Include="EtpMessagesTests.cs" />
     <Compile Include="Common\EtpAdapterBaseTests.cs" />
     <Compile Include="Common\EtpExtensionsTests.cs" />
     <Compile Include="v11\Datatypes\ChannelData\StreamingStartIndexConverterTests.cs" />

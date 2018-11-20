@@ -21,7 +21,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace Energistics.Etp.Common
 {
@@ -91,7 +90,7 @@ namespace Energistics.Etp.Common
                 {
                     var messageType = Enum.Parse(messageTypeEnumType, name);
 
-                    if (!etp11.IsMessageDecoderRegistered(protocol, messageType) && name != "ChannelNotUsed")
+                    if (!etp11.IsMessageDecoderRegistered(protocol, messageType))
                         unregistered.Add(messageTypeEnumType.FullName + "." + name);
                 }
 
@@ -120,7 +119,7 @@ namespace Energistics.Etp.Common
                 {
                     var messageType = Enum.Parse(messageTypeEnumType, name);
 
-                    if (!etp12.IsMessageDecoderRegistered(protocol, messageType) && name != "ChannelNotUsed")
+                    if (!etp12.IsMessageDecoderRegistered(protocol, messageType))
                         unregistered.Add(messageTypeEnumType.FullName + "." + name);
                 }
 

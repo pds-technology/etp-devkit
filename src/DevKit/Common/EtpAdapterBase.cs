@@ -42,7 +42,6 @@ namespace Energistics.Etp.Common
         {
             SupportedVersion = version;
             RegisterStandardMessageDecoders();
-            RegisterWitsmlSoapDecoders();
         }
 
         public EtpVersion SupportedVersion { get; }
@@ -113,8 +112,6 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Checks whether a decoder is registered for the specified protocol message.
         /// </summary>
-        /// <param name="protocol">The message protocol.</param>
-        /// <param name="messageType">The message type.</param>
         /// <returns><c>true</c> if there is a message decoder registered; <c>false</c> otherwise.</returns>
         public bool IsMessageDecoderRegistered<T>() where T : ISpecificRecord
         {
@@ -169,47 +166,5 @@ namespace Energistics.Etp.Common
                 genericRegister.Invoke(this, new object[] { protocolsEnumValue, messageTypeEnumValue });
             }
         }
-
-        /// <summary>
-        /// Registers message decoders for WitsmlSoap, which does not follow the pattern set by other protocols.
-        /// </summary>
-        protected void RegisterWitsmlSoapDecoders()
-        {
-            if (SupportedVersion == EtpVersion.v11)
-            {
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMLS_AddToStore>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.AddToStore);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMSL_AddToStoreResponse>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.AddToStoreResponse);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMLS_DeleteFromStore>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.DeleteFromStore);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMSL_DeleteFromStoreResponse>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.DeleteFromStoreResponse);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMLS_GetBaseMsg>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.GetBaseMsg);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMSL_GetBaseMsgResponse>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.GetBaseMsgResponse);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMLS_GetCap>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.GetCap);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMSL_GetCapResponse>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.GetCapResponse);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMLS_GetFromStore>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.GetFromStore);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMSL_GetFromStoreResponse>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.GetFromStoreResponse);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMLS_GetVersion>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.GetVersion);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMSL_GetVersionResponse>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.GetVersionResponse);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMLS_UpdateInStore>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.UpdateInStore);
-                RegisterMessageDecoder<v11.Protocol.WitsmlSoap.WMSL_UpdateInStoreResponse>(v11.Protocols.WitsmlSoap, v11.MessageTypes.WitsmlSoap.UpdateInStoreResponse);
-            }
-            else
-            {
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_AddToStore>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.AddToStore);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_AddToStoreResponse>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.AddToStoreResponse);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_DeleteFromStore>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.DeleteFromStore);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_DeleteFromStoreResponse>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.DeleteFromStoreResponse);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_GetBaseMsg>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.GetBaseMsg);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_GetBaseMsgResponse>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.GetBaseMsgResponse);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_GetCap>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.GetCap);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_GetCapResponse>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.GetCapResponse);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_GetFromStore>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.GetFromStore);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_GetFromStoreResponse>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.GetFromStoreResponse);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_GetVersion>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.GetVersion);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_GetVersionResponse>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.GetVersionResponse);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_UpdateInStore>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.UpdateInStore);
-                RegisterMessageDecoder<v12.Protocol.WitsmlSoap.WMLS_UpdateInStoreResponse>(v12.Protocols.WitsmlSoap, v12.MessageTypes.WitsmlSoap.UpdateInStoreResponse);
-            }
-        }
-
     }
 }
