@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Energistics.Etp.Common.Datatypes;
 using log4net;
 
@@ -79,7 +80,9 @@ namespace Energistics.Etp.Common
         /// <returns>The message.</returns>
         public string Log(string message)
         {
-            Output?.Invoke(message);
+            if (Output != null)
+                Task.Run(() => Output(message));
+
             return message;
         }
 

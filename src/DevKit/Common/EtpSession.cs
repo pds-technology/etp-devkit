@@ -295,50 +295,47 @@ namespace Energistics.Etp.Common
         /// <returns>The message identifier.</returns>
         public async Task<long> SendMessageAsync<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null) where T : ISpecificRecord
         {
+            // Lock to ensure only one thread at a time attempts to send data and to ensure that messages are sent with sequential IDs
             try
             {
-                // Lock to ensure only one thread at a time attempts to send data and to ensure that messages are sent with sequential IDs
-                try
+                await _sendLock.WaitAsync().ConfigureAwait(false);
+
+                if (!IsOpen)
                 {
-                    await _sendLock.WaitAsync().ConfigureAwait(false);
-
-                    if (!IsOpen)
-                    {
-                        Log("Warning: Sending on a session that is not open.");
-                        Logger.Debug("Sending on a session that is not open.");
-                        return -1;
-                    }
-
-                    header.MessageId = NewMessageId();
-
-                    // Call the pre-send action in case any deterministic handling is needed with the actual message ID.
-                    // Must be invoked before sending to ensure the response is not asynchronously processed before this method returns.
-                    onBeforeSend?.Invoke(header);
-
-                    // Log message just before it gets sent if needed.
-                    Sending(header, body);
-
-                    if (IsJsonEncoding)
-                    {
-                        var message = EtpExtensions.Serialize(new object[] {header, body});
-                        await SendAsync(message).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        var data = body.Encode(header, SupportedCompression);
-                        await SendAsync(data, 0, data.Length).ConfigureAwait(false);
-                    }
+                    Log("Warning: Sending on a session that is not open.");
+                    Logger.Debug("Sending on a session that is not open.");
+                    return -1;
                 }
-                finally
+
+                header.MessageId = NewMessageId();
+
+                // Call the pre-send action in case any deterministic handling is needed with the actual message ID.
+                // Must be invoked before sending to ensure the response is not asynchronously processed before this method returns.
+                onBeforeSend?.Invoke(header);
+
+                // Log message just before it gets sent if needed.
+                Sending(header, body);
+
+                if (IsJsonEncoding)
                 {
-                    _sendLock.Release();
+                    var message = EtpExtensions.Serialize(new object[] {header, body});
+                    await SendAsync(message).ConfigureAwait(false);
+                }
+                else
+                {
+                    var data = body.Encode(header, SupportedCompression);
+                    await SendAsync(data, 0, data.Length).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
             {
                 // Handler already locked by the calling code...
                 return Handler(header.Protocol)
-                    .ProtocolException((int) EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
+                    .ProtocolException((int)EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
+            }
+            finally
+            {
+                _sendLock.Release();
             }
 
             return header.MessageId;
