@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -84,13 +84,13 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
 
                 var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjectsResponse, request.MessageId, messageFlags);
 
-                var findObjectsResponse = new FindObjectsResponse
+                var response = new FindObjectsResponse
                 {
-                    DataObject = objects[i],
+                    DataObject = new[] { objects[i] },
                     ServerSortOrder = sortOrder ?? string.Empty
                 };
 
-                messageId = Session.SendMessage(header, findObjectsResponse);
+                messageId = Session.SendMessage(header, response);
                 sortOrder = string.Empty; // Only needs to be set in the first message
             }
 

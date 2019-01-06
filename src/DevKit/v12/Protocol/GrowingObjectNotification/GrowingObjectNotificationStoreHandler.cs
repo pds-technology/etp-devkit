@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         public GrowingObjectNotificationStoreHandler() : base((int)Protocols.GrowingObjectNotification, "store", "customer")
         {
             RegisterMessageHandler<SubscribePartNotification>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotification, HandleSubscribePartNotification);
-            RegisterMessageHandler<SubscribePartNotification2>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotification2, HandleSubscribePartNotification2);
             RegisterMessageHandler<UnsubscribePartNotification>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsubscribePartNotification, HandleUnsubscribePartNotification);
         }
 
@@ -168,11 +167,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         public event ProtocolEventHandler<SubscribePartNotification> OnSubscribePartNotification;
 
         /// <summary>
-        /// Handles the SubscribePartNotification event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<SubscribePartNotification2> OnSubscribePartNotification2;
-
-        /// <summary>
         /// Handles the UnsubscribePartNotification event from a customer.
         /// </summary>
         public event ProtocolEventHandler<UnsubscribePartNotification> OnUnsubscribePartNotification;
@@ -185,16 +179,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         protected virtual void HandleSubscribePartNotification(IMessageHeader header, SubscribePartNotification request)
         {
             Notify(OnSubscribePartNotification, header, request);
-        }
-
-        /// <summary>
-        /// Handles the SubscribePartNotification message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="request">The SubscribePartNotification message.</param>
-        protected virtual void HandleSubscribePartNotification2(IMessageHeader header, SubscribePartNotification2 request)
-        {
-            Notify(OnSubscribePartNotification2, header, request);
         }
 
         /// <summary>

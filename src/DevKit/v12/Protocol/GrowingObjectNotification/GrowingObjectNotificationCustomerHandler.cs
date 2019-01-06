@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,23 +51,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
             var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotification);
 
             var notificationRequest = new SubscribePartNotification
-            {
-                Request = subscriptionInfo
-            };
-
-            return Session.SendMessage(header, notificationRequest);
-        }
-
-        /// <summary>
-        /// Sends a SubscribePartNotification message to a store.
-        /// </summary>
-        /// <param name="subscriptionInfo">The subscription information.</param>
-        /// <returns>The message identifier.</returns>
-        public long SubscribePartNotification2(SubscriptionInfo2 subscriptionInfo)
-        {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotification2);
-
-            var notificationRequest = new SubscribePartNotification2
             {
                 Request = subscriptionInfo
             };

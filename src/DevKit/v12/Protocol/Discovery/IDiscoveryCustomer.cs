@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,27 +30,24 @@ namespace Energistics.Etp.v12.Protocol.Discovery
     public interface IDiscoveryCustomer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a GetResources message to a store.
-        /// </summary>
-        /// <param name="uri">The URI.</param>
-        /// <returns>The message identifier.</returns>
-        long GetResources(string uri);
-
-        /// <summary>
-        /// Sends a GetResources message to a store.
+        /// Sends a GetTreeResources message to a store.
         /// </summary>
         /// <param name="contextInfo">The context information.</param>
         /// <returns>The message identifier.</returns>
-        long GetResources2(ContextInfo contextInfo);
+        long GetTreeResources(ContextInfo contextInfo);
+
+        /// <summary>
+        /// Sends a GetGraphResources message to a store.
+        /// </summary>
+        /// <param name="contextInfo">The context information.</param>
+        /// <param name="scope">The scope.</param>
+        /// <param name="groupByType">if set to <c>true</c> group by type.</param>
+        /// <returns>The message identifier.</returns>
+        long GetGraphResources(ContextInfo contextInfo, ContextScopeKind scope, bool groupByType);
 
         /// <summary>
         /// Handles the GetResourcesResponse event from a store.
         /// </summary>
         event ProtocolEventHandler<GetResourcesResponse, string> OnGetResourcesResponse;
-
-        /// <summary>
-        /// Handles the GetResourcesResponse event from a store.
-        /// </summary>
-        event ProtocolEventHandler<GetResourcesResponse2, string> OnGetResourcesResponse2;
     }
 }

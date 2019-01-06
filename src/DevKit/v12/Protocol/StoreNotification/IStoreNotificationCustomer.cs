@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,13 +36,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <param name="subscriptionInfo">The subscription information.</param>
         /// <returns>The message identifier.</returns>
         long SubscribeNotification(SubscriptionInfo subscriptionInfo);
-
-        /// <summary>
-        /// Sends a SubscribeNotification message to a store.
-        /// </summary>
-        /// <param name="subscriptionInfo">The subscription information.</param>
-        /// <returns>The message identifier.</returns>
-        long SubscribeNotification2(SubscriptionInfo2 subscriptionInfo);
 
         /// <summary>
         /// Sends a UnsubscribeNotification message to a store.

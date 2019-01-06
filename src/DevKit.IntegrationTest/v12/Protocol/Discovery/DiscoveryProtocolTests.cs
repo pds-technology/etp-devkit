@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +16,12 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes.Object;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Energistics.Etp.v12.Protocol.Discovery
@@ -57,22 +60,30 @@ namespace Energistics.Etp.v12.Protocol.Discovery
                 x => handler.OnGetResourcesResponse += x);
 
             // Send GetResources message for root URI
-            handler.GetResources(EtpUri.RootUri);
+            handler.GetTreeResources(new ContextInfo
+            {
+                Uri = EtpUri.RootUri,
+                ContentTypes = new List<string>()
+            });
 
             // Wait for GetResourcesResponse for top level resources
             var argsRoot = await onGetRootResourcesResponse.WaitAsync();
 
             Assert.IsNotNull(argsRoot);
-            Assert.IsNotNull(argsRoot.Message.Resource);
-            Assert.IsNotNull(argsRoot.Message.Resource.Uri);
+            Assert.IsNotNull(argsRoot.Message.Resources?.FirstOrDefault());
+            Assert.IsNotNull(argsRoot.Message.Resources[0].Uri);
 
             // Register event handler for child resources
             var onGetChildResourcesResponse = HandleAsync<GetResourcesResponse, string>(
                 x => handler.OnGetResourcesResponse += x);
 
             // Send GetResources message for child resources
-            var resource = argsRoot.Message.Resource;
-            handler.GetResources(resource.Uri);
+            var resource = argsRoot.Message.Resources[0];
+            handler.GetTreeResources(new ContextInfo
+            {
+                Uri = resource.Uri,
+                ContentTypes = new List<string>()
+            });
 
             // Wait for GetResourcesResponse for child resources
             var argsChild = await onGetChildResourcesResponse.WaitAsync();
@@ -81,12 +92,12 @@ namespace Energistics.Etp.v12.Protocol.Discovery
 
             if (argsChild.Header.IsNoData())
             {
-                Assert.IsNull(argsChild.Message.Resource);
+                Assert.IsNull(argsChild.Message.Resources?.FirstOrDefault());
             }
             else
             {
-                Assert.IsNotNull(argsChild.Message.Resource);
-                Assert.AreNotEqual(resource.Uri, argsChild.Message.Resource.Uri);
+                Assert.IsNotNull(argsChild.Message.Resources?.FirstOrDefault());
+                Assert.AreNotEqual(resource.Uri, argsChild.Message.Resources[0].Uri);
             }
         }
     }

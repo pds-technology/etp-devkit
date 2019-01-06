@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -89,10 +89,14 @@ namespace Energistics.Etp.Common
             actualKey = EtpExtensions.CreateMessageKey((int)v11.Protocols.Discovery, (int)v11.MessageTypes.Discovery.GetResources);
             Assert.AreEqual(expectedKey, actualKey);
 
-            expectedKey = (3L << 32) + 1;
-            actualKey = EtpExtensions.CreateMessageKey((int)v12.Protocols.Discovery, (int)v12.MessageTypes.Discovery.GetResources);
+            expectedKey = (3L << 32) + 5;
+            actualKey = EtpExtensions.CreateMessageKey((int)v12.Protocols.Discovery, (int)v12.MessageTypes.Discovery.GetTreeResources);
             Assert.AreEqual(expectedKey, actualKey);
-            
+
+            expectedKey = (3L << 32) + 6;
+            actualKey = EtpExtensions.CreateMessageKey((int)v12.Protocols.Discovery, (int)v12.MessageTypes.Discovery.GetGraphResources);
+            Assert.AreEqual(expectedKey, actualKey);
+
             expectedKey = 1000L;
             actualKey = EtpExtensions.CreateMessageKey((int)v11.Protocols.Discovery, (int)v11.MessageTypes.Core.ProtocolException);
             Assert.AreEqual(expectedKey, actualKey);

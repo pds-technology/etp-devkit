@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,21 +39,13 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         long GetResourcesResponse(IMessageHeader request, IList<Resource> resources);
 
         /// <summary>
-        /// Sends a GetResourcesResponse message to a customer.
+        /// Handles the GetTreeResources event from a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
-        /// <returns>The message identifier.</returns>
-        long GetResourcesResponse2(IMessageHeader request, IList<Resource2> resources);
+        event ProtocolEventHandler<GetTreeResources, IList<Resource>> OnGetTreeResources;
 
         /// <summary>
-        /// Handles the GetResources event from a customer.
+        /// Handles the GetGraphResources event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetResources, IList<Resource>> OnGetResources;
-
-        /// <summary>
-        /// Handles the GetResources event from a customer.
-        /// </summary>
-        event ProtocolEventHandler<GetResources2, IList<Resource2>> OnGetResources2;
+        event ProtocolEventHandler<GetGraphResources, IList<Resource>> OnGetGraphResources;
     }
 }

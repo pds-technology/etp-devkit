@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
 
                 var part = parts[i];
 
-                var findPartsResponse = new FindPartsResponse
+                var response = new FindPartsResponse
                 {
                     Uri = part.Uri,
                     Uid = part.Uid,
@@ -95,7 +95,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
                     ServerSortOrder = sortOrder ?? string.Empty
                 };
 
-                messageId = Session.SendMessage(header, findPartsResponse);
+                messageId = Session.SendMessage(header, response);
                 sortOrder = string.Empty; // Only needs to be set in the first message
             }
 

@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,8 +39,8 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         {
             MaxResponseCount = EtpSettings.DefaultMaxResponseCount;
 
-            RegisterMessageHandler<GetResources>(Protocols.Discovery, MessageTypes.Discovery.GetResources, HandleGetResources);
-            RegisterMessageHandler<GetResources2>(Protocols.Discovery, MessageTypes.Discovery.GetResources2, HandleGetResources2);
+            RegisterMessageHandler<GetTreeResources>(Protocols.Discovery, MessageTypes.Discovery.GetTreeResources, HandleGetTreeResources);
+            RegisterMessageHandler<GetGraphResources>(Protocols.Discovery, MessageTypes.Discovery.GetGraphResources, HandleGetGraphResources);
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
 
             long messageId = 0;
 
-            for (int i=0; i<resources.Count; i++)
+            for (var i=0; i<resources.Count; i++)
             {
                 var messageFlags = i < resources.Count - 1
                     ? MessageFlags.MultiPart
@@ -84,70 +84,37 @@ namespace Energistics.Etp.v12.Protocol.Discovery
 
                 var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse, request.MessageId, messageFlags);
 
-                var getResourcesResponse = new GetResourcesResponse
+                // TODO: Optimize reponse by sending multiple Resource at a time
+                var response = new GetResourcesResponse
                 {
-                    Resource = resources[i]
+                    Resources = new[] { resources[i] }
                 };
 
-                messageId = Session.SendMessage(header, getResourcesResponse);
+                messageId = Session.SendMessage(header, response);
             }
 
             return messageId;
         }
 
         /// <summary>
-        /// Sends a GetResourcesResponse message to a customer.
+        /// Handles the GetTreeResources event from a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="resources">The list of <see cref="Resource" /> objects.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long GetResourcesResponse2(IMessageHeader request, IList<Resource2> resources)
-        {
-            if (!resources.Any())
-            {
-                return Acknowledge(request.MessageId, MessageFlags.NoData);
-            }
-
-            long messageId = 0;
-
-            for (int i = 0; i < resources.Count; i++)
-            {
-                var messageFlags = i < resources.Count - 1
-                    ? MessageFlags.MultiPart
-                    : MessageFlags.MultiPartAndFinalPart;
-
-                var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse2, request.MessageId, messageFlags);
-
-                var getResourcesResponse = new GetResourcesResponse2
-                {
-                    Resource = resources
-                };
-
-                messageId = Session.SendMessage(header, getResourcesResponse);
-            }
-
-            return messageId;
-        }
+        public event ProtocolEventHandler<GetTreeResources, IList<Resource>> OnGetTreeResources;
 
         /// <summary>
-        /// Handles the GetResources event from a customer.
+        /// Handles the GetGraphResources event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetResources, IList<Resource>> OnGetResources;
+        public event ProtocolEventHandler<GetGraphResources, IList<Resource>> OnGetGraphResources;
 
         /// <summary>
-        /// Handles the GetResources event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<GetResources2, IList<Resource2>> OnGetResources2;
-
-        /// <summary>
-        /// Handles the GetResources message from a customer.
+        /// Handles the GetTreeResources message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="getResources">The GetResources message.</param>
-        protected virtual void HandleGetResources(IMessageHeader header, GetResources getResources)
+        /// <param name="getTreeResources">The GetTreeResources message.</param>
+        protected virtual void HandleGetTreeResources(IMessageHeader header, GetTreeResources getTreeResources)
         {
-            var args = Notify(OnGetResources, header, getResources, new List<Resource>());
-            HandleGetResources(args);
+            var args = Notify(OnGetTreeResources, header, getTreeResources, new List<Resource>());
+            HandleGetTreeResources(args);
 
             if (!args.Cancel)
             {
@@ -156,34 +123,34 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         }
 
         /// <summary>
-        /// Handles the GetResources message from a customer.
+        /// Handles the GetTreeResources message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{GetResources}"/> instance containing the event data.</param>
-        protected virtual void HandleGetResources(ProtocolEventArgs<GetResources, IList<Resource>> args)
+        /// <param name="args">The <see cref="ProtocolEventArgs{GetTreeResources}"/> instance containing the event data.</param>
+        protected virtual void HandleGetTreeResources(ProtocolEventArgs<GetTreeResources, IList<Resource>> args)
         {
         }
 
         /// <summary>
-        /// Handles the GetResources message from a customer.
+        /// Handles the GetGraphResources message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="getResources">The GetResources message.</param>
-        protected virtual void HandleGetResources2(IMessageHeader header, GetResources2 getResources)
+        /// <param name="getGraphResources">The GetGraphResources message.</param>
+        protected virtual void HandleGetGraphResources(IMessageHeader header, GetGraphResources getGraphResources)
         {
-            var args = Notify(OnGetResources2, header, getResources, new List<Resource2>());
-            HandleGetResources2(args);
+            var args = Notify(OnGetGraphResources, header, getGraphResources, new List<Resource>());
+            HandleGetGraphResources(args);
 
             if (!args.Cancel)
             {
-                GetResourcesResponse2(header, args.Context);
+                GetResourcesResponse(header, args.Context);
             }
         }
 
         /// <summary>
-        /// Handles the GetResources message from a customer.
+        /// Handles the GetGraphResources message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{GetResources}"/> instance containing the event data.</param>
-        protected virtual void HandleGetResources2(ProtocolEventArgs<GetResources2, IList<Resource2>> args)
+        /// <param name="args">The <see cref="ProtocolEventArgs{GetGraphResources}"/> instance containing the event data.</param>
+        protected virtual void HandleGetGraphResources(ProtocolEventArgs<GetGraphResources, IList<Resource>> args)
         {
         }
     }

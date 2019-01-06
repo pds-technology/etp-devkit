@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,23 +50,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
             var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotification);
 
             var notificationRequest = new SubscribeNotification
-            {
-                Request = subscriptionInfo
-            };
-
-            return Session.SendMessage(header, notificationRequest);
-        }
-
-        /// <summary>
-        /// Sends a SubscribeNotification message to a store.
-        /// </summary>
-        /// <param name="subscriptionInfo">The subscription information.</param>
-        /// <returns>The message identifier.</returns>
-        public long SubscribeNotification2(SubscriptionInfo2 subscriptionInfo)
-        {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotification2);
-
-            var notificationRequest = new SubscribeNotification2
             {
                 Request = subscriptionInfo
             };

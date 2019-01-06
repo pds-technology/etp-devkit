@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,27 +30,27 @@ namespace Energistics.Etp.v12.Protocol.Store
     public interface IStoreStore : IProtocolHandler
     {
         /// <summary>
-        /// Sends an Object message to a customer.
+        /// Sends an GetDataObjectsResponse message to a customer.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long Object(DataObject dataObject, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        long GetDataObjectsResponse(DataObject dataObject, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
-        /// Handles the GetObject event from a customer.
+        /// Handles the GetDataObjects event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetObject, DataObject> OnGetObject;
+        event ProtocolEventHandler<GetDataObjects, DataObject> OnGetDataObjects;
 
         /// <summary>
-        /// Handles the PutObject event from a customer.
+        /// Handles the PutDataObjects event from a customer.
         /// </summary>
-        event ProtocolEventHandler<PutObject> OnPutObject;
+        event ProtocolEventHandler<PutDataObjects> OnPutDataObjects;
 
         /// <summary>
-        /// Handles the DeleteObject event from a customer.
+        /// Handles the DeleteDataObjects event from a customer.
         /// </summary>
-        event ProtocolEventHandler<DeleteObject> OnDeleteObject;
+        event ProtocolEventHandler<DeleteDataObjects> OnDeleteDataObjects;
     }
 }

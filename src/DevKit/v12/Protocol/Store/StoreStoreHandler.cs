@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,90 +34,91 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// </summary>
         public StoreStoreHandler() : base((int)Protocols.Store, "store", "customer")
         {
-            RegisterMessageHandler<GetObject>(Protocols.Store, MessageTypes.Store.GetObject, HandleGetObject);
-            RegisterMessageHandler<PutObject>(Protocols.Store, MessageTypes.Store.PutObject, HandlePutObject);
-            RegisterMessageHandler<DeleteObject>(Protocols.Store, MessageTypes.Store.DeleteObject, HandleDeleteObject);
+            RegisterMessageHandler<GetDataObjects>(Protocols.Store, MessageTypes.Store.GetDataObjects, HandleGetDataObjects);
+            RegisterMessageHandler<PutDataObjects>(Protocols.Store, MessageTypes.Store.PutDataObjects, HandlePutDataObjects);
+            RegisterMessageHandler<DeleteDataObjects>(Protocols.Store, MessageTypes.Store.DeleteDataObjects, HandleDeleteDataObjects);
         }
 
         /// <summary>
-        /// Sends an Object message to a customer.
+        /// Sends an GetDataObjectsResponse message to a customer.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long Object(DataObject dataObject, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        public virtual long GetDataObjectsResponse(DataObject dataObject, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
         {
-            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.Object, correlationId, messageFlag);
+            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetDataObjectsResponse, correlationId, messageFlag);
 
-            var @object = new Object()
+            // TODO: Optimize reponse by sending multiple DataObject at a time
+            var response = new GetDataObjectsResponse
             {
-                DataObject = dataObject
+                DataObjects = new[] { dataObject }
             };
 
-            return Session.SendMessage(header, @object);
+            return Session.SendMessage(header, response);
         }
 
         /// <summary>
-        /// Handles the GetObject event from a customer.
+        /// Handles the GetDataObjects event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetObject, DataObject> OnGetObject;
+        public event ProtocolEventHandler<GetDataObjects, DataObject> OnGetDataObjects;
 
         /// <summary>
-        /// Handles the PutObject event from a customer.
+        /// Handles the PutDataObjects event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<PutObject> OnPutObject;
+        public event ProtocolEventHandler<PutDataObjects> OnPutDataObjects;
 
         /// <summary>
-        /// Handles the DeleteObject event from a customer.
+        /// Handles the DeleteDataObjects event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<DeleteObject> OnDeleteObject;
+        public event ProtocolEventHandler<DeleteDataObjects> OnDeleteDataObjects;
 
         /// <summary>
-        /// Handles the GetObject message from a customer.
+        /// Handles the GetDataObjects message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="getObject">The GetObject message.</param>
-        protected virtual void HandleGetObject(IMessageHeader header, GetObject getObject)
+        /// <param name="getDataObjects">The GetDataObjects message.</param>
+        protected virtual void HandleGetDataObjects(IMessageHeader header, GetDataObjects getDataObjects)
         {
-            var args = Notify(OnGetObject, header, getObject, new DataObject());
-            HandleGetObject(args);
+            var args = Notify(OnGetDataObjects, header, getDataObjects, new DataObject());
+            HandleGetDataObjects(args);
 
             if (args.Cancel)
                 return;
 
             if (args.Context.Data == null || args.Context.Data.Length == 0)
-                Object(args.Context, header.MessageId, MessageFlags.NoData);
+                GetDataObjectsResponse(args.Context, header.MessageId, MessageFlags.NoData);
             else
-                Object(args.Context, header.MessageId);
+                GetDataObjectsResponse(args.Context, header.MessageId);
         }
 
         /// <summary>
-        /// Handles the GetObject message from a customer.
+        /// Handles the GetDataObjects message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{GetObject, DataObject}"/> instance containing the event data.</param>
-        protected virtual void HandleGetObject(ProtocolEventArgs<GetObject, DataObject> args)
+        /// <param name="args">The <see cref="ProtocolEventArgs{GetDataObjects, DataObject}"/> instance containing the event data.</param>
+        protected virtual void HandleGetDataObjects(ProtocolEventArgs<GetDataObjects, DataObject> args)
         {
         }
 
         /// <summary>
-        /// Handles the PutObject message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="putObject">The PutObject message.</param>
-        protected virtual void HandlePutObject(IMessageHeader header, PutObject putObject)
-        {
-            Notify(OnPutObject, header, putObject);
-        }
-
-        /// <summary>
-        /// Handles the DeleteObject message from a customer.
+        /// Handles the PutDataObjects message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="deleteObject">The DeleteObject message.</param>
-        protected virtual void HandleDeleteObject(IMessageHeader header, DeleteObject deleteObject)
+        /// <param name="putDataObjects">The PutDataObjects message.</param>
+        protected virtual void HandlePutDataObjects(IMessageHeader header, PutDataObjects putDataObjects)
         {
-            Notify(OnDeleteObject, header, deleteObject);
+            Notify(OnPutDataObjects, header, putDataObjects);
+        }
+
+        /// <summary>
+        /// Handles the DeleteDataObjects message from a customer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="deleteDataObjects">The DeleteDataObjects message.</param>
+        protected virtual void HandleDeleteDataObjects(IMessageHeader header, DeleteDataObjects deleteDataObjects)
+        {
+            Notify(OnDeleteDataObjects, header, deleteDataObjects);
         }
     }
 }

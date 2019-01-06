@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,18 +30,18 @@ namespace Energistics.Etp.v12.Protocol.Discovery
 
         }
 
-        protected override void HandleGetResources(ProtocolEventArgs<GetResources, IList<Resource>> args)
+        protected override void HandleGetTreeResources(ProtocolEventArgs<GetTreeResources, IList<Resource>> args)
         {
             var witsml20 = new EtpUri("eml://witsml20");
 
-            if (args.Message.Uri == EtpUri.RootUri)
+            if (args.Message.Context.Uri == EtpUri.RootUri)
             {
                 args.Context.Add(new Resource
                 {
                     Uuid = null,
                     Uri = witsml20,
                     Name = "WITSML Store (2.0)",
-                    ChildCount = 1,
+                    TargetCount = 1,
                     ContentType = witsml20.ContentType,
                     ResourceType = ResourceKind.UriProtocol,
                     CustomData = new Dictionary<string, string>(),
@@ -50,7 +50,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
                     ObjectNotifiable = false,
                 });
             }
-            else if (args.Message.Uri == witsml20)
+            else if (args.Message.Context.Uri == witsml20)
             {
                 var witsml20well = new EtpUri("eml://witsml20/well");
                 args.Context.Add(new Resource
@@ -58,7 +58,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
                     Uuid = null,
                     Uri = witsml20well,
                     Name = "Well",
-                    ChildCount = 0,
+                    TargetCount = 0,
                     ContentType = witsml20well.ContentType,
                     ResourceType = ResourceKind.Folder,
                     CustomData = new Dictionary<string, string>(),

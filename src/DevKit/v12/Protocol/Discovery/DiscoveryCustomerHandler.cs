@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,40 +41,43 @@ namespace Energistics.Etp.v12.Protocol.Discovery
             _requests = new ConcurrentDictionary<long, string>();
 
             RegisterMessageHandler<GetResourcesResponse>(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse, HandleGetResourcesResponse);
-            RegisterMessageHandler<GetResourcesResponse2>(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse2, HandleGetResourcesResponse2);
         }
 
         /// <summary>
-        /// Sends a GetResources message to a store.
+        /// Sends a GetTreeResources message to a store.
         /// </summary>
-        /// <param name="uri">The URI.</param>
+        /// <param name="contextInfo">The context information.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long GetResources(string uri)
+        public virtual long GetTreeResources(ContextInfo contextInfo)
         {
-            var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResources);
+            var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetTreeResources);
 
-            var getResources = new GetResources
+            var getResources = new GetTreeResources
             {
-                Uri = uri
+                Context = contextInfo
             };
-            
+
             return Session.SendMessage(header, getResources,
-                h => _requests[h.MessageId] = uri // Cache requested URIs by message ID
+                h => _requests[h.MessageId] = contextInfo.Uri // Cache requested URIs by message ID
             );
         }
 
         /// <summary>
-        /// Sends a GetResources message to a store.
+        /// Sends a GetGraphResources message to a store.
         /// </summary>
         /// <param name="contextInfo">The context information.</param>
+        /// <param name="scope">The scope.</param>
+        /// <param name="groupByType">if set to <c>true</c> group by type.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long GetResources2(ContextInfo contextInfo)
+        public virtual long GetGraphResources(ContextInfo contextInfo, ContextScopeKind scope, bool groupByType)
         {
-            var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResources2);
+            var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetGraphResources);
 
-            var getResources = new GetResources2
+            var getResources = new GetGraphResources
             {
-                Context = contextInfo
+                Context = contextInfo,
+                Scope = scope,
+                GroupByType = groupByType
             };
 
             return Session.SendMessage(header, getResources,
@@ -86,11 +89,6 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// Handles the GetResourcesResponse event from a store.
         /// </summary>
         public event ProtocolEventHandler<GetResourcesResponse, string> OnGetResourcesResponse;
-
-        /// <summary>
-        /// Handles the GetResourcesResponse event from a store.
-        /// </summary>
-        public event ProtocolEventHandler<GetResourcesResponse2, string> OnGetResourcesResponse2;
 
         /// <summary>
         /// Handle any final cleanup related to the final message in response to a request.
@@ -118,26 +116,6 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{GetResourcesResponse}"/> instance containing the event data.</param>
         protected virtual void HandleGetResourcesResponse(ProtocolEventArgs<GetResourcesResponse, string> args)
-        {
-        }
-
-        /// <summary>
-        /// Handles the GetResourcesResponse message from a store.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="getResourcesResponse">The GetResourcesResponse message.</param>
-        protected virtual void HandleGetResourcesResponse2(IMessageHeader header, GetResourcesResponse2 getResourcesResponse)
-        {
-            var uri = GetRequestedUri(header);
-            var args = Notify(OnGetResourcesResponse2, header, getResourcesResponse, uri);
-            HandleGetResourcesResponse2(args);
-        }
-
-        /// <summary>
-        /// Handles the GetResourcesResponse message from a store.
-        /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{GetResourcesResponse}"/> instance containing the event data.</param>
-        protected virtual void HandleGetResourcesResponse2(ProtocolEventArgs<GetResourcesResponse2, string> args)
         {
         }
 

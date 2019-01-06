@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -34,74 +35,74 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// </summary>
         public StoreCustomerHandler() : base((int)Protocols.Store, "customer", "store")
         {
-            RegisterMessageHandler<Object>(Protocols.Store, MessageTypes.Store.Object, HandleObject);
+            RegisterMessageHandler<GetDataObjectsResponse>(Protocols.Store, MessageTypes.Store.GetDataObjectsResponse, HandleGetDataObjectsResponse);
         }
 
         /// <summary>
-        /// Sends a GetObject message to a store.
+        /// Sends a GetDataObjects message to a store.
         /// </summary>
-        /// <param name="uri">The URI.</param>
+        /// <param name="uris">The URIs.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long GetObject(string uri, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        public virtual long GetDataObjects(IList<string> uris, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
         {
-            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetObject, messageFlags: messageFlag);
+            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetDataObjects, messageFlags: messageFlag);
 
-            var getObject = new GetObject()
+            var getObject = new GetDataObjects
             {
-                Uri = uri
+                Uris = uris
             };
 
             return Session.SendMessage(header, getObject);
         }
 
         /// <summary>
-        /// Sends a PutObject message to a store.
+        /// Sends a PutDataObjects message to a store.
         /// </summary>
-        /// <param name="dataObject">The data object.</param>
+        /// <param name="dataObjects">The data objects.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long PutObject(DataObject dataObject)
+        public virtual long PutDataObjects(IList<DataObject> dataObjects)
         {
-            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.PutObject);
+            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.PutDataObjects);
 
-            var putObject = new PutObject()
+            var putObject = new PutDataObjects
             {
-                DataObject = dataObject
+                DataObjects = dataObjects
             };
 
             return Session.SendMessage(header, putObject);
         }
 
         /// <summary>
-        /// Sends a DeleteObject message to a store.
+        /// Sends a DeleteDataObjects message to a store.
         /// </summary>
-        /// <param name="uri">The URI.</param>
+        /// <param name="uris">The URIs.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long DeleteObject(string uri)
+        public virtual long DeleteDataObjects(IList<string> uris)
         {
-            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.DeleteObject);
+            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.DeleteDataObjects);
 
-            var deleteObject = new DeleteObject()
+            var deleteObject = new DeleteDataObjects
             {
-                Uri = uri
+                Uris = uris
             };
 
             return Session.SendMessage(header, deleteObject);
         }
 
         /// <summary>
-        /// Handles the Object event from a store.
+        /// Handles the GetDataObjectsResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<Object> OnObject;
+        public event ProtocolEventHandler<GetDataObjectsResponse> OnGetDataObjectsResponse;
 
         /// <summary>
-        /// Handles the Object message from a store.
+        /// Handles the GetDataObjectsResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="object">The Object message.</param>
-        protected virtual void HandleObject(IMessageHeader header, Object @object)
+        /// <param name="response">The GetDataObjectsResponse message.</param>
+        protected virtual void HandleGetDataObjectsResponse(IMessageHeader header, GetDataObjectsResponse response)
         {
-            Notify(OnObject, header, @object);
+            Notify(OnGetDataObjectsResponse, header, response);
         }
     }
 }

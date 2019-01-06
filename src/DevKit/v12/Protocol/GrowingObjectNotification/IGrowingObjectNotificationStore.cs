@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -87,11 +87,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// Handles the SubscribePartNotification event from a customer.
         /// </summary>
         event ProtocolEventHandler<SubscribePartNotification> OnSubscribePartNotification;
-
-        /// <summary>
-        /// Handles the SubscribePartNotification event from a customer.
-        /// </summary>
-        event ProtocolEventHandler<SubscribePartNotification2> OnSubscribePartNotification2;
 
         /// <summary>
         /// Handles the UnsubscribePartNotification event from a customer.

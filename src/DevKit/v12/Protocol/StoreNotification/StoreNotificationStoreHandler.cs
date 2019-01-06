@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         public StoreNotificationStoreHandler() : base((int)Protocols.StoreNotification, "store", "customer")
         {
             RegisterMessageHandler<SubscribeNotification>(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotification, HandleSubscribeNotification);
-            RegisterMessageHandler<SubscribeNotification2>(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotification2, HandleSubscribeNotification2);
             RegisterMessageHandler<UnsubscribeNotification>(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsubscribeNotification, HandleUnsubscribeNotification);
         }
 
@@ -103,11 +102,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         public event ProtocolEventHandler<SubscribeNotification> OnSubscribeNotification;
 
         /// <summary>
-        /// Handles the SubscribeNotification event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<SubscribeNotification2> OnSubscribeNotification2;
-
-        /// <summary>
         /// Handles the UnsubscribeNotification event from a customer.
         /// </summary>
         public event ProtocolEventHandler<UnsubscribeNotification> OnUnsubscribeNotification;
@@ -120,16 +114,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         protected virtual void HandleSubscribeNotification(IMessageHeader header, SubscribeNotification request)
         {
             Notify(OnSubscribeNotification, header, request);
-        }
-
-        /// <summary>
-        /// Handles the SubscribeNotification message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="request">The SubscribeNotification message.</param>
-        protected virtual void HandleSubscribeNotification2(IMessageHeader header, SubscribeNotification2 request)
-        {
-            Notify(OnSubscribeNotification2, header, request);
         }
 
         /// <summary>

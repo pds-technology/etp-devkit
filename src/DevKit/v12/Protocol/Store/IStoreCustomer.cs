@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -32,28 +33,28 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <summary>
         /// Sends a GetObject message to a store.
         /// </summary>
-        /// <param name="uri">The URI.</param>
+        /// <param name="uris">The URI.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long GetObject(string uri, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        long GetDataObjects(IList<string> uris, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Sends a PutObject message to a store.
         /// </summary>
-        /// <param name="dataObject">The data object.</param>
+        /// <param name="dataObjects">The data objects.</param>
         /// <returns>The message identifier.</returns>
-        long PutObject(DataObject dataObject);
+        long PutDataObjects(IList<DataObject> dataObjects);
 
         /// <summary>
         /// Sends a DeleteObject message to a store.
         /// </summary>
-        /// <param name="uri">The URI.</param>
+        /// <param name="uris">The URI.</param>
         /// <returns>The message identifier.</returns>
-        long DeleteObject(string uri);
+        long DeleteDataObjects(IList<string> uris);
 
         /// <summary>
-        /// Handles the Object event from a store.
+        /// Handles the GetDataObjectsResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<Object> OnObject;
+        event ProtocolEventHandler<GetDataObjectsResponse> OnGetDataObjectsResponse;
     }
 }

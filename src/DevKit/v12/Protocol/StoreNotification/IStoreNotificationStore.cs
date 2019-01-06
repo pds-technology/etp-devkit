@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -59,11 +59,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// Handles the SubscribeNotification event from a customer.
         /// </summary>
         event ProtocolEventHandler<SubscribeNotification> OnSubscribeNotification;
-
-        /// <summary>
-        /// Handles the SubscribeNotification event from a customer.
-        /// </summary>
-        event ProtocolEventHandler<SubscribeNotification2> OnSubscribeNotification2;
 
         /// <summary>
         /// Handles the UnsubscribeNotification event from a customer.
