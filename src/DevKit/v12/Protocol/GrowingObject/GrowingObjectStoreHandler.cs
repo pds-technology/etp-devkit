@@ -55,16 +55,19 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public long ObjectPart(string uri, string uid, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        public long GetPartsResponse(string uri, string uid, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.ObjectPart, correlationId, messageFlag);
+            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsResponse, correlationId, messageFlag);
 
-            var message = new ObjectPart
+            var message = new GetPartsResponse
             {
-                Uri = uri,
-                Uid = uid,
-                ContentType = contentType,
-                Data = data
+                ObjectPart = new ObjectPart
+                {
+                    Uri = uri,
+                    Uid = uid,
+                    ContentType = contentType,
+                    Data = data
+                }
             };
 
             return Session.SendMessage(header, message);

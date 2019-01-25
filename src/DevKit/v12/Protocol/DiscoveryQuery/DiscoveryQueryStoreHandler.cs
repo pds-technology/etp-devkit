@@ -86,7 +86,7 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
 
                 var response = new FindResourcesResponse
                 {
-                    Resource = resources[i],
+                    Resources = new[] { resources[i] },
                     ServerSortOrder = sortOrder ?? string.Empty
                 };
 

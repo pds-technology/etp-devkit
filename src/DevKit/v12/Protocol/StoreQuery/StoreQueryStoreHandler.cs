@@ -86,7 +86,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
 
                 var response = new FindObjectsResponse
                 {
-                    DataObject = new[] { objects[i] },
+                    DataObjects = new[] { objects[i] },
                     ServerSortOrder = sortOrder ?? string.Empty
                 };
 

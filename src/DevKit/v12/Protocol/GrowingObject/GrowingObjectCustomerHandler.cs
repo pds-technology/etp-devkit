@@ -40,7 +40,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
             Metadata = new ConcurrentBag<PartsMetadataInfo>();
             Errors = new ConcurrentBag<ErrorInfo>();
 
-            RegisterMessageHandler<ObjectPart>(Protocols.GrowingObject, MessageTypes.GrowingObject.ObjectPart, HandleObjectPart);
+            RegisterMessageHandler<GetPartsResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsResponse, HandleGetPartsResponse);
             RegisterMessageHandler<GetPartsMetadataResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadataResponse, HandleGetPartsMetadataResponse);
         }
 
@@ -229,9 +229,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
-        /// Handles the ObjectPart event from a store.
+        /// Handles the GetPartsResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<ObjectPart> OnObjectPart;
+        public event ProtocolEventHandler<GetPartsResponse> OnGetPartsResponse;
 
         /// <summary>
         /// Handles the GetPartsMetadataResponse event from a store.
@@ -239,13 +239,13 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         public event ProtocolEventHandler<GetPartsMetadataResponse> OnGetPartsMetadataResponse;
 
         /// <summary>
-        /// Handles the ObjectPart message from a store.
+        /// Handles the GetPartsResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The ObjectPart message.</param>
-        protected virtual void HandleObjectPart(IMessageHeader header, ObjectPart message)
+        /// <param name="message">The GetPartsResponse message.</param>
+        protected virtual void HandleGetPartsResponse(IMessageHeader header, GetPartsResponse message)
         {
-            Notify(OnObjectPart, header, message);
+            Notify(OnGetPartsResponse, header, message);
         }
 
         /// <summary>

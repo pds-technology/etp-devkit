@@ -21,7 +21,7 @@ using System.Linq;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
-using Energistics.Etp.v12.Protocol.GrowingObject;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
 {
@@ -84,14 +84,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
 
                 var header = CreateMessageHeader(Protocols.GrowingObjectQuery, MessageTypes.GrowingObjectQuery.FindPartsResponse, request.MessageId, messageFlags);
 
-                var part = parts[i];
-
                 var response = new FindPartsResponse
                 {
-                    Uri = part.Uri,
-                    Uid = part.Uid,
-                    ContentType = part.ContentType,
-                    Data = part.Data,
+                    ObjectParts = new[] { parts[i] },
                     ServerSortOrder = sortOrder ?? string.Empty
                 };
 
@@ -105,7 +100,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// <summary>
         /// Handles the FindParts event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<FindParts, ObjectPartResponse> OnFindParts;
+        public event ProtocolEventHandler<FindParts, FindPartsResponse> OnFindParts;
 
         /// <summary>
         /// Handles the FindParts message from a customer.
@@ -114,7 +109,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// <param name="findParts">The FindParts message.</param>
         protected virtual void HandleFindParts(IMessageHeader header, FindParts findParts)
         {
-            var args = Notify(OnFindParts, header, findParts, new ObjectPartResponse());
+            var args = Notify(OnFindParts, header, findParts, new FindPartsResponse());
             HandleFindParts(args);
 
             if (!args.Cancel)
@@ -127,7 +122,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// Handles the FindParts message from a customer.
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{FindParts}"/> instance containing the event data.</param>
-        protected virtual void HandleFindParts(ProtocolEventArgs<FindParts, ObjectPartResponse> args)
+        protected virtual void HandleFindParts(ProtocolEventArgs<FindParts, FindPartsResponse> args)
         {
         }
     }

@@ -102,9 +102,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         long ReplacePartsByRange(string uri, string uid, string contentType, byte[] data, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals);
 
         /// <summary>
-        /// Handles the ObjectPart event from a store.
+        /// Handles the GetPartsResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<ObjectPart> OnObjectPart;
+        event ProtocolEventHandler<GetPartsResponse> OnGetPartsResponse;
 
         /// <summary>
         /// Handles the GetPartsMetadataResponse event from a store.
