@@ -24,12 +24,5 @@ namespace Energistics.Etp.Common
     /// <seealso cref="IEtpSession" />
     public interface IEtpServer : IEtpSession
     {
-        /// <summary>
-        /// Gets a value indicating whether the connection is open.
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
-        /// </value>
-        bool IsOpen { get; }
     }
 }

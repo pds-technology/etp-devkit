@@ -140,7 +140,7 @@ namespace Energistics.Etp.Common
         /// Gets the collection of WebSocket or HTTP headers.
         /// </summary>
         /// <value>The headers.</value>
-        protected IDictionary<string, string> Headers { get; }
+        public IDictionary<string, string> Headers { get; }
 
         /// <summary>
         /// Gets the collection of registered protocol handlers by Type.
@@ -153,6 +153,16 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <value>The handlers.</value>
         private IDictionary<int, IProtocolHandler> HandlersByProtocol { get; }
+
+        /// <summary>
+        /// Gets the registered handler for the specified protocol.
+        /// </summary>
+        /// <param name="protocol">The protocol.</param>
+        /// <returns>The registered protocol handler instance.</returns>
+        public IProtocolHandler Handler(int protocol)
+        {
+            return GetHandler(protocol);
+        }
 
         /// <summary>
         /// Gets the registered protocol handler for the specified ETP interface.
@@ -573,12 +583,12 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
-        /// Get the registered handler for the specified protocol.
+        /// Gets the registered handler for the specified protocol.
         /// </summary>
         /// <param name="protocol">The protocol.</param>
         /// <returns>The registered protocol handler instance.</returns>
         /// <exception cref="System.NotSupportedException"></exception>
-        protected IProtocolHandler Handler(int protocol)
+        protected IProtocolHandler GetHandler(int protocol)
         {
             try
             {

@@ -46,6 +46,14 @@ namespace Energistics.Etp.Common
         bool IsClient { get; }
 
         /// <summary>
+        /// Gets a value indicating whether the underlying websocket connection is open.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance is open; otherwise, <c>false</c>.
+        /// </value>
+        bool IsOpen { get; }
+
+        /// <summary>
         /// Gets the name of the application.
         /// </summary>
         /// <value>The name of the application.</value>
@@ -73,6 +81,12 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <value>The supported objects.</value>
         IList<string> SupportedObjects { get; set; }
+
+        /// <summary>
+        /// Gets the collection of WebSocket or HTTP headers.
+        /// </summary>
+        /// <value>The headers.</value>
+        IDictionary<string, string> Headers { get; }
 
         /// <summary>
         /// Gets or sets a delegate to process logging messages.
@@ -144,6 +158,13 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <returns>A list of supported protocols.</returns>
         IList<ISupportedProtocol> GetSupportedProtocols();
+
+        /// <summary>
+        /// Gets the registered handler for the specified protocol.
+        /// </summary>
+        /// <param name="protocol">The protocol.</param>
+        /// <returns>The registered protocol handler instance.</returns>
+        IProtocolHandler Handler(int protocol);
 
         /// <summary>
         /// Gets the registered protocol handler for the specified ETP interface.

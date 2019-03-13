@@ -43,20 +43,12 @@ namespace Energistics.Etp.Common
         void SetProxy(string host, int port, string username = null, string password = null);
 
         /// <summary>
-        /// Gets a value indicating whether the connection is open.
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
-        /// </value>
-        bool IsOpen { get; }
-
-        /// <summary>
         /// Opens the WebSocket connection.
         /// </summary>
         void Open();
 
         /// <summary>
-        /// Asynchronously pens the WebSocket connection.
+        /// Asynchronously opens the WebSocket connection.
         /// </summary>
         Task<bool> OpenAsync();
 

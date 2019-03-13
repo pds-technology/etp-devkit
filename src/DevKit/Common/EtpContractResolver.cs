@@ -55,7 +55,7 @@ namespace Energistics.Etp.Common
                 if (IsNullableString(member, property))
                 {
                     property.Converter = new NullableStringConverter();
-                    property.MemberConverter = property.Converter;
+                    //property.MemberConverter = property.Converter;
                 }
             }
 
