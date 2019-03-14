@@ -16,8 +16,10 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.Store
@@ -32,16 +34,17 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <summary>
         /// Sends an GetDataObjectsResponse message to a customer.
         /// </summary>
-        /// <param name="dataObject">The data object.</param>
         /// <param name="correlationId">The correlation identifier.</param>
+        /// <param name="dataObjects">The data objects.</param>
+        /// <param name="errors">The errors.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long GetDataObjectsResponse(DataObject dataObject, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        long GetDataObjectsResponse(long correlationId, IList<DataObject> dataObjects, IList<ErrorInfo> errors, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Handles the GetDataObjects event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetDataObjects, DataObject> OnGetDataObjects;
+        event ProtocolEventHandler<GetDataObjects> OnGetDataObjects;
 
         /// <summary>
         /// Handles the PutDataObjects event from a customer.

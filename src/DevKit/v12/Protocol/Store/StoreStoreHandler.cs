@@ -16,8 +16,11 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
+using System.Linq;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.Store
@@ -42,18 +45,19 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <summary>
         /// Sends an GetDataObjectsResponse message to a customer.
         /// </summary>
-        /// <param name="dataObject">The data object.</param>
         /// <param name="correlationId">The correlation identifier.</param>
+        /// <param name="dataObjects">The data objects.</param>
+        /// <param name="errors">The errors.</param>
         /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long GetDataObjectsResponse(DataObject dataObject, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        public virtual long GetDataObjectsResponse(long correlationId, IList<DataObject> dataObjects, IList<ErrorInfo> errors, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetDataObjectsResponse, correlationId, messageFlag);
 
-            // TODO: Optimize reponse by sending multiple DataObject at a time
             var response = new GetDataObjectsResponse
             {
-                DataObjects = new[] { dataObject }
+                DataObjects = dataObjects,
+                Errors = errors
             };
 
             return Session.SendMessage(header, response);
@@ -62,7 +66,7 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <summary>
         /// Handles the GetDataObjects event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetDataObjects, DataObject> OnGetDataObjects;
+        public event ProtocolEventHandler<GetDataObjects> OnGetDataObjects;
 
         /// <summary>
         /// Handles the PutDataObjects event from a customer.
@@ -81,23 +85,28 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <param name="getDataObjects">The GetDataObjects message.</param>
         protected virtual void HandleGetDataObjects(IMessageHeader header, GetDataObjects getDataObjects)
         {
-            var args = Notify(OnGetDataObjects, header, getDataObjects, new DataObject());
-            HandleGetDataObjects(args);
+            var args = Notify(OnGetDataObjects, header, getDataObjects);
+            var dataObjects = new List<DataObject>();
+            var errors = new List<ErrorInfo>();
+
+            HandleGetDataObjects(args, dataObjects, errors);
 
             if (args.Cancel)
                 return;
 
-            if (args.Context.Data == null || args.Context.Data.Length == 0)
-                GetDataObjectsResponse(args.Context, header.MessageId, MessageFlags.NoData);
+            if (!dataObjects.Any() && !errors.Any())
+                GetDataObjectsResponse(header.MessageId, dataObjects, errors, MessageFlags.NoData);
             else
-                GetDataObjectsResponse(args.Context, header.MessageId);
+                GetDataObjectsResponse(header.MessageId, dataObjects, errors);
         }
 
         /// <summary>
         /// Handles the GetDataObjects message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{GetDataObjects, DataObject}"/> instance containing the event data.</param>
-        protected virtual void HandleGetDataObjects(ProtocolEventArgs<GetDataObjects, DataObject> args)
+        /// <param name="args">The <see cref="ProtocolEventArgs{GetDataObjects}" /> instance containing the event data.</param>
+        /// <param name="dataObjects">The data objects.</param>
+        /// <param name="errors">The errors.</param>
+        protected virtual void HandleGetDataObjects(ProtocolEventArgs<GetDataObjects> args, IList<DataObject> dataObjects, IList<ErrorInfo> errors)
         {
         }
 
