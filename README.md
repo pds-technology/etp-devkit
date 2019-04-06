@@ -1,3 +1,6 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/g6ajypuytusux14q?svg=true)](https://ci.appveyor.com/project/PDS/etp-devkit)
+[![Coverity Scan Build Status](https://scan.coverity.com/projects/18116/badge.svg)](https://scan.coverity.com/projects/pds-technology-etp-devkit)
+
 ### ETP DevKit v1.1
 
 ##### ABOUT THE DEVKIT
