@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace Energistics.Etp.Common.Datatypes
 {
@@ -30,6 +31,7 @@ namespace Energistics.Etp.Common.Datatypes
     public struct EtpUri
     {
         private static readonly Regex Pattern = new Regex(@"^eml:(\/\/|\/\/\/|\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|eml)([0-9]+)(\+(xml|json))?)(\/((obj_|cs_|part_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private const string FormatParameterName = "$format";
         private readonly EtpUri?[] _parent;
         private readonly Match _match;
 
@@ -50,17 +52,18 @@ namespace Energistics.Etp.Common.Datatypes
             Uri = uri;
             IsValid = _match.Success || IsRoot(uri);
 
-            var format = GetValue(_match, 8);
 
             DataSpace = GetValue(_match, 3);
             Family = GetValue(_match, 5);
             Version = FormatVersion(GetValue(_match, 6), Family);
-            Format = string.IsNullOrWhiteSpace(format) ? EtpContentType.Xml : format;
-            ContentType = new EtpContentType(Family, Version, null, Format);
             ObjectType = null;
             ObjectId = null;
             Query = GetValue(_match, 15);
             Hash = GetValue(_match, 16);
+
+            var format = GetQueryStringFormat(Query, GetValue(_match, 8));
+            Format = string.IsNullOrWhiteSpace(format) ? EtpContentType.Xml : format;
+            ContentType = new EtpContentType(Family, Version, null, Format);
 
             if (!HasRepeatValues(_match)) return;
 
@@ -357,6 +360,30 @@ namespace Energistics.Etp.Common.Datatypes
             }
 
             return string.Join(".", version.Trim().Select(x => x));
+        }
+
+        /// <summary>
+        /// Gets the $format from the query string.
+        /// </summary>
+        /// <param name="queryString">The query string.</param>
+        /// <param name="defaultValue">The default value.</param>
+        /// <returns>The query string $format parameter value.</returns>
+        private static string GetQueryStringFormat(string queryString, string defaultValue)
+        {
+            if (string.IsNullOrWhiteSpace(queryString))
+                return defaultValue;
+
+            try
+            {
+                var values = HttpUtility.ParseQueryString(queryString);
+                var format = values[FormatParameterName]?.Trim();
+
+                return string.IsNullOrWhiteSpace(format) ? defaultValue : format;
+            }
+            catch
+            {
+                return defaultValue;
+            }
         }
 
         /// <summary>
