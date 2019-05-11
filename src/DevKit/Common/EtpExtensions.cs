@@ -321,7 +321,7 @@ namespace Energistics.Etp.Common
                     gzip.CopyTo(uncompressed);
                 }
 
-                return uncompressed.GetBuffer();
+                return uncompressed.ToArray();
             }
         }
 
@@ -340,12 +340,12 @@ namespace Energistics.Etp.Common
                 using (var compressed = new MemoryStream())
                 {
                     using (var uncompressed = new MemoryStream(data))
-                    using (var gzip = new GZipStream(compressed, CompressionMode.Compress, true))
+                    using (var gzip = new GZipStream(compressed, CompressionMode.Compress))
                     {
                         uncompressed.CopyTo(gzip);
                     }
 
-                    data = compressed.GetBuffer();
+                    data = compressed.ToArray();
                     encoding = GzipEncoding;
                 }
             }
