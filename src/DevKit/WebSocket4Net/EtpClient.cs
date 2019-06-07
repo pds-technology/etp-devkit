@@ -64,7 +64,7 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="etpSubProtocol">The ETP sub protocol.</param>
         /// <param name="headers">The WebSocket headers.</param>
         public EtpClient(string uri, string application, string version, string etpSubProtocol, IDictionary<string, string> headers)
-            : base(EtpWebSocketValidation.GetEtpVersion(etpSubProtocol), application, version, headers, true)
+            : base(EtpWebSocketValidation.GetEtpVersion(etpSubProtocol), application, version, headers, true, false)
         {
             var headerItems = Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList();
 
@@ -160,7 +160,7 @@ namespace Energistics.Etp.WebSocket4Net
             _socket.Error += errorHandler;
             _socket.Open();
 
-            return await task.ConfigureAwait(false);
+            return await task.ConfigureAwait(CaptureAsyncContext);
         }
 
         /// <summary>
@@ -247,7 +247,7 @@ namespace Energistics.Etp.WebSocket4Net
 
             _socket.Close(reason);
 
-            await task.ConfigureAwait(false);
+            await task.ConfigureAwait(CaptureAsyncContext);
         }
 
         /// <summary>

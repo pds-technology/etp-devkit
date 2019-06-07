@@ -46,7 +46,7 @@ namespace Energistics.Etp.Native
         /// <param name="headers">The WebSocket or HTTP headers.</param>
         /// <param name="isClient">Whether or not this is the client-side of the session.</param>
         public EtpSessionNativeBase(EtpVersion etpVersion, WebSocket webSocket, string application, string version, IDictionary<string, string> headers, bool isClient)
-            : base(etpVersion, application, version, headers, isClient)
+            : base(etpVersion, application, version, headers, isClient, !isClient)
         {
             Socket = webSocket;
         }
@@ -90,7 +90,7 @@ namespace Energistics.Etp.Native
 
             try
             {
-                await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None).ConfigureAwait(false);
+                await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None).ConfigureAwait(CaptureAsyncContext);
                 Logger.Debug(Log("[{0}] Socket session closed.", SessionId));
                 InvokeSocketClosed();
             }
@@ -141,7 +141,7 @@ namespace Energistics.Etp.Native
                     while (Socket.State == WebSocketState.Open)
                     {
                         var buffer = new ArraySegment<byte>(new byte[BufferSize]);
-                        var result = await Socket.ReceiveAsync(buffer, token).ConfigureAwait(false);
+                        var result = await Socket.ReceiveAsync(buffer, token).ConfigureAwait(CaptureAsyncContext);
 
                         // transfer received data to MemoryStream
                         stream.Write(buffer.Array, 0, result.Count);
@@ -202,7 +202,7 @@ namespace Energistics.Etp.Native
 
             try
             {
-                await Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None).ConfigureAwait(false);
+                await Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None).ConfigureAwait(CaptureAsyncContext);
             }
             catch (Exception ex)
             {
@@ -232,7 +232,7 @@ namespace Energistics.Etp.Native
 
             try
             {
-                await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None).ConfigureAwait(false);
+                await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None).ConfigureAwait(CaptureAsyncContext);
             }
             catch (Exception ex)
             {

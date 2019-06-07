@@ -114,7 +114,7 @@ namespace Energistics.Etp.Native
 
             try
             {
-                await ClientSocket.ConnectAsync(Uri, token).ConfigureAwait(false);
+                await ClientSocket.ConnectAsync(Uri, token).ConfigureAwait(CaptureAsyncContext);
                 Logger.Verbose($"Connected to {Uri}");
             }
             catch (OperationCanceledException)
@@ -130,7 +130,7 @@ namespace Energistics.Etp.Native
                 return false;
 
             _connectionHandlingTask = Task.Factory.StartNew(
-                async () => await HandleConnection(token).ConfigureAwait(false), token,
+                async () => await HandleConnection(token).ConfigureAwait(CaptureAsyncContext), token,
                 TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach,
                 TaskScheduler.Default).Unwrap();
 
@@ -153,7 +153,7 @@ namespace Energistics.Etp.Native
             try
             {
                 if (_connectionHandlingTask != null)
-                    await _connectionHandlingTask.ConfigureAwait(false);
+                    await _connectionHandlingTask.ConfigureAwait(CaptureAsyncContext);
             }
             catch (OperationCanceledException)
             {
@@ -166,7 +166,7 @@ namespace Energistics.Etp.Native
             }
 
             if (IsOpen)
-                await base.CloseAsyncCore(reason).ConfigureAwait(false);
+                await base.CloseAsyncCore(reason).ConfigureAwait(CaptureAsyncContext);
         }
 
         /// <summary>

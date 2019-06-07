@@ -37,7 +37,7 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="application">The server application name.</param>
         /// <param name="version">The server application version.</param>
-        protected EtpWebServerBase(string application, string version)
+        protected EtpWebServerBase(string application, string version) : base(false)
         {
             ApplicationName = application;
             ApplicationVersion = version;

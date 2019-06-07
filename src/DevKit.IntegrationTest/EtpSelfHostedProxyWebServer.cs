@@ -23,7 +23,6 @@ using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using log4net;
-using StreamExtended.Network;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
 using Titanium.Web.Proxy.Models;

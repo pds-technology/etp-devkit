@@ -35,8 +35,10 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpBase"/> class.
         /// </summary>
-        protected EtpBase()
+        /// <param name="captureAsyncContext">Where or not the synchronization context should be captured for async tasks.</param>
+        protected EtpBase(bool captureAsyncContext)
         {
+            CaptureAsyncContext = captureAsyncContext;
             Logger = LogManager.GetLogger(GetType());
             SupportedObjects = new List<string>();
             RegisteredHandlers = new Dictionary<Type, Type>();
@@ -60,6 +62,11 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <value>The supported objects.</value>
         public IList<string> SupportedObjects { get; set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the synchronization context should be captured for async tasks.
+        /// </summary>
+        protected bool CaptureAsyncContext { get; }
 
         /// <summary>
         /// Gets the collection of registered protocol handlers.

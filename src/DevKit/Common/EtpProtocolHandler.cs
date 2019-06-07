@@ -40,7 +40,7 @@ namespace Energistics.Etp.Common
         /// <param name="protocol">The protocol.</param>
         /// <param name="role">The role.</param>
         /// <param name="requestedRole">The requested role.</param>
-        protected EtpProtocolHandler(EtpVersion version, int protocol, string role, string requestedRole)
+        protected EtpProtocolHandler(EtpVersion version, int protocol, string role, string requestedRole) : base(false)
         {
             SupportedVersion = version;
             Protocol = protocol;

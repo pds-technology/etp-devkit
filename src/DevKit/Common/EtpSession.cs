@@ -54,7 +54,9 @@ namespace Energistics.Etp.Common
         /// <param name="version">The application version.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
         /// <param name="isClient">Whether or not this is the client-side of the session.</param>
-        protected EtpSession(EtpVersion etpVersion, string application, string version, IDictionary<string, string> headers, bool isClient)
+        /// <param name="captureAsyncContext">Where or not the synchronization context should be captured for async tasks.</param>
+        protected EtpSession(EtpVersion etpVersion, string application, string version, IDictionary<string, string> headers, bool isClient, bool captureAsyncContext)
+            : base(captureAsyncContext)
         {
             IsClient = isClient;
 
@@ -308,7 +310,7 @@ namespace Energistics.Etp.Common
             // Lock to ensure only one thread at a time attempts to send data and to ensure that messages are sent with sequential IDs
             try
             {
-                await _sendLock.WaitAsync().ConfigureAwait(false);
+                await _sendLock.WaitAsync().ConfigureAwait(CaptureAsyncContext);
 
                 if (!IsOpen)
                 {
@@ -329,12 +331,12 @@ namespace Energistics.Etp.Common
                 if (IsJsonEncoding)
                 {
                     var message = EtpExtensions.Serialize(new object[] {header, body});
-                    await SendAsync(message).ConfigureAwait(false);
+                    await SendAsync(message).ConfigureAwait(CaptureAsyncContext);
                 }
                 else
                 {
                     var data = body.Encode(header, SupportedCompression);
-                    await SendAsync(data, 0, data.Length).ConfigureAwait(false);
+                    await SendAsync(data, 0, data.Length).ConfigureAwait(CaptureAsyncContext);
                 }
             }
             catch (Exception ex)
@@ -396,10 +398,10 @@ namespace Energistics.Etp.Common
             // Closing sends messages over the websocket so need to ensure no other messages are being sent when closing
             try
             {
-                await _sendLock.WaitAsync().ConfigureAwait(false);
+                await _sendLock.WaitAsync().ConfigureAwait(CaptureAsyncContext);
                 Logger.Trace($"Closing Session: {reason}");
 
-                await CloseAsyncCore(reason).ConfigureAwait(false);
+                await CloseAsyncCore(reason).ConfigureAwait(CaptureAsyncContext);
             }
             finally
             {

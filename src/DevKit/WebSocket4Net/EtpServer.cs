@@ -47,7 +47,7 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="version">The server application version.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
         public EtpServer(WebSocketSession session, string application, string version, IDictionary<string, string> headers)
-            : base(EtpWebSocketValidation.GetEtpVersion(session.SubProtocol.Name), application, version, headers, false)
+            : base(EtpWebSocketValidation.GetEtpVersion(session.SubProtocol.Name), application, version, headers, false, false)
         {
             SessionId = session.SessionID;
             _session = session;
