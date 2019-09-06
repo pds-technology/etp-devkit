@@ -114,7 +114,25 @@ namespace Energistics.Etp.Native
 
             try
             {
+                //////////////////////////////////////////////////////////////////////
+                // Work around based on https://stackoverflow.com/questions/40502921
+
+                var prevIdleTime = ServicePointManager.MaxServicePointIdleTime;
+                ServicePointManager.MaxServicePointIdleTime = Timeout.Infinite;
+
+                // End work around
+                //////////////////////////////////////////////////////////////////////
+
                 await ClientSocket.ConnectAsync(Uri, token).ConfigureAwait(CaptureAsyncContext);
+
+                //////////////////////////////////////////////////////////////////////
+                // Work around based on https://stackoverflow.com/questions/40502921
+
+                ServicePointManager.MaxServicePointIdleTime = prevIdleTime;
+
+                // End work around
+                //////////////////////////////////////////////////////////////////////
+
                 Logger.Verbose($"Connected to {Uri}");
             }
             catch (OperationCanceledException)
