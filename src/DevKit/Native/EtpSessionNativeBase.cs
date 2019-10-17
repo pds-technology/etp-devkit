@@ -153,15 +153,19 @@ namespace Energistics.Etp.Native
                         // filter null bytes from data buffer
                         var bytes = stream.GetBuffer();
 
-                        if (result.MessageType == WebSocketMessageType.Binary)
+                        await Task.Factory.StartNew(() =>
                         {
-                            OnDataReceived(bytes);
-                        }
-                        else // json encoding
-                        {
-                            var message = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
-                            OnMessageReceived(message);
-                        }
+                            if (result.MessageType == WebSocketMessageType.Binary)
+                            {
+                                OnDataReceived(bytes);
+                            }
+                            else // json encoding
+                            {
+                                var message = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
+                                OnMessageReceived(message);
+                            }
+                        }, token, TaskCreationOptions.LongRunning, TaskScheduler.FromCurrentSynchronizationContext())
+                            .ConfigureAwait(CaptureAsyncContext);
 
                         // clear and reuse MemoryStream
                         stream.Clear();
