@@ -164,7 +164,10 @@ namespace Energistics.Etp.Native
                                 var message = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
                                 OnMessageReceived(message);
                             }
-                        }, token, TaskCreationOptions.LongRunning, TaskScheduler.FromCurrentSynchronizationContext())
+                        }, token, TaskCreationOptions.LongRunning,
+                                CaptureAsyncContext
+                                    ? TaskScheduler.FromCurrentSynchronizationContext()
+                                    : TaskScheduler.Default)
                             .ConfigureAwait(CaptureAsyncContext);
 
                         // clear and reuse MemoryStream
