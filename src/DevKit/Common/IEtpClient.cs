@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Energistics.Etp.Common
@@ -41,6 +42,13 @@ namespace Energistics.Etp.Common
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
         void SetProxy(string host, int port, string username = null, string password = null);
+
+        /// <summary>
+        /// Sets security options.
+        /// </summary>
+        /// <param name="enabledSslProtocols">The enabled SSL and TLS protocols.</param>
+        /// <param name="acceptInvalidCertificates">Whether or not to accept invalid certificates.</param>
+        void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates);
 
         /// <summary>
         /// Opens the WebSocket connection.

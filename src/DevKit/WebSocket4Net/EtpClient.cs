@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Authentication;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -286,6 +287,19 @@ namespace Energistics.Etp.WebSocket4Net
             var endPoint = new DnsEndPoint(host, port);
             var headers = Security.Authorization.Basic(username, password);
             _socket.Proxy = new HttpConnectProxy(endPoint, headers[Security.Authorization.Header]);
+        }
+
+        /// <summary>
+        /// Sets security options.
+        /// </summary>
+        /// <param name="enabledSslProtocols">The enabled SSL and TLS protocols.</param>
+        /// <param name="acceptInvalidCertificates">Whether or not to accept invalid certificates.</param>
+        public void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates)
+        {
+            _socket.Security.EnabledSslProtocols = (SslProtocols)enabledSslProtocols;
+            _socket.Security.AllowCertificateChainErrors = acceptInvalidCertificates;
+            _socket.Security.AllowNameMismatchCertificate = acceptInvalidCertificates;
+            _socket.Security.AllowUnstrustedCertificate = acceptInvalidCertificates;
         }
 
         /// <summary>

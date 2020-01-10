@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
+using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
@@ -209,6 +210,22 @@ namespace Energistics.Etp.Native
             // TODO: Handle using default credentials
 
             ClientSocket.Options.Proxy = proxy;
+        }
+
+        /// <summary>
+        /// Sets security options.
+        /// </summary>
+        /// <param name="enabledSslProtocols">The enabled SSL and TLS protocols.</param>
+        /// <param name="acceptInvalidCertificates">Whether or not to accept invalid certificates.</param>
+        public void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates)
+        {
+            ServicePointManager.SecurityProtocol = enabledSslProtocols;
+
+            if (acceptInvalidCertificates)
+                ServicePointManager.ServerCertificateValidationCallback +=
+                    (sender, certificate, chain, sslPolicyErrors) => true;
+            else
+                ServicePointManager.ServerCertificateValidationCallback = null;
         }
 
         /// <summary>
