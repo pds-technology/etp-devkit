@@ -18,6 +18,7 @@
 
 using System.Collections.Concurrent;
 using Avro;
+using Avro.Generic;
 using Avro.IO;
 using Avro.Specific;
 
@@ -56,6 +57,43 @@ namespace Energistics.Etp.Common
             var mapSchema = readerSchema as MapSchema;
             reuse = reuse ?? CreateInstance(mapSchema?.ValueSchema, Schema.Type.Map);
             return base.ReadMap(reuse, writerSchema, readerSchema, decoder);
+        }
+
+        protected override object ReadUnion(object reuse, UnionSchema writerSchema, Schema readerSchema, Decoder d)
+        {
+            var index = d.ReadUnionIndex();
+            var schema = writerSchema[index];
+
+            if (readerSchema is UnionSchema)
+                readerSchema = MatchSchemas(readerSchema as UnionSchema, schema);
+            else if (!readerSchema.CanRead(schema))
+                throw new AvroException("Schema mismatch. Reader: " + ReaderSchema + ", writer: " + WriterSchema);
+            return Read(reuse, schema, readerSchema, d);
+        }
+
+        protected static Schema MatchSchemas(UnionSchema us, Schema s)
+        {
+            if (s is UnionSchema)
+                throw new AvroException("Cannot find a match against union schema");
+
+            var found = -1;
+            for (var index = 0; index < us.Count; ++index)
+            {
+                // Attempt to find exact schema match first
+                if (us[index].Equals(s))
+                {
+                    found = index;
+                    break;
+                }
+
+                if (found < 0 && us[index].CanRead(s))
+                    found = index;
+            }
+
+            if (found >= 0)
+                return us[found];
+
+            throw new AvroException("No matching schema for " + s + " in " + us);
         }
 
         private object CreateInstance(Schema schema, Schema.Type schemaType)
