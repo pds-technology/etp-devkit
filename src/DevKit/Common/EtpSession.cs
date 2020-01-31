@@ -28,6 +28,7 @@ using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Properties;
 using Newtonsoft.Json.Linq;
+using Nito.AsyncEx;
 
 
 namespace Energistics.Etp.Common
@@ -42,7 +43,7 @@ namespace Energistics.Etp.Common
         private long _messageId;
         private bool? _isJsonEncoding;
         // Used to ensure only one thread at a time sends data over a websocket.
-        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1);
+        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
         // Used to ensure only one thread at a time manipulates the collection of handlers.
         private readonly ReaderWriterLockSlim _handlersLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
@@ -294,7 +295,7 @@ namespace Energistics.Etp.Common
         public long SendMessage<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null)
             where T : ISpecificRecord
         {
-            return SendMessageAsync(header, body, onBeforeSend).Result;
+            return AsyncContext.Run(() => SendMessageAsync(header, body, onBeforeSend));
         }
 
         /// <summary>

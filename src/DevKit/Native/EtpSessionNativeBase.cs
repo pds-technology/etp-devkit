@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.WebSockets;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -130,6 +131,7 @@ namespace Energistics.Etp.Native
         /// <param name="token">The cancellation token.</param>
         /// <returns>An awaitable <see cref="Task"/>.</returns>
         /// <remarks>Runs an infinite loop to handle communication until the connection is closed.</remarks>
+        [HandleProcessCorruptedStateExceptions]
         public async Task HandleConnection(CancellationToken token)
         {
             try
@@ -153,7 +155,7 @@ namespace Energistics.Etp.Native
                         // filter null bytes from data buffer
                         var bytes = stream.GetBuffer();
 
-                        await Task.Factory.StartNew(() =>
+                        try
                         {
                             if (result.MessageType == WebSocketMessageType.Binary)
                             {
@@ -164,11 +166,11 @@ namespace Energistics.Etp.Native
                                 var message = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
                                 OnMessageReceived(message);
                             }
-                        }, token, TaskCreationOptions.LongRunning,
-                                CaptureAsyncContext
-                                    ? TaskScheduler.FromCurrentSynchronizationContext()
-                                    : TaskScheduler.Default)
-                            .ConfigureAwait(CaptureAsyncContext);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error($"Error processing received data.", e);
+                        }
 
                         // clear and reuse MemoryStream
                         stream.Clear();
