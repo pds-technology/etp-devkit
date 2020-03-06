@@ -202,15 +202,18 @@ namespace Energistics.Etp.Common.Datatypes
         {
             if (HasRepeatValues(_match))
             {
+                var objectPathGroup = _match.Groups[9];
                 var objectTypeGroup = _match.Groups[12];
                 var objectIdGroup = _match.Groups[14];
 
+                var groupIndex = 0;
                 for (int i=0; i<objectTypeGroup.Captures.Count; i++)
                 {
+                    var objectPath = objectPathGroup.Captures[i].Value;
                     var objectType = objectTypeGroup.Captures[i].Value;
 
-                    var objectId = objectIdGroup.Captures.Count > i
-                        ? WebUtility.UrlDecode(objectIdGroup.Captures[i].Value)
+                    var objectId = objectIdGroup.Captures.Count > groupIndex && objectPath.EndsWith(")")
+                        ? WebUtility.UrlDecode(objectIdGroup.Captures[groupIndex++].Value)
                         : null;
 
                     yield return new Segment(
