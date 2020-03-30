@@ -53,8 +53,10 @@ namespace Energistics.Etp.Common
 
         IAcknowledge DecodeAcknowledge(ISpecificRecord body);
 
-        IProtocolException CreateProtocolException();
-
         IProtocolException DecodeProtocolException(ISpecificRecord body);
+
+        IErrorInfo CreateErrorInfo();
+
+        IProtocolException CreateProtocolException(IErrorInfo errorInfo);
     }
 }

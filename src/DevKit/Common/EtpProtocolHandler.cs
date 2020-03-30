@@ -112,12 +112,21 @@ namespace Energistics.Etp.Common
         /// <returns>The message identifier.</returns>
         public virtual long ProtocolException(int errorCode, string errorMessage, long correlationId = 0)
         {
+            var errorInfo = Session.Adapter.CreateErrorInfo().Set(errorCode, errorMessage);
+            return ProtocolException(errorInfo, correlationId);
+        }
+
+        /// <summary>
+        /// Sends a ProtocolException message with the specified error code, message and correlation identifier.
+        /// </summary>
+        /// <param name="errorInfo">The error info.</param>
+        /// <param name="correlationId">The correlation identifier.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long ProtocolException(IErrorInfo errorInfo, long correlationId = 0)
+        {
             var header = CreateMessageHeader(Protocol, v11.MessageTypes.Core.ProtocolException, correlationId);
 
-            var error = Session.Adapter.CreateProtocolException();
-
-            error.ErrorCode = errorCode;
-            error.ErrorMessage = errorMessage;
+            var error = Session.Adapter.CreateProtocolException(errorInfo);
 
             return Session.SendMessage(header, error);
         }

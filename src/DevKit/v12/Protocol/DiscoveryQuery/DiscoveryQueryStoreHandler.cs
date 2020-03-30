@@ -88,11 +88,14 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// Handles the FindResources message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="findResources">The FindResources message.</param>
-        protected virtual void HandleFindResources(IMessageHeader header, FindResources findResources)
+        /// <param name="message">The FindResources message.</param>
+        protected virtual void HandleFindResources(IMessageHeader header, FindResources message)
         {
-            var args = Notify(OnFindResources, header, findResources, new ResourceResponse());
-            HandleFindResources(args);
+            var args = Notify(OnFindResources, header, message, new ResourceResponse());
+            if (args.Cancel)
+                return;
+
+            HandleFindResources(header, message, args.Context);
 
             if (!args.Cancel)
             {
@@ -103,8 +106,10 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <summary>
         /// Handles the FindResources message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{FindResources}"/> instance containing the event data.</param>
-        protected virtual void HandleFindResources(ProtocolEventArgs<FindResources, ResourceResponse> args)
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="response">The response.</param>
+        protected virtual void HandleFindResources(IMessageHeader header, FindResources message, ResourceResponse response)
         {
         }
     }

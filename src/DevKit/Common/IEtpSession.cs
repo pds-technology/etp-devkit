@@ -80,7 +80,7 @@ namespace Energistics.Etp.Common
         /// Gets or sets the list of supported objects.
         /// </summary>
         /// <value>The supported objects.</value>
-        IList<string> SupportedObjects { get; set; }
+        IList<IDataObjectType> SupportedObjects { get; set; }
 
         /// <summary>
         /// Gets the collection of WebSocket or HTTP headers.

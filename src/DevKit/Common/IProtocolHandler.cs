@@ -88,11 +88,10 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Sends a ProtocolException message with the specified error code, message and correlation identifier.
         /// </summary>
-        /// <param name="errorCode">The error code.</param>
-        /// <param name="errorMessage">The error message.</param>
+        /// <param name="errorInfo">The error info.</param>
         /// <param name="correlationId">The correlation identifier.</param>
         /// <returns>The message identifier.</returns>
-        long ProtocolException(int errorCode, string errorMessage, long correlationId = 0);
+        long ProtocolException(IErrorInfo errorInfo, long correlationId = 0);
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.

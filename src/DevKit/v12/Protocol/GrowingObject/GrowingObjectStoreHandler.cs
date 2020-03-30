@@ -170,10 +170,10 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// Handles the GetParts message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The GetParts message.</param>
-        /// <param name="parts">The parts.</param>
-        /// <param name="errors">The errors, if any.</param>
-        protected virtual bool HandleGetParts(IMessageHeader header, GetParts message, IDictionary<string, ObjectPart> parts, IDictionary<string, ErrorInfo> errors)
+        /// <param name="message">The message.</param>
+        /// <param name="response">The response.</param>
+        /// <param name="errors">The errors.</param>
+        protected virtual bool HandleGetParts(IMessageHeader header, GetParts message, IDictionary<string, ObjectPart> response, IDictionary<string, ErrorInfo> errors)
         {
             return true;
         }
@@ -186,22 +186,24 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         protected virtual void HandleGetPartsByRange(IMessageHeader header, GetPartsByRange message)
         {
             var args = Notify(OnGetPartsByRange, header, message, new List<ObjectPart>());
+            if (args.Cancel)
+                return;
 
-            HandleGetPartsByRange(message, args.Context);
+            if (!HandleGetPartsByRange(header, message, args.Context))
+                return;
 
-            if (!args.Cancel)
-            {
-                GetPartsByRangeResponse(header, message.Uri, args.Context);
-            }
+            GetPartsByRangeResponse(header, message.Uri, args.Context);
         }
 
         /// <summary>
-        /// Handles the GetParts message from a customer.
+        /// Handles the GetPartsByRange message from a customer.
         /// </summary>
-        /// <param name="message">The GetPartsByRangeMessage.</param>
-        /// <param name="parts">The parts.</param>
-        protected virtual void HandleGetPartsByRange(GetPartsByRange message, IList<ObjectPart> parts)
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="response">The response.</param>
+        protected virtual bool HandleGetPartsByRange(IMessageHeader header, GetPartsByRange message, IList<ObjectPart> response)
         {
+            return true;
         }
 
         /// <summary>
@@ -252,23 +254,25 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         protected virtual void HandleGetPartsMetadata(IMessageHeader header, GetPartsMetadata message)
         {
             var args = Notify(OnGetPartsMetadata, header, message, new Dictionary<string, PartsMetadataInfo>(), new Dictionary<string, ErrorInfo>());
+            if (args.Cancel)
+                return;
 
-            HandleGetPartsMetadata(message.Uris.Keys.ToList(), args.Context, args.Errors);
+            if (!HandleGetPartsMetadata(header, message, args.Context, args.Errors))
+                return;
 
-            if (!args.Cancel)
-            {
-                GetPartsMetadataResponse(header, args.Context, args.Errors);
-            }
+            GetPartsMetadataResponse(header, args.Context, args.Errors);
         }
 
         /// <summary>
         /// Handles the GetPartsMetadata message from a customer.
         /// </summary>
-        /// <param name="uris">The URIs to get metadata for.</param>
-        /// <param name="metadata">The metadata.</param>
-        /// <param name="errors">The errors, if any.</param>
-        protected virtual void HandleGetPartsMetadata(IList<string> uris, IDictionary<string, PartsMetadataInfo> metadata, IDictionary<string, ErrorInfo> errors)
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="response">The response.</param>
+        /// <param name="errors">The errors.</param>
+        protected virtual bool HandleGetPartsMetadata(IMessageHeader header, GetPartsMetadata message, IDictionary<string, PartsMetadataInfo> response, IDictionary<string, ErrorInfo> errors)
         {
+            return true;
         }
     }
 }

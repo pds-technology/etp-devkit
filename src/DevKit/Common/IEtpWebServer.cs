@@ -55,7 +55,7 @@ namespace Energistics.Etp.Common
         /// Gets or sets the list of supported objects.
         /// </summary>
         /// <value>The supported objects.</value>
-        IList<string> SupportedObjects { get; set; }
+        IList<IDataObjectType> SupportedObjects { get; set; }
 
         /// <summary>
         /// Gets or sets the list of supported encodings.

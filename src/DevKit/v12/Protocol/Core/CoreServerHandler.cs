@@ -77,7 +77,7 @@ namespace Energistics.Etp.v12.Protocol.Core
                 ApplicationName = Session.ApplicationName,
                 ApplicationVersion = Session.ApplicationVersion,
                 SupportedProtocols = supportedProtocols.Cast<SupportedProtocol>().ToList(),
-                SupportedObjects = Session.SupportedObjects,
+                SupportedObjects = Session.SupportedObjects.Select(o => o.DataObjectType).ToList(),
                 SupportedCompression = Session.SupportedCompression ?? string.Empty,
                 ServerInstanceId = Guid.Parse(Session.ServerInstanceId).ToUuid(),
             };

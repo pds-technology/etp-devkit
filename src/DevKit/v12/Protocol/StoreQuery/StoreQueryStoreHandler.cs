@@ -109,24 +109,28 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// Handles the FindObjects message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="findObjects">The FindObjects message.</param>
-        protected virtual void HandleFindObjects(IMessageHeader header, FindObjects findObjects)
+        /// <param name="message">The FindObjects message.</param>
+        protected virtual void HandleFindObjects(IMessageHeader header, FindObjects message)
         {
-            var args = Notify(OnFindObjects, header, findObjects, new DataObjectResponse());
-            HandleFindObjects(args);
+            var args = Notify(OnFindObjects, header, message, new DataObjectResponse());
+            if (args.Cancel)
+                return;
 
-            if (!args.Cancel)
-            {
-                FindObjectsResponse(header, args.Context.DataObjects, args.Context.ServerSortOrder);
-            }
+            if (!HandleFindObjects(header, message, args.Context))
+                return;
+
+            FindObjectsResponse(header, args.Context.DataObjects, args.Context.ServerSortOrder);
         }
 
         /// <summary>
         /// Handles the FindObjects message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{FindObjects}"/> instance containing the event data.</param>
-        protected virtual void HandleFindObjects(ProtocolEventArgs<FindObjects, DataObjectResponse> args)
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="response">The response.</param>
+        protected virtual bool HandleFindObjects(IMessageHeader header, FindObjects findObjects, DataObjectResponse response)
         {
+            return true;
         }
     }
 }

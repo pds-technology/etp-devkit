@@ -95,14 +95,26 @@ namespace Energistics.Etp.v11
             return (Acknowledge)body;
         }
 
-        public IProtocolException CreateProtocolException()
+        public IProtocolException DecodeProtocolException(ISpecificRecord body)
+        {
+            return (ProtocolException)body;
+        }
+
+        public IErrorInfo CreateErrorInfo()
         {
             return new ProtocolException();
         }
 
-        public IProtocolException DecodeProtocolException(ISpecificRecord body)
+        public IProtocolException CreateProtocolException(IErrorInfo errorInfo)
         {
-            return (ProtocolException)body;
+            if (errorInfo is ProtocolException)
+                return (ProtocolException)errorInfo;
+
+            return new ProtocolException
+            {
+                ErrorCode = errorInfo.Code,
+                ErrorMessage = errorInfo.Message,
+            };
         }
     }
 }

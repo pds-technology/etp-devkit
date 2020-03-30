@@ -106,5 +106,18 @@ namespace Energistics.Etp.v12
         {
             return (ProtocolException)body;
         }
+
+        public IErrorInfo CreateErrorInfo()
+        {
+            return new ErrorInfo();
+        }
+
+        public IProtocolException CreateProtocolException(IErrorInfo errorInfo)
+        {
+            return new ProtocolException
+            {
+                Error = errorInfo as ErrorInfo ?? new ErrorInfo { Code = errorInfo.Code, Message = errorInfo.Message },
+            };
+        }
     }
 }

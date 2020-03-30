@@ -40,7 +40,7 @@ namespace Energistics.Etp.Common
         {
             CaptureAsyncContext = captureAsyncContext;
             Logger = LogManager.GetLogger(GetType());
-            SupportedObjects = new List<string>();
+            SupportedObjects = new List<IDataObjectType>();
             RegisteredHandlers = new Dictionary<Type, Type>();
             RegisteredFactories = new Dictionary<Type, Func<IProtocolHandler>>();
         }
@@ -61,7 +61,7 @@ namespace Energistics.Etp.Common
         /// Gets or sets the list of supported objects.
         /// </summary>
         /// <value>The supported objects.</value>
-        public IList<string> SupportedObjects { get; set; }
+        public IList<IDataObjectType> SupportedObjects { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether the synchronization context should be captured for async tasks.

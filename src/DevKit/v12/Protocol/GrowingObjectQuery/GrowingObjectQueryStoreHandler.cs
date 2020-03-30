@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using System.Linq;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -85,30 +84,34 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// <summary>
         /// Handles the FindParts event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<FindParts, FindPartsResponse> OnFindParts;
+        public event ProtocolEventHandler<FindParts, PartsResponse> OnFindParts;
 
         /// <summary>
         /// Handles the FindParts message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="findParts">The FindParts message.</param>
-        protected virtual void HandleFindParts(IMessageHeader header, FindParts findParts)
+        /// <param name="message">The FindParts message.</param>
+        protected virtual void HandleFindParts(IMessageHeader header, FindParts message)
         {
-            var args = Notify(OnFindParts, header, findParts, new FindPartsResponse());
-            HandleFindParts(args);
+            var args = Notify(OnFindParts, header, message, new PartsResponse());
+            if (args.Cancel)
+                return;
 
-            if (!args.Cancel)
-            {
-                FindPartsResponse(header, findParts.Uri, args.Context.Parts, args.Context.ServerSortOrder, findParts.Format);
-            }
+            if (!HandleFindParts(header, message, args.Context))
+                return;
+
+            FindPartsResponse(header, message.Uri, args.Context.Parts, args.Context.ServerSortOrder, args.Context.Format);
         }
 
         /// <summary>
         /// Handles the FindParts message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{FindParts}"/> instance containing the event data.</param>
-        protected virtual void HandleFindParts(ProtocolEventArgs<FindParts, FindPartsResponse> args)
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="response">The response.</param>
+        protected virtual bool HandleFindParts(IMessageHeader header, FindParts message, PartsResponse response)
         {
+            return true;
         }
     }
 }

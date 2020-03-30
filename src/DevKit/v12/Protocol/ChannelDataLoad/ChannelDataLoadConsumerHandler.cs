@@ -105,23 +105,25 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         protected virtual void HandleOpenChannels(IMessageHeader header, OpenChannels message)
         {
             var args = Notify(OnOpenChannels, header, message, new Dictionary<string, OpenChannelInfo>(), new Dictionary<string, ErrorInfo>());
+            if (args.Cancel)
+                return;
 
-            HandleOpenChannels(message, args.Context, args.Errors);
+            if (!HandleOpenChannels(header, message, args.Context, args.Errors))
+                return;
 
-            if (!args.Cancel)
-            {
-                OpenChannelsResponse(header, args.Context, args.Errors);
-            }
+            OpenChannelsResponse(header, args.Context, args.Errors);
         }
 
         /// <summary>
         /// Handles the OpenChannel message from a customer.
         /// </summary>
-        /// <param name="message">The OpenChannels message.</param>
-        /// <param name="channels">The channels.</param>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="response">The response.</param>
         /// <param name="errors">The errors.</param>
-        protected virtual void HandleOpenChannels(OpenChannels message, IDictionary<string, OpenChannelInfo> channels, IDictionary<string, ErrorInfo> errors)
+        protected virtual bool HandleOpenChannels(IMessageHeader header, OpenChannels message, IDictionary<string, OpenChannelInfo> response, IDictionary<string, ErrorInfo> errors)
         {
+            return true;
         }
 
         /// <summary>

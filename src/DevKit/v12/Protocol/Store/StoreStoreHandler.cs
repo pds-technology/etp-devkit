@@ -110,10 +110,10 @@ namespace Energistics.Etp.v12.Protocol.Store
         protected virtual void HandleGetDataObjects(IMessageHeader header, GetDataObjects message)
         {
             var args = Notify(OnGetDataObjects, header, message, new Dictionary<string, DataObject>(), new Dictionary<string, ErrorInfo>());
-
-            HandleGetDataObjects(message, args.Context, args.Errors);
-
             if (args.Cancel)
+                return;
+
+            if (!HandleGetDataObjects(header, message, args.Context, args.Errors))
                 return;
 
             GetDataObjectsResponse(header, args.Context, args.Errors);
@@ -122,11 +122,13 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <summary>
         /// Handles the GetDataObjects message from a customer.
         /// </summary>
-        /// <param name="message">The GetDataObjects message.</param>
-        /// <param name="dataObjects">The data objects.</param>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="response">The response.</param>
         /// <param name="errors">The errors.</param>
-        protected virtual void HandleGetDataObjects(GetDataObjects message, IDictionary<string, DataObject> dataObjects, IDictionary<string, ErrorInfo> errors)
+        protected virtual bool HandleGetDataObjects(IMessageHeader header, GetDataObjects message, IDictionary<string, DataObject> response, IDictionary<string, ErrorInfo> errors)
         {
+            return true;
         }
 
         /// <summary>

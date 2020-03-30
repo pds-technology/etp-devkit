@@ -18,6 +18,7 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 
 namespace Energistics.Etp.v12.Protocol
 {
@@ -36,6 +37,15 @@ namespace Energistics.Etp.v12.Protocol
         protected Etp12ProtocolHandler(int protocol, string role, string requestedRole)
             : base(EtpVersion.v12, protocol, role, requestedRole)
         {
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ErrorInfo"/> instance.
+        /// </summary>
+        /// <returns>The <see cref="ErrorInfo"/> instance.</returns>
+        public ErrorInfo ErrorInfo()
+        {
+            return new ErrorInfo();
         }
     }
 }

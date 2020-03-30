@@ -64,13 +64,18 @@ namespace Energistics.Etp.Common.Datatypes
             var format = GetQueryStringFormat(Query, GetValue(_match, 8));
             Format = string.IsNullOrWhiteSpace(format) ? EtpContentType.Xml : format;
             ContentType = new EtpContentType(Family, Version, null, Format);
+            DataObjectType = new EtpDataObjectType(Family, Version);
 
-            if (!HasRepeatValues(_match)) return;
+            if (!HasRepeatValues(_match))
+            {
+                return;
+            }
 
             var last = GetObjectIds().Last();
             ObjectType = last.ObjectType;
             ObjectId = last.ObjectId;
             ContentType = new EtpContentType(Family, Version, ObjectType, Format);
+            DataObjectType = new EtpDataObjectType(Family, Version, ObjectType);
         }
 
         /// <summary>
@@ -132,6 +137,11 @@ namespace Energistics.Etp.Common.Datatypes
         /// </summary>
         /// <value>The type of the content.</value>
         public EtpContentType ContentType { get; }
+
+        /// <summary>
+        /// Gets the data object type.
+        /// </summary>
+        public EtpDataObjectType DataObjectType { get; }
 
         /// <summary>
         /// Returns true if a valid URI was specified.

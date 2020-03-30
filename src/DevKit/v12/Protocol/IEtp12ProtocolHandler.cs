@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using Energistics.Etp.Common;
+using Energistics.Etp.v12.Datatypes;
 
 namespace Energistics.Etp.v12.Protocol
 {
@@ -25,5 +26,9 @@ namespace Energistics.Etp.v12.Protocol
     /// </summary>
     public interface IEtp12ProtocolHandler : IProtocolHandler
     {
+        /// Creates a new <see cref="ErrorInfo"/> instance.
+        /// </summary>
+        /// <returns>The <see cref="ErrorInfo"/> instance.</returns>
+        ErrorInfo ErrorInfo();
     }
 }

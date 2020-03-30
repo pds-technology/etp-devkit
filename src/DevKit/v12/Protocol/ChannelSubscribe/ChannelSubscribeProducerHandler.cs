@@ -168,23 +168,25 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         protected virtual void HandleGetChannelMetadata(IMessageHeader header, GetChannelMetadata message)
         {
             var args = Notify(OnGetChannelMetadata, header, message, new Dictionary<string, ChannelMetadataRecord>(), new Dictionary<string, ErrorInfo>());
+            if (args.Cancel)
+                return;
 
-            HandleGetChannelMetadata(message, args.Context, args.Errors);
+            if (!HandleGetChannelMetadata(header, message, args.Context, args.Errors))
+                return;
 
-            if (!args.Cancel)
-            {
-                GetChannelMetadataResponse(header, args.Context, args.Errors);
-            }
+            GetChannelMetadataResponse(header, args.Context, args.Errors);
         }
 
         /// <summary>
         /// Handles the GetChannelMetadata message from a consumer.
         /// </summary>
-        /// <param name="message">The GetChannelMetadata message.</param>
-        /// <param name="metadata">The metadata.</param>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="response">The response.</param>
         /// <param name="errors">The errors.</param>
-        protected virtual void HandleGetChannelMetadata(GetChannelMetadata message, IDictionary<string, ChannelMetadataRecord> metadata, IDictionary<string, ErrorInfo> errors)
+        protected virtual bool HandleGetChannelMetadata(IMessageHeader header, GetChannelMetadata message, IDictionary<string, ChannelMetadataRecord> response, IDictionary<string, ErrorInfo> errors)
         {
+            return true;
         }
 
         /// <summary>
@@ -205,23 +207,25 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         protected virtual void HandleUnsubscribeChannels(IMessageHeader header, UnsubscribeChannels message)
         {
             var args = Notify(OnUnsubscribeChannels, header, message, new Dictionary<string, long>(), new Dictionary<string, ErrorInfo>());
+            if (args.Cancel)
+                return;
 
-            HandleUnsubscribeChannels(message, args.Context, args.Errors);
+            if (!HandleUnsubscribeChannels(header, message, args.Context, args.Errors))
+                return;
 
-            if (!args.Cancel)
-            {
-                SubscriptionsStopped(header, args.Context, args.Errors);
-            }
+            SubscriptionsStopped(header, args.Context, args.Errors);
         }
 
         /// <summary>
         /// Handles the UnsubscribeChannels message from a consumer.
         /// </summary>
-        /// <param name="message">The UnsubscribeChannels message.</param>
-        /// <param name="channelIds">The channel IDs.</param>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="response">The response.</param>
         /// <param name="errors">The errors.</param>
-        protected virtual void HandleUnsubscribeChannels(UnsubscribeChannels message, IDictionary<string, long> channelIds, IDictionary<string, ErrorInfo> errors)
+        protected virtual bool HandleUnsubscribeChannels(IMessageHeader header, UnsubscribeChannels message, IDictionary<string, long> response, IDictionary<string, ErrorInfo> errors)
         {
+            return true;
         }
 
 

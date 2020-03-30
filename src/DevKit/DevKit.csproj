@@ -97,10 +97,11 @@
     <Compile Include="Common\Datatypes\EtpVersion.cs" />
     <Compile Include="Common\Datatypes\WebSocketType.cs" />
     <Compile Include="Common\EtpAdapterBase.cs" />
+    <Compile Include="Common\EtpErrorInfos.cs" />
+    <Compile Include="Common\EtpProtocolExceptions.cs" />
     <Compile Include="Common\EtpWebServerBase.cs" />
     <Compile Include="Common\EtpBase.cs" />
     <Compile Include="Common\EtpWebSocketValidation.cs" />
-    <Compile Include="Common\EtpErrorMessages.cs" />
     <Compile Include="Common\EtpMessageHeaderExtensions.cs" />
     <Compile Include="Common\EtpExtensions.cs" />
     <Compile Include="Common\EtpProtocolHandler.cs" />
@@ -130,7 +131,6 @@
     <Compile Include="v11\Datatypes\ChannelData\StreamingStartIndexConverter.cs" />
     <Compile Include="Common\Datatypes\NullableAttributeConverter.cs" />
     <Compile Include="v11\Datatypes\DataValueConverter.cs" />
-    <Compile Include="Common\Datatypes\EtpContentType.cs" />
     <Compile Include="Common\Datatypes\EtpUri.cs" />
     <Compile Include="Common\IEtpSession.cs" />
     <Compile Include="Common\ProtocolEventArgs.cs" />

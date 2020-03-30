@@ -351,7 +351,7 @@ namespace Energistics.Etp.Common
             {
                 // Handler already locked by the calling code...
                 return Handler(header.Protocol)
-                    .ProtocolException((int)EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
+                    .InvalidState(ex.Message, header.MessageId);
             }
 
             return header.MessageId;
@@ -532,8 +532,7 @@ namespace Energistics.Etp.Common
                         return;
                     }
 
-                    var msg = $"Protocol handler not registered for protocol { header.Protocol }.";
-                    handler.ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, msg, header.MessageId);
+                    handler.UnsupportedProtocol(header.Protocol, header.MessageId);
 
                     return;
                 }
@@ -560,7 +559,7 @@ namespace Energistics.Etp.Common
                 catch (Exception ex)
                 {
                     Logger.Debug(ex);
-                    handler.ProtocolException((int)EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
+                    handler.InvalidState(ex.Message, header.MessageId);
                 }
             }
             finally

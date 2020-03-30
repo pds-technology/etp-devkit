@@ -124,16 +124,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <param name="message">The OpenChannelsResponse message.</param>
         protected virtual void HandleOpenChannelsResponse(IMessageHeader header, OpenChannelsResponse message)
         {
-            var args = Notify(OnOpenChannelsResponse, header, message);
-            HandleOpenChannelsResponse(args);
-        }
-
-        /// <summary>
-        /// Handles the OpenChannelsResponse message from a customer.
-        /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{OpenChannelResponse}"/> instance containing the event data.</param>
-        protected virtual void HandleOpenChannelsResponse(ProtocolEventArgs<OpenChannelsResponse> args)
-        {
+            Notify(OnOpenChannelsResponse, header, message);
         }
     }
 }
