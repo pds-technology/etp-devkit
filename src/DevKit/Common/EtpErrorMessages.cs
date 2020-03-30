@@ -39,6 +39,22 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
+        /// Creates an error info for a unset type.
+        /// </summary>
+        /// <param name="handler">The handler.</param>
+        /// <param name="header">The message header.</param>
+        /// <returns>The error info.</returns>
+        public static TErrorInfo GetUnset<TErrorInfo>(this IProtocolHandler handler, IMessageHeader header)
+            where TErrorInfo : class, IErrorInfo, new()
+        {
+            return new TErrorInfo
+            {
+                Code = (int)EtpErrorCodes.Unset,
+                Message = "Unset: " + header.MessageType,
+            };
+        }
+
+        /// <summary>
         /// Sends a ProtocolException message for a no role type.
         /// </summary>
         /// <param name="handler">The handler.</param>
@@ -50,6 +66,22 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
+        /// Creates an error info for a no role type.
+        /// </summary>
+        /// <param name="handler">The handler.</param>
+        /// <param name="header">The message header.</param>
+        /// <returns>The error info.</returns>
+        public static TErrorInfo GetNoRole<TErrorInfo>(this IProtocolHandler handler, IMessageHeader header)
+            where TErrorInfo : class, IErrorInfo, new()
+        {
+            return new TErrorInfo
+            {
+                Code = (int)EtpErrorCodes.NoRole,
+                Message = "No Role: " + header.MessageType,
+            };
+        }
+
+        /// <summary>
         /// Sends a ProtocolException message for a no supported protocols type.
         /// </summary>
         /// <param name="handler">The handler.</param>
@@ -58,6 +90,22 @@ namespace Energistics.Etp.Common
         public static long NoSupportedProtocols(this IProtocolHandler handler, IMessageHeader header)
         {
             return handler.ProtocolException((int)EtpErrorCodes.NoSupportedProtocols, "No supported protocols: " + header.MessageType, header.MessageId);
+        }
+
+        /// <summary>
+        /// Creates an error info for a no supported protocols type.
+        /// </summary>
+        /// <param name="handler">The handler.</param>
+        /// <param name="header">The message header.</param>
+        /// <returns>The error info.</returns>
+        public static TErrorInfo NoSupportedProtocols<TErrorInfo>(this IProtocolHandler handler, IMessageHeader header)
+            where TErrorInfo : class, IErrorInfo, new()
+        {
+            return new TErrorInfo
+            {
+                Code = (int)EtpErrorCodes.NoSupportedProtocols,
+                Message = "No supported protocols: " + header.MessageType,
+            };
         }
 
         /// <summary>
@@ -120,6 +168,22 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
+        /// Creates an error info for not supported.
+        /// </summary>
+        /// <param name="handler">The handler.</param>
+        /// <param name="value">The argument value.</param>
+        /// <returns>The error info.</returns>
+        public static TErrorInfo GetNotSupported<TErrorInfo>(this IProtocolHandler handler, object value)
+            where TErrorInfo : class, IErrorInfo, new()
+        {
+            return new TErrorInfo
+            {
+                Code = (int)EtpErrorCodes.NotSupported,
+                Message = "Not Supported: " + value,
+            };
+        }
+
+        /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for an invalid state.
         /// </summary>
         /// <param name="handler">The protocol handler.</param>
@@ -165,6 +229,22 @@ namespace Energistics.Etp.Common
         public static long NotFound(this IProtocolHandler handler, object value, long messageId = 0)
         {
             return handler.ProtocolException((int)EtpErrorCodes.NotFound, "Not Found: " + value, messageId);
+        }
+
+        /// <summary>
+        /// Creates an error info for object not found.
+        /// </summary>
+        /// <param name="handler">The handler.</param>
+        /// <param name="value">The argument value.</param>
+        /// <returns>The error info.</returns>
+        public static TErrorInfo GetNotFound<TErrorInfo>(this IProtocolHandler handler, object value)
+            where TErrorInfo : class, IErrorInfo, new()
+        {
+            return new TErrorInfo
+            {
+                Code = (int)EtpErrorCodes.NotFound,
+                Message = "Not Found: " + value,
+            };
         }
 
         /// <summary>

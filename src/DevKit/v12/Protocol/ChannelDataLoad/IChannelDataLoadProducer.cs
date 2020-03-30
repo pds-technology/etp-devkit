@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.ChannelData;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
 {
@@ -31,49 +32,39 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
     public interface IChannelDataLoadProducer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a OpenChannel message to a store.
+        /// Sends a OpenChannels message to a consumer.
         /// </summary>
         /// <param name="channels">The channels.</param>
         /// <returns>The message identifier.</returns>
-        long OpenChannel(IList<ChannelMetadataRecord> channels);
+        long OpenChannels(IList<ChannelMetadataRecord> channels);
 
         /// <summary>
-        /// Sends a CloseChannel message to a store.
+        /// Handles the OpenChannelsResponse event from a consumer.
         /// </summary>
-        /// <param name="id">The channel identifier.</param>
-        /// <param name="reason">The close reason.</param>
-        /// <returns>The message identifier.</returns>
-        long CloseChannel(long id, string reason);
+        event ProtocolEventHandler<OpenChannelsResponse> OnOpenChannelsResponse;
 
         /// <summary>
-        /// Sends a RealtimeData message to a store.
+        /// Sends a CloseChannel message to a consumer.
+        /// </summary>
+        /// <param name="channelIds">The channel IDs.</param>
+        /// <returns>The message identifier.</returns>
+        long CloseChannel(IList<long> channelIds);
+
+        /// <summary>
+        /// Sends a RealtimeData message to a consumer.
         /// </summary>
         /// <param name="dataItems">The data items.</param>
         /// <returns>The message identifier.</returns>
         long RealtimeData(IList<DataItem> dataItems);
 
         /// <summary>
-        /// Sends a InfillData message to a store.
+        /// Sends a ReplaceRange message to a consumer.
         /// </summary>
-        /// <param name="dataItems">The data items.</param>
+        /// <param name="channelIds">The IDs of the channels that are changing.</param>
+        /// <param name="changedInterval">The indexes that define the interval that is changing.</param>
+        /// <param name="dataItems">The channel data of the changed interval.</param>
         /// <returns>The message identifier.</returns>
-        long InfillData(IList<DataItem> dataItems);
+        long ReplaceRange(IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> dataItems);
 
-        /// <summary>
-        /// Sends a ChangedData message to a store.
-        /// </summary>
-        /// <param name="id">The channel identifier.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="depthDatum">The depth datum.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="dataItems">The data items.</param>
-        /// <returns>The message identifier.</returns>
-        long ChangedData(long id, object startIndex, object endIndex, string depthDatum, string uom, IList<DataItem> dataItems);
-
-        /// <summary>
-        /// Handles the OpenChannelResponse event from a store.
-        /// </summary>
-        event ProtocolEventHandler<OpenChannelResponse> OnOpenChannelResponse;
     }
 }

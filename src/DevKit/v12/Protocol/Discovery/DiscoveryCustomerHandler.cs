@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -31,64 +30,45 @@ namespace Energistics.Etp.v12.Protocol.Discovery
     /// <seealso cref="Energistics.Etp.v12.Protocol.Discovery.IDiscoveryCustomer" />
     public class DiscoveryCustomerHandler : Etp12ProtocolHandler, IDiscoveryCustomer
     {
-        private readonly IDictionary<long, string> _requests;
+        private readonly ConcurrentDictionary<long, GetResources> _requests = new ConcurrentDictionary<long, GetResources>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscoveryCustomerHandler"/> class.
         /// </summary>
         public DiscoveryCustomerHandler() : base((int)Protocols.Discovery, "customer", "store")
         {
-            _requests = new ConcurrentDictionary<long, string>();
-
             RegisterMessageHandler<GetResourcesResponse>(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse, HandleGetResourcesResponse);
         }
 
         /// <summary>
-        /// Sends a GetTreeResources message to a store.
+        /// Sends a GetResources message to a store.
         /// </summary>
-        /// <param name="contextInfo">The context information.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long GetTreeResources(ContextInfo contextInfo)
-        {
-            var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetTreeResources);
-
-            var getResources = new GetTreeResources
-            {
-                Context = contextInfo
-            };
-
-            return Session.SendMessage(header, getResources,
-                h => _requests[h.MessageId] = contextInfo.Uri // Cache requested URIs by message ID
-            );
-        }
-
-        /// <summary>
-        /// Sends a GetGraphResources message to a store.
-        /// </summary>
-        /// <param name="contextInfo">The context information.</param>
+        /// <param name="context">The context information.</param>
         /// <param name="scope">The scope.</param>
-        /// <param name="groupByType">if set to <c>true</c> group by type.</param>
+        /// <param name="lastChangedFilter">An optional parameter to filter discovery on a date when an object last changed.</param>
+        /// <param name="countObjects">if set to <c>true</c>, request object counts.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long GetGraphResources(ContextInfo contextInfo, ContextScopeKind scope, bool groupByType)
+        public virtual long GetResources(ContextInfo context, ContextScopeKind scope, long? lastChangedFilter = null, bool countObjects = false)
         {
-            var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetGraphResources);
+            var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResources);
 
-            var getResources = new GetGraphResources
+            var getResources = new GetResources
             {
-                Context = contextInfo,
+                Context = context,
                 Scope = scope,
-                GroupByType = groupByType
+                LastChangedFilter = lastChangedFilter,
+                CountObjects = countObjects,
             };
 
             return Session.SendMessage(header, getResources,
-                h => _requests[h.MessageId] = contextInfo.Uri // Cache requested URIs by message ID
+                h => _requests[h.MessageId] = getResources// Cache requested URIs by message ID
             );
         }
 
         /// <summary>
         /// Handles the GetResourcesResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<GetResourcesResponse, string> OnGetResourcesResponse;
+        public event ProtocolEventHandler<GetResourcesResponse, GetResources> OnGetResourcesResponse;
 
         /// <summary>
         /// Handle any final cleanup related to the final message in response to a request.
@@ -96,7 +76,8 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// <param name="correlationId">The correlation ID of the request</param>
         protected override void HandleFinalResponse(long correlationId)
         {
-            _requests.Remove(correlationId);
+            GetResources request;
+            _requests.TryRemove(correlationId, out request);
         }
 
         /// <summary>
@@ -106,8 +87,8 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// <param name="getResourcesResponse">The GetResourcesResponse message.</param>
         protected virtual void HandleGetResourcesResponse(IMessageHeader header, GetResourcesResponse getResourcesResponse)
         {
-            var uri = GetRequestedUri(header);
-            var args = Notify(OnGetResourcesResponse, header, getResourcesResponse, uri);
+            var request = GetRequest(header);
+            var args = Notify(OnGetResourcesResponse, header, getResourcesResponse, request);
             HandleGetResourcesResponse(args);
         }
 
@@ -115,20 +96,20 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// Handles the GetResourcesResponse message from a store.
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{GetResourcesResponse}"/> instance containing the event data.</param>
-        protected virtual void HandleGetResourcesResponse(ProtocolEventArgs<GetResourcesResponse, string> args)
+        protected virtual void HandleGetResourcesResponse(ProtocolEventArgs<GetResourcesResponse, GetResources> args)
         {
         }
 
         /// <summary>
-        /// Gets the requested URI from the internal cache of message IDs.
+        /// Gets the request from the internal cache of message IDs.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <returns>The requested URI.</returns>
-        private string GetRequestedUri(IMessageHeader header)
+        /// <returns>The request.</returns>
+        private GetResources GetRequest(IMessageHeader header)
         {
-            string uri;
-            _requests.TryGetValue(header.CorrelationId, out uri);
-            return uri;
+            GetResources request;
+            _requests.TryGetValue(header.CorrelationId, out request);
+            return request;
         }
     }
 }

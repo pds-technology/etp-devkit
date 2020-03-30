@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
+using System.Linq;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -36,91 +37,101 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// </summary>
         public GrowingObjectStoreHandler() : base((int)Protocols.GrowingObject, "store", "customer")
         {
-            RegisterMessageHandler<GetPart>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPart, HandleGetPart);
+            RegisterMessageHandler<GetParts>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetParts, HandleGetParts);
             RegisterMessageHandler<GetPartsByRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRange, HandleGetPartsByRange);
-            RegisterMessageHandler<PutPart>(Protocols.GrowingObject, MessageTypes.GrowingObject.PutPart, HandlePutPart);
-            RegisterMessageHandler<DeletePart>(Protocols.GrowingObject, MessageTypes.GrowingObject.DeletePart, HandleDeletePart);
+            RegisterMessageHandler<PutParts>(Protocols.GrowingObject, MessageTypes.GrowingObject.PutParts, HandlePutParts);
+            RegisterMessageHandler<DeleteParts>(Protocols.GrowingObject, MessageTypes.GrowingObject.DeleteParts, HandleDeleteParts);
             RegisterMessageHandler<DeletePartsByRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.DeletePartsByRange, HandleDeletePartsByRange);
             RegisterMessageHandler<ReplacePartsByRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.ReplacePartsByRange, HandleReplacePartsByRange);
             RegisterMessageHandler<GetPartsMetadata>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadata, HandleGetPartsMetadata);
         }
 
         /// <summary>
-        /// Sends a single list item as a response for GetPart and GetPartsByRange.
+        /// Sends a a list of parts as a response for GetParts to a customer.
         /// </summary>
+        /// <param name="request">The request.</param>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
-        /// <param name="contentType">The content type string.</param>
-        /// <param name="data">The data.</param>
-        /// <param name="correlationId">The correlation identifier.</param>
-        /// <param name="messageFlag">The message flag.</param>
+        /// <param name="parts">The UIDs and data of the parts being returned.</param>
+        /// <param name="errors">The errors, if any.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        public long GetPartsResponse(string uri, string uid, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        public virtual long GetPartsResponse(IMessageHeader request, string uri, IDictionary<string, ObjectPart> parts, IDictionary<string, ErrorInfo> errors, string format = "xml")
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsResponse, correlationId, messageFlag);
-
+            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsResponse, request.MessageId);
             var message = new GetPartsResponse
             {
-                ObjectPart = new ObjectPart
-                {
-                    Uri = uri,
-                    Uid = uid,
-                    ContentType = contentType,
-                    Data = data
-                }
+                Uri = uri,
+                Format = format ?? "xml",
             };
 
-            return Session.SendMessage(header, message);
+            return Session.Send12MultipartResponse(header, message, parts, errors, (m, i) => m.Parts = i);
         }
 
         /// <summary>
-        /// Sends the metadata describing the list items in the requested growing objects.
+        /// Sends a a list of parts as a response for GetPartsByRange to a customer.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="parts">The UIDs and data of the parts being returned.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long GetPartsByRangeResponse(IMessageHeader request, string uri, IList<ObjectPart> parts, string format = "xml")
+        {
+            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRangeResponse, request.MessageId);
+            var message = new GetPartsByRangeResponse
+            {
+                Uri = uri,
+                Format = format ?? "xml",
+            };
+
+            return Session.Send12MultipartResponse(header, message, parts, (m, i) => m.Parts = i);
+        }
+
+        /// <summary>
+        /// Sends the metadata describing the parts in the requested growing objects to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="metadata">The parts metadata.</param>
-        /// <param name="errors">The errors.</param>
+        /// <param name="errors">The errors, if any.</param>
         /// <returns>The message identifier.</returns>
-        public long GetPartsMetadataResponse(IMessageHeader request, IList<PartsMetadataInfo> metadata, IList<ErrorInfo> errors)
+        public virtual long GetPartsMetadataResponse(IMessageHeader request, IDictionary<string, PartsMetadataInfo> metadata, IDictionary<string, ErrorInfo> errors)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadataResponse, request.MessageId);
-
-            if (metadata != null)
-            {
-                foreach (var info in metadata)
-                {
-                    if (info.CustomData == null)
-                        info.CustomData = new Dictionary<string, DataValue>();
-                }
-            }
-
             var message = new GetPartsMetadataResponse
             {
-                Metadata = metadata ?? new List<PartsMetadataInfo>(),
-                Errors = errors ?? new List<ErrorInfo>()
             };
 
-            return Session.SendMessage(header, message);
+            if (metadata == null)
+                metadata = new Dictionary<string, PartsMetadataInfo>();
+
+            foreach (var info in metadata.Values)
+            {
+                if (info.CustomData == null)
+                    info.CustomData = new Dictionary<string, DataValue>();
+            }
+
+            return Session.Send12MultipartResponse(header, message, metadata, errors, (m, i) => m.Metadata = i);
         }
 
         /// <summary>
-        /// Handles the GetPart event from a customer.
+        /// Handles the GetParts event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetPart> OnGetPart;
+        public event ProtocolEventHandler<GetParts, ObjectPart, ErrorInfo> OnGetParts;
 
         /// <summary>
         /// Handles the GetPartsByRange event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetPartsByRange> OnGetPartsByRange;
+        public event ProtocolEventHandler<GetPartsByRange, IList<ObjectPart>> OnGetPartsByRange;
 
         /// <summary>
-        /// Handles the PutPart event from a customer.
+        /// Handles the PutParts event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<PutPart> OnPutPart;
+        public event ProtocolEventHandler<PutParts> OnPutParts;
 
         /// <summary>
-        /// Handles the DeletePart event from a customer.
+        /// Handles the DeleteParts event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<DeletePart> OnDeletePart;
+        public event ProtocolEventHandler<DeleteParts> OnDeleteParts;
 
         /// <summary>
         /// Handles the DeletePartsByRange event from a customer.
@@ -135,50 +146,86 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the GetPartsMetadata event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetPartsMetadata> OnGetPartsMetadata;
+        public event ProtocolEventHandler<GetPartsMetadata, PartsMetadataInfo, ErrorInfo> OnGetPartsMetadata;
 
         /// <summary>
-        /// Handles the GetPart message from a store.
+        /// Handles the GetParts message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The GetPart message.</param>
-        protected virtual void HandleGetPart(IMessageHeader header, GetPart message)
+        /// <param name="message">The GetParts message.</param>
+        protected virtual void HandleGetParts(IMessageHeader header, GetParts message)
         {
-            Notify(OnGetPart, header, message);
+            var args = Notify(OnGetParts, header, message, new Dictionary<string, ObjectPart>(), new Dictionary<string, ErrorInfo>());
+
+            if (args.Cancel)
+                return;
+
+            if (!HandleGetParts(header, message, args.Context, args.Errors))
+                return;
+
+            GetPartsResponse(header, message.Uri, args.Context, args.Errors);
         }
 
         /// <summary>
-        /// Handles the GetPartsByRange message from a store.
+        /// Handles the GetParts message from a customer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The GetParts message.</param>
+        /// <param name="parts">The parts.</param>
+        /// <param name="errors">The errors, if any.</param>
+        protected virtual bool HandleGetParts(IMessageHeader header, GetParts message, IDictionary<string, ObjectPart> parts, IDictionary<string, ErrorInfo> errors)
+        {
+            return true;
+        }
+
+        /// <summary>
+        /// Handles the GetPartsByRange message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The GetPartsByRange message.</param>
         protected virtual void HandleGetPartsByRange(IMessageHeader header, GetPartsByRange message)
         {
-            Notify(OnGetPartsByRange, header, message);
+            var args = Notify(OnGetPartsByRange, header, message, new List<ObjectPart>());
+
+            HandleGetPartsByRange(message, args.Context);
+
+            if (!args.Cancel)
+            {
+                GetPartsByRangeResponse(header, message.Uri, args.Context);
+            }
         }
 
         /// <summary>
-        /// Handles the PutPart message from a store.
+        /// Handles the GetParts message from a customer.
+        /// </summary>
+        /// <param name="message">The GetPartsByRangeMessage.</param>
+        /// <param name="parts">The parts.</param>
+        protected virtual void HandleGetPartsByRange(GetPartsByRange message, IList<ObjectPart> parts)
+        {
+        }
+
+        /// <summary>
+        /// Handles the PutParts message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The PutPart message.</param>
-        protected virtual void HandlePutPart(IMessageHeader header, PutPart message)
+        /// <param name="message">The PutParts message.</param>
+        protected virtual void HandlePutParts(IMessageHeader header, PutParts message)
         {
-            Notify(OnPutPart, header, message);
+            Notify(OnPutParts, header, message);
         }
 
         /// <summary>
-        /// Handles the DeletePart message from a store.
+        /// Handles the DeleteParts message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The DeletePart message.</param>
-        protected virtual void HandleDeletePart(IMessageHeader header, DeletePart message)
+        /// <param name="message">The DeleteParts message.</param>
+        protected virtual void HandleDeleteParts(IMessageHeader header, DeleteParts message)
         {
-            Notify(OnDeletePart, header, message);
+            Notify(OnDeleteParts, header, message);
         }
 
         /// <summary>
-        /// Handles the DeletePartsByRange message from a store.
+        /// Handles the DeletePartsByRange message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The DeletePartsByRange message.</param>
@@ -188,7 +235,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
-        /// Handles the ReplacePartsByRange message from a store.
+        /// Handles the ReplacePartsByRange message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The ReplacePartsByRange message.</param>
@@ -198,31 +245,29 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
-        /// Handles the GetPartsMetadata message from a store.
+        /// Handles the GetPartsMetadata message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The GetPartsMetadata message.</param>
         protected virtual void HandleGetPartsMetadata(IMessageHeader header, GetPartsMetadata message)
         {
-            var args = Notify(OnGetPartsMetadata, header, message);
-            var metadata = new List<PartsMetadataInfo>();
-            var errors = new List<ErrorInfo>();
+            var args = Notify(OnGetPartsMetadata, header, message, new Dictionary<string, PartsMetadataInfo>(), new Dictionary<string, ErrorInfo>());
 
-            HandleGetPartsMetadata(args, metadata, errors);
+            HandleGetPartsMetadata(message.Uris.Keys.ToList(), args.Context, args.Errors);
 
             if (!args.Cancel)
             {
-                GetPartsMetadataResponse(header, metadata, errors);
+                GetPartsMetadataResponse(header, args.Context, args.Errors);
             }
         }
 
         /// <summary>
-        /// Handles the GetPartsMetadata message from a store.
+        /// Handles the GetPartsMetadata message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{GetPartsMetadata}" /> instance containing the event data.</param>
+        /// <param name="uris">The URIs to get metadata for.</param>
         /// <param name="metadata">The metadata.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual void HandleGetPartsMetadata(ProtocolEventArgs<GetPartsMetadata> args, IList<PartsMetadataInfo> metadata, IList<ErrorInfo> errors)
+        /// <param name="errors">The errors, if any.</param>
+        protected virtual void HandleGetPartsMetadata(IList<string> uris, IDictionary<string, PartsMetadataInfo> metadata, IDictionary<string, ErrorInfo> errors)
         {
         }
     }

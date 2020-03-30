@@ -18,6 +18,7 @@
 
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -37,155 +38,127 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// </summary>
         public GrowingObjectCustomerHandler() : base((int)Protocols.GrowingObject, "customer", "store")
         {
-            Metadata = new ConcurrentBag<PartsMetadataInfo>();
-            Errors = new ConcurrentBag<ErrorInfo>();
-
             RegisterMessageHandler<GetPartsResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsResponse, HandleGetPartsResponse);
+            RegisterMessageHandler<GetPartsByRangeResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRangeResponse, HandleGetPartsByRangeResponse);
             RegisterMessageHandler<GetPartsMetadataResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadataResponse, HandleGetPartsMetadataResponse);
         }
 
         /// <summary>
-        /// Gets the collection of parts metadata infos.
-        /// </summary>
-        protected ConcurrentBag<PartsMetadataInfo> Metadata { get; }
-
-        /// <summary>
-        /// Gets the collection of errors.
-        /// </summary>
-        protected ConcurrentBag<ErrorInfo> Errors { get; }
-
-        /// <summary>
-        /// Gets the metadata for growing object parts.
+        /// Gets the metadata for growing object parts from a store.
         /// </summary>
         /// <param name="uris">The collection of growing object URIs.</param>
         /// <returns>The message identifier.</returns>
-        public long GetPartsMetadata(IList<string> uris)
+        public virtual long GetPartsMetadata(IList<string> uris)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadata);
 
             var message = new GetPartsMetadata
             {
-                Uris = uris
+                Uris = uris.ToDictionary(uri => uri, uri => string.Empty),
             };
 
             return Session.SendMessage(header, message);
         }
 
         /// <summary>
-        /// Gets a single list item in a growing object, by its ID.
+        /// Gets parts in a growing object by UID from a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
+        /// <param name="uids">The UIDs of the elements within the growing object to get.</param>
+        /// <param name="format">The format of the response (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        public long GetPart(string uri, string uid)
+        public virtual long GetParts(string uri, IList<string> uids, string format = "xml")
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPart);
-
-            var message = new GetPart
+            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetParts);
+            var list = new List<string>();
+            var message = new GetParts
             {
                 Uri = uri,
-                Uid = uid
+                Uids = uids.ToMap(),
+                Format = format ?? "xml",
             };
 
             return Session.SendMessage(header, message);
         }
 
         /// <summary>
-        /// Gets all list items in a growing object within an index range.
+        /// Gets all parts in a growing object within an index range from a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
+        /// <param name="indexInterval">The index interval.</param>
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
+        /// <param name="format">The format of the response (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        public long GetPartsByRange(string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals = false)
+        public virtual long GetPartsByRange(string uri, IndexInterval indexInterval, bool includeOverlappingIntervals = false, string format = "xml")
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRange);
 
             var message = new GetPartsByRange
             {
                 Uri = uri,
-                IndexInterval = new IndexInterval
-                {
-                    StartIndex = new IndexValue { Item = startIndex },
-                    EndIndex = new IndexValue { Item = endIndex },
-                    Uom = uom ?? string.Empty,
-                    DepthDatum = depthDatum ?? string.Empty
-                },
-                IncludeOverlappingIntervals = includeOverlappingIntervals
+                IndexInterval = indexInterval,
+                IncludeOverlappingIntervals = includeOverlappingIntervals,
+                Format = format ?? "xml",
             };
 
             return Session.SendMessage(header, message);
         }
 
         /// <summary>
-        /// Adds or updates a list item in a growing object.
+        /// Adds or updates parts in a growing object in a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
-        /// <param name="contentType">The content type string for the parent object.</param>
-        /// <param name="data">The data (list items) to be added to the growing object.</param>
+        /// <param name="parts">The UIDs and data of the parts being put.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        public long PutPart(string uri, string uid, string contentType, byte[] data)
+        public virtual long PutParts(string uri, IList<ObjectPart> parts, string format = "xml")
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.PutPart);
+            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.PutParts);
 
-            var message = new PutPart
+            var message = new PutParts
             {
                 Uri = uri,
-                Uid = uid, 
-                ContentType = contentType,
-                Data = data
+                Parts = parts.ToMap(),
+                Format = format ?? "xml",
             };
 
             return Session.SendMessage(header, message);
         }
 
         /// <summary>
-        /// Deletes one list item in a growing object.
+        /// Deletes parts from a growing object from a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
+        /// <param name="uids">The UIDs of the parts within the growing object to delete.</param>
         /// <returns>The message identifier.</returns>
-        public long DeletePart(string uri, string uid)
+        public virtual long DeleteParts(string uri, IList<string> uids)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.DeletePart);
+            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.DeleteParts);
 
-            var message = new DeletePart
+            var message = new DeleteParts
             {
                 Uri = uri,
-                Uid = uid
+                Uids = uids.ToMap(),
             };
 
             return Session.SendMessage(header, message);
         }
 
         /// <summary>
-        /// Deletes all list items in a range of index values.
+        /// Deletes all parts in a range of index values from a growing object from a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
+        /// <param name="deleteInterval">The index interval to delete.</param>
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
         /// <returns>The message identifier.</returns>
-        public long DeletePartsByRange(string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals = false)
+        public virtual long DeletePartsByRange(string uri, IndexInterval deleteInterval, bool includeOverlappingIntervals = false)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.DeletePartsByRange);
 
             var message = new DeletePartsByRange
             {
                 Uri = uri,
-                DeleteInterval = new IndexInterval
-                {
-                    StartIndex = new IndexValue { Item = startIndex },
-                    EndIndex = new IndexValue { Item = endIndex },
-                    Uom = uom ?? string.Empty,
-                    DepthDatum = depthDatum ?? string.Empty
-                },
+                DeleteInterval = deleteInterval,
                 IncludeOverlappingIntervals = includeOverlappingIntervals
             };
 
@@ -193,36 +166,25 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
-        /// Replaces a list item in a growing object.
+        /// Replaces all parts in a range of index values in a growing object with new parts in a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
-        /// <param name="contentType">The content type string for the parent object.</param>
-        /// <param name="data">The data (list items) to be added to the growing object.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
+        /// <param name="deleteInterval">The index interval to delete.</param>
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
+        /// <param name="parts">The map of UIDs and data of the parts being put.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        public long ReplacePartsByRange(string uri, string uid, string contentType, byte[] data, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals)
+        public virtual long ReplacePartsByRange(string uri, IndexInterval deleteInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, string format = "xml")
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.ReplacePartsByRange);
 
             var message = new ReplacePartsByRange
             {
                 Uri = uri,
-                Uid = uid,
-                ContentType = contentType,
-                Data = data,
-                DeleteInterval = new IndexInterval
-                {
-                    StartIndex = new IndexValue { Item = startIndex },
-                    EndIndex = new IndexValue { Item = endIndex },
-                    Uom = uom,
-                    DepthDatum = depthDatum
-                },
-                IncludeOverlappingIntervals = includeOverlappingIntervals
+                Parts = parts,
+                DeleteInterval = deleteInterval,
+                IncludeOverlappingIntervals = includeOverlappingIntervals,
+                Format = format ?? "xml",
             };
 
             return Session.SendMessage(header, message);
@@ -232,6 +194,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// Handles the GetPartsResponse event from a store.
         /// </summary>
         public event ProtocolEventHandler<GetPartsResponse> OnGetPartsResponse;
+
+        /// <summary>
+        /// Handles the GetPartsByRangeResponse event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<GetPartsByRangeResponse> OnGetPartsByRangeResponse;
 
         /// <summary>
         /// Handles the GetPartsMetadataResponse event from a store.
@@ -249,18 +216,22 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
+        /// Handles the GetPartsByRangeResponse message from a store.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The GetPartsResponse message.</param>
+        protected virtual void HandleGetPartsByRangeResponse(IMessageHeader header, GetPartsByRangeResponse message)
+        {
+            Notify(OnGetPartsByRangeResponse, header, message);
+        }
+
+        /// <summary>
         /// Handles the GetPartsMetadataResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The GetPartsMetadataResponse message.</param>
         protected virtual void HandleGetPartsMetadataResponse(IMessageHeader header, GetPartsMetadataResponse message)
         {
-            foreach (var metadata in message.Metadata)
-                Metadata.Add(metadata);
-
-            foreach (var error in message.Errors)
-                Errors.Add(error);
-
             Notify(OnGetPartsMetadataResponse, header, message);
         }
     }

@@ -370,7 +370,7 @@ namespace Energistics.Etp.WebSocket4Net
         /// </summary>
         private void OnWebSocketOpened()
         {
-            Logger.Trace(Log("[{0}] Socket opened.", SessionId));
+            Logger.Trace(Log("[{0}] Socket opened.", ServerInstanceId));
 
             Adapter.RequestSession(this, ApplicationName, ApplicationVersion, _supportedCompression);
         }
@@ -382,8 +382,8 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private void OnWebSocketClosed(object sender, EventArgs e)
         {
-            Logger.Trace(Log("[{0}] Socket closed.", SessionId));
-            SessionId = null;
+            Logger.Trace(Log("[{0}] Socket closed.", ServerInstanceId));
+            ServerInstanceId = null;
         }
 
         /// <summary>
@@ -413,7 +413,7 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="e">The <see cref="ErrorEventArgs"/> instance containing the event data.</param>
         private void OnWebSocketError(object sender, ErrorEventArgs e)
         {
-            Logger.Debug(Log("[{0}] Socket error: {1}", SessionId, e.Exception.Message), e.Exception);
+            Logger.Debug(Log("[{0}] Socket error: {1}", ServerInstanceId, e.Exception.Message), e.Exception);
             SocketError?.Invoke(this, e.Exception);
         }
     }

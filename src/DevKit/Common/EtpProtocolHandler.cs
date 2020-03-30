@@ -165,7 +165,7 @@ namespace Energistics.Etp.Common
         protected virtual void HandleProtocolException(IMessageHeader header, IProtocolException protocolException)
         {
             Notify(OnProtocolException, header, protocolException);
-            Logger.DebugFormat("[{0}] Protocol exception: {1} - {2}", Session.SessionId, protocolException.ErrorCode, protocolException.ErrorMessage);
+            Logger.DebugFormat("[{0}] Protocol exception: {1} - {2}", Session.ServerInstanceId, protocolException.ErrorCode, protocolException.ErrorMessage);
         }
 
         /// <summary>
@@ -204,6 +204,26 @@ namespace Energistics.Etp.Common
         protected ProtocolEventArgs<T, TContext> Notify<T, TContext>(ProtocolEventHandler<T, TContext> handler, IMessageHeader header, T message, TContext context) where T : ISpecificRecord
         {
             var args = new ProtocolEventArgs<T, TContext>(header, message, context);
+            handler?.Invoke(this, args);
+            return args;
+        }
+
+        /// <summary>
+        /// Notifies subscribers of the specified event handler.
+        /// </summary>
+        /// <typeparam name="T">The type of the message.</typeparam>
+        /// <typeparam name="TContext">The type of the context.</typeparam>
+        /// <typeparam name="TErrorInfo">The error info type.</typeparam>
+        /// <param name="handler">The message handler.</param>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message body.</param>
+        /// <param name="context">The message context.</param>
+        /// <returns>The protocol event args.</returns>
+        protected ProtocolEventArgs<T, TContext, TErrorInfo> Notify<T, TContext, TErrorInfo>(ProtocolEventHandler<T, TContext, TErrorInfo> handler, IMessageHeader header, T message, IDictionary<string, TContext> context, IDictionary<string, TErrorInfo> errors)
+            where T : ISpecificRecord
+            where TErrorInfo : IErrorInfo
+        {
+            var args = new ProtocolEventArgs<T, TContext, TErrorInfo>(header, message, context, errors);
             handler?.Invoke(this, args);
             return args;
         }

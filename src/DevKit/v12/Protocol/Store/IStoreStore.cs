@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -34,17 +35,16 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <summary>
         /// Sends an GetDataObjectsResponse message to a customer.
         /// </summary>
-        /// <param name="correlationId">The correlation identifier.</param>
+        /// <param name="request">The request.</param>
         /// <param name="dataObjects">The data objects.</param>
         /// <param name="errors">The errors.</param>
-        /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long GetDataObjectsResponse(long correlationId, IList<DataObject> dataObjects, IList<ErrorInfo> errors, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        long GetDataObjectsResponse(IMessageHeader request, IDictionary<string, DataObject> dataObjects, IDictionary<string, ErrorInfo> errors);
 
         /// <summary>
         /// Handles the GetDataObjects event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetDataObjects> OnGetDataObjects;
+        event ProtocolEventHandler<GetDataObjects, DataObject, ErrorInfo> OnGetDataObjects;
 
         /// <summary>
         /// Handles the PutDataObjects event from a customer.
@@ -55,5 +55,20 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// Handles the DeleteDataObjects event from a customer.
         /// </summary>
         event ProtocolEventHandler<DeleteDataObjects> OnDeleteDataObjects;
+
+        /// <summary>
+        /// Sends a Chunk message to a customer.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="blobId">The blob ID.</param>
+        /// <param name="data">The chunk data.</param>
+        /// <param name="messageFlags">The message flags.</param>
+        /// <returns>The message identifier.</returns>
+        long Chunk(IMessageHeader request, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart);
+
+        /// <summary>
+        /// Handles the Chunk event from a customer.
+        /// </summary>
+        event ProtocolEventHandler<Chunk> OnChunk;
     }
 }

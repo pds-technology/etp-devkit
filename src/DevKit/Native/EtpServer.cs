@@ -49,7 +49,7 @@ namespace Energistics.Etp.Native
             : base(EtpWebSocketValidation.GetEtpVersion(webSocket.SubProtocol), webSocket, application, version, headers, false)
         {
             //var etpVersion = EtpWebSocketValidation.GetEtpVersion(Socket.SubProtocol);
-            SessionId = Guid.NewGuid().ToString();
+            ServerInstanceId = Guid.NewGuid().ToString();
         }
 
         /// <summary>
@@ -63,12 +63,12 @@ namespace Energistics.Etp.Native
         /// </summary>
         protected override void RegisterNewConnection()
         {
-            Logger.Debug(Log("[{0}] Socket session connected.", SessionId));
+            Logger.Debug(Log("[{0}] Socket session connected.", ServerInstanceId));
 
             InvokeSocketOpened();
 
             // keep track of connected clients
-            Clients.AddOrUpdate(SessionId, this, (id, client) => this);
+            Clients.AddOrUpdate(ServerInstanceId, this, (id, client) => this);
         }
 
         /// <summary>
@@ -79,11 +79,11 @@ namespace Energistics.Etp.Native
             EtpServer item;
 
             // remove client after connection ends
-            if (Clients.TryRemove(SessionId, out item))
+            if (Clients.TryRemove(ServerInstanceId, out item))
             {
                 if (item != this)
                 {
-                    Clients.AddOrUpdate(item.SessionId, item, (id, client) => item);
+                    Clients.AddOrUpdate(item.ServerInstanceId, item, (id, client) => item);
                 }
             }
         }

@@ -89,12 +89,8 @@ namespace Energistics.Etp.Common
             actualKey = EtpExtensions.CreateMessageKey((int)v11.Protocols.Discovery, (int)v11.MessageTypes.Discovery.GetResources);
             Assert.AreEqual(expectedKey, actualKey);
 
-            expectedKey = (3L << 32) + 5;
-            actualKey = EtpExtensions.CreateMessageKey((int)v12.Protocols.Discovery, (int)v12.MessageTypes.Discovery.GetTreeResources);
-            Assert.AreEqual(expectedKey, actualKey);
-
-            expectedKey = (3L << 32) + 6;
-            actualKey = EtpExtensions.CreateMessageKey((int)v12.Protocols.Discovery, (int)v12.MessageTypes.Discovery.GetGraphResources);
+            expectedKey = (3L << 32) + 1;
+            actualKey = EtpExtensions.CreateMessageKey((int)v12.Protocols.Discovery, (int)v12.MessageTypes.Discovery.GetResources);
             Assert.AreEqual(expectedKey, actualKey);
 
             expectedKey = 1000L;

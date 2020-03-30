@@ -147,7 +147,7 @@ namespace Energistics.Etp.v11.Protocol.Core
         {
             SupportedProtocols = openSession.SupportedProtocols.Cast<ISupportedProtocol>().ToList();
             ServerObjects = openSession.SupportedObjects;
-            Session.SessionId = openSession.SessionId;
+            Session.ServerInstanceId = openSession.SessionId;
             Notify(OnOpenSession, header, openSession);
             Session.OnSessionOpened(RequestedProtocols, SupportedProtocols);
         }

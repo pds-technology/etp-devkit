@@ -31,18 +31,18 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
     public interface IStoreNotificationCustomer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a SubscribeNotification message to a store.
+        /// Sends a SubscribeNotifications message to a store.
         /// </summary>
-        /// <param name="subscriptionInfo">The subscription information.</param>
+        /// <param name="request">The subscription request.</param>
         /// <returns>The message identifier.</returns>
-        long SubscribeNotification(SubscriptionInfo subscriptionInfo);
+        long SubscribeNotifications(SubscriptionInfo request);
 
         /// <summary>
-        /// Sends a UnsubscribeNotification message to a store.
+        /// Sends a UnsubscribeNotifications message to a store.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
         /// <returns>The message identifier.</returns>
-        long UnsubscribeNotification(Guid requestUuid);
+        long UnsubscribeNotifications(Guid requestUuid);
 
         /// <summary>
         /// Handles the ObjectChanged event from a store.
@@ -55,8 +55,23 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         event ProtocolEventHandler<ObjectDeleted> OnObjectDeleted;
 
         /// <summary>
+        /// Handles the Chunk event from a store.
+        /// </summary>
+        event ProtocolEventHandler<Chunk> OnChunk;
+
+        /// <summary>
         /// Handles the ObjectAccessRevoked event from a store.
         /// </summary>
         event ProtocolEventHandler<ObjectAccessRevoked> OnObjectAccessRevoked;
+
+        /// <summary>
+        /// Handles the SubscriptionEnded event from a store.
+        /// </summary>
+        event ProtocolEventHandler<SubscriptionEnded> OnSubscriptionEnded;
+
+        /// <summary>
+        /// Handles the UnsolicitedStoreNotifications event from a store.
+        /// </summary>
+        event ProtocolEventHandler<UnsolicitedStoreNotifications> OnUnsolicitedStoreNotifications;
     }
 }

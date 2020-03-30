@@ -20,6 +20,9 @@ using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
 {
@@ -40,81 +43,69 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
-        /// Sends a PartChanged message to a customer.
+        /// Sends a PartsChanged message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="uri">The URI.</param>
-        /// <param name="uid">The UID.</param>
-        /// <param name="contentType">The content type.</param>
-        /// <param name="data">The data.</param>
+        /// <param name="requestUuid">The request UUID.</param>
+        /// <param name="uri">The URI of the growing object.</param>
+        /// <param name="parts">The changed parts.</param>
         /// <param name="changeKind">The change kind.</param>
         /// <param name="changeTime">The change time.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        public long PartChanged(IMessageHeader request, string uri, string uid, string contentType, byte[] data, ObjectChangeKind changeKind, long changeTime)
+        public virtual long PartsChanged(Guid requestUuid, string uri, IList<ObjectPart> parts, ObjectChangeKind changeKind, long changeTime, string format = "xml")
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartChanged, request.MessageId);
-
-            var message = new PartChanged
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsChanged);
+            var message = new PartsChanged
             {
+                RequestUuid = requestUuid.ToUuid(),
                 Uri = uri,
-                Uid = uid,
-                ContentType = contentType,
-                Data = data,
                 ChangeKind = changeKind,
-                ChangeTime = changeTime
+                ChangeTime = changeTime,
+                Format = format ?? "xml",
             };
 
-            return Session.SendMessage(header, message);
+            return Session.Send12MultipartResponse(header, message, parts, (m, i) => m.Parts = i);
         }
 
         /// <summary>
-        /// Sends a PartDeleted message to a customer.
+        /// Sends a PartsDeleted message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="uri">The URI.</param>
-        /// <param name="uid">The UID.</param>
+        /// <param name="requestUuid">The request UUID.</param>
+        /// <param name="uri">The URI of the growing object.</param>
+        /// <param name="uids">The UIDs of the deleted parts.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        public long PartDeleted(IMessageHeader request, string uri, string uid, long changeTime)
+        public virtual long PartsDeleted(Guid requestUuid, string uri, IList<string> uids, long changeTime)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartDeleted, request.MessageId);
-
-            var message = new PartDeleted
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsDeleted);
+            var message = new PartsDeleted
             {
+                RequestUuid = requestUuid.ToUuid(),
                 Uri = uri,
-                Uid = uid,
                 ChangeTime = changeTime
             };
 
-            return Session.SendMessage(header, message);
+            return Session.Send12MultipartResponse(header, message, uids, (m, i) => m.Uids = i);
         }
 
         /// <summary>
         /// Sends a PartsDeletedByRange message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="requestUuid">The request UUID.</param>
         /// <param name="uri">The URI.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
-        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
+        /// <param name="deletedInterval">The index interval for the deleted range.</param>
+        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals were included; otherwise, <c>false</c>.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        public long PartsDeletedByRange(IMessageHeader request, string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime)
+        public virtual long PartsDeletedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, long changeTime)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsDeletedByRange, request.MessageId);
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsDeletedByRange);
 
             var message = new PartsDeletedByRange
             {
+                RequestUuid = requestUuid.ToUuid(),
                 Uri = uri,
-                DeletedInterval = new IndexInterval
-                {
-                    StartIndex = new IndexValue { Item = startIndex },
-                    EndIndex = new IndexValue { Item = endIndex },
-                    Uom = uom ?? string.Empty,
-                    DepthDatum = depthDatum ?? string.Empty
-                },
+                DeletedInterval = deletedInterval,
                 IncludeOverlappingIntervals = includeOverlappingIntervals,
                 ChangeTime = changeTime
             };
@@ -125,37 +116,59 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <summary>
         /// Sends a PartsReplacedByRange message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="requestUuid">The request UUID.</param>
         /// <param name="uri">The URI.</param>
-        /// <param name="uid">The uid.</param>
-        /// <param name="contentType">The content type.</param>
-        /// <param name="data">The data.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
-        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
+        /// <param name="deletedInterval">The index interval for the deleted range.</param>
+        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals were included; otherwise, <c>false</c>.</param>
+        /// <param name="parts">The map of UIDs and data of the parts that were put.</param>
         /// <param name="changeTime">The change time.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        public long PartsReplacedByRange(IMessageHeader request, string uri, string uid, string contentType, byte[] data, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime)
+        public virtual long PartsReplacedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, long changeTime, string format = "xml")
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsReplacedByRange, request.MessageId);
-
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsReplacedByRange);
             var message = new PartsReplacedByRange
             {
+                RequestUuid = requestUuid.ToUuid(),
                 Uri = uri,
-                Uid = uid,
-                ContentType = contentType,
-                Data = data,
-                DeletedInterval = new IndexInterval
-                {
-                    StartIndex = new IndexValue { Item = startIndex },
-                    EndIndex = new IndexValue { Item = endIndex },
-                    Uom = uom ?? string.Empty,
-                    DepthDatum = depthDatum ?? string.Empty
-                },
+                DeletedInterval = deletedInterval,
                 IncludeOverlappingIntervals = includeOverlappingIntervals,
-                ChangeTime = changeTime
+                ChangeTime = changeTime,
+                Format = format ?? "xml",
+            };
+
+            return Session.Send12MultipartResponse(header, message, parts, (m, i) => m.Parts = i);
+        }
+
+        /// <summary>
+        /// Sends a PartSubscriptionEnded message to a customer.
+        /// </summary>
+        /// <param name="requestUuid">The UUID of the subscription that has ended.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long PartSubscriptionEnded(Guid requestUuid)
+        {
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartSubscriptionEnded);
+
+            var message = new PartSubscriptionEnded
+            {
+                RequestUuid = requestUuid.ToUuid(),
+            };
+
+            return Session.SendMessage(header, message);
+        }
+
+        /// <summary>
+        /// Sends an UnsolicitedPartNotifications message to a customer.
+        /// </summary>
+        /// <param name="subscriptions">The unsolicited subscriptions.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long UnsolicitedPartNotifications(IList<SubscriptionInfo> subscriptions)
+        {
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsolicitedPartNotifications);
+
+            var message = new UnsolicitedPartNotifications
+            {
+                Subscriptions = subscriptions,
             };
 
             return Session.SendMessage(header, message);

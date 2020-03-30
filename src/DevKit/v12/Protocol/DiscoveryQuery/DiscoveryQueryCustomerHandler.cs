@@ -30,14 +30,14 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
     /// <seealso cref="Energistics.Etp.v12.Protocol.DiscoveryQuery.IDiscoveryQueryCustomer" />
     public class DiscoveryQueryCustomerHandler : Etp12ProtocolHandler, IDiscoveryQueryCustomer
     {
-        private readonly IDictionary<long, string> _requests;
+        private readonly ConcurrentDictionary<long, FindResources> _requests = new ConcurrentDictionary<long, FindResources>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscoveryQueryCustomerHandler"/> class.
         /// </summary>
         public DiscoveryQueryCustomerHandler() : base((int)Protocols.DiscoveryQuery, "customer", "store")
         {
-            _requests = new ConcurrentDictionary<long, string>();
+            _requests = new ConcurrentDictionary<long, FindResources>();
 
             RegisterMessageHandler<FindResourcesResponse>(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResourcesResponse, HandleFindResourcesResponse);
         }
@@ -57,14 +57,14 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
             };
             
             return Session.SendMessage(header, findResources,
-                h => _requests[h.MessageId] = uri // Cache requested URIs by message ID
+                h => _requests[h.MessageId] = findResources // Cache requested URIs by message ID
             );
         }
 
         /// <summary>
         /// Handles the FindResourcesResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<FindResourcesResponse, string> OnFindResourcesResponse;
+        public event ProtocolEventHandler<FindResourcesResponse, FindResources> OnFindResourcesResponse;
 
         /// <summary>
         /// Handle any final cleanup related to the final message in response to a request.
@@ -72,7 +72,8 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <param name="correlationId">The correlation ID of the request</param>
         protected override void HandleFinalResponse(long correlationId)
         {
-            _requests.Remove(correlationId);
+            FindResources request;
+            _requests.TryRemove(correlationId, out request);
         }
 
         /// <summary>
@@ -82,8 +83,8 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <param name="findResourcesResponse">The FindResourcesResponse message.</param>
         protected virtual void HandleFindResourcesResponse(IMessageHeader header, FindResourcesResponse findResourcesResponse)
         {
-            var uri = GetRequestedUri(header);
-            var args = Notify(OnFindResourcesResponse, header, findResourcesResponse, uri);
+            var request = GetRequest(header);
+            var args = Notify(OnFindResourcesResponse, header, findResourcesResponse, request);
             HandleFindResourcesResponse(args);
         }
 
@@ -91,20 +92,20 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// Handles the FindResourcesResponse message from a store.
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{FindResourcesResponse}"/> instance containing the event data.</param>
-        protected virtual void HandleFindResourcesResponse(ProtocolEventArgs<FindResourcesResponse, string> args)
+        protected virtual void HandleFindResourcesResponse(ProtocolEventArgs<FindResourcesResponse, FindResources> args)
         {
         }
 
         /// <summary>
-        /// Gets the requested URI from the internal cache of message IDs.
+        /// Gets the request from the internal cache of message IDs.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <returns>The requested URI.</returns>
-        private string GetRequestedUri(IMessageHeader header)
+        /// <returns>The request.</returns>
+        private FindResources GetRequest(IMessageHeader header)
         {
-            string uri;
-            _requests.TryGetValue(header.CorrelationId, out uri);
-            return uri;
+            FindResources request;
+            _requests.TryGetValue(header.CorrelationId, out request);
+            return request;
         }
     }
 }

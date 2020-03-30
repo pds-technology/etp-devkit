@@ -34,10 +34,12 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// Sends a FindPartsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
+        /// <param name="uri">The URI from the request.</param>
         /// <param name="parts">The list of <see cref="ObjectPart"/> objects.</param>
         /// <param name="sortOrder">The sort order.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        long FindPartsResponse(IMessageHeader request, IList<ObjectPart> parts, string sortOrder);
+        long FindPartsResponse(IMessageHeader request, string uri, IList<ObjectPart> parts, string sortOrder, string format = "xml");
 
         /// <summary>
         /// Handles the FindParts event from a customer.

@@ -201,9 +201,9 @@ namespace Energistics.Etp.Native
         private void CleanUpServer(EtpServer server)
         {
             EtpServer s;
-            _servers.TryRemove(server.SessionId, out s);
+            _servers.TryRemove(server.ServerInstanceId, out s);
             Task t;
-            _serverTasks.TryRemove(server.SessionId, out t);
+            _serverTasks.TryRemove(server.ServerInstanceId, out t);
 
             server.Dispose();
         }
@@ -271,8 +271,8 @@ namespace Energistics.Etp.Native
                 server.SupportedObjects = SupportedObjects;
                 RegisterAll(server);
 
-                _servers[server.SessionId] = server;
-                _serverTasks[server.SessionId] = Task.Factory.StartNew(async () =>
+                _servers[server.ServerInstanceId] = server;
+                _serverTasks[server.ServerInstanceId] = Task.Factory.StartNew(async () =>
                 {
                     try
                     {

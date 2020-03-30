@@ -189,10 +189,6 @@
     <Compile Include="v11\Protocol\Store\StoreStoreHandler.cs" />
     <Compile Include="Security\Authorization.cs" />
     <Compile Include="v12\Datatypes\IndexValueConverter.cs" />
-    <Compile Include="v12\Protocol\ChannelDataFrame\ChannelDataFrameConsumerHandler.cs" />
-    <Compile Include="v12\Protocol\ChannelDataFrame\ChannelDataFrameProducerHandler.cs" />
-    <Compile Include="v12\Protocol\ChannelDataFrame\IChannelDataFrameConsumer.cs" />
-    <Compile Include="v12\Protocol\ChannelDataFrame\IChannelDataFrameProducer.cs" />
     <Compile Include="v12\Protocol\ChannelDataLoad\ChannelDataLoadConsumerHandler.cs" />
     <Compile Include="v12\Protocol\ChannelDataLoad\ChannelDataLoadProducerHandler.cs" />
     <Compile Include="v12\Protocol\ChannelDataLoad\IChannelDataLoadConsumer.cs" />

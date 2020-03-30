@@ -19,6 +19,8 @@
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
+using System;
+using System.Collections.Generic;
 
 namespace Energistics.Etp.v12.Protocol.StoreNotification
 {
@@ -34,96 +36,154 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// </summary>
         public StoreNotificationStoreHandler() : base((int)Protocols.StoreNotification, "store", "customer")
         {
-            RegisterMessageHandler<SubscribeNotification>(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotification, HandleSubscribeNotification);
-            RegisterMessageHandler<UnsubscribeNotification>(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsubscribeNotification, HandleUnsubscribeNotification);
+            RegisterMessageHandler<SubscribeNotifications>(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotifications, HandleSubscribeNotifications);
+            RegisterMessageHandler<UnsubscribeNotifications>(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsubscribeNotifications, HandleUnsubscribeNotifications);
         }
 
         /// <summary>
         /// Sends an ObjectChanged message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="requestUuid">The request UUID.</param>
         /// <param name="change">The object change.</param>
         /// <returns>The message identifier.</returns>
-        public long ObjectChanged(IMessageHeader request, ObjectChange change)
+        public virtual long ObjectChanged(Guid requestUuid, ObjectChange change)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectChanged, request.MessageId);
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectChanged);
 
-            var notification = new ObjectChanged
+            var message = new ObjectChanged
             {
-                Change = change
+                RequestUuid = requestUuid.ToUuid(),
+                Change = change,
             };
 
-            return Session.SendMessage(header, notification);
+            return Session.SendMessage(header, message);
         }
 
         /// <summary>
-        /// Sends a ObjectDeleted message to a customer.
+        /// Sends an ObjectDeleted message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="requestUuid">The request UUID.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        public long ObjectDeleted(IMessageHeader request, string uri, long changeTime)
+        public virtual long ObjectDeleted(Guid requestUuid, string uri, long changeTime)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectDeleted, request.MessageId);
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectDeleted);
 
-            var notification = new ObjectDeleted
+            var message = new ObjectDeleted
             {
+                RequestUuid = requestUuid.ToUuid(),
                 Uri = uri,
-                ChangeTime = changeTime
+                ChangeTime = changeTime,
             };
 
-            return Session.SendMessage(header, notification);
+            return Session.SendMessage(header, message);
+        }
+
+        /// <summary>
+        /// Sends a Chunk message to a customer.
+        /// </summary>
+        /// <param name="notification">The notification.</param>
+        /// <param name="blobId">The blob ID.</param>
+        /// <param name="data">The chunk data.</param>
+        /// <param name="messageFlags">The message flags.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long Chunk(IMessageHeader notification, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart)
+        {
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.Chunk, notification.MessageId, messageFlags);
+
+            var message = new Chunk
+            {
+                BlobId = blobId.ToUuid(),
+                Data = data,
+            };
+
+            return Session.SendMessage(header, message);
         }
 
         /// <summary>
         /// Sends a ObjectAccessRevoked message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="requestUuid">The request UUID.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        public long ObjectAccessRevoked(IMessageHeader request, string uri, long changeTime)
+        public virtual long ObjectAccessRevoked(Guid requestUuid, string uri, long changeTime)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectAccessRevoked, request.MessageId);
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectAccessRevoked);
 
-            var notification = new ObjectAccessRevoked
+            var message = new ObjectAccessRevoked
             {
+                RequestUuid = requestUuid.ToUuid(),
                 Uri = uri,
                 ChangeTime = changeTime
             };
 
-            return Session.SendMessage(header, notification);
+            return Session.SendMessage(header, message);
+        }
+
+        /// <summary>
+        /// Sends a SubscriptionEnded message to a customer.
+        /// </summary>
+        /// <param name="requestUuid">The UUID of the subscription that has ended.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long SubscriptionEnded(Guid requestUuid)
+        {
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscriptionEnded);
+
+            var message = new SubscriptionEnded
+            {
+                RequestUuid = requestUuid.ToUuid(),
+            };
+
+            return Session.SendMessage(header, message);
+        }
+
+        /// <summary>
+        /// Sends an UnsolicitedStoreNotifications message to a customer.
+        /// </summary>
+        /// <param name="subscriptions">The unsolicited subscriptions.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long UnsolicitedStoreNotifications(IList<SubscriptionInfo> subscriptions)
+        {
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsolicitedStoreNotifications);
+
+            var message = new UnsolicitedStoreNotifications
+            {
+                Subscriptions = subscriptions,
+            };
+
+            return Session.SendMessage(header, message);
         }
 
         /// <summary>
         /// Handles the SubscribeNotification event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<SubscribeNotification> OnSubscribeNotification;
+        public event ProtocolEventHandler<SubscribeNotifications> OnSubscribeNotifications;
 
         /// <summary>
         /// Handles the UnsubscribeNotification event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<UnsubscribeNotification> OnUnsubscribeNotification;
+        public event ProtocolEventHandler<UnsubscribeNotifications> OnUnsubscribeNotifications;
 
         /// <summary>
-        /// Handles the SubscribeNotification message from a customer.
+        /// Handles the SubscribeNotificatiosn message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="request">The SubscribeNotification message.</param>
-        protected virtual void HandleSubscribeNotification(IMessageHeader header, SubscribeNotification request)
+        protected virtual void HandleSubscribeNotifications(IMessageHeader header, SubscribeNotifications request)
         {
-            Notify(OnSubscribeNotification, header, request);
+            Notify(OnSubscribeNotifications, header, request);
         }
 
         /// <summary>
-        /// Handles the UnsubscribeNotification message from a customer.
+        /// Handles the UnsubscribeNotifications message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="request">The UnsubscribeNotification message.</param>
-        protected virtual void HandleUnsubscribeNotification(IMessageHeader header, UnsubscribeNotification request)
+        protected virtual void HandleUnsubscribeNotifications(IMessageHeader header, UnsubscribeNotifications request)
         {
-            Notify(OnUnsubscribeNotification, header, request);
+            Notify(OnUnsubscribeNotifications, header, request);
         }
     }
 }

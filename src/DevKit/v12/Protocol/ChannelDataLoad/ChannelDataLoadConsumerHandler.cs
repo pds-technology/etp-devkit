@@ -36,38 +36,34 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// </summary>
         public ChannelDataLoadConsumerHandler() : base((int)Protocols.ChannelDataLoad, "consumer", "producer")
         {
-            RegisterMessageHandler<OpenChannel>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannel, HandleOpenChannel);
+            RegisterMessageHandler<OpenChannels>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannels, HandleOpenChannels);
             RegisterMessageHandler<CloseChannel>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.CloseChannel, HandleCloseChannel);
             RegisterMessageHandler<RealtimeData>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.RealtimeData, HandleRealtimeData);
-            RegisterMessageHandler<InfillData>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.InfillData, HandleInfillData);
-            RegisterMessageHandler<ChangedData>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ChangedData, HandleChangedData);
+            RegisterMessageHandler<ReplaceRange>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ReplaceRange, HandleReplaceRange);
         }
 
         /// <summary>
-        /// Sends a OpenChannelResponse message to a store.
+        /// Handles the OpenChannels event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<OpenChannels, OpenChannelInfo, ErrorInfo> OnOpenChannels;
+
+        /// <summary>
+        /// Sends a OpenChannelsResponse message to a store.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="channels">The channels.</param>
         /// <param name="errors">The errors.</param>
-        /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long OpenChannelResponse(IMessageHeader request, IList<OpenChannelInfo> channels, IList<ErrorInfo> errors, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        public virtual long OpenChannelsResponse(IMessageHeader request, IDictionary<string, OpenChannelInfo> channels, IDictionary<string, ErrorInfo> errors)
         {
-            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelResponse, request.MessageId, messageFlag);
+            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelsResponse, request.MessageId);
 
-            var message = new OpenChannelResponse
+            var message = new OpenChannelsResponse
             {
-                Channels = channels ?? new List<OpenChannelInfo>(),
-                Errors = errors ?? new List<ErrorInfo>()
             };
 
-            return Session.SendMessage(header, message);
+            return Session.Send12MultipartResponse(header, message, channels, errors, (m, i) => m.Channels = i);
         }
-
-        /// <summary>
-        /// Handles the OpenChannel event from a store.
-        /// </summary>
-        public event ProtocolEventHandler<OpenChannel> OnOpenChannel;
 
         /// <summary>
         /// Handles the CloseChannel event from a store.
@@ -80,41 +76,51 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         public event ProtocolEventHandler<RealtimeData> OnRealtimeData;
 
         /// <summary>
-        /// Handles the InfillData event from a store.
+        /// Handles the ReplaceRange event from a store.
         /// </summary>
-        public event ProtocolEventHandler<InfillData> OnInfillData;
+        public event ProtocolEventHandler<ReplaceRange> OnReplaceRange;
 
         /// <summary>
-        /// Handles the ChangedData event from a store.
+        /// Sends a ChannelClosed message to a producer.
         /// </summary>
-        public event ProtocolEventHandler<ChangedData> OnChangedData;
+        /// <param name="channelIds">The IDs of the closed channels.</param>
+        /// <returns></returns>
+        public virtual long ChannelClosed(IList<long> channelIds)
+        {
+            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ChannelClosed);
+
+            var message = new ChannelClosed
+            {
+                Id = channelIds.ToMap(),
+            };
+
+            return Session.SendMessage(header, message);
+        }
 
         /// <summary>
-        /// Handles the OpenChannel message from a customer.
+        /// Handles the OpenChannels message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The OpenChannel message.</param>
-        protected virtual void HandleOpenChannel(IMessageHeader header, OpenChannel message)
+        /// <param name="message">The OpenChannels message.</param>
+        protected virtual void HandleOpenChannels(IMessageHeader header, OpenChannels message)
         {
-            var args = Notify(OnOpenChannel, header, message);
-            var channels = new List<OpenChannelInfo>();
-            var errors = new List<ErrorInfo>();
+            var args = Notify(OnOpenChannels, header, message, new Dictionary<string, OpenChannelInfo>(), new Dictionary<string, ErrorInfo>());
 
-            HandleOpenChannel(args, channels, errors);
+            HandleOpenChannels(message, args.Context, args.Errors);
 
             if (!args.Cancel)
             {
-                OpenChannelResponse(header, channels, errors);
+                OpenChannelsResponse(header, args.Context, args.Errors);
             }
         }
 
         /// <summary>
         /// Handles the OpenChannel message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{OpenChannel}"/> instance containing the event data.</param>
+        /// <param name="message">The OpenChannels message.</param>
         /// <param name="channels">The channels.</param>
         /// <param name="errors">The errors.</param>
-        protected virtual void HandleOpenChannel(ProtocolEventArgs<OpenChannel> args, List<OpenChannelInfo> channels, List<ErrorInfo> errors)
+        protected virtual void HandleOpenChannels(OpenChannels message, IDictionary<string, OpenChannelInfo> channels, IDictionary<string, ErrorInfo> errors)
         {
         }
 
@@ -139,23 +145,13 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Handles the InfillData message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The InfillData message.</param>
-        protected virtual void HandleInfillData(IMessageHeader header, InfillData message)
-        {
-            Notify(OnInfillData, header, message);
-        }
-
-        /// <summary>
         /// Handles the ChangedData message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The ChangedData message.</param>
-        protected virtual void HandleChangedData(IMessageHeader header, ChangedData message)
+        protected virtual void HandleReplaceRange(IMessageHeader header, ReplaceRange message)
         {
-            Notify(OnChangedData, header, message);
+            Notify(OnReplaceRange, header, message);
         }
     }
 }

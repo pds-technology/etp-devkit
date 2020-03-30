@@ -32,38 +32,39 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
     public interface IChannelDataLoadConsumer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a OpenChannelResponse message to a store.
+        /// Handles the OpenChannels event from a producer.
+        /// </summary>
+        event ProtocolEventHandler<OpenChannels, OpenChannelInfo, ErrorInfo> OnOpenChannels;
+
+        /// <summary>
+        /// Sends a OpenChannelsResponse message to a producer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="channels">The channels.</param>
         /// <param name="errors">The errors.</param>
-        /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long OpenChannelResponse(IMessageHeader request, IList<OpenChannelInfo> channels, IList<ErrorInfo> errors, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        long OpenChannelsResponse(IMessageHeader request, IDictionary<string, OpenChannelInfo> channels, IDictionary<string, ErrorInfo> errors);
 
         /// <summary>
-        /// Handles the OpenChannel event from a store.
-        /// </summary>
-        event ProtocolEventHandler<OpenChannel> OnOpenChannel;
-
-        /// <summary>
-        /// Handles the CloseChannel event from a store.
+        /// Handles the CloseChannel event from a producer.
         /// </summary>
         event ProtocolEventHandler<CloseChannel> OnCloseChannel;
 
         /// <summary>
-        /// Handles the RealtimeData event from a store.
+        /// Handles the RealtimeData event from a producer.
         /// </summary>
         event ProtocolEventHandler<RealtimeData> OnRealtimeData;
 
         /// <summary>
-        /// Handles the InfillData event from a store.
+        /// Handles the ReplaceRange event from a producer.
         /// </summary>
-        event ProtocolEventHandler<InfillData> OnInfillData;
+        event ProtocolEventHandler<ReplaceRange> OnReplaceRange;
 
         /// <summary>
-        /// Handles the ChangedData event from a store.
+        /// Sends a ChannelClosed message to a producer.
         /// </summary>
-        event ProtocolEventHandler<ChangedData> OnChangedData;
+        /// <param name="channelIds">The IDs of the closed channels.</param>
+        /// <returns></returns>
+        long ChannelClosed(IList<long> channelIds);
     }
 }

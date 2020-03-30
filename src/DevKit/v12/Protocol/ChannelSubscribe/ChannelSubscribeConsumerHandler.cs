@@ -40,10 +40,9 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
 
             RegisterMessageHandler<GetChannelMetadataResponse>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetChannelMetadataResponse, HandleGetChannelMetadataResponse);
             RegisterMessageHandler<RealtimeData>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.RealtimeData, HandleRealtimeData);
-            RegisterMessageHandler<InfillData>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.InfillData, HandleInfillData);
-            RegisterMessageHandler<ChangedData>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.ChangedData, HandleChangedData);
-            RegisterMessageHandler<SubscriptionStopped>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.SubscriptionStopped, HandleSubscriptionStopped);
-            RegisterMessageHandler<GetRangeResponse>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRangeResponse, HandleGetRangeResponse);
+            RegisterMessageHandler<ReplaceRange>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.ReplaceRange, HandleReplaceRange);
+            RegisterMessageHandler<SubscriptionsStopped>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.SubscriptionsStopped, HandleSubscriptionsStopped);
+            RegisterMessageHandler<GetRangesResponse>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRangesResponse, HandleGetRangesResponse);
         }
 
         /// <summary>
@@ -63,28 +62,43 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
 
             var channelDescribe = new GetChannelMetadata
             {
-                Uris = uris
+                Uris = uris.ToMap(),
             };
 
             return Session.SendMessage(header, channelDescribe);
         }
 
         /// <summary>
+        /// Handles the GetChannelMetadataResponse event from a producer.
+        /// </summary>
+        public event ProtocolEventHandler<GetChannelMetadataResponse> OnGetChannelMetadataResponse;
+
+        /// <summary>
         /// Sends a SubscribeChannels message to a producer.
         /// </summary>
-        /// <param name="channelSubscribeInfos">The list of <see cref="ChannelSubscribeInfo" /> objects.</param>
+        /// <param name="channels">The list of channels.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long SubscribeChannels(IList<ChannelSubscribeInfo> channelSubscribeInfos)
+        public virtual long SubscribeChannels(IList<ChannelSubscribeInfo> channels)
         {
             var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.SubscribeChannels);
 
             var channelSubscribeStart = new SubscribeChannels
             {
-                Channels = channelSubscribeInfos
+                Channels = channels.ToMap(),
             };
 
             return Session.SendMessage(header, channelSubscribeStart);
         }
+
+        /// <summary>
+        /// Handles the RealtimeData event from a producer.
+        /// </summary>
+        public event ProtocolEventHandler<RealtimeData> OnRealtimeData;
+
+        /// <summary>
+        /// Handles the ReplaceRange event from a producer.
+        /// </summary>
+        public event ProtocolEventHandler<ReplaceRange> OnReplaceRange;
 
         /// <summary>
         /// Sends a UnsubscribeChannels message to a producer.
@@ -97,41 +111,51 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
 
             var channelSubscribeStop = new UnsubscribeChannels
             {
-                ChannelIds = channelIds
+                ChannelIds = channelIds.ToMap(),
             };
 
             return Session.SendMessage(header, channelSubscribeStop);
         }
 
         /// <summary>
-        /// Sends a GetRange message to a producer.
+        /// Handles the SubscriptionsStopped event from a producer.
+        /// </summary>
+        public event ProtocolEventHandler<SubscriptionsStopped> OnSubscriptionsStopped;
+
+        /// <summary>
+        /// Sends a GetRanges message to a producer.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
-        /// <param name="channelRangeInfos">The list of <see cref="ChannelRangeInfo" /> objects.</param>
+        /// <param name="channelRanges">The list of channelRanges.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long GetRange(Guid requestUuid, IList<ChannelRangeInfo> channelRangeInfos)
+        public virtual long GetRanges(Guid requestUuid, IList<ChannelRangeInfo> channelRanges)
         {
-            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRange);
+            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRanges);
 
-            var channelRangeRequest = new GetRange
+            var channelRangeRequest = new GetRanges
             {
                 RequestUuid = requestUuid.ToUuid(),
-                ChannelRanges = channelRangeInfos
+                ChannelRanges = channelRanges,
             };
 
             return Session.SendMessage(header, channelRangeRequest);
         }
 
         /// <summary>
-        /// Sends a CancelGetRange message to a producer.
+        /// Handles the GetRangesResponse event from a producer.
+        /// </summary>
+        public event ProtocolEventHandler<GetRangesResponse> OnGetRangesResponse;
+
+        /// <summary>
+        /// Sends a CancelGetRanges message to a producer.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long CancelGetRange(Guid requestUuid)
+        public virtual long CancelGetRanges(Guid requestUuid)
         {
-            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.CancelGetRange);
+            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.CancelGetRanges);
 
-            var cancelGetRange = new CancelGetRange
+            var cancelGetRange = new CancelGetRanges
             {
                 RequestUuid = requestUuid.ToUuid()
             };
@@ -140,96 +164,56 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the GetChannelMetadataResponse event from a producer.
-        /// </summary>
-        public event ProtocolEventHandler<GetChannelMetadataResponse> OnGetChannelMetadataResponse;
-
-        /// <summary>
-        /// Handles the RealtimeData event from a producer.
-        /// </summary>
-        public event ProtocolEventHandler<RealtimeData> OnRealtimeData;
-
-        /// <summary>
-        /// Handles the InfillData event from a producer.
-        /// </summary>
-        public event ProtocolEventHandler<InfillData> OnInfillData;
-
-        /// <summary>
-        /// Handles the ChangedData event from a producer.
-        /// </summary>
-        public event ProtocolEventHandler<ChangedData> OnChangedData;
-
-        /// <summary>
-        /// Handles the SubscriptionStopped event from a producer.
-        /// </summary>
-        public event ProtocolEventHandler<SubscriptionStopped> OnSubscriptionStopped;
-
-        /// <summary>
-        /// Handles the GetRangeResponse event from a producer.
-        /// </summary>
-        public event ProtocolEventHandler<GetRangeResponse> OnGetRangeResponse;
-
-        /// <summary>
         /// Handles the GetChannelMetadataResponse message from a producer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="getChannelMetadataResponse">The GetChannelMetadataResponse message.</param>
-        protected virtual void HandleGetChannelMetadataResponse(IMessageHeader header, GetChannelMetadataResponse getChannelMetadataResponse)
+        /// <param name="message">The GetChannelMetadataResponse message.</param>
+        protected virtual void HandleGetChannelMetadataResponse(IMessageHeader header, GetChannelMetadataResponse message)
         {
-            foreach (var channel in getChannelMetadataResponse.Metadata)
-                ChannelMetadataRecords.Add(channel);
+            foreach (var channel in message.Metadata)
+                ChannelMetadataRecords.Add(channel.Value);
 
-            Notify(OnGetChannelMetadataResponse, header, getChannelMetadataResponse);
+            Notify(OnGetChannelMetadataResponse, header, message);
         }
 
         /// <summary>
         /// Handles the RealtimeData message from a producer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="realtimeData">The RealtimeData message.</param>
-        protected virtual void HandleRealtimeData(IMessageHeader header, RealtimeData realtimeData)
+        /// <param name="message">The RealtimeData message.</param>
+        protected virtual void HandleRealtimeData(IMessageHeader header, RealtimeData message)
         {
-            Notify(OnRealtimeData, header, realtimeData);
-        }
-
-        /// <summary>
-        /// Handles the InfillData message from a producer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="infillData">The InfillData message.</param>
-        protected virtual void HandleInfillData(IMessageHeader header, InfillData infillData)
-        {
-            Notify(OnInfillData, header, infillData);
+            Notify(OnRealtimeData, header, message);
         }
 
         /// <summary>
         /// Handles the ChangedData message from a producer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="changedData">The ChangedData message.</param>
-        protected virtual void HandleChangedData(IMessageHeader header, ChangedData changedData)
+        /// <param name="message">The ReplaceRange message.</param>
+        protected virtual void HandleReplaceRange(IMessageHeader header, ReplaceRange message)
         {
-            Notify(OnChangedData, header, changedData);
+            Notify(OnReplaceRange, header, message);
         }
 
         /// <summary>
-        /// Handles the SubscriptionStopped message from a producer.
+        /// Handles the SubscriptionsStopped message from a producer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="subscriptionStopped">The SubscriptionStopped message.</param>
-        protected virtual void HandleSubscriptionStopped(IMessageHeader header, SubscriptionStopped subscriptionStopped)
+        /// <param name="message">The SubscriptionStopped message.</param>
+        protected virtual void HandleSubscriptionsStopped(IMessageHeader header, SubscriptionsStopped message)
         {
-            Notify(OnSubscriptionStopped, header, subscriptionStopped);
+            Notify(OnSubscriptionsStopped, header, message);
         }
 
         /// <summary>
-        /// Handles the GetRangeResponse message from a producer.
+        /// Handles the GetRangesResponse message from a producer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="getRangeResponse">The GetRangeResponse message.</param>
-        protected virtual void HandleGetRangeResponse(IMessageHeader header, GetRangeResponse getRangeResponse)
+        /// <param name="message">The GetRangesResponse message.</param>
+        protected virtual void HandleGetRangesResponse(IMessageHeader header, GetRangesResponse message)
         {
-            Notify(OnGetRangeResponse, header, getRangeResponse);
+            Notify(OnGetRangesResponse, header, message);
         }
     }
 }

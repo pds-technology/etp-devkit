@@ -69,32 +69,14 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <returns>The message identifier.</returns>
         public virtual long FindResourcesResponse(IMessageHeader request, IList<Resource> resources, string sortOrder)
         {
-            if (!resources.Any())
+
+            var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResourcesResponse, request.MessageId);
+            var response = new FindResourcesResponse
             {
-                return Acknowledge(request.MessageId, MessageFlags.NoData);
-            }
+                ServerSortOrder = string.Empty,
+            };
 
-            long messageId = 0;
-
-            for (var i=0; i<resources.Count; i++)
-            {
-                var messageFlags = i < resources.Count - 1
-                    ? MessageFlags.MultiPart
-                    : MessageFlags.MultiPartAndFinalPart;
-
-                var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResourcesResponse, request.MessageId, messageFlags);
-
-                var response = new FindResourcesResponse
-                {
-                    Resources = new[] { resources[i] },
-                    ServerSortOrder = sortOrder ?? string.Empty
-                };
-
-                messageId = Session.SendMessage(header, response);
-                sortOrder = string.Empty; // Only needs to be set in the first message
-            }
-
-            return messageId;
+            return Session.Send12MultipartResponse(header, response, resources, (m, i) => m.Resources = i);
         }
 
         /// <summary>

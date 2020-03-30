@@ -79,7 +79,7 @@ namespace Energistics.Etp.v12.Protocol.Core
                 SupportedProtocols = supportedProtocols.Cast<SupportedProtocol>().ToList(),
                 SupportedObjects = Session.SupportedObjects,
                 SupportedCompression = Session.SupportedCompression ?? string.Empty,
-                SessionId = Session.SessionId
+                ServerInstanceId = Guid.Parse(Session.ServerInstanceId).ToUuid(),
             };
 
             SupportedProtocols = supportedProtocols;

@@ -30,15 +30,13 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
     /// <seealso cref="Energistics.Etp.v12.Protocol.GrowingObjectQuery.IGrowingObjectQueryCustomer" />
     public class GrowingObjectQueryCustomerHandler : Etp12ProtocolHandler, IGrowingObjectQueryCustomer
     {
-        private readonly IDictionary<long, string> _requests;
+        private readonly ConcurrentDictionary<long, FindParts> _requests = new ConcurrentDictionary<long, FindParts>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GrowingObjectQueryCustomerHandler"/> class.
         /// </summary>
         public GrowingObjectQueryCustomerHandler() : base((int)Protocols.GrowingObjectQuery, "customer", "store")
         {
-            _requests = new ConcurrentDictionary<long, string>();
-
             RegisterMessageHandler<FindPartsResponse>(Protocols.GrowingObjectQuery, MessageTypes.GrowingObjectQuery.FindPartsResponse, HandleFindPartsResponse);
         }
 
@@ -46,25 +44,27 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// Sends a FindParts message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        public virtual long FindParts(string uri)
+        public virtual long FindParts(string uri, string format = "xml")
         {
             var header = CreateMessageHeader(Protocols.GrowingObjectQuery, MessageTypes.GrowingObjectQuery.FindParts);
 
             var findParts = new FindParts()
             {
-                Uri = uri
+                Uri = uri,
+                Format = format ?? "xml",
             };
             
             return Session.SendMessage(header, findParts,
-                h => _requests[h.MessageId] = uri // Cache requested URIs by message ID
+                h => _requests[h.MessageId] = findParts // Cache requested URIs by message ID
             );
         }
 
         /// <summary>
         /// Handles the FindPartsResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<FindPartsResponse, string> OnFindPartsResponse;
+        public event ProtocolEventHandler<FindPartsResponse, FindParts> OnFindPartsResponse;
 
         /// <summary>
         /// Handle any final cleanup related to the final message in response to a request.
@@ -72,7 +72,8 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// <param name="correlationId">The correlation ID of the request</param>
         protected override void HandleFinalResponse(long correlationId)
         {
-            _requests.Remove(correlationId);
+            FindParts request;
+            _requests.TryRemove(correlationId, out request);
         }
 
         /// <summary>
@@ -82,8 +83,8 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// <param name="findPartsResponse">The FindPartsResponse message.</param>
         protected virtual void HandleFindPartsResponse(IMessageHeader header, FindPartsResponse findPartsResponse)
         {
-            var uri = GetRequestedUri(header);
-            var args = Notify(OnFindPartsResponse, header, findPartsResponse, uri);
+            var request = GetRequest(header);
+            var args = Notify(OnFindPartsResponse, header, findPartsResponse, request);
             HandleFindPartsResponse(args);
         }
 
@@ -91,20 +92,20 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// Handles the FindPartsResponse message from a store.
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{FindPartsResponse}"/> instance containing the event data.</param>
-        protected virtual void HandleFindPartsResponse(ProtocolEventArgs<FindPartsResponse, string> args)
+        protected virtual void HandleFindPartsResponse(ProtocolEventArgs<FindPartsResponse, FindParts> args)
         {
         }
 
         /// <summary>
-        /// Gets the requested URI from the internal cache of message IDs.
+        /// Gets the request from the internal cache of message IDs.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <returns>The requested URI.</returns>
-        private string GetRequestedUri(IMessageHeader header)
+        /// <returns>The request.</returns>
+        private FindParts GetRequest(IMessageHeader header)
         {
-            string uri;
-            _requests.TryGetValue(header.CorrelationId, out uri);
-            return uri;
+            FindParts request;
+            _requests.TryGetValue(header.CorrelationId, out request);
+            return request;
         }
     }
 }

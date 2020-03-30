@@ -155,7 +155,7 @@ namespace Energistics.Etp.v12.Protocol.Core
         {
             SupportedProtocols = openSession.SupportedProtocols.Cast<ISupportedProtocol>().ToList();
             ServerObjects = openSession.SupportedObjects;
-            Session.SessionId = openSession.SessionId;
+            Session.ServerInstanceId = openSession.ServerInstanceId.ToGuid().ToString();
             Session.SupportedCompression = openSession.SupportedCompression;
             Notify(OnOpenSession, header, openSession);
             Session.OnSessionOpened(RequestedProtocols, SupportedProtocols);

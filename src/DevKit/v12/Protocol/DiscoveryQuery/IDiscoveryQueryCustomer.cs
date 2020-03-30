@@ -38,6 +38,6 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <summary>
         /// Handles the FindResourcesResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<FindResourcesResponse, string> OnFindResourcesResponse;
+        event ProtocolEventHandler<FindResourcesResponse, FindResources> OnFindResourcesResponse;
     }
 }

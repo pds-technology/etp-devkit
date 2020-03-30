@@ -30,24 +30,18 @@ namespace Energistics.Etp.v12.Protocol.Discovery
     public interface IDiscoveryCustomer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a GetTreeResources message to a store.
+        /// Sends a GetResources message to a store.
         /// </summary>
-        /// <param name="contextInfo">The context information.</param>
-        /// <returns>The message identifier.</returns>
-        long GetTreeResources(ContextInfo contextInfo);
-
-        /// <summary>
-        /// Sends a GetGraphResources message to a store.
-        /// </summary>
-        /// <param name="contextInfo">The context information.</param>
+        /// <param name="context">The context information.</param>
         /// <param name="scope">The scope.</param>
-        /// <param name="groupByType">if set to <c>true</c> group by type.</param>
+        /// <param name="lastChangedFilter">An optional parameter to filter discovery on a date when an object last changed.</param>
+        /// <param name="countObjects">if set to <c>true</c>, request object counts.</param>
         /// <returns>The message identifier.</returns>
-        long GetGraphResources(ContextInfo contextInfo, ContextScopeKind scope, bool groupByType);
+        long GetResources(ContextInfo context, ContextScopeKind scope, long? lastChangedFilter = null, bool countObjects = false);
 
         /// <summary>
         /// Handles the GetResourcesResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<GetResourcesResponse, string> OnGetResourcesResponse;
+        event ProtocolEventHandler<GetResourcesResponse, GetResources> OnGetResourcesResponse;
     }
 }

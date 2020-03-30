@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -34,9 +35,9 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// Sends a GetObject message to a store.
         /// </summary>
         /// <param name="uris">The URI.</param>
-        /// <param name="messageFlag">The message flag.</param>
+        /// <param name="format">The format of the response (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        long GetDataObjects(IList<string> uris, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        long GetDataObjects(IList<string> uris, string format = "xml");
 
         /// <summary>
         /// Sends a PutObject message to a store.
@@ -56,5 +57,20 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// Handles the GetDataObjectsResponse event from a store.
         /// </summary>
         event ProtocolEventHandler<GetDataObjectsResponse> OnGetDataObjectsResponse;
+
+        /// <summary>
+        /// Sends a Chunk message to a store.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="blobId">The blob ID.</param>
+        /// <param name="data">The chunk data.</param>
+        /// <param name="messageFlags">The message flags.</param>
+        /// <returns>The message identifier.</returns>
+        long Chunk(IMessageHeader request, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart);
+
+        /// <summary>
+        /// Handles the Chunk event from a store.
+        /// </summary>
+        event ProtocolEventHandler<Chunk> OnChunk;
     }
 }

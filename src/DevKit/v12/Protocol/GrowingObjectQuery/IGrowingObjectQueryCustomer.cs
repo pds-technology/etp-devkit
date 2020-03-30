@@ -32,12 +32,13 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// Sends a FindParts message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        long FindParts(string uri);
+        long FindParts(string uri, string format = "xml");
 
         /// <summary>
         /// Handles the FindPartsResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<FindPartsResponse, string> OnFindPartsResponse;
+        event ProtocolEventHandler<FindPartsResponse, FindParts> OnFindPartsResponse;
     }
 }

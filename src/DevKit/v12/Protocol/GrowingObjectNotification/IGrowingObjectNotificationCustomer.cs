@@ -33,9 +33,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <summary>
         /// Sends a SubscribePartNotification message to a store.
         /// </summary>
-        /// <param name="subscriptionInfo">The subscription information.</param>
+        /// <param name="request">The subscription request.</param>
         /// <returns>The message identifier.</returns>
-        long SubscribePartNotification(SubscriptionInfo subscriptionInfo);
+        long SubscribePartNotification(SubscriptionInfo request);
 
         /// <summary>
         /// Sends an UnsubscribePartNotification message to a store.
@@ -45,14 +45,14 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         long UnsubscribePartNotification(Guid requestUuid);
 
         /// <summary>
-        /// Handles the PartChanged event from a store.
+        /// Handles the PartsChanged event from a store.
         /// </summary>
-        event ProtocolEventHandler<PartChanged> OnPartChanged;
+        event ProtocolEventHandler<PartsChanged> OnPartsChanged;
 
         /// <summary>
         /// Handles the PartDeleted event from a store.
         /// </summary>
-        event ProtocolEventHandler<PartDeleted> OnPartDeleted;
+        event ProtocolEventHandler<PartsDeleted> OnPartsDeleted;
 
         /// <summary>
         /// Handles the PartsDeletedByRange event from a store.
@@ -63,5 +63,15 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// Handles the PartsReplacedByRange event from a store.
         /// </summary>
         event ProtocolEventHandler<PartsReplacedByRange> OnPartsReplacedByRange;
+
+        /// <summary>
+        /// Handles the PartSubscriptionEnded event from a store.
+        /// </summary>
+        event ProtocolEventHandler<PartSubscriptionEnded> OnPartSubscriptionEnded;
+
+        /// <summary>
+        /// Handles the UnsolicitedPartNotifications event from a store.
+        /// </summary>
+        event ProtocolEventHandler<UnsolicitedPartNotifications> OnUnsolicitedPartNotifications;
     }
 }

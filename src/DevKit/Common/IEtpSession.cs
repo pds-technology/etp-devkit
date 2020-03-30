@@ -66,10 +66,10 @@ namespace Energistics.Etp.Common
         string ApplicationVersion { get; }
 
         /// <summary>
-        /// Gets or sets the session identifier.
+        /// Gets or sets the server instance identifier.
         /// </summary>
-        /// <value>The session identifier.</value>
-        string SessionId { get; set; }
+        /// <value>The server instance identifier.</value>
+        string ServerInstanceId { get; set; }
 
         /// <summary>
         /// Gets or sets the supported compression type.

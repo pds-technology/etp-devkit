@@ -30,41 +30,47 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
     /// <seealso cref="Energistics.Etp.v12.Protocol.StoreQuery.IStoreQueryCustomer" />
     public class StoreQueryCustomerHandler : Etp12ProtocolHandler, IStoreQueryCustomer
     {
-        private readonly IDictionary<long, string> _requests;
+        private readonly ConcurrentDictionary<long, FindObjects> _requests = new ConcurrentDictionary<long, FindObjects>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreQueryCustomerHandler"/> class.
         /// </summary>
         public StoreQueryCustomerHandler() : base((int)Protocols.StoreQuery, "customer", "store")
         {
-            _requests = new ConcurrentDictionary<long, string>();
-
             RegisterMessageHandler<FindObjectsResponse>(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjectsResponse, HandleFindObjectsResponse);
+            RegisterMessageHandler<Chunk>(Protocols.StoreQuery, MessageTypes.StoreQuery.Chunk, HandleChunk);
         }
 
         /// <summary>
         /// Sends a FindObjects message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        public virtual long FindObjects(string uri)
+        public virtual long FindObjects(string uri, string format = "xml")
         {
             var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjects);
 
             var findObjects = new FindObjects()
             {
-                Uri = uri
+                Uri = uri,
+                Format = format ?? "xml",
             };
             
             return Session.SendMessage(header, findObjects,
-                h => _requests[h.MessageId] = uri // Cache requested URIs by message ID
+                h => _requests[h.MessageId] = findObjects // Cache requested URIs by message ID
             );
         }
 
         /// <summary>
         /// Handles the FindObjectsResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<FindObjectsResponse, string> OnFindObjectsResponse;
+        public event ProtocolEventHandler<FindObjectsResponse, FindObjects> OnFindObjectsResponse;
+
+        /// <summary>
+        /// Handles the Chunk event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<Chunk> OnChunk;
 
         /// <summary>
         /// Handle any final cleanup related to the final message in response to a request.
@@ -72,7 +78,8 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <param name="correlationId">The correlation ID of the request</param>
         protected override void HandleFinalResponse(long correlationId)
         {
-            _requests.Remove(correlationId);
+            FindObjects request;
+            _requests.TryRemove(correlationId, out request);
         }
 
         /// <summary>
@@ -82,8 +89,8 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <param name="findObjectsResponse">The FindObjectsResponse message.</param>
         protected virtual void HandleFindObjectsResponse(IMessageHeader header, FindObjectsResponse findObjectsResponse)
         {
-            var uri = GetRequestedUri(header);
-            var args = Notify(OnFindObjectsResponse, header, findObjectsResponse, uri);
+            var request = GetRequest(header);
+            var args = Notify(OnFindObjectsResponse, header, findObjectsResponse, request);
             HandleFindObjectsResponse(args);
         }
 
@@ -91,20 +98,30 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// Handles the FindObjectsResponse message from a store.
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{FindObjectsResponse}"/> instance containing the event data.</param>
-        protected virtual void HandleFindObjectsResponse(ProtocolEventArgs<FindObjectsResponse, string> args)
+        protected virtual void HandleFindObjectsResponse(ProtocolEventArgs<FindObjectsResponse, FindObjects> args)
         {
         }
 
         /// <summary>
-        /// Gets the requested URI from the internal cache of message IDs.
+        /// Handles the Chunk message from a store.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="notification">The Chunk message.</param>
+        protected virtual void HandleChunk(IMessageHeader header, Chunk notification)
+        {
+            Notify(OnChunk, header, notification);
+        }
+
+        /// <summary>
+        /// Gets the request from the internal cache of message IDs.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <returns>The requested URI.</returns>
-        private string GetRequestedUri(IMessageHeader header)
+        private FindObjects GetRequest(IMessageHeader header)
         {
-            string uri;
-            _requests.TryGetValue(header.CorrelationId, out uri);
-            return uri;
+            FindObjects request;
+            _requests.TryGetValue(header.CorrelationId, out request);
+            return request;
         }
     }
 }

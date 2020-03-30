@@ -61,15 +61,23 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         }
 
         /// <summary>
+        /// Handles the StartStreaming event from a consumer.
+        /// </summary>
+        public event ProtocolEventHandler<StartStreaming> OnStartStreaming;
+
+        /// <summary>
+        /// Handles the StopStreaming event from a consumer.
+        /// </summary>
+        public event ProtocolEventHandler<StopStreaming> OnStopStreaming;
+
+        /// <summary>
         /// Sends a ChannelMetadata message to a consumer.
         /// </summary>
-        /// <param name="request">The request.</param>
         /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
-        /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long ChannelMetadata(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        public virtual long ChannelMetadata(IList<ChannelMetadataRecord> channelMetadataRecords)
         {
-            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelMetadata, request.MessageId, messageFlag);
+            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelMetadata);
 
             var channelMetadata = new ChannelMetadata
             {
@@ -82,13 +90,11 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// <summary>
         /// Sends a ChannelData message to a consumer.
         /// </summary>
-        /// <param name="request">The request.</param>
         /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long ChannelData(IMessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart)
+        public virtual long ChannelData(IList<DataItem> dataItems)
         {
-            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelData, messageFlags: messageFlag);
+            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelData);
 
             var channelData = new ChannelData
             {
@@ -97,16 +103,6 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
 
             return Session.SendMessage(header, channelData);
         }
-
-        /// <summary>
-        /// Handles the StartStreaming event from a consumer.
-        /// </summary>
-        public event ProtocolEventHandler<StartStreaming> OnStartStreaming;
-
-        /// <summary>
-        /// Handles the StopStreaming event from a consumer.
-        /// </summary>
-        public event ProtocolEventHandler<StopStreaming> OnStopStreaming;
 
         /// <summary>
         /// Handles the StartStreaming message from a consumer.

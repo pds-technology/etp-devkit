@@ -31,24 +31,6 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
     public interface IChannelStreamingProducer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a ChannelMetadata message to a consumer.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        long ChannelMetadata(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
-
-        /// <summary>
-        /// Sends a ChannelData message to a consumer.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        long ChannelData(IMessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart);
-
-        /// <summary>
         /// Handles the StartStreaming event from a consumer.
         /// </summary>
         event ProtocolEventHandler<StartStreaming> OnStartStreaming;
@@ -57,5 +39,19 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// Handles the StopStreaming event from a consumer.
         /// </summary>
         event ProtocolEventHandler<StopStreaming> OnStopStreaming;
+        
+        /// <summary>
+        /// Sends a ChannelMetadata message to a consumer.
+        /// </summary>
+        /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
+        /// <returns>The message identifier.</returns>
+        long ChannelMetadata(IList<ChannelMetadataRecord> channelMetadataRecords);
+
+        /// <summary>
+        /// Sends a ChannelData message to a consumer.
+        /// </summary>
+        /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
+        /// <returns>The message identifier.</returns>
+        long ChannelData(IList<DataItem> dataItems);
     }
 }

@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -36,21 +37,23 @@ namespace Energistics.Etp.v12.Protocol.Store
         public StoreCustomerHandler() : base((int)Protocols.Store, "customer", "store")
         {
             RegisterMessageHandler<GetDataObjectsResponse>(Protocols.Store, MessageTypes.Store.GetDataObjectsResponse, HandleGetDataObjectsResponse);
+            RegisterMessageHandler<Chunk>(Protocols.Store, MessageTypes.Store.Chunk, HandleChunk);
         }
 
         /// <summary>
         /// Sends a GetDataObjects message to a store.
         /// </summary>
         /// <param name="uris">The URIs.</param>
-        /// <param name="messageFlag">The message flag.</param>
+        /// <param name="format">The format of the response (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        public virtual long GetDataObjects(IList<string> uris, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        public virtual long GetDataObjects(IList<string> uris, string format = "xml")
         {
-            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetDataObjects, messageFlags: messageFlag);
+            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetDataObjects);
 
             var getObject = new GetDataObjects
             {
-                Uris = uris
+                Uris = uris.ToMap(),
+                Format = format ?? "xml",
             };
 
             return Session.SendMessage(header, getObject);
@@ -67,7 +70,7 @@ namespace Energistics.Etp.v12.Protocol.Store
 
             var putObject = new PutDataObjects
             {
-                DataObjects = dataObjects
+                DataObjects = dataObjects.ToMap(),
             };
 
             return Session.SendMessage(header, putObject);
@@ -84,7 +87,7 @@ namespace Energistics.Etp.v12.Protocol.Store
 
             var deleteObject = new DeleteDataObjects
             {
-                Uris = uris
+                Uris = uris.ToMap(),
             };
 
             return Session.SendMessage(header, deleteObject);
@@ -96,6 +99,32 @@ namespace Energistics.Etp.v12.Protocol.Store
         public event ProtocolEventHandler<GetDataObjectsResponse> OnGetDataObjectsResponse;
 
         /// <summary>
+        /// Sends a Chunk message to a store.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="blobId">The blob ID.</param>
+        /// <param name="data">The chunk data.</param>
+        /// <param name="messageFlags">The message flags.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long Chunk(IMessageHeader request, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart)
+        {
+            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.Chunk, request.MessageId, messageFlags);
+
+            var message = new Chunk
+            {
+                BlobId = blobId.ToUuid(),
+                Data = data,
+            };
+
+            return Session.SendMessage(header, message);
+        }
+
+        /// <summary>
+        /// Handles the Chunk event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<Chunk> OnChunk;
+        
+        /// <summary>
         /// Handles the GetDataObjectsResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
@@ -103,6 +132,16 @@ namespace Energistics.Etp.v12.Protocol.Store
         protected virtual void HandleGetDataObjectsResponse(IMessageHeader header, GetDataObjectsResponse response)
         {
             Notify(OnGetDataObjectsResponse, header, response);
+        }
+
+        /// <summary>
+        /// Handles the DeleteDataObjects message from a store.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="chunk">The Chunk message.</param>
+        protected virtual void HandleChunk(IMessageHeader header, Chunk chunk)
+        {
+            Notify(OnChunk, header, chunk);
         }
     }
 }

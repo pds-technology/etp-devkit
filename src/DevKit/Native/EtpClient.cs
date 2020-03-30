@@ -242,8 +242,8 @@ namespace Energistics.Etp.Native
         /// </summary>
         protected override void CleanupAfterConnection()
         {
-            Logger.Trace(Log("[{0}] Socket closed.", SessionId));
-            SessionId = null;
+            Logger.Trace(Log("[{0}] Socket closed.", ServerInstanceId));
+            ServerInstanceId = null;
         }
 
         /// <summary>
@@ -253,7 +253,7 @@ namespace Energistics.Etp.Native
         /// <param name="supportedProtocols">The supported protocols.</param>
         public override void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols)
         {
-            Logger.Trace(Log("[{0}] Socket opened.", SessionId));
+            Logger.Trace(Log("[{0}] Socket opened.", ServerInstanceId));
 
             base.OnSessionOpened(requestedProtocols, supportedProtocols);
         }

@@ -78,16 +78,16 @@ namespace Energistics.Etp.v11.Protocol.Core
                 ApplicationVersion = Session.ApplicationVersion,
                 SupportedProtocols = supportedProtocols.Cast<SupportedProtocol>().ToList(),
                 SupportedObjects = Session.SupportedObjects,
-                SessionId = Session.SessionId
+                SessionId = Session.ServerInstanceId
             };
 
             SupportedProtocols = supportedProtocols;
 
-            Logger.Verbose($"[{Session.SessionId}] Sending open session");
+            Logger.Verbose($"[{Session.ServerInstanceId}] Sending open session");
 
             var messageId = Session.SendMessage(header, openSession);
 
-            Logger.Verbose($"[{Session.SessionId}] Received {header.MessageId} and Sent {messageId}");
+            Logger.Verbose($"[{Session.ServerInstanceId}] Received {header.MessageId} and Sent {messageId}");
 
             if (messageId == header.MessageId)
             {

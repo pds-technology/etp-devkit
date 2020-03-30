@@ -103,7 +103,7 @@ namespace Energistics.Etp.Common
         /// Gets or sets the session identifier.
         /// </summary>
         /// <value>The session identifier.</value>
-        public string SessionId { get; set; }
+        public string ServerInstanceId { get; set; }
 
         /// <summary>
         /// Gets or sets the supported compression type.
@@ -188,7 +188,7 @@ namespace Energistics.Etp.Common
                 _handlersLock.ExitReadLock();
             }
 
-            Logger.Debug(Log("[{0}] Protocol handler not registered for {1}.", SessionId, typeof(T).FullName));
+            Logger.Debug(Log("[{0}] Protocol handler not registered for {1}.", ServerInstanceId, typeof(T).FullName));
             throw new NotSupportedException($"Protocol handler not registered for { typeof(T).FullName }.");
         }
 
@@ -220,7 +220,7 @@ namespace Energistics.Etp.Common
         /// <param name="supportedProtocols">The supported protocols.</param>
         public override void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols)
         {
-            Logger.Trace($"[{SessionId}] OnSessionOpened");
+            Logger.Trace($"[{ServerInstanceId}] OnSessionOpened");
             HandleUnsupportedProtocols(supportedProtocols);
 
             try
@@ -246,7 +246,7 @@ namespace Energistics.Etp.Common
         /// </summary>
         public override void OnSessionClosed()
         {
-            Logger.Trace($"[{SessionId}] OnSessionClosed");
+            Logger.Trace($"[{ServerInstanceId}] OnSessionClosed");
 
             try
             {
@@ -459,7 +459,7 @@ namespace Energistics.Etp.Common
                 // log message metadata
                 if (Logger.IsVerboseEnabled())
                 {
-                    Logger.VerboseFormat("[{0}] Binary message received: {1}", SessionId, EtpExtensions.Serialize(header));
+                    Logger.VerboseFormat("[{0}] Binary message received: {1}", ServerInstanceId, EtpExtensions.Serialize(header));
                 }
 
                 Stream gzip = null;
@@ -500,7 +500,7 @@ namespace Energistics.Etp.Common
             // log message metadata
             if (Logger.IsVerboseEnabled())
             {
-                Logger.VerboseFormat("[{0}] JSON message received: {1}", SessionId, header);
+                Logger.VerboseFormat("[{0}] JSON message received: {1}", ServerInstanceId, header);
             }
             
             // call processing action
@@ -609,7 +609,7 @@ namespace Energistics.Etp.Common
                 _handlersLock.ExitReadLock();
             }
 
-            Logger.Debug(Log("[{0}] Protocol handler not registered for protocol {1}.", SessionId, protocol));
+            Logger.Debug(Log("[{0}] Protocol handler not registered for protocol {1}.", ServerInstanceId, protocol));
             throw new NotSupportedException($"Protocol handler not registered for protocol { protocol }.");
         }
 
@@ -659,7 +659,7 @@ namespace Energistics.Etp.Common
 
             if (Output != null)
             {
-                Log("[{0}] Sending message at {1}", SessionId, now.ToString(TimestampFormat));
+                Log("[{0}] Sending message at {1}", ServerInstanceId, now.ToString(TimestampFormat));
                 Log(EtpExtensions.Serialize(header));
                 Log(EtpExtensions.Serialize(body, true));
             }
@@ -667,7 +667,7 @@ namespace Energistics.Etp.Common
             if (Logger.IsVerboseEnabled())
             {
                 Logger.VerboseFormat("[{0}] Sending message at {1}: {2}{3}{4}",
-                    SessionId, now.ToString(TimestampFormat), EtpExtensions.Serialize(header), Environment.NewLine, EtpExtensions.Serialize(body, true));
+                    ServerInstanceId, now.ToString(TimestampFormat), EtpExtensions.Serialize(header), Environment.NewLine, EtpExtensions.Serialize(body, true));
             }
         }
 
@@ -682,7 +682,7 @@ namespace Energistics.Etp.Common
 
             if (Output != null)
             {
-                Log("[{0}] Message received at {1}", SessionId, now.ToString(TimestampFormat));
+                Log("[{0}] Message received at {1}", ServerInstanceId, now.ToString(TimestampFormat));
                 Log(EtpExtensions.Serialize(header));
                 Log(EtpExtensions.Serialize(message, true));
             }
@@ -690,7 +690,7 @@ namespace Energistics.Etp.Common
             if (Logger.IsVerboseEnabled())
             {
                 Logger.VerboseFormat("[{0}] Message received at {1}: {2}{3}{4}",
-                    SessionId, now.ToString(TimestampFormat), EtpExtensions.Serialize(header), Environment.NewLine, EtpExtensions.Serialize(message, true));
+                    ServerInstanceId, now.ToString(TimestampFormat), EtpExtensions.Serialize(header), Environment.NewLine, EtpExtensions.Serialize(message, true));
             }
         }
 

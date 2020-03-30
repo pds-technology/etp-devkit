@@ -19,6 +19,8 @@
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
+using System;
+using System.Collections.Generic;
 
 namespace Energistics.Etp.v12.Protocol.StoreNotification
 {
@@ -32,37 +34,61 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <summary>
         /// Sends an ObjectChanged message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="requestUuid">The request UUID.</param>
         /// <param name="change">The object change.</param>
         /// <returns>The message identifier.</returns>
-        long ObjectChanged(IMessageHeader request, ObjectChange change);
+        long ObjectChanged(Guid requestUuid, ObjectChange change);
 
         /// <summary>
         /// Sends an ObjectDeleted message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="requestUuid">The request UUID.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        long ObjectDeleted(IMessageHeader request, string uri, long changeTime);
+        long ObjectDeleted(Guid requestUuid, string uri, long changeTime);
+
+        /// <summary>
+        /// Sends a Chunk message to a customer.
+        /// </summary>
+        /// <param name="notification">The notification.</param>
+        /// <param name="blobId">The blob ID.</param>
+        /// <param name="data">The chunk data.</param>
+        /// <param name="messageFlags">The message flags.</param>
+        /// <returns>The message identifier.</returns>
+        long Chunk(IMessageHeader notification, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Sends an ObjectAccessRevoked message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="requestUuid">The request UUID.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        long ObjectAccessRevoked(IMessageHeader request, string uri, long changeTime);
+        long ObjectAccessRevoked(Guid requestUuid, string uri, long changeTime);
 
         /// <summary>
-        /// Handles the SubscribeNotification event from a customer.
+        /// Sends a SubscriptionEnded message to a customer.
         /// </summary>
-        event ProtocolEventHandler<SubscribeNotification> OnSubscribeNotification;
+        /// <param name="requestUuid">The UUID of the subscription that has ended.</param>
+        /// <returns>The message identifier.</returns>
+        long SubscriptionEnded(Guid requestUuid);
 
         /// <summary>
-        /// Handles the UnsubscribeNotification event from a customer.
+        /// Sends an UnsolicitedStoreNotifications message to a customer.
         /// </summary>
-        event ProtocolEventHandler<UnsubscribeNotification> OnUnsubscribeNotification;
+        /// <param name="subscriptions">The unsolicited subscriptions.</param>
+        /// <returns>The message identifier.</returns>
+        long UnsolicitedStoreNotifications(IList<SubscriptionInfo> subscriptions);
+
+        /// <summary>
+        /// Handles the SubscribeNotifications event from a customer.
+        /// </summary>
+        event ProtocolEventHandler<SubscribeNotifications> OnSubscribeNotifications;
+
+        /// <summary>
+        /// Handles the UnsubscribeNotifications event from a customer.
+        /// </summary>
+        event ProtocolEventHandler<UnsubscribeNotifications> OnUnsubscribeNotifications;
     }
 }

@@ -21,6 +21,7 @@ using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.ChannelData;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
 {
@@ -32,64 +33,18 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
     public interface IChannelSubscribeProducer : IProtocolHandler
     {
         /// <summary>
+        /// Handles the GetChannelMetadata event from a consumer.
+        /// </summary>
+        event ProtocolEventHandler<GetChannelMetadata, ChannelMetadataRecord, ErrorInfo> OnGetChannelMetadata;
+
+        /// <summary>
         /// Sends a GetChannelMetadataResponse message to a consumer.
         /// </summary>
         /// <param name="request">The request.</param>
-        /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
+        /// <param name="metadata">The channel metadata records.</param>
         /// <param name="errors">The errors.</param>
-        /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        long GetChannelMetadataResponse(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, IList<ErrorInfo> errors, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
-
-        /// <summary>
-        /// Sends a RealtimeData message to a consumer.
-        /// </summary>
-        /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        long RealtimeData(IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart);
-
-        /// <summary>
-        /// Sends a InfillData message to a consumer.
-        /// </summary>
-        /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        long InfillData(IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart);
-
-        /// <summary>
-        /// Sends a ChangedData message to a consumer.
-        /// </summary>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
-        /// <param name="dataItems">The data items.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        long ChangedData(object startIndex, object endIndex, string uom, string depthDatum, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart);
-
-        /// <summary>
-        /// Sends a SubscriptionStopped message to a consumer.
-        /// </summary>
-        /// <param name="channelIds">The channel identifiers.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        long SubscriptionStopped(IList<long> channelIds, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
-
-        /// <summary>
-        /// Sends a GetRangeResponse message to a consumer.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="dataItems">The data items.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        long GetRangeResponse(IMessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart);
-
-        /// <summary>
-        /// Handles the GetChannelMetadata event from a consumer.
-        /// </summary>
-        event ProtocolEventHandler<GetChannelMetadata> OnGetChannelMetadata;
+        long GetChannelMetadataResponse(IMessageHeader request, IDictionary<string, ChannelMetadataRecord> metadata, IDictionary<string, ErrorInfo> errors);
 
         /// <summary>
         /// Handles the SubscribeChannels event from a consumer.
@@ -97,18 +52,51 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         event ProtocolEventHandler<SubscribeChannels> OnSubscribeChannels;
 
         /// <summary>
+        /// Sends a RealtimeData message to a consumer.
+        /// </summary>
+        /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
+        /// <returns>The message identifier.</returns>
+        long RealtimeData(IList<DataItem> dataItems);
+
+        /// <summary>
+        /// Sends a ReplaceRange message to a consumer.
+        /// </summary>
+        /// <param name="channelIds">The IDs of the channels that are changing.</param>
+        /// <param name="changedInterval">The indexes that define the interval that is changing.</param>
+        /// <param name="dataItems">The channel data of the changed interval.</param>
+        /// <returns>The message identifier.</returns>
+        long ReplaceRange(IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> dataItems);
+
+        /// <summary>
         /// Handles the UnsubscribeChannels event from a consumer.
         /// </summary>
-        event ProtocolEventHandler<UnsubscribeChannels> OnUnsubscribeChannels;
+        event ProtocolEventHandler<UnsubscribeChannels, long, ErrorInfo> OnUnsubscribeChannels;
 
         /// <summary>
-        /// Handles the GetRange event from a consumer.
+        /// Sends a SubscriptionsStopped message to a consumer.
         /// </summary>
-        event ProtocolEventHandler<GetRange> OnGetRange;
+        /// <param name="request">The request.</param>
+        /// <param name="channelIds">The channel identifiers.</param>
+        /// <param name="errors">The errors if any.</param>
+        /// <returns>The message identifier.</returns>
+        long SubscriptionsStopped(IMessageHeader request, IDictionary<string, long> channelIds, IDictionary<string, ErrorInfo> errors);
 
         /// <summary>
-        /// Handles the CancelGetRange event from a consumer.
+        /// Handles the GetRanges event from a consumer.
         /// </summary>
-        event ProtocolEventHandler<CancelGetRange> OnCancelGetRange;
+        event ProtocolEventHandler<GetRanges> OnGetRanges;
+
+        /// <summary>
+        /// Sends a GetRangesResponse message to a consumer.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="dataItems">The data items.</param>
+        /// <returns>The message identifier.</returns>
+        long GetRangesResponse(IMessageHeader request, IList<DataItem> dataItems);
+
+        /// <summary>
+        /// Handles the CancelGetRanges event from a consumer.
+        /// </summary>
+        event ProtocolEventHandler<CancelGetRanges> OnCancelGetRanges;
     }
 }

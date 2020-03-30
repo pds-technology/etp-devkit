@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Energistics.Etp.Common;
@@ -61,6 +62,11 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         }
 
         /// <summary>
+        /// Handles the FindObjects event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<FindObjects, DataObjectResponse> OnFindObjects;
+
+        /// <summary>
         /// Sends a FindObjectsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
@@ -69,38 +75,35 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <returns>The message identifier.</returns>
         public virtual long FindObjectsResponse(IMessageHeader request, IList<DataObject> objects, string sortOrder)
         {
-            if (!objects.Any())
+            var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjectsResponse, request.MessageId);
+            var response = new FindObjectsResponse
             {
-                return Acknowledge(request.MessageId, MessageFlags.NoData);
-            }
+                ServerSortOrder = sortOrder ?? string.Empty
+            };
 
-            long messageId = 0;
-
-            for (var i=0; i<objects.Count; i++)
-            {
-                var messageFlags = i < objects.Count - 1
-                    ? MessageFlags.MultiPart
-                    : MessageFlags.MultiPartAndFinalPart;
-
-                var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjectsResponse, request.MessageId, messageFlags);
-
-                var response = new FindObjectsResponse
-                {
-                    DataObjects = new[] { objects[i] },
-                    ServerSortOrder = sortOrder ?? string.Empty
-                };
-
-                messageId = Session.SendMessage(header, response);
-                sortOrder = string.Empty; // Only needs to be set in the first message
-            }
-
-            return messageId;
+            return Session.Send12MultipartResponse(header, response, objects, (m, i) => m.DataObjects = i);
         }
 
         /// <summary>
-        /// Handles the FindObjects event from a customer.
+        /// Sends a Chunk message to a customer.
         /// </summary>
-        public event ProtocolEventHandler<FindObjects, DataObjectResponse> OnFindObjects;
+        /// <param name="request">The request.</param>
+        /// <param name="blobId">The blob ID.</param>
+        /// <param name="data">The chunk data.</param>
+        /// <param name="messageFlags">The message flags.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long Chunk(IMessageHeader request, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart)
+        {
+            var header = CreateMessageHeader(Protocols.Store, MessageTypes.StoreQuery.Chunk, request.MessageId, messageFlags);
+
+            var message = new Chunk
+            {
+                BlobId = blobId.ToUuid(),
+                Data = data,
+            };
+
+            return Session.SendMessage(header, message);
+        }
 
         /// <summary>
         /// Handles the FindObjects message from a customer.

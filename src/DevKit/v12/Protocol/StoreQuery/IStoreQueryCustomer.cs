@@ -32,12 +32,18 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// Sends a FindObjects message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        long FindObjects(string uri);
+        long FindObjects(string uri, string format = "xml");
 
         /// <summary>
         /// Handles the FindObjectsResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<FindObjectsResponse, string> OnFindObjectsResponse;
+        event ProtocolEventHandler<FindObjectsResponse, FindObjects> OnFindObjectsResponse;
+
+        /// <summary>
+        /// Handles the Chunk event from a store.
+        /// </summary>
+        event ProtocolEventHandler<Chunk> OnChunk;
     }
 }

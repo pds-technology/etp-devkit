@@ -64,37 +64,22 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// Sends a FindPartsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
-        /// <param name="parts">The list of <see cref="ObjectPart" /> objects.</param>
+        /// <param name="uri">The URI from the request.</param>
+        /// <param name="parts">The list of <see cref="ObjectPart"/> objects.</param>
         /// <param name="sortOrder">The sort order.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        public virtual long FindPartsResponse(IMessageHeader request, IList<ObjectPart> parts, string sortOrder)
+        public virtual long FindPartsResponse(IMessageHeader request, string uri, IList<ObjectPart> parts, string sortOrder, string format = "xml")
         {
-            if (!parts.Any())
+            var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.GrowingObjectQuery.FindPartsResponse, request.MessageId);
+            var response = new FindPartsResponse
             {
-                return Acknowledge(request.MessageId, MessageFlags.NoData);
-            }
+                Uri = uri,
+                ServerSortOrder = string.Empty,
+                Format = format ?? "xml",
+            };
 
-            long messageId = 0;
-
-            for (var i=0; i<parts.Count; i++)
-            {
-                var messageFlags = i < parts.Count - 1
-                    ? MessageFlags.MultiPart
-                    : MessageFlags.MultiPartAndFinalPart;
-
-                var header = CreateMessageHeader(Protocols.GrowingObjectQuery, MessageTypes.GrowingObjectQuery.FindPartsResponse, request.MessageId, messageFlags);
-
-                var response = new FindPartsResponse
-                {
-                    ObjectParts = new[] { parts[i] },
-                    ServerSortOrder = sortOrder ?? string.Empty
-                };
-
-                messageId = Session.SendMessage(header, response);
-                sortOrder = string.Empty; // Only needs to be set in the first message
-            }
-
-            return messageId;
+            return Session.Send12MultipartResponse(header, response, parts, (m, i) => m.Parts = i);
         }
 
         /// <summary>
@@ -114,7 +99,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
 
             if (!args.Cancel)
             {
-                FindPartsResponse(header, args.Context.ObjectParts, args.Context.ServerSortOrder);
+                FindPartsResponse(header, findParts.Uri, args.Context.Parts, args.Context.ServerSortOrder, findParts.Format);
             }
         }
 

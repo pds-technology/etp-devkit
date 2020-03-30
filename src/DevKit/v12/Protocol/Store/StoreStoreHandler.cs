@@ -16,8 +16,8 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -40,33 +40,31 @@ namespace Energistics.Etp.v12.Protocol.Store
             RegisterMessageHandler<GetDataObjects>(Protocols.Store, MessageTypes.Store.GetDataObjects, HandleGetDataObjects);
             RegisterMessageHandler<PutDataObjects>(Protocols.Store, MessageTypes.Store.PutDataObjects, HandlePutDataObjects);
             RegisterMessageHandler<DeleteDataObjects>(Protocols.Store, MessageTypes.Store.DeleteDataObjects, HandleDeleteDataObjects);
+            RegisterMessageHandler<Chunk>(Protocols.Store, MessageTypes.Store.Chunk, HandleChunk);
         }
 
         /// <summary>
         /// Sends an GetDataObjectsResponse message to a customer.
         /// </summary>
-        /// <param name="correlationId">The correlation identifier.</param>
+        /// <param name="request">The request.</param>
         /// <param name="dataObjects">The data objects.</param>
         /// <param name="errors">The errors.</param>
-        /// <param name="messageFlag">The message flag.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long GetDataObjectsResponse(long correlationId, IList<DataObject> dataObjects, IList<ErrorInfo> errors, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        public virtual long GetDataObjectsResponse(IMessageHeader request, IDictionary<string, DataObject> dataObjects, IDictionary<string, ErrorInfo> errors)
         {
-            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetDataObjectsResponse, correlationId, messageFlag);
+            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetDataObjectsResponse, request.MessageId);
 
             var response = new GetDataObjectsResponse
             {
-                DataObjects = dataObjects,
-                Errors = errors
             };
 
-            return Session.SendMessage(header, response);
+            return Session.Send12MultipartResponse(header, response, dataObjects, errors, (m, i) => m.DataObjects = i);
         }
 
         /// <summary>
         /// Handles the GetDataObjects event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetDataObjects> OnGetDataObjects;
+        public event ProtocolEventHandler<GetDataObjects, DataObject, ErrorInfo> OnGetDataObjects;
 
         /// <summary>
         /// Handles the PutDataObjects event from a customer.
@@ -79,34 +77,55 @@ namespace Energistics.Etp.v12.Protocol.Store
         public event ProtocolEventHandler<DeleteDataObjects> OnDeleteDataObjects;
 
         /// <summary>
+        /// Sends a Chunk message to a customer.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="blobId">The blob ID.</param>
+        /// <param name="data">The chunk data.</param>
+        /// <param name="messageFlags">The message flags.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long Chunk(IMessageHeader request, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart)
+        {
+            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.Chunk, request.MessageId, messageFlags);
+
+            var message = new Chunk
+            {
+                BlobId = blobId.ToUuid(),
+                Data = data,
+            };
+
+            return Session.SendMessage(header, message);
+        }
+
+        /// <summary>
+        /// Handles the Chunk event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<Chunk> OnChunk;
+
+        /// <summary>
         /// Handles the GetDataObjects message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="getDataObjects">The GetDataObjects message.</param>
-        protected virtual void HandleGetDataObjects(IMessageHeader header, GetDataObjects getDataObjects)
+        /// <param name="message">The GetDataObjects message.</param>
+        protected virtual void HandleGetDataObjects(IMessageHeader header, GetDataObjects message)
         {
-            var args = Notify(OnGetDataObjects, header, getDataObjects);
-            var dataObjects = new List<DataObject>();
-            var errors = new List<ErrorInfo>();
+            var args = Notify(OnGetDataObjects, header, message, new Dictionary<string, DataObject>(), new Dictionary<string, ErrorInfo>());
 
-            HandleGetDataObjects(args, dataObjects, errors);
+            HandleGetDataObjects(message, args.Context, args.Errors);
 
             if (args.Cancel)
                 return;
 
-            if (!dataObjects.Any() && !errors.Any())
-                GetDataObjectsResponse(header.MessageId, dataObjects, errors, MessageFlags.NoData);
-            else
-                GetDataObjectsResponse(header.MessageId, dataObjects, errors);
+            GetDataObjectsResponse(header, args.Context, args.Errors);
         }
 
         /// <summary>
         /// Handles the GetDataObjects message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{GetDataObjects}" /> instance containing the event data.</param>
+        /// <param name="message">The GetDataObjects message.</param>
         /// <param name="dataObjects">The data objects.</param>
         /// <param name="errors">The errors.</param>
-        protected virtual void HandleGetDataObjects(ProtocolEventArgs<GetDataObjects> args, IList<DataObject> dataObjects, IList<ErrorInfo> errors)
+        protected virtual void HandleGetDataObjects(GetDataObjects message, IDictionary<string, DataObject> dataObjects, IDictionary<string, ErrorInfo> errors)
         {
         }
 
@@ -128,6 +147,16 @@ namespace Energistics.Etp.v12.Protocol.Store
         protected virtual void HandleDeleteDataObjects(IMessageHeader header, DeleteDataObjects deleteDataObjects)
         {
             Notify(OnDeleteDataObjects, header, deleteDataObjects);
+        }
+
+        /// <summary>
+        /// Handles the DeleteDataObjects message from a customer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="chunk">The Chunk message.</param>
+        protected virtual void HandleChunk(IMessageHeader header, Chunk chunk)
+        {
+            Notify(OnChunk, header, chunk);
         }
     }
 }

@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.GrowingObject
 {
@@ -30,81 +31,77 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
     public interface IGrowingObjectCustomer : IProtocolHandler
     {
         /// <summary>
-        /// Gets the metadata for growing object parts.
+        /// Gets the metadata for growing object parts from a store.
         /// </summary>
         /// <param name="uris">The collection of growing object URIs.</param>
         /// <returns>The message identifier.</returns>
         long GetPartsMetadata(IList<string> uris);
 
         /// <summary>
-        /// Gets a single list item in a growing object, by its ID.
+        /// Gets parts in a growing object by UID from a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
+        /// <param name="uids">The UIDs of the elements within the growing object to get.</param>
+        /// <param name="format">The format of the response (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        long GetPart(string uri, string uid);
+        long GetParts(string uri, IList<string> uids, string format = "xml");
 
         /// <summary>
-        /// Gets all list items in a growing object within an index range.
+        /// Gets all parts in a growing object within an index range from a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
+        /// <param name="indexInterval">The index interval.</param>
+        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
+        /// <param name="format">The format of the response (XML or JSON).</param>
+        /// <returns>The message identifier.</returns>
+        long GetPartsByRange(string uri, IndexInterval indexInterval, bool includeOverlappingIntervals = false, string format = "xml");
+
+        /// <summary>
+        /// Adds or updates parts in a growing object in a store.
+        /// </summary>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="parts">The UIDs and data of the parts being put.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <returns>The message identifier.</returns>
+        long PutParts(string uri, IList<ObjectPart> parts, string format = "xml");
+
+        /// <summary>
+        /// Deletes parts from a growing object from a store.
+        /// </summary>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="uids">The UIDs of the parts within the growing object to delete.</param>
+        /// <returns>The message identifier.</returns>
+        long DeleteParts(string uri, IList<string> uids);
+
+        /// <summary>
+        /// Deletes all parts in a range of index values from a growing object from a store.
+        /// </summary>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="deleteInterval">The index interval to delete.</param>
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
         /// <returns>The message identifier.</returns>
-        long GetPartsByRange(string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals = false);
+        long DeletePartsByRange(string uri, IndexInterval deleteInterval, bool includeOverlappingIntervals = false);
 
         /// <summary>
-        /// Adds or updates a list item in a growing object.
+        /// Replaces all parts in a range of index values in a growing object with new parts in a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
-        /// <param name="contentType">The content type string for the parent object.</param>
-        /// <param name="data">The data (list items) to be added to the growing object.</param>
-        /// <returns>The message identifier.</returns>
-        long PutPart(string uri, string uid, string contentType, byte[] data);
-
-        /// <summary>
-        /// Deletes one list item in a growing object.
-        /// </summary>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
-        /// <returns>The message identifier.</returns>
-        long DeletePart(string uri, string uid);
-
-        /// <summary>
-        /// Deletes all list items in a range of index values.
-        /// </summary>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
+        /// <param name="deleteInterval">The index interval to delete.</param>
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
+        /// <param name="parts">The map of UIDs and data of the parts being put.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        long DeletePartsByRange(string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals = false);
-
-        /// <summary>
-        /// Replaces a list item in a growing object.
-        /// </summary>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
-        /// <param name="contentType">The content type string for the parent object.</param>
-        /// <param name="data">The data (list items) to be added to the growing object.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
-        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
-        /// <returns>The message identifier.</returns>
-        long ReplacePartsByRange(string uri, string uid, string contentType, byte[] data, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals);
+        long ReplacePartsByRange(string uri, IndexInterval deleteInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, string format = "xml");
 
         /// <summary>
         /// Handles the GetPartsResponse event from a store.
         /// </summary>
         event ProtocolEventHandler<GetPartsResponse> OnGetPartsResponse;
+
+        /// <summary>
+        /// Handles the GetPartsByRangeResponse event from a store.
+        /// </summary>
+        event ProtocolEventHandler<GetPartsByRangeResponse> OnGetPartsByRangeResponse;
 
         /// <summary>
         /// Handles the GetPartsMetadataResponse event from a store.

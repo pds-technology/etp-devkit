@@ -37,41 +37,44 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         {
             RegisterMessageHandler<ObjectChanged>(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectChanged, HandleObjectChanged);
             RegisterMessageHandler<ObjectDeleted>(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectDeleted, HandleObjectDeleted);
+            RegisterMessageHandler<Chunk>(Protocols.StoreNotification, MessageTypes.StoreNotification.Chunk, HandleChunk);
             RegisterMessageHandler<ObjectAccessRevoked>(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectAccessRevoked, HandleObjectAccessRevoked);
+            RegisterMessageHandler<SubscriptionEnded>(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscriptionEnded, HandleSubscriptionEnded);
+            RegisterMessageHandler<UnsolicitedStoreNotifications>(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsolicitedStoreNotifications, HandleUnsolicitedStoreNotifications);
         }
 
         /// <summary>
-        /// Sends a SubscribeNotification message to a store.
+        /// Sends a SubscribeNotifications message to a store.
         /// </summary>
-        /// <param name="subscriptionInfo">The subscription information.</param>
+        /// <param name="request">The subscription request.</param>
         /// <returns>The message identifier.</returns>
-        public long SubscribeNotification(SubscriptionInfo subscriptionInfo)
+        public long SubscribeNotifications(SubscriptionInfo request)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotification);
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotifications);
 
-            var notificationRequest = new SubscribeNotification
+            var message = new SubscribeNotifications
             {
-                Request = subscriptionInfo
+                Request = request
             };
 
-            return Session.SendMessage(header, notificationRequest);
+            return Session.SendMessage(header, message);
         }
 
         /// <summary>
-        /// Sends a UnsubscribeNotification message to a store.
+        /// Sends a UnsubscribeNotifications message to a store.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
         /// <returns>The message identifier.</returns>
-        public long UnsubscribeNotification(Guid requestUuid)
+        public long UnsubscribeNotifications(Guid requestUuid)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsubscribeNotification);
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsubscribeNotifications);
 
-            var cancelNotification = new UnsubscribeNotification
+            var message = new UnsubscribeNotifications
             {
                 RequestUuid = requestUuid.ToUuid()
             };
 
-            return Session.SendMessage(header, cancelNotification);
+            return Session.SendMessage(header, message);
         }
 
         /// <summary>
@@ -85,9 +88,24 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         public event ProtocolEventHandler<ObjectDeleted> OnObjectDeleted;
 
         /// <summary>
+        /// Handles the Chunk event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<Chunk> OnChunk;
+
+        /// <summary>
         /// Handles the ObjectAccessRevoked event from a store.
         /// </summary>
         public event ProtocolEventHandler<ObjectAccessRevoked> OnObjectAccessRevoked;
+
+        /// <summary>
+        /// Handles the SubscriptionEnded event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<SubscriptionEnded> OnSubscriptionEnded;
+
+        /// <summary>
+        /// Handles the UnsolicitedStoreNotifications event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<UnsolicitedStoreNotifications> OnUnsolicitedStoreNotifications;
 
         /// <summary>
         /// Handles the ObjectChanged message from a store.
@@ -110,6 +128,16 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         }
 
         /// <summary>
+        /// Handles the Chunk message from a store.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="notification">The Chunk message.</param>
+        protected virtual void HandleChunk(IMessageHeader header, Chunk notification)
+        {
+            Notify(OnChunk, header, notification);
+        }
+
+        /// <summary>
         /// Handles the ObjectAccessRevoked message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
@@ -118,5 +146,26 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         {
             Notify(OnObjectAccessRevoked, header, notification);
         }
+
+        /// <summary>
+        /// Handles the SubscriptionEnded message from a store.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="notification">The SubscriptionEnded message.</param>
+        protected virtual void HandleSubscriptionEnded(IMessageHeader header, SubscriptionEnded notification)
+        {
+            Notify(OnSubscriptionEnded, header, notification);
+        }
+
+        /// <summary>
+        /// Handles the UnsolicitedStoreNotifications message from a store.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="notification">The UnsolicitedStoreNotifications message.</param>
+        protected virtual void HandleUnsolicitedStoreNotifications(IMessageHeader header, UnsolicitedStoreNotifications notification)
+        {
+            Notify(OnUnsolicitedStoreNotifications, header, notification);
+        }
+
     }
 }

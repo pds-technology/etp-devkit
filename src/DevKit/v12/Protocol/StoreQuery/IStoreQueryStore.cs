@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -31,6 +32,11 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
     public interface IStoreQueryStore : IProtocolHandler
     {
         /// <summary>
+        /// Handles the FindObjects event from a customer.
+        /// </summary>
+        event ProtocolEventHandler<FindObjects, DataObjectResponse> OnFindObjects;
+
+        /// <summary>
         /// Sends a FindObjectsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
@@ -40,9 +46,14 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         long FindObjectsResponse(IMessageHeader request, IList<DataObject> objects, string sortOrder);
 
         /// <summary>
-        /// Handles the FindObjects event from a customer.
+        /// Sends a Chunk message to a customer.
         /// </summary>
-        event ProtocolEventHandler<FindObjects, DataObjectResponse> OnFindObjects;
+        /// <param name="request">The request.</param>
+        /// <param name="blobId">The blob ID.</param>
+        /// <param name="data">The chunk data.</param>
+        /// <param name="messageFlags">The message flags.</param>
+        /// <returns>The message identifier.</returns>
+        long Chunk(IMessageHeader request, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart);
     }
 
     /// <summary>

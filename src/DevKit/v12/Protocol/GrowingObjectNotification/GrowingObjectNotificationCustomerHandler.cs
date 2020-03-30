@@ -35,24 +35,26 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// </summary>
         public GrowingObjectNotificationCustomerHandler() : base((int)Protocols.GrowingObjectNotification, "customer", "store")
         {
-            RegisterMessageHandler<PartChanged>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartChanged, HandlePartChanged);
-            RegisterMessageHandler<PartDeleted>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartDeleted, HandlePartDeleted);
+            RegisterMessageHandler<PartsChanged>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsChanged, HandlePartsChanged);
+            RegisterMessageHandler<PartsDeleted>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsDeleted, HandlePartsDeleted);
             RegisterMessageHandler<PartsDeletedByRange>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsDeletedByRange, HandlePartsDeletedByRange);
             RegisterMessageHandler<PartsReplacedByRange>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsReplacedByRange, HandlePartsReplacedByRange);
+            RegisterMessageHandler<PartSubscriptionEnded>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartSubscriptionEnded, HandlePartSubscriptionEnded);
+            RegisterMessageHandler<UnsolicitedPartNotifications>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsolicitedPartNotifications, HandleUnsolicitedPartNotifications);
         }
 
         /// <summary>
         /// Sends a SubscribePartNotification message to a store.
         /// </summary>
-        /// <param name="subscriptionInfo">The subscription information.</param>
+        /// <param name="request">The subscription request.</param>
         /// <returns>The message identifier.</returns>
-        public long SubscribePartNotification(SubscriptionInfo subscriptionInfo)
+        public virtual long SubscribePartNotification(SubscriptionInfo request)
         {
             var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotification);
 
             var notificationRequest = new SubscribePartNotification
             {
-                Request = subscriptionInfo
+                Request = request,
             };
 
             return Session.SendMessage(header, notificationRequest);
@@ -63,27 +65,27 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
         /// <returns>The message identifier.</returns>
-        public long UnsubscribePartNotification(Guid requestUuid)
+        public virtual long UnsubscribePartNotification(Guid requestUuid)
         {
             var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsubscribePartNotification);
 
             var cancelNotification = new UnsubscribePartNotification
             {
-                RequestUuid = requestUuid.ToUuid()
+                RequestUuid = requestUuid.ToUuid(),
             };
 
             return Session.SendMessage(header, cancelNotification);
         }
 
         /// <summary>
-        /// Handles the PartChanged event from a store.
+        /// Handles the PartsChanged event from a store.
         /// </summary>
-        public event ProtocolEventHandler<PartChanged> OnPartChanged;
+        public event ProtocolEventHandler<PartsChanged> OnPartsChanged;
 
         /// <summary>
-        /// Handles the PartDeleted event from a store.
+        /// Handles the PartsDeleted event from a store.
         /// </summary>
-        public event ProtocolEventHandler<PartDeleted> OnPartDeleted;
+        public event ProtocolEventHandler<PartsDeleted> OnPartsDeleted;
 
         /// <summary>
         /// Handles the PartsDeletedByRange event from a store.
@@ -96,23 +98,33 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         public event ProtocolEventHandler<PartsReplacedByRange> OnPartsReplacedByRange;
 
         /// <summary>
-        /// Handles the PartChanged message from a store.
+        /// Handles the PartSubscriptionEnded event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<PartSubscriptionEnded> OnPartSubscriptionEnded;
+
+        /// <summary>
+        /// Handles the UnsolicitedPartNotifications event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<UnsolicitedPartNotifications> OnUnsolicitedPartNotifications;
+
+        /// <summary>
+        /// Handles the PartsChanged message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="notification">The PartChanged message.</param>
-        protected virtual void HandlePartChanged(IMessageHeader header, PartChanged notification)
+        protected virtual void HandlePartsChanged(IMessageHeader header, PartsChanged notification)
         {
-            Notify(OnPartChanged, header, notification);
+            Notify(OnPartsChanged, header, notification);
         }
 
         /// <summary>
-        /// Handles the PartDeleted message from a store.
+        /// Handles the PartsDeleted message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="notification">The PartDeleted message.</param>
-        protected virtual void HandlePartDeleted(IMessageHeader header, PartDeleted notification)
+        protected virtual void HandlePartsDeleted(IMessageHeader header, PartsDeleted notification)
         {
-            Notify(OnPartDeleted, header, notification);
+            Notify(OnPartsDeleted, header, notification);
         }
 
         /// <summary>
@@ -133,6 +145,26 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         protected virtual void HandlePartsReplacedByRange(IMessageHeader header, PartsReplacedByRange notification)
         {
             Notify(OnPartsReplacedByRange, header, notification);
+        }
+
+        /// <summary>
+        /// Handles the PartSubscriptionEnded message from a store.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="notification">The PartSubscriptionEnded message.</param>
+        protected virtual void HandlePartSubscriptionEnded(IMessageHeader header, PartSubscriptionEnded notification)
+        {
+            Notify(OnPartSubscriptionEnded, header, notification);
+        }
+
+        /// <summary>
+        /// Handles the UnsolicitedPartNotifications message from a store.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="notification">The UnsolicitedPartNotifications message.</param>
+        protected virtual void HandleUnsolicitedPartNotifications(IMessageHeader header, UnsolicitedPartNotifications notification)
+        {
+            Notify(OnUnsolicitedPartNotifications, header, notification);
         }
     }
 }

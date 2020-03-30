@@ -39,13 +39,8 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         long GetResourcesResponse(IMessageHeader request, IList<Resource> resources);
 
         /// <summary>
-        /// Handles the GetTreeResources event from a customer.
+        /// Handles the GetResources event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetTreeResources, IList<Resource>> OnGetTreeResources;
-
-        /// <summary>
-        /// Handles the GetGraphResources event from a customer.
-        /// </summary>
-        event ProtocolEventHandler<GetGraphResources, IList<Resource>> OnGetGraphResources;
+        event ProtocolEventHandler<GetResources, IList<Resource>> OnGetResources;
     }
 }

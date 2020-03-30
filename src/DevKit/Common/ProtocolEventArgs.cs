@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 
@@ -85,5 +86,35 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <value>The message context.</value>
         public TContext Context { get; }
+    }
+
+
+    /// <summary>
+    /// Provides data for protocol handler events.
+    /// </summary>
+    /// <typeparam name="T">The type of the message.</typeparam>
+    /// <typeparam name="TContext">The type of the context.</typeparam>
+    /// <seealso cref="System.EventArgs" />
+    public class ProtocolEventArgs<T, TContext, TErrorInfo> : ProtocolEventArgs<T, IDictionary<string, TContext>>
+        where T : ISpecificRecord
+        where TErrorInfo : IErrorInfo
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ProtocolEventArgs{T, TContext, TErrorInfo}"/> class.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message body.</param>
+        /// <param name="context">The additional message context.</param>
+        /// <param name="errors">The errors.</param>
+        public ProtocolEventArgs(IMessageHeader header, T message, IDictionary<string, TContext> context, IDictionary<string, TErrorInfo> errors)
+            : base(header, message, context)
+        {
+            Errors = errors;
+        }
+
+        /// <summary>
+        /// Gets the errors.
+        /// </summary>
+        public IDictionary<string, TErrorInfo> Errors { get; }
     }
 }

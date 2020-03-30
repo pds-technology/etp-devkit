@@ -39,11 +39,26 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         long GetChannelMetadata(IList<string> uris);
 
         /// <summary>
+        /// Handles the GetChannelMetadataResponse event from a producer.
+        /// </summary>
+        event ProtocolEventHandler<GetChannelMetadataResponse> OnGetChannelMetadataResponse;
+
+        /// <summary>
         /// Sends a SubscribeChannels message to a producer.
         /// </summary>
-        /// <param name="channelSubscribeInfos">The list of <see cref="ChannelSubscribeInfo"/> objects.</param>
+        /// <param name="channels">The list of channels.</param>
         /// <returns>The message identifier.</returns>
-        long SubscribeChannels(IList<ChannelSubscribeInfo> channelSubscribeInfos);
+        long SubscribeChannels(IList<ChannelSubscribeInfo> channels);
+
+        /// <summary>
+        /// Handles the RealtimeData event from a producer.
+        /// </summary>
+        event ProtocolEventHandler<RealtimeData> OnRealtimeData;
+
+        /// <summary>
+        /// Handles the ReplaceRange event from a producer.
+        /// </summary>
+        event ProtocolEventHandler<ReplaceRange> OnReplaceRange;
 
         /// <summary>
         /// Sends a UnsubscribeChannels message to a producer.
@@ -53,48 +68,28 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         long UnsubscribeChannels(IList<long> channelIds);
 
         /// <summary>
-        /// Sends a GetRange message to a producer.
+        /// Handles the SubscriptionsStopped event from a producer.
+        /// </summary>
+        event ProtocolEventHandler<SubscriptionsStopped> OnSubscriptionsStopped;
+
+        /// <summary>
+        /// Sends a GetRanges message to a producer.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
-        /// <param name="channelRangeInfos">The list of <see cref="ChannelRangeInfo" /> objects.</param>
+        /// <param name="channelRanges">The list of channelRanges.</param>
         /// <returns>The message identifier.</returns>
-        long GetRange(Guid requestUuid, IList<ChannelRangeInfo> channelRangeInfos);
+        long GetRanges(Guid requestUuid, IList<ChannelRangeInfo> channelRanges);
 
         /// <summary>
-        /// Sends a CancelGetRange message to a producer.
+        /// Handles the GetRangesResponse event from a producer.
+        /// </summary>
+        event ProtocolEventHandler<GetRangesResponse> OnGetRangesResponse;
+
+        /// <summary>
+        /// Sends a CancelGetRanges message to a producer.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
         /// <returns>The message identifier.</returns>
-        long CancelGetRange(Guid requestUuid);
-
-        /// <summary>
-        /// Handles the GetChannelMetadataResponse event from a producer.
-        /// </summary>
-        event ProtocolEventHandler<GetChannelMetadataResponse> OnGetChannelMetadataResponse;
-
-        /// <summary>
-        /// Handles the RealtimeData event from a producer.
-        /// </summary>
-        event ProtocolEventHandler<RealtimeData> OnRealtimeData;
-
-        /// <summary>
-        /// Handles the InfillData event from a producer.
-        /// </summary>
-        event ProtocolEventHandler<InfillData> OnInfillData;
-
-        /// <summary>
-        /// Handles the ChangedData event from a producer.
-        /// </summary>
-        event ProtocolEventHandler<ChangedData> OnChangedData;
-
-        /// <summary>
-        /// Handles the SubscriptionStopped event from a producer.
-        /// </summary>
-        event ProtocolEventHandler<SubscriptionStopped> OnSubscriptionStopped;
-
-        /// <summary>
-        /// Handles the GetRangeResponse event from a producer.
-        /// </summary>
-        event ProtocolEventHandler<GetRangeResponse> OnGetRangeResponse;
+        long CancelGetRanges(Guid requestUuid);
     }
 }

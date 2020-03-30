@@ -49,7 +49,7 @@ namespace Energistics.Etp.WebSocket4Net
         public EtpServer(WebSocketSession session, string application, string version, IDictionary<string, string> headers)
             : base(EtpWebSocketValidation.GetEtpVersion(session.SubProtocol.Name), application, version, headers, false, false)
         {
-            SessionId = session.SessionID;
+            ServerInstanceId = session.SessionID;
             _session = session;
         }
 

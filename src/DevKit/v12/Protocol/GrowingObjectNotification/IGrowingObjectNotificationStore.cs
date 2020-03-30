@@ -19,6 +19,8 @@
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
+using System;
+using System.Collections.Generic;
 
 namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
 {
@@ -30,58 +32,64 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
     public interface IGrowingObjectNotificationStore : IProtocolHandler
     {
         /// <summary>
-        /// Sends a PartChanged message to a customer.
+        /// Sends a PartsChanged message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="uri">The URI.</param>
-        /// <param name="uid">The UID.</param>
-        /// <param name="contentType">The content type.</param>
-        /// <param name="data">The data.</param>
+        /// <param name="requestUuid">The request UUID.</param>
+        /// <param name="uri">The URI of the growing object.</param>
+        /// <param name="parts">The changed parts.</param>
         /// <param name="changeKind">The change kind.</param>
         /// <param name="changeTime">The change time.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        long PartChanged(IMessageHeader request, string uri, string uid, string contentType, byte[] data, ObjectChangeKind changeKind, long changeTime);
+        long PartsChanged(Guid requestUuid, string uri, IList<ObjectPart> parts, ObjectChangeKind changeKind, long changeTime, string format = "xml");
 
         /// <summary>
-        /// Sends a PartDeleted message to a customer.
+        /// Sends a PartsDeleted message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="uri">The URI.</param>
-        /// <param name="uid">The UID.</param>
+        /// <param name="requestUuid">The request UUID.</param>
+        /// <param name="uri">The URI of the growing object.</param>
+        /// <param name="uids">The UIDs of the deleted parts.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        long PartDeleted(IMessageHeader request, string uri, string uid, long changeTime);
+        long PartsDeleted(Guid requestUuid, string uri, IList<string> uids, long changeTime);
 
         /// <summary>
         /// Sends a PartsDeletedByRange message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="requestUuid">The request UUID.</param>
         /// <param name="uri">The URI.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
-        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
+        /// <param name="deletedInterval">The index interval for the deleted range.</param>
+        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals were included; otherwise, <c>false</c>.</param>
         /// <param name="changeTime">The change time.</param>
         /// <returns>The message identifier.</returns>
-        long PartsDeletedByRange(IMessageHeader request, string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime);
+        long PartsDeletedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, long changeTime);
 
         /// <summary>
         /// Sends a PartsReplacedByRange message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="requestUuid">The request UUID.</param>
         /// <param name="uri">The URI.</param>
-        /// <param name="uid">The uid.</param>
-        /// <param name="contentType">The content type.</param>
-        /// <param name="data">The data.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
-        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
+        /// <param name="deletedInterval">The index interval for the deleted range.</param>
+        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals were included; otherwise, <c>false</c>.</param>
+        /// <param name="parts">The map of UIDs and data of the parts that were put.</param>
         /// <param name="changeTime">The change time.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        long PartsReplacedByRange(IMessageHeader request, string uri, string uid, string contentType, byte[] data, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime);
+        long PartsReplacedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, long changeTime, string format = "xml");
+
+        /// <summary>
+        /// Sends a PartSubscriptionEnded message to a customer.
+        /// </summary>
+        /// <param name="requestUuid">The UUID of the subscription that has ended.</param>
+        /// <returns>The message identifier.</returns>
+        long PartSubscriptionEnded(Guid requestUuid);
+
+        /// <summary>
+        /// Sends an UnsolicitedPartNotifications message to a customer.
+        /// </summary>
+        /// <param name="subscriptions">The unsolicited subscriptions.</param>
+        /// <returns>The message identifier.</returns>
+        long UnsolicitedPartNotifications(IList<SubscriptionInfo> subscriptions);
 
         /// <summary>
         /// Handles the SubscribePartNotification event from a customer.

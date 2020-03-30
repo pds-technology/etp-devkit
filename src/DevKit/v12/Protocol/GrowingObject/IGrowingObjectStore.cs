@@ -32,45 +32,54 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
     public interface IGrowingObjectStore : IProtocolHandler
     {
         /// <summary>
-        /// Sends a single list item as a response for GetPart and GetPartsByRange.
+        /// Sends a a list of parts as a response for GetParts to a customer.
         /// </summary>
+        /// <param name="request">The request.</param>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
-        /// <param name="contentType">The content type string.</param>
-        /// <param name="data">The data.</param>
-        /// <param name="correlationId">The correlation identifier.</param>
-        /// <param name="messageFlag">The message flag.</param>
+        /// <param name="parts">The UIDs and data of the parts being returned.</param>
+        /// <param name="errors">The errors, if any.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
-        long GetPartsResponse(string uri, string uid, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        long GetPartsResponse(IMessageHeader request, string uri, IDictionary<string, ObjectPart> parts, IDictionary<string, ErrorInfo> errors, string format = "xml");
 
         /// <summary>
-        /// Sends the metadata describing the list items in the requested growing objects.
+        /// Sends a a list of parts as a response for GetPartsByRange to a customer.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="parts">The UIDs and data of the parts being returned.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <returns>The message identifier.</returns>
+        long GetPartsByRangeResponse(IMessageHeader request, string uri, IList<ObjectPart> parts, string format = "xml");
+
+        /// <summary>
+        /// Sends the metadata describing the parts in the requested growing objects to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="metadata">The parts metadata.</param>
-        /// <param name="errors">The errors.</param>
+        /// <param name="errors">The errors, if any.</param>
         /// <returns>The message identifier.</returns>
-        long GetPartsMetadataResponse(IMessageHeader request, IList<PartsMetadataInfo> metadata, IList<ErrorInfo> errors);
+        long GetPartsMetadataResponse(IMessageHeader request, IDictionary<string, PartsMetadataInfo> metadata, IDictionary<string, ErrorInfo> errors);
 
         /// <summary>
-        /// Handles the GetPart event from a customer.
+        /// Handles the GetParts event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetPart> OnGetPart;
+        event ProtocolEventHandler<GetParts, ObjectPart, ErrorInfo> OnGetParts;
 
         /// <summary>
         /// Handles the GetPartsByRange event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetPartsByRange> OnGetPartsByRange;
+        event ProtocolEventHandler<GetPartsByRange, IList<ObjectPart>> OnGetPartsByRange;
 
         /// <summary>
-        /// Handles the PutPart event from a customer.
+        /// Handles the PutParts event from a customer.
         /// </summary>
-        event ProtocolEventHandler<PutPart> OnPutPart;
+        event ProtocolEventHandler<PutParts> OnPutParts;
 
         /// <summary>
-        /// Handles the DeletePart event from a customer.
+        /// Handles the DeleteParts event from a customer.
         /// </summary>
-        event ProtocolEventHandler<DeletePart> OnDeletePart;
+        event ProtocolEventHandler<DeleteParts> OnDeleteParts;
 
         /// <summary>
         /// Handles the DeletePartsByRange event from a customer.
@@ -85,6 +94,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the GetPartsMetadata event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetPartsMetadata> OnGetPartsMetadata;
+        event ProtocolEventHandler<GetPartsMetadata, PartsMetadataInfo, ErrorInfo> OnGetPartsMetadata;
     }
 }

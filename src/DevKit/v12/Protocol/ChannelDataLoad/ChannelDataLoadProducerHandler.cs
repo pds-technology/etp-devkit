@@ -37,40 +37,43 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// </summary>
         public ChannelDataLoadProducerHandler() : base((int)Protocols.ChannelDataLoad, "producer", "consumer")
         {
-            RegisterMessageHandler<OpenChannelResponse>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelResponse, HandleOpenChannelResponse);
+            RegisterMessageHandler<OpenChannelsResponse>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelsResponse, HandleOpenChannelsResponse);
         }
 
         /// <summary>
-        /// Sends a OpenChannel message to a store.
+        /// Sends a OpenChannels message to a store.
         /// </summary>
         /// <param name="channels">The channels.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long OpenChannel(IList<ChannelMetadataRecord> channels)
+        public virtual long OpenChannels(IList<ChannelMetadataRecord> channels)
         {
-            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannel);
+            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannels);
 
-            var message = new OpenChannel
+            var message = new OpenChannels
             {
-                Channels = channels
+                Channels = channels.ToMap(),
             };
 
             return Session.SendMessage(header, message);
         }
 
         /// <summary>
-        /// Sends a CloseChannel message to a store.
+        /// Handles the OpenChannelsResponse event from a store.
         /// </summary>
-        /// <param name="id">The channel identifier.</param>
-        /// <param name="reason">The close reason.</param>
+        public event ProtocolEventHandler<OpenChannelsResponse> OnOpenChannelsResponse;
+
+        /// <summary>
+        /// Sends a CloseChannel message to a consumer.
+        /// </summary>
+        /// <param name="channelIds">The channel IDs.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long CloseChannel(long id, string reason)
+        public virtual long CloseChannel(IList<long> channelIds)
         {
             var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.CloseChannel);
 
             var message = new CloseChannel
             {
-                Id = id,
-                CloseReason = reason
+                Id = channelIds.ToMap(),
             };
 
             return Session.SendMessage(header, message);
@@ -94,72 +97,42 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Sends a InfillData message to a store.
+        /// Sends a ReplaceRange message to a consumer.
         /// </summary>
-        /// <param name="dataItems">The data items.</param>
+        /// <param name="channelIds">The IDs of the channels that are changing.</param>
+        /// <param name="changedInterval">The indexes that define the interval that is changing.</param>
+        /// <param name="dataItems">The channel data of the changed interval.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long InfillData(IList<DataItem> dataItems)
+        public virtual long ReplaceRange(IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> dataItems)
         {
-            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.InfillData);
+            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelDataLoad.ReplaceRange);
 
-            var message = new InfillData
+            var message = new ReplaceRange
             {
-                Data = dataItems
+                ChannelIds = channelIds,
+                ChangedInterval = changedInterval,
+                Data = dataItems,
             };
 
             return Session.SendMessage(header, message);
         }
 
         /// <summary>
-        /// Sends a ChangedData message to a store.
-        /// </summary>
-        /// <param name="id">The channel identifier.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="depthDatum">The depth datum.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="dataItems">The data items.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long ChangedData(long id, object startIndex, object endIndex, string depthDatum, string uom, IList<DataItem> dataItems)
-        {
-            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ChangedData);
-
-            var message = new ChangedData
-            {
-                ChangedInterval = new IndexInterval
-                {
-                    StartIndex = new IndexValue { Item = startIndex },
-                    EndIndex = new IndexValue { Item = endIndex },
-                    DepthDatum = depthDatum,
-                    Uom = uom
-                },
-                Data = dataItems
-            };
-
-            return Session.SendMessage(header, message);
-        }
-
-        /// <summary>
-        /// Handles the OpenChannelResponse event from a store.
-        /// </summary>
-        public event ProtocolEventHandler<OpenChannelResponse> OnOpenChannelResponse;
-
-        /// <summary>
-        /// Handles the OpenChannelResponse message from a customer.
+        /// Handles the OpenChannelsResponse message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The OpenChannelResponse message.</param>
-        protected virtual void HandleOpenChannelResponse(IMessageHeader header, OpenChannelResponse message)
+        /// <param name="message">The OpenChannelsResponse message.</param>
+        protected virtual void HandleOpenChannelsResponse(IMessageHeader header, OpenChannelsResponse message)
         {
-            var args = Notify(OnOpenChannelResponse, header, message);
-            HandleOpenChannelResponse(args);
+            var args = Notify(OnOpenChannelsResponse, header, message);
+            HandleOpenChannelsResponse(args);
         }
 
         /// <summary>
-        /// Handles the OpenChannelResponse message from a customer.
+        /// Handles the OpenChannelsResponse message from a customer.
         /// </summary>
         /// <param name="args">The <see cref="ProtocolEventArgs{OpenChannelResponse}"/> instance containing the event data.</param>
-        protected virtual void HandleOpenChannelResponse(ProtocolEventArgs<OpenChannelResponse> args)
+        protected virtual void HandleOpenChannelsResponse(ProtocolEventArgs<OpenChannelsResponse> args)
         {
         }
     }

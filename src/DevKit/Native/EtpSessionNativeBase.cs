@@ -92,7 +92,7 @@ namespace Energistics.Etp.Native
             try
             {
                 await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None).ConfigureAwait(CaptureAsyncContext);
-                Logger.Debug(Log("[{0}] Socket session closed.", SessionId));
+                Logger.Debug(Log("[{0}] Socket session closed.", ServerInstanceId));
                 InvokeSocketClosed();
             }
             catch (Exception ex)
