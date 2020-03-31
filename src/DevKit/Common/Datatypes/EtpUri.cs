@@ -30,7 +30,12 @@ namespace Energistics.Etp.Common.Datatypes
     /// </summary>
     public struct EtpUri
     {
-        private static readonly Regex Pattern = new Regex(@"^eml:(\/\/|\/\/\/|\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|eml)([0-9]+)(\+(xml|json))?)(\/((obj_|cs_|part_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        public const string HierarchicalGroup = "hierarchical";
+        public const string CanonicalGroup = "canonical";
+        public const string HierarchicalPattern = @"eml:(\/\/|\/\/\/|\/\/((?<dataspace>[_\w\-]+)?\/)?(((?<family>witsml|resqml|prodml|eml))((?<version>[0-9]+))(\+(?<format>xml|json))?)(\/((obj_|cs_|part_)?((?<objectType>\w+)))(\((?<objectId>[^\s\)]+)\)|(?<objectId>))?)*?)";
+        public const string CanonicalPattern = @"eml:\/(?:\/\/)?(?:dataspace\((?<dataSpace>[^)]*)\))?(?:(?:(?:(?<=\/))|(?<!\/)\/)(?<domain>prodml|resqml|witsml|eml)(?<domainVersion>\d{2})\.(?<objectType>\w+)(?:\((?<objectUuid>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?:(?:\,(?<objectVersion>\w+))|(?<objectVersion>))?\)|(?<objectUuid>)(?<objectVersion>)))*?";
+        public static readonly Regex Pattern = new Regex($@"^(?:(?<{HierarchicalGroup}>{HierarchicalPattern})|(?<{CanonicalGroup}>{CanonicalPattern}))(?<query>\?[^#]*)?(?<hash>#.*)?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        //public static readonly Regex Pattern = new Regex(@"^eml:(\/\/|\/\/\/|\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|eml)([0-9]+)(\+(xml|json))?)(\/((obj_|cs_|part_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private const string FormatParameterName = "$format";
         private readonly EtpUri?[] _parent;
         private readonly Match _match;
@@ -50,18 +55,24 @@ namespace Energistics.Etp.Common.Datatypes
             _parent = new EtpUri?[] { null };
 
             Uri = uri;
-            IsValid = _match.Success || IsRoot(uri);
+            var isRoot = IsRoot(uri);
+            IsValid = _match.Success || isRoot;
 
+            var hierarchicalGroup = GetGroup(_match, HierarchicalGroup);
+            var canonicalGroup = GetGroup(_match, CanonicalGroup);
 
-            DataSpace = GetValue(_match, 3);
-            Family = GetValue(_match, 5);
-            Version = FormatVersion(GetValue(_match, 6), Family);
+            IsHierarchical = hierarchicalGroup.Success;
+            IsCanonical = canonicalGroup.Success;
+
+            DataSpace = GetValue(_match, "dataspace");
+            Family = GetValue(_match, "family");
+            Version = FormatVersion(GetValue(_match, "version"), Family);
             ObjectType = null;
             ObjectId = null;
-            Query = GetValue(_match, 15);
-            Hash = GetValue(_match, 16);
+            Query = GetValue(_match, "query");
+            Hash = GetValue(_match, "hash");
 
-            var format = GetQueryStringFormat(Query, GetValue(_match, 8));
+            var format = GetQueryStringFormat(Query, GetValue(_match, "format"));
             Format = string.IsNullOrWhiteSpace(format) ? EtpContentType.Xml : format;
             ContentType = new EtpContentType(Family, Version, null, Format);
             DataObjectType = new EtpDataObjectType(Family, Version);
@@ -150,6 +161,18 @@ namespace Energistics.Etp.Common.Datatypes
         public bool IsValid { get; }
 
         /// <summary>
+        /// Returns true if a valid hierarchical URI was specified.
+        /// </summary>
+        /// <value><c>true</c> if this instance is valid; otherwise, <c>false</c>.</value>
+        public bool IsHierarchical { get; }
+
+        /// <summary>
+        /// Returns true if a valid canonical URI was specified.
+        /// </summary>
+        /// <value><c>true</c> if this instance is valid; otherwise, <c>false</c>.</value>
+        public bool IsCanonical { get; }
+
+        /// <summary>
         /// Gets a value indicating whether this instance is a base URI.
         /// </summary>
         /// <value><c>true</c> if this instance is a base URI; otherwise, <c>false</c>.</value>
@@ -210,25 +233,66 @@ namespace Energistics.Etp.Common.Datatypes
         /// <returns>A collection of <see cref="Segment"/> items.</returns>
         public IEnumerable<Segment> GetObjectIds()
         {
+            return IsHierarchical
+                ? GetHierarchicalObjectIds()
+                : GetCanonicalObjectIds();
+        }
+
+        /// <summary>
+        /// Gets a collection of <see cref="Segment"/> items.
+        /// </summary>
+        /// <returns>A collection of <see cref="Segment"/> items.</returns>
+        private IEnumerable<Segment> GetHierarchicalObjectIds()
+        {
             if (HasRepeatValues(_match))
             {
-                var objectPathGroup = _match.Groups[9];
-                var objectTypeGroup = _match.Groups[12];
-                var objectIdGroup = _match.Groups[14];
+                var objectTypeGroup = GetGroup(_match, "objectType");
+                var objectIdGroup = GetGroup(_match, "objectId");
 
-                var groupIndex = 0;
-                for (int i=0; i<objectTypeGroup.Captures.Count; i++)
+                for (var groupIndex = 0; groupIndex < objectTypeGroup.Captures.Count; ++groupIndex)
                 {
-                    var objectPath = objectPathGroup.Captures[i].Value;
-                    var objectType = objectTypeGroup.Captures[i].Value;
-
-                    var objectId = objectIdGroup.Captures.Count > groupIndex && objectPath.EndsWith(")")
-                        ? WebUtility.UrlDecode(objectIdGroup.Captures[groupIndex++].Value)
-                        : null;
+                    var objectType = objectTypeGroup.Captures[groupIndex].Value;
+                    var objectId = WebUtility.UrlDecode(objectIdGroup.Captures[groupIndex].Value);
 
                     yield return new Segment(
+                        Family,
+                        Version,
                         EtpContentType.FormatObjectType(objectType, Version),
-                        objectId);
+                        objectId,
+                        string.Empty);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets a collection of <see cref="Segment"/> items.
+        /// </summary>
+        /// <returns>A collection of <see cref="Segment"/> items.</returns>
+        private IEnumerable<Segment> GetCanonicalObjectIds()
+        {
+            if (HasRepeatValues(_match))
+            {
+                var domainGroup = GetGroup(_match, "domain");
+                var domainVersionGroup = GetGroup(_match, "domainVersion");
+
+                var objectTypeGroup = GetGroup(_match, "objectType");
+                var objectIdGroup = GetGroup(_match, "objectUuid");
+                var objectVersionGroup = GetGroup(_match, "objectVersion");
+
+                for (var groupIndex = 0; groupIndex < objectTypeGroup.Captures.Count; ++groupIndex)
+                {
+                    var domain = domainGroup.Captures[groupIndex].Value;
+                    var domainVersion = domainVersionGroup.Captures[groupIndex].Value;
+                    var objectType = objectTypeGroup.Captures[groupIndex].Value;
+                    var objectId = WebUtility.UrlDecode(objectIdGroup.Captures[groupIndex].Value);
+                    var objectVersion = objectVersionGroup.Captures[groupIndex].Value;
+
+                    yield return new Segment(
+                        domain,
+                        domainVersion,
+                        EtpContentType.FormatObjectType(objectType, domainVersion),
+                        objectId,
+                        objectVersion);
                 }
             }
         }
@@ -343,13 +407,48 @@ namespace Energistics.Etp.Common.Datatypes
         }
 
         /// <summary>
+        /// Gets the value contained within the specified match at the specified index.
+        /// </summary>
+        /// <param name="match">The match.</param>
+        /// <param name="groupName">The group name.</param>
+        /// <returns>The matched value found at the specified index.</returns>
+        private static string GetValue(Match match, string groupName)
+        {
+            return match.Success
+                ? GetGroup(match, groupName).Value
+                : null;
+        }
+
+        /// <summary>
+        /// Gets the group at the specified index.
+        /// </summary>
+        /// <param name="match">The match.</param>
+        /// <param name="groupIndex">The group index.</param>
+        /// <returns>The matched value found at the specified index.</returns>
+        private static Group GetGroup(Match match, int groupIndex)
+        {
+            return match.Groups[groupIndex];
+        }
+
+        /// <summary>
+        /// Gets the group with the specified name.
+        /// </summary>
+        /// <param name="match">The match.</param>
+        /// <param name="groupName">The group name.</param>
+        /// <returns>The matched value found at the specified index.</returns>
+        private static Group GetGroup(Match match, string groupName)
+        {
+            return match.Groups[groupName];
+        }
+
+        /// <summary>
         /// Determines whether the specified match contains repeating values.
         /// </summary>
         /// <param name="match">The match.</param>
         /// <returns><c>true</c> if any repeating groups were matched; otherwise, <c>false</c>.</returns>
         private static bool HasRepeatValues(Match match)
         {
-            return match.Success && match.Groups[12].Captures.Count > 0;
+            return match.Success && match.Groups["objectType"].Captures.Count > 0;
         }
 
         /// <summary>
@@ -408,13 +507,31 @@ namespace Energistics.Etp.Common.Datatypes
             /// <summary>
             /// Initializes a new instance of the <see cref="Segment"/> struct.
             /// </summary>
+            /// <param name="domain"> The domain/family.</param>
+            /// <param name="domainVersion">The domain/family version.</param>
             /// <param name="objectType">The object type.</param>
             /// <param name="objectId">The object identifier.</param>
-            public Segment(string objectType, string objectId)
+            /// <param name="objectVersion">The object version.</param>
+            public Segment(string domain, string domainVersion, string objectType, string objectId, string objectVersion)
             {
+                Domain = domain;
+                DomainVersion = domainVersion;
                 ObjectType = objectType;
                 ObjectId = objectId;
+                ObjectVersion = objectVersion;
             }
+
+            /// <summary>
+            /// Gets the ML domain name.
+            /// </summary>
+            /// <value>The ML family.</value>
+            public string Domain { get; }
+
+            /// <summary>
+            /// Gets the domain version.
+            /// </summary>
+            /// <value>The version.</value>
+            public string DomainVersion { get; }
 
             /// <summary>
             /// Gets the type of the object.
@@ -427,6 +544,12 @@ namespace Energistics.Etp.Common.Datatypes
             /// </summary>
             /// <value>The object identifier.</value>
             public string ObjectId { get; }
+
+            /// <summary>
+            /// Gets the object version.
+            /// </summary>
+            /// <value>The version.</value>
+            public string ObjectVersion { get; }
         }
     }
 }

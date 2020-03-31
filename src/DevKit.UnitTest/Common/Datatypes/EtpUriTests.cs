@@ -54,7 +54,7 @@ namespace Energistics.Etp.Common.Datatypes
             var uri = "eml:/";
             var etpUri = new EtpUri(uri);
 
-            Assert.IsFalse(etpUri.IsValid);
+            Assert.IsFalse(etpUri.IsHierarchical);
             Assert.IsFalse(etpUri.IsRootUri);
         }
 
