@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 
@@ -30,64 +31,253 @@ namespace Energistics.Etp.Common.Datatypes
     /// </summary>
     public struct EtpUri
     {
-        public const string HierarchicalGroup = "hierarchical";
-        public const string CanonicalGroup = "canonical";
-        public const string HierarchicalPattern = @"eml:(\/\/|\/\/\/|\/\/((?<dataspace>[_\w\-]+)?\/)?(((?<family>witsml|resqml|prodml|eml))((?<version>[0-9]+))(\+(?<format>xml|json))?)(\/((obj_|cs_|part_)?((?<objectType>\w+)))(\((?<objectId>[^\s\)]+)\)|(?<objectId>))?)*?)";
-        public const string CanonicalPattern = @"eml:\/(?:\/\/)?(?:dataspace\((?<dataSpace>[^)]*)\))?(?:(?:(?:(?<=\/))|(?<!\/)\/)(?<domain>prodml|resqml|witsml|eml)(?<domainVersion>\d{2})\.(?<objectType>\w+)(?:\((?<objectUuid>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?:(?:\,(?<objectVersion>\w+))|(?<objectVersion>))?\)|(?<objectUuid>)(?<objectVersion>)))*?";
-        public static readonly Regex Pattern = new Regex($@"^(?:(?<{HierarchicalGroup}>{HierarchicalPattern})|(?<{CanonicalGroup}>{CanonicalPattern}))(?<query>\?[^#]*)?(?<hash>#.*)?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        //public static readonly Regex Pattern = new Regex(@"^eml:(\/\/|\/\/\/|\/\/(([_\w\-]+)?\/)?((witsml|resqml|prodml|eml)([0-9]+)(\+(xml|json))?)(\/((obj_|cs_|part_)?(\w+))(\(([^\s\)]+)\))?)*?(\?[^#]*)?(#.*)?)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private const string FormatParameterName = "$format";
+        public static class Definition
+        {
+            public static readonly string FormatParameter =                   "$format";
+
+            public static readonly string FamilyGroup =                       "family";
+            public static readonly string ShortVersionGroup =                 "shortVersion";
+            public static readonly string ObjectTypeGroup =                   "objectType";
+            public static readonly string ObjectIdGroup =                     "objectId";
+            public static readonly string ObjectVersionGroup =                "objectVersion";
+            public static readonly string ObjectGroup =                       "object";
+            public static readonly string QueryGroup =                        "query";
+            public static readonly string HashGroup =                         "hash";
+            public static readonly string DataspaceGroup =                    "dataspace";
+            public static readonly string ObjectUriGroup =                    "objectUri";
+            public static readonly string PrefixUriGroup =                    "prefixUri";
+            public static readonly string CanonicalUriGroup =                 "canonicalUri";
+            public static readonly string QueryUriGroup =                     "queryUri";
+            public static readonly string ObjectHierarchyUriGroup =           "objectHierarchyUri";
+            public static readonly string TemplateUriGroup =                  "templateUri";
+            public static readonly string AlternateUriGroup =                 "alternateUri";
+            public static readonly string Etp11UriGroup =                     "etp11Uri";
+            public static readonly string Etp12UriGroup =                     "etp12Uri";
+
+            // URI Components
+
+            private static readonly string FamilyAndShortVersion =            $@"(?:(?<{FamilyGroup}>witsml|resqml|prodml|eml)(?<{ShortVersionGroup}>\d\d))";
+
+            private static readonly string ObjectType =                       $@"(?:(?:obj_|cs_|part_)?(?<{ObjectTypeGroup}>\w+))";
+            private static readonly string ObjectId =                         $@"(?:\((?<{ObjectIdGroup}>[^ ),]+)\))";
+            private static readonly string ObjectIdAndVersion =               $@"(?:\((?<{ObjectIdGroup}>[^ ),]+)(?:,(?<{ObjectVersionGroup}>[^)]*))?\))";
+
+            private static readonly string Query =                            $@"(?:(?<{QueryGroup}>\?[^#]*))";
+            private static readonly string Hash =                             $@"(?:(?<{HashGroup}>#.*))";
+            private static readonly string Suffix =                           $@"(?:(?:{Query})?(?:{Hash})?)";
+
+            private static readonly string Etp11Root =                        $@"(?:eml:/)";
+            private static readonly string Etp12Root =                        $@"(?:eml:|eml://)";
+
+            private static readonly string Etp11Dataspace =                   $@"(?:(?!witsml|resqml|prodml|eml)(?<{DataspaceGroup}>[^/]+(?:/(?!witsml|resqml|prodml|eml)[^/]+)*))";
+            private static readonly string Etp12Dataspace =                   $@"(?:dataspace\((?<{DataspaceGroup}>[^)]+)\))";
+
+            private static readonly string Etp11Object =                      $@"(?<{ObjectGroup}>{ObjectType}{ObjectId})";
+            private static readonly string Etp12Object =                      $@"(?<{ObjectGroup}>{FamilyAndShortVersion}\.{ObjectType}{ObjectIdAndVersion})";
+
+            private static readonly string Etp11Prefix =                      $@"(?:{Etp11Root}(?:/{Etp11Dataspace})?/{FamilyAndShortVersion})";
+            private static readonly string Etp12Prefix =                      $@"(?:{Etp12Root}(?:/{Etp12Dataspace})?)";
+
+            private static readonly string Etp11PrefixWithObject =            $@"(?:{Etp11Prefix}/{Etp11Object})";
+            private static readonly string Etp12PrefixWithObject =            $@"(?:{Etp12Prefix}/{Etp12Object})";
+
+            private static readonly string Etp11Folder =                      $@"(?<{ObjectGroup}>{ObjectType})";
+            private static readonly string Etp12Folder =                      $@"(?<{ObjectGroup}>{FamilyAndShortVersion}\.{ObjectType})";
+
+            private static readonly string Etp11Query =                       $@"(?:(?:{Etp11Prefix}/{Etp11Folder}|{Etp11PrefixWithObject}/{Etp11Folder}){Query}?)";
+            private static readonly string Etp12Query =                       $@"(?:(?:{Etp12Prefix}/{Etp12Folder}|{Etp12PrefixWithObject}/{Etp12Folder}){Query}?)";
+
+            private static readonly string Etp11ObjectHierarchy =             $@"(?:{Etp11PrefixWithObject}(?:/{Etp11Object})+)";
+            private static readonly string Etp12ObjectHierarchy =             $@"(?:{Etp12PrefixWithObject}(?:/{Etp12Object})+)";
+
+            private static readonly string Etp11Template =                    $@"(?:{Etp11Folder}(?:/{Etp11Folder})+)";
+            private static readonly string Etp12Template =                    $@"(?:{Etp12Folder}(?:/{Etp12Folder})+)";
+
+            private static readonly string Etp11ObjectWithTemplate =          $@"(?:{Etp11PrefixWithObject}/{Etp11Template})";
+            private static readonly string Etp12ObjectWithTemplate =          $@"(?:{Etp12PrefixWithObject}/{Etp12Template})";
+
+            private static readonly string Etp11ObjectHierarchyWithTemplate = $@"(?:{Etp11ObjectHierarchy}(?:/{Etp11Folder})+)";
+            private static readonly string Etp12ObjectHierarchyWithTemplate = $@"(?:{Etp12ObjectHierarchy}(?:/{Etp12Folder})+)";
+
+            private static readonly string Etp11TemplateOnly =                $@"(?:{Etp11Prefix}/{Etp11Template})";
+            private static readonly string Etp12TemplateOnly =                $@"(?:{Etp12Prefix}/{Etp12Template})";
+
+            private static readonly string Etp11ArbitraryTemplate =           $@"(?:{Etp11Prefix}(?:/(?:{Etp11Folder}|{Etp11Object}))+)";
+            private static readonly string Etp12ArbitraryTemplate =           $@"(?:{Etp12Prefix}(?:/(?:{Etp12Folder}|{Etp12Object}))+)";
+
+            // Root URIs
+
+            private static readonly string Etp11RootUri =                     $@"(?:^{Etp11Root}/$)";
+            private static readonly string Etp12RootUri =                     $@"(?:^{Etp12Root}/$)";
+
+            // Canonical URIs
+
+            private static readonly string Etp11CanonicalPrefixUri =          $@"(?<{PrefixUriGroup}>^{Etp11Root}(?:/|(?:/{Etp11Dataspace}|/{FamilyAndShortVersion}|/{Etp11Dataspace}/{FamilyAndShortVersion})/?)$)";
+            private static readonly string Etp12CanonicalPrefixUri =          $@"(?<{PrefixUriGroup}>^{Etp12Root}(?:/|/{Etp12Dataspace}/?)$)";
+
+            private static readonly string Etp11CanonicalObjectUri =          $@"(?<{ObjectUriGroup}>^{Etp11PrefixWithObject}$)";
+            private static readonly string Etp12CanonicalObjectUri =          $@"(?<{ObjectUriGroup}>^{Etp12PrefixWithObject}$)";
+
+            private static readonly string Etp11CanonicalUri =                $@"(?<{CanonicalUriGroup}>{Etp11CanonicalPrefixUri}|{Etp11CanonicalObjectUri})";
+            private static readonly string Etp12CanonicalUri =                $@"(?<{CanonicalUriGroup}>{Etp12CanonicalPrefixUri}|{Etp12CanonicalObjectUri})";
+
+            // Query URIs
+
+            private static readonly string Etp11QueryUri =                    $@"(?<{QueryUriGroup}>^{Etp11Query}$)";
+            private static readonly string Etp12QueryUri =                    $@"(?<{QueryUriGroup}>^{Etp12Query}$)";
+
+            // Alternate URIs
+
+            private static readonly string Etp11QueryWithSuffixUri =          $@"(?:^{Etp11Query}{Hash}$)";
+            private static readonly string Etp12QueryWithSuffixUri =          $@"(?:^{Etp12Query}{Hash}$)";
+
+            private static readonly string Etp11ObjectWithSuffixUri =         $@"(?<{ObjectUriGroup}>^(?:{Etp11PrefixWithObject}{Query}{Hash}?|{Etp11PrefixWithObject}{Hash})$)";
+            private static readonly string Etp12ObjectWithSuffixUri =         $@"(?<{ObjectUriGroup}>^(?:{Etp12PrefixWithObject}{Query}{Hash}?|{Etp12PrefixWithObject}{Hash})$)";
+
+            private static readonly string Etp11ObjectHierarchyWithSuffixUri= $@"(?<{ObjectHierarchyUriGroup}>^{Etp11ObjectHierarchy}{Suffix}?$)";
+            private static readonly string Etp12ObjectHierarchyWithSuffixUri= $@"(?<{ObjectHierarchyUriGroup}>^{Etp12ObjectHierarchy}{Suffix}{Suffix}?$)";
+
+            private static readonly string Etp11PrefixWithTemplate =          $@"(?:(?<{ObjectHierarchyUriGroup}>{Etp11ObjectHierarchyWithTemplate})|{Etp11ObjectWithTemplate}|{Etp11TemplateOnly}|{Etp11ArbitraryTemplate})";
+            private static readonly string Etp12PrefixWithTemplate =          $@"(?:(?<{ObjectHierarchyUriGroup}>{Etp12ObjectHierarchyWithTemplate})|{Etp12ObjectWithTemplate}|{Etp12TemplateOnly}|{Etp12ArbitraryTemplate})";
+
+            private static readonly string Etp11TemplateWithSuffixUri =       $@"(?<{TemplateUriGroup}>^{Etp11PrefixWithTemplate}{Suffix}$)";
+            private static readonly string Etp12TemplateWithSuffixUri =       $@"(?<{TemplateUriGroup}>^{Etp12PrefixWithTemplate}{Suffix}$)";
+
+            private static readonly string Etp11AlternateUri =                $@"(?<{AlternateUriGroup}>^(?:{Etp11QueryWithSuffixUri}|{Etp11ObjectWithSuffixUri}|{Etp11ObjectHierarchyWithSuffixUri}|{Etp11TemplateWithSuffixUri})$)";
+            private static readonly string Etp12AlternateUri =                $@"(?<{AlternateUriGroup}>^(?:{Etp12QueryWithSuffixUri}|{Etp12ObjectWithSuffixUri}|{Etp12ObjectHierarchyWithSuffixUri}|{Etp12TemplateWithSuffixUri})$)";
+
+            // Complete Patterns
+
+            private static readonly string EtpRootUri =                       $@"(?:{Etp11RootUri}|{Etp12RootUri})";
+
+            private static readonly string Etp11Uri =                         $@"(?<{Etp11UriGroup}>{Etp11CanonicalUri}|{Etp11QueryUri}|{Etp11AlternateUri})";
+            private static readonly string Etp12Uri =                         $@"(?<{Etp12UriGroup}>{Etp12CanonicalUri}|{Etp12QueryUri}|{Etp12AlternateUri})";
+
+            private static readonly string EtpUri =                           $@"(?:{Etp11Uri}|{Etp12Uri})";
+
+            // Objects and Folders
+
+            private static readonly string Etp11ObjectOrFolder =              $@"(?:^(?:{Etp11Object}|{Etp11Folder})$)";
+            private static readonly string Etp12ObjectOrFolder =              $@"(?:^(?:{Etp12Object}|{Etp12Folder})$)";
+
+            private static readonly string EtpObjectOrFolder =                $@"(?:{Etp11ObjectOrFolder}|{Etp12ObjectOrFolder})";
+
+            // Regexes
+
+            public static readonly Regex EtpRootUriRegex = new Regex(EtpRootUri, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+            public static readonly Regex EtpUriRegex = new Regex(EtpUri, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+            public static readonly Regex EtpObjectOrFolderRegex = new Regex(EtpObjectOrFolder, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        }
+
+        private static readonly HashSet<string> EmlCommonObjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Activity",
+            "ActivityTemplate",
+            "DataAssuranceRecord",
+            "EpcExternalPartReference",
+            "GeodeticCrs",
+            "GraphicalInformationSet",
+            "ProjectedCrs",
+            "PropertyKind",
+            "PropertyKindDictionary",
+            "TimeSeries",
+            "VerticalCrs"
+        };
+
         private readonly EtpUri?[] _parent;
-        private readonly Match _match;
+        private readonly string[] _objectSegments;
 
         /// <summary>
-        /// The root URI supported by the Discovery protocol.
+        /// The root ETP 1.1 URI supported by the Discovery protocol.
         /// </summary>
-        public static readonly EtpUri RootUri = new EtpUri("eml://");
+        public static readonly EtpUri RootUri11 = new EtpUri("eml://");
+
+        /// <summary>
+        /// The root ETP 1.2 URI supported by the Discovery protocol.
+        /// </summary>
+        public static readonly EtpUri RootUri12 = new EtpUri("eml:///");
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpUri"/> struct.
         /// </summary>
         /// <param name="uri">The URI string.</param>
         public EtpUri(string uri)
+            : this()
         {
-            _match = Pattern.Match(uri);
+            var uriMatch = Definition.EtpUriRegex.Match(uri);
             _parent = new EtpUri?[] { null };
 
             Uri = uri;
-            var isRoot = IsRoot(uri);
-            IsValid = _match.Success || isRoot;
+            
+            IsValid = uriMatch.Success;
 
-            var hierarchicalGroup = GetGroup(_match, HierarchicalGroup);
-            var canonicalGroup = GetGroup(_match, CanonicalGroup);
-
-            IsHierarchical = hierarchicalGroup.Success;
-            IsCanonical = canonicalGroup.Success;
-
-            DataSpace = GetValue(_match, "dataspace");
-            Family = GetValue(_match, "family");
-            Version = FormatVersion(GetValue(_match, "version"), Family);
-            ObjectType = null;
-            ObjectId = null;
-            Query = GetValue(_match, "query");
-            Hash = GetValue(_match, "hash");
-
-            var format = GetQueryStringFormat(Query, GetValue(_match, "format"));
-            Format = string.IsNullOrWhiteSpace(format) ? EtpContentType.Xml : format;
-            ContentType = new EtpContentType(Family, Version, null, Format);
-            DataObjectType = new EtpDataObjectType(Family, Version);
-
-            if (!HasRepeatValues(_match))
-            {
+            if (!IsValid)
                 return;
+
+            if (WasGroupMatched(uriMatch, Definition.Etp11UriGroup))
+                EtpVersion = EtpVersion.v11;
+            else
+                EtpVersion = EtpVersion.v12;
+
+            IsRoot = IsRootUri(uri);
+            IsPrefix = !WasGroupMatched(uriMatch, Definition.ObjectGroup);
+            IsCanonical = WasGroupMatched(uriMatch, Definition.CanonicalUriGroup);
+            IsCanonicalQuery = WasGroupMatched(uriMatch, Definition.QueryUriGroup);
+            IsAlternate = WasGroupMatched(uriMatch, Definition.AlternateUriGroup);
+            IsHierarchical = WasGroupMatched(uriMatch, Definition.ObjectHierarchyUriGroup);
+            IsTemplate = WasGroupMatched(uriMatch, Definition.TemplateUriGroup) || IsCanonicalQuery;
+
+            Query = GetFirstMatch(uriMatch, Definition.QueryGroup) ?? string.Empty;
+            Hash = GetFirstMatch(uriMatch, Definition.HashGroup) ?? string.Empty;
+
+            Dataspace = GetFirstMatch(uriMatch, Definition.DataspaceGroup) ?? string.Empty;
+
+            var family = GetFirstMatch(uriMatch, Definition.FamilyGroup);
+            NamespaceFamily = EtpDataObjectType.TryGetFamily(family);
+
+            var shortVersion = GetFirstMatch(uriMatch, Definition.ShortVersionGroup);
+            NamespaceVersion = EtpDataObjectType.TryGetFamilyVersionFromShortVersion(family, shortVersion);
+
+            _objectSegments = GetAllMatches(uriMatch, Definition.ObjectGroup);
+            if (_objectSegments != null)
+            {
+                var segment = CreateSegment(_objectSegments[_objectSegments.Length - 1], NamespaceFamily, NamespaceVersion);
+
+                Family = segment.Family;
+                Version = segment.Version;
+
+                ObjectType = segment.ObjectType;
+                ObjectId = segment.ObjectId;
+                ObjectVersion = segment.ObjectVersion;
+            }
+            else
+            {
+                Family = NamespaceFamily;
+                Version = NamespaceVersion;
             }
 
-            var last = GetObjectIds().Last();
-            ObjectType = last.ObjectType;
-            ObjectId = last.ObjectId;
-            ContentType = new EtpContentType(Family, Version, ObjectType, Format);
             DataObjectType = new EtpDataObjectType(Family, Version, ObjectType);
+
+            Format = GetQueryStringFormat(Query, EtpContentType.Xml);
+
+            ContentType = new EtpContentType(Family, Version, ObjectType, Format);
         }
+
+        /// <summary>
+        /// The ETP version for this URI.
+        /// </summary>
+        public EtpVersion EtpVersion { get; }
+
+        /// <summary>
+        /// Wheher or not this is an ETP 1.1 URI.
+        /// </summary>
+        public bool IsEtp11 => EtpVersion == EtpVersion.v11;
+
+        /// <summary>
+        /// Wheher or not this is an ETP 1.2 URI.
+        /// </summary>
+        public bool IsEtp12 => EtpVersion == EtpVersion.v12;
 
         /// <summary>
         /// Gets the original URI string.
@@ -96,19 +286,44 @@ namespace Energistics.Etp.Common.Datatypes
         public string Uri { get; }
 
         /// <summary>
+        /// Gets the URI without any query or hash suffix.
+        /// </summary>
+        public string UriWithoutSuffix
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Uri) || (string.IsNullOrEmpty(Query) && string.IsNullOrEmpty(Hash)))
+                    return Uri;
+
+                var suffixLength = (Query?.Length ?? 0) + (Hash?.Length ?? 0);
+                return Uri.Substring(0, Uri.Length - suffixLength);
+            }
+        }
+
+        /// <summary>
         /// Gets the data space.
         /// </summary>
         /// <value>The data space.</value>
-        public string DataSpace { get; }
+        public string Dataspace { get; }
 
         /// <summary>
-        /// Gets the ML family name.
+        /// Gets the ML family of the ETP 1.1 URI namespace
+        /// </summary>
+        public string NamespaceFamily { get; }
+
+        /// <summary>
+        /// Gets the ML family version of the ETP 1.1 URI namespace
+        /// </summary>
+        public string NamespaceVersion { get; }
+
+        /// <summary>
+        /// Gets the ML family name for the object specified by the URI.
         /// </summary>
         /// <value>The ML family.</value>
         public string Family { get; }
 
         /// <summary>
-        /// Gets the version.
+        /// Gets the family version for the object specified by the URI.
         /// </summary>
         /// <value>The version.</value>
         public string Version { get; }
@@ -130,6 +345,12 @@ namespace Energistics.Etp.Common.Datatypes
         /// </summary>
         /// <value>The object identifier.</value>
         public string ObjectId { get; }
+
+        /// <summary>
+        /// Gets the object version.
+        /// </summary>
+        /// <value>The object version.</value>
+        public string ObjectVersion { get; }
 
         /// <summary>
         /// Gets the query string.
@@ -161,28 +382,58 @@ namespace Energistics.Etp.Common.Datatypes
         public bool IsValid { get; }
 
         /// <summary>
-        /// Returns true if a valid hierarchical URI was specified.
+        /// Gets a value indicating whether this instance is the root URI.
+        /// For ETP 1.1: eml://
+        /// For ETP 1.2: eml:/ or eml:///
         /// </summary>
-        /// <value><c>true</c> if this instance is valid; otherwise, <c>false</c>.</value>
-        public bool IsHierarchical { get; }
+        /// <value><c>true</c> if this instance is the root URI; otherwise, <c>false</c>.</value>
+        public bool IsRoot { get; }
 
         /// <summary>
-        /// Returns true if a valid canonical URI was specified.
+        /// Gets a value indicating whether this instance is a prefix URI.
+        /// A prefix URI does not contain a data object or folder but may contain a supported version and/or dataspace.
         /// </summary>
-        /// <value><c>true</c> if this instance is valid; otherwise, <c>false</c>.</value>
+        /// <value><c>true</c> if this instance is a prefix URI; otherwise, <c>false</c>.</value>
+        public bool IsPrefix { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is a canonical URI.
+        /// A canonical URI contains only a data object.
+        /// </summary>
+        /// <value><c>true</c> if this instance is a canonical URI; otherwise, <c>false</c>.</value>
         public bool IsCanonical { get; }
 
         /// <summary>
-        /// Gets a value indicating whether this instance is a base URI.
+        /// Gets a value indicating whether this instance is a canonical query URI.
+        /// A canonical query URI contains one folder and may contain one data object and/or a query string.
         /// </summary>
-        /// <value><c>true</c> if this instance is a base URI; otherwise, <c>false</c>.</value>
-        public bool IsBaseUri => string.IsNullOrWhiteSpace(ObjectType) && string.IsNullOrWhiteSpace(ObjectId);
+        /// <value><c>true</c> if this instance is a canonical query URI; otherwise, <c>false</c>.</value>
+        public bool IsCanonicalQuery { get; }
 
         /// <summary>
-        /// Gets a value indicating whether this instance is a the root URI.
+        /// Gets a value indicating whether this instance is an alternate URI.
+        /// There are several forms of supported alternate URIs:
+        /// Canonical URIs with query strings and/or hashes
+        /// Query URIs with hashes
+        /// Hierarchical object URIs, optionally with query strings and/or hashes
+        /// Template URIs (URIs with multiple folder segments), optionally with query strings and/or hashes
         /// </summary>
-        /// <value><c>true</c> if this instance is the root URI; otherwise, <c>false</c>.</value>
-        public bool IsRootUri => string.Equals(RootUri, Uri, StringComparison.InvariantCultureIgnoreCase);
+        /// <value><c>true</c> if this instance is an alternate URI; otherwise, <c>false</c>.</value>
+        public bool IsAlternate { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is an alternate URI.
+        /// Hierarchical object URIs have more than one path segment with an object defined.
+        /// </summary>
+        /// <value><c>true</c> if this instance is a hierarcical URI; otherwise, <c>false</c>.</value>
+        public bool IsHierarchical { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is a template URI.
+        /// Template object URIs have more than one path segment that is a folder.
+        /// </summary>
+        /// <value><c>true</c> if this instance is a template URI; otherwise, <c>false</c>.</value>
+        public bool IsTemplate { get; }
 
         /// <summary>
         /// Gets the parent URI.
@@ -192,25 +443,31 @@ namespace Energistics.Etp.Common.Datatypes
         {
             get
             {
-                if (!IsValid || IsBaseUri)
-                    return this;
-
-                if (_parent[0].HasValue)
-                    return _parent[0].Value;
-
-                var uri = Uri;
-
-                if (!string.IsNullOrWhiteSpace(Query))
-                    uri = uri.Substring(0, uri.IndexOf('?'));
-
-                else if (!string.IsNullOrWhiteSpace(Hash))
-                    uri = uri.Substring(0, uri.IndexOf('#'));
-
-                var index = uri.LastIndexOf('/');
-                _parent[0] = new EtpUri(uri.Substring(0, index));
+                if (_parent[0] == null)
+                    _parent[0] = CreateParent();
 
                 return _parent[0].Value;
             }
+        }
+
+        /// <summary>
+        /// Creates the parent URI.
+        /// </summary>
+        /// <returns>The parent URI.</returns>
+        private EtpUri? CreateParent()
+        {
+            if (!IsValid || IsPrefix)
+                return this;
+
+            var uri = UriWithoutSuffix;
+
+            var rootLength = IsEtp11 ? RootUri11.Uri.Length : RootUri12.Uri.Length;
+
+            var index = uri.LastIndexOf('/', uri.Length - 1, uri.Length - rootLength);
+            if (index < 0)
+                return IsEtp11 ? RootUri11 : RootUri12;
+            else
+                return new EtpUri(uri.Substring(0, index));
         }
 
         /// <summary>
@@ -233,67 +490,13 @@ namespace Energistics.Etp.Common.Datatypes
         /// <returns>A collection of <see cref="Segment"/> items.</returns>
         public IEnumerable<Segment> GetObjectIds()
         {
-            return IsHierarchical
-                ? GetHierarchicalObjectIds()
-                : GetCanonicalObjectIds();
-        }
+            if (_objectSegments == null)
+                yield break;
 
-        /// <summary>
-        /// Gets a collection of <see cref="Segment"/> items.
-        /// </summary>
-        /// <returns>A collection of <see cref="Segment"/> items.</returns>
-        private IEnumerable<Segment> GetHierarchicalObjectIds()
-        {
-            if (HasRepeatValues(_match))
+            for (int i = 0; i < _objectSegments.Length; i++)
             {
-                var objectTypeGroup = GetGroup(_match, "objectType");
-                var objectIdGroup = GetGroup(_match, "objectId");
-
-                for (var groupIndex = 0; groupIndex < objectTypeGroup.Captures.Count; ++groupIndex)
-                {
-                    var objectType = objectTypeGroup.Captures[groupIndex].Value;
-                    var objectId = WebUtility.UrlDecode(objectIdGroup.Captures[groupIndex].Value);
-
-                    yield return new Segment(
-                        Family,
-                        Version,
-                        EtpContentType.FormatObjectType(objectType, Version),
-                        objectId,
-                        string.Empty);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets a collection of <see cref="Segment"/> items.
-        /// </summary>
-        /// <returns>A collection of <see cref="Segment"/> items.</returns>
-        private IEnumerable<Segment> GetCanonicalObjectIds()
-        {
-            if (HasRepeatValues(_match))
-            {
-                var domainGroup = GetGroup(_match, "domain");
-                var domainVersionGroup = GetGroup(_match, "domainVersion");
-
-                var objectTypeGroup = GetGroup(_match, "objectType");
-                var objectIdGroup = GetGroup(_match, "objectUuid");
-                var objectVersionGroup = GetGroup(_match, "objectVersion");
-
-                for (var groupIndex = 0; groupIndex < objectTypeGroup.Captures.Count; ++groupIndex)
-                {
-                    var domain = domainGroup.Captures[groupIndex].Value;
-                    var domainVersion = domainVersionGroup.Captures[groupIndex].Value;
-                    var objectType = objectTypeGroup.Captures[groupIndex].Value;
-                    var objectId = WebUtility.UrlDecode(objectIdGroup.Captures[groupIndex].Value);
-                    var objectVersion = objectVersionGroup.Captures[groupIndex].Value;
-
-                    yield return new Segment(
-                        domain,
-                        domainVersion,
-                        EtpContentType.FormatObjectType(objectType, domainVersion),
-                        objectId,
-                        objectVersion);
-                }
+                var last = i == _objectSegments.Length - 1;
+                yield return CreateSegment(_objectSegments[i], last ? Family : NamespaceFamily, last ? Version : NamespaceVersion);
             }
         }
 
@@ -310,20 +513,130 @@ namespace Energistics.Etp.Common.Datatypes
         /// <summary>
         /// Appends the specified object type and optional object identifier to the <see cref="EtpUri" />.
         /// </summary>
+        /// <param name="family">The object family.</param>
+        /// <param name="version">The object version.</param>
         /// <param name="objectType">The object type.</param>
         /// <param name="objectId">The object identifier.</param>
+        /// <param name="objectVersion">The object version.</param>
         /// <param name="encode">if set to <c>true</c> encode the object identifier value.</param>
         /// <returns>A new <see cref="EtpUri" /> instance.</returns>
-        public EtpUri Append(string objectType, string objectId = null, bool encode = false)
+        public EtpUri Append(string family, string version, string objectType, string objectId = null, string objectVersion = null, bool encode = false)
         {
-            objectType = EtpContentType.FormatObjectType(objectType, Version);
+            objectType = EtpContentType.FormatObjectType(objectType, version);
 
-            if (encode)
+            if (encode && objectId != null)
                 objectId = WebUtility.UrlEncode(objectId);
 
-            return string.IsNullOrWhiteSpace(objectId) ?
-                new EtpUri(Uri + "/" + objectType) :
-                new EtpUri(Uri + $"/{ objectType }({ objectId })");
+            var uri = UriWithoutSuffix ?? string.Empty;
+            string slash = null;
+            if (uri.Length == 0 || uri[uri.Length - 1] != '/')
+                slash = "/";
+
+            if (IsEtp11)
+            {
+                if (objectId != null)
+                    objectId = $"({objectId})";
+
+                return new EtpUri($"{uri}{slash}{objectType}{objectId}{Query}{Hash}");
+            }
+            else
+            {
+                family = family ?? Family;
+                version = version ?? Version;
+                var shortVersion = EtpDataObjectType.TryGetFamilyShortVersionFromVersion(family, version);
+
+                string objectIdAndVersion = null;
+                if (objectId != null && objectVersion != null)
+                    objectIdAndVersion = $"({objectId},{objectVersion})";
+                else if (objectId != null)
+                    objectIdAndVersion = $"({objectId})";
+
+                return new EtpUri($"{uri}{slash}{family}{shortVersion}.{objectType}{objectIdAndVersion}{Query}{Hash}");
+            }
+        }
+
+        /// <summary>
+        /// Converts the URI to an ETP 1.1 URI.
+        /// </summary>
+        /// <returns>The converted URI.</returns>
+        public EtpUri AsEtp11()
+        {
+            if (IsEtp11 || !IsValid)
+                return this;
+
+            var sb = new StringBuilder();
+            var appendSlash = false;
+            sb.Append($"{RootUri11.Uri}");
+            if (!string.IsNullOrEmpty(Dataspace))
+            {
+                sb.Append(Dataspace);
+                appendSlash = true;
+            }
+            if (!string.IsNullOrEmpty(NamespaceFamily) && !string.IsNullOrEmpty(NamespaceVersion))
+            {
+                if (appendSlash)
+                    sb.Append("/");
+
+                var shortVersion = EtpDataObjectType.TryGetFamilyShortVersionFromVersion(NamespaceFamily, NamespaceVersion);
+                sb.Append($"{NamespaceFamily}{shortVersion}");
+                appendSlash = true;
+            }
+
+            foreach (var segment in GetObjectIds())
+            {
+                if (appendSlash)
+                    sb.Append("/");
+                sb.Append($"{segment.ObjectType}");
+
+                if (segment.ObjectId != null)
+                    sb.Append($"({segment.ObjectId})");
+            }
+
+            sb.Append(Query);
+            sb.Append(Hash);
+
+            return new EtpUri(sb.ToString());
+        }
+
+        /// <summary>
+        /// Converts the URI to an ETP 1.2 URI.
+        /// </summary>
+        /// <returns>The converted URI.</returns>
+        public EtpUri AsEtp12()
+        {
+            if (IsEtp12 || !IsValid)
+                return this;
+
+            var sb = new StringBuilder();
+            sb.Append(RootUri12.Uri);
+
+            var appendSlash = false;
+            if (!string.IsNullOrEmpty(Dataspace))
+            {
+                sb.Append($"dataspace({Dataspace})");
+                appendSlash = true;
+            }
+            foreach (var segment in GetObjectIds())
+            {
+                if (appendSlash)
+                    sb.Append("/");
+                var shortVersion = EtpDataObjectType.TryGetFamilyShortVersionFromVersion(segment.Family, segment.Version);
+                sb.Append($"{segment.Family}{shortVersion}.{segment.ObjectType}");
+                if (!string.IsNullOrEmpty(segment.ObjectId))
+                {
+                    if (!string.IsNullOrEmpty(segment.ObjectVersion))
+                        sb.Append($"({segment.ObjectId},{segment.ObjectVersion})");
+                    else
+                        sb.Append($"({segment.ObjectId})");
+                }
+
+                appendSlash = true;
+            }
+
+            sb.Append(Query);
+            sb.Append(Hash);
+
+            return new EtpUri(sb.ToString());
         }
 
         /// <summary>
@@ -370,7 +683,7 @@ namespace Energistics.Etp.Common.Datatypes
         /// </returns>
         public override int GetHashCode()
         {
-            return Uri.ToLower().GetHashCode();
+            return Uri.ToLowerInvariant().GetHashCode();
         }
 
         /// <summary>
@@ -388,90 +701,78 @@ namespace Energistics.Etp.Common.Datatypes
         /// </summary>
         /// <param name="uri">The URI string.</param>
         /// <returns><c>true</c> if the URI is a root URI; otherwise, <c>false</c>.</returns>
-        public static bool IsRoot(string uri)
+        public static bool IsRootUri(string uri)
         {
-            return string.Equals(RootUri, uri, StringComparison.InvariantCultureIgnoreCase);
+            return Definition.EtpRootUriRegex.IsMatch(uri);
         }
 
         /// <summary>
-        /// Gets the value contained within the specified match at the specified index.
+        /// Gets the first matching value in the URI for the specified capture group.
         /// </summary>
-        /// <param name="match">The match.</param>
-        /// <param name="index">The index.</param>
-        /// <returns>The matched value found at the specified index.</returns>
-        private static string GetValue(Match match, int index)
+        /// <param name="match">The regex match results.</param>
+        /// <param name="groupName">The capture group name.</param>
+        /// <returns>The first matching value if successfully matched; <c>null</c> if not matched.</returns>
+        private static string GetFirstMatch(Match match, string groupName)
         {
-            return match.Success && match.Groups.Count > index
-                ? match.Groups[index].Value
-                : null;
-        }
-
-        /// <summary>
-        /// Gets the value contained within the specified match at the specified index.
-        /// </summary>
-        /// <param name="match">The match.</param>
-        /// <param name="groupName">The group name.</param>
-        /// <returns>The matched value found at the specified index.</returns>
-        private static string GetValue(Match match, string groupName)
-        {
-            return match.Success
-                ? GetGroup(match, groupName).Value
-                : null;
-        }
-
-        /// <summary>
-        /// Gets the group at the specified index.
-        /// </summary>
-        /// <param name="match">The match.</param>
-        /// <param name="groupIndex">The group index.</param>
-        /// <returns>The matched value found at the specified index.</returns>
-        private static Group GetGroup(Match match, int groupIndex)
-        {
-            return match.Groups[groupIndex];
-        }
-
-        /// <summary>
-        /// Gets the group with the specified name.
-        /// </summary>
-        /// <param name="match">The match.</param>
-        /// <param name="groupName">The group name.</param>
-        /// <returns>The matched value found at the specified index.</returns>
-        private static Group GetGroup(Match match, string groupName)
-        {
-            return match.Groups[groupName];
-        }
-
-        /// <summary>
-        /// Determines whether the specified match contains repeating values.
-        /// </summary>
-        /// <param name="match">The match.</param>
-        /// <returns><c>true</c> if any repeating groups were matched; otherwise, <c>false</c>.</returns>
-        private static bool HasRepeatValues(Match match)
-        {
-            return match.Success && match.Groups["objectType"].Captures.Count > 0;
-        }
-
-        /// <summary>
-        /// Formats the version number.
-        /// </summary>
-        /// <param name="version">The version.</param>
-        /// <param name="family">The ML family.</param>
-        /// <returns>A dot delimited version number.</returns>
-        private static string FormatVersion(string version, string family)
-        {
-            if (string.IsNullOrWhiteSpace(version))
+            if (!match.Success)
+                return null;
+            var group = match.Groups[groupName];
+            if (!group.Success)
                 return null;
 
-            // Force WITSML versions 13* and 14* to be formatted as 1.3.1.1 and 1.4.1.1, respectively
-            if ("WITSML".Equals(family, StringComparison.InvariantCultureIgnoreCase))
-            {
-                if (version == "13" || version == "131")
-                    version = "1311";
-                else if (version == "14" || version == "141")
-                    version = "1411";
-            }
+            return group.Captures[0].Value;
+        }
 
-            return string.Join(".", version.Trim().Select(x => x));
+        /// <summary>
+        /// Gets the last matching value in the URI for the specified capture group.
+        /// </summary>
+        /// <param name="match">The regex match results.</param>
+        /// <param name="groupName">The capture group name.</param>
+        /// <returns>The last matching value if successfully matched; <c>null</c> if not matched.</returns>
+        private static string GetLastMatch(Match match, string groupName)
+        {
+            if (!match.Success)
+                return null;
+            var group = match.Groups[groupName];
+            if (!group.Success)
+                return null;
+
+            return group.Captures[group.Captures.Count - 1].Value;
+        }
+
+        /// <summary>
+        /// Gets an array of all matches in the URI for the specified capture group.
+        /// </summary>
+        /// <param name="match">The regex match results.</param>
+        /// <param name="groupName">The capture group name.</param>
+        /// <returns>The array of all matching value if successfully matched; <c>null</c> if not matched.</returns>
+        private static string[] GetAllMatches(Match match, string groupName)
+        {
+            if (!match.Success)
+                return null;
+            var group = match.Groups[groupName];
+            if (!group.Success)
+                return null;
+
+            var matches = new string[group.Captures.Count];
+            for (int i = 0; i < group.Captures.Count; i++)
+                matches[i] = group.Captures[i].Value;
+
+            return matches;
+        }
+
+        /// <summary>
+        /// Checks if the specified capture group was matched.
+        /// </summary>
+        /// <param name="match">The regex match results.</param>
+        /// <param name="groupName">The capture group name.</param>
+        /// <returns><c>true</c> if the group was matched; <c>false</c> otherwise.</returns>
+        private static bool WasGroupMatched(Match match, string groupName)
+        {
+            if (!match.Success)
+                return false;
+            var group = match.Groups[groupName];
+            return group.Success;
         }
 
         /// <summary>
@@ -488,7 +789,7 @@ namespace Energistics.Etp.Common.Datatypes
             try
             {
                 var values = HttpUtility.ParseQueryString(queryString);
-                var format = values[FormatParameterName]?.Trim();
+                var format = values[Definition.FormatParameter]?.Trim();
 
                 return string.IsNullOrWhiteSpace(format) ? defaultValue : format;
             }
@@ -496,6 +797,40 @@ namespace Energistics.Etp.Common.Datatypes
             {
                 return defaultValue;
             }
+        }
+
+        /// <summary>
+        /// Creates an ETP URI segment from the specified object string.
+        /// </summary>
+        /// <param name="object">The object string.</param>
+        /// <param name="defaultFamily">The default family if the object does not specify it.</param>
+        /// <param name="defaultVersion">The default family version if the object string does not specify it.</param>
+        /// <returns></returns>
+        private static Segment CreateSegment(string @object, string defaultFamily, string defaultVersion)
+        {
+            var match = Definition.EtpObjectOrFolderRegex.Match(@object);
+
+            var objectType = GetFirstMatch(match, Definition.ObjectTypeGroup);
+            var objectId = GetFirstMatch(match, Definition.ObjectIdGroup);
+            if (objectId != null)
+                objectId = WebUtility.UrlDecode(objectId);
+            var objectVersion = GetFirstMatch(match, Definition.ObjectVersionGroup);
+
+            if (objectType != null && EmlCommonObjects.Contains(objectType)) // Special case for ETP 1.1 hierarchical URIs with EML common objects
+            {
+                defaultFamily = "eml";
+                defaultVersion = "2.1";
+            }
+
+            var family = GetFirstMatch(match, Definition.FamilyGroup) ?? defaultFamily;
+            family = EtpDataObjectType.TryGetFamily(family);
+
+            var shortVersion = GetFirstMatch(match, Definition.ShortVersionGroup);
+            var version = EtpDataObjectType.TryGetFamilyVersionFromShortVersion(family, shortVersion) ?? defaultVersion;
+
+            objectType = EtpContentType.FormatObjectType(objectType, version);
+
+            return new Segment(family, version, objectType, objectId, objectVersion);
         }
 
         /// <summary>
@@ -507,15 +842,15 @@ namespace Energistics.Etp.Common.Datatypes
             /// <summary>
             /// Initializes a new instance of the <see cref="Segment"/> struct.
             /// </summary>
-            /// <param name="domain"> The domain/family.</param>
-            /// <param name="domainVersion">The domain/family version.</param>
+            /// <param name="family"> The domain/family.</param>
+            /// <param name="version">The domain/family version.</param>
             /// <param name="objectType">The object type.</param>
             /// <param name="objectId">The object identifier.</param>
             /// <param name="objectVersion">The object version.</param>
-            public Segment(string domain, string domainVersion, string objectType, string objectId, string objectVersion)
+            public Segment(string family, string version, string objectType, string objectId, string objectVersion)
             {
-                Domain = domain;
-                DomainVersion = domainVersion;
+                Family = family;
+                Version = version;
                 ObjectType = objectType;
                 ObjectId = objectId;
                 ObjectVersion = objectVersion;
@@ -525,13 +860,13 @@ namespace Energistics.Etp.Common.Datatypes
             /// Gets the ML domain name.
             /// </summary>
             /// <value>The ML family.</value>
-            public string Domain { get; }
+            public string Family { get; }
 
             /// <summary>
-            /// Gets the domain version.
+            /// Gets the family version.
             /// </summary>
             /// <value>The version.</value>
-            public string DomainVersion { get; }
+            public string Version { get; }
 
             /// <summary>
             /// Gets the type of the object.

@@ -66,11 +66,12 @@
   <ItemGroup>
     <Compile Include="Common\Datatypes\ByteArrayConverterTests.cs" />
     <Compile Include="Common\Datatypes\EtpDataObjectTypeTests.cs" />
+    <Compile Include="Common\Datatypes\EtpUri12Tests.cs" />
     <Compile Include="EtpMessagesTests.cs" />
     <Compile Include="Common\EtpAdapterBaseTests.cs" />
     <Compile Include="Common\EtpExtensionsTests.cs" />
     <Compile Include="v11\Datatypes\ChannelData\StreamingStartIndexConverterTests.cs" />
-    <Compile Include="Common\Datatypes\EtpUriTests.cs" />
+    <Compile Include="Common\Datatypes\EtpUri11Tests.cs" />
     <Compile Include="Common\Datatypes\EtpContentTypeTests.cs" />
     <Compile Include="v11\Datatypes\Object\GrowingObjectIndexConverterTests.cs" />
     <Compile Include="Common\Datatypes\ProtocolRoleAttributeTests.cs" />
