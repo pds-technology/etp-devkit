@@ -35,6 +35,7 @@ namespace Energistics.Etp.Common.Datatypes
         {
             public static readonly string FormatParameter =                   "$format";
 
+            public static readonly string PrefixGroup =                       "prefix";
             public static readonly string FamilyGroup =                       "family";
             public static readonly string ShortVersionGroup =                 "shortVersion";
             public static readonly string ObjectTypeGroup =                   "objectType";
@@ -50,6 +51,7 @@ namespace Energistics.Etp.Common.Datatypes
             public static readonly string QueryUriGroup =                     "queryUri";
             public static readonly string ObjectHierarchyUriGroup =           "objectHierarchyUri";
             public static readonly string TemplateUriGroup =                  "templateUri";
+            public static readonly string AlternatePrefixUriGroup =           "alternatePrefixUri";
             public static readonly string AlternateUriGroup =                 "alternateUri";
             public static readonly string Etp11UriGroup =                     "etp11Uri";
             public static readonly string Etp12UriGroup =                     "etp12Uri";
@@ -59,8 +61,8 @@ namespace Energistics.Etp.Common.Datatypes
             private static readonly string FamilyAndShortVersion =            $@"(?:(?<{FamilyGroup}>witsml|resqml|prodml|eml)(?<{ShortVersionGroup}>\d\d))";
 
             private static readonly string ObjectType =                       $@"(?:(?:obj_|cs_|part_)?(?<{ObjectTypeGroup}>\w+))";
-            private static readonly string ObjectId =                         $@"(?:\((?<{ObjectIdGroup}>[^ ),]+)\))";
-            private static readonly string ObjectIdAndVersion =               $@"(?:\((?<{ObjectIdGroup}>[^ ),]+)(?:,(?<{ObjectVersionGroup}>[^)]*))?\))";
+            private static readonly string ObjectId =                         $@"(?:\((?<{ObjectIdGroup}>[^ ?#),]+)\))";
+            private static readonly string ObjectIdAndVersion =               $@"(?:\((?<{ObjectIdGroup}>[^ ?#),]+)(?:,(?<{ObjectVersionGroup}>[^?#)]*))?\))";
 
             private static readonly string Query =                            $@"(?:(?<{QueryGroup}>\?[^#]*))";
             private static readonly string Hash =                             $@"(?:(?<{HashGroup}>#.*))";
@@ -69,14 +71,14 @@ namespace Energistics.Etp.Common.Datatypes
             private static readonly string Etp11Root =                        $@"(?:eml:/)";
             private static readonly string Etp12Root =                        $@"(?:eml:|eml://)";
 
-            private static readonly string Etp11Dataspace =                   $@"(?:(?!witsml|resqml|prodml|eml)(?<{DataspaceGroup}>[^/]+(?:/(?!witsml|resqml|prodml|eml)[^/]+)*))";
-            private static readonly string Etp12Dataspace =                   $@"(?:dataspace\((?<{DataspaceGroup}>[^)]+)\))";
+            private static readonly string Etp11Dataspace =                   $@"(?:(?!witsml|resqml|prodml|eml)(?<{DataspaceGroup}>[^?#)/]+(?:/(?!witsml|resqml|prodml|eml)[^?#)/]+)*))";
+            private static readonly string Etp12Dataspace =                   $@"(?:dataspace\((?<{DataspaceGroup}>[^?#)]+)\))";
 
             private static readonly string Etp11Object =                      $@"(?<{ObjectGroup}>{ObjectType}{ObjectId})";
             private static readonly string Etp12Object =                      $@"(?<{ObjectGroup}>{FamilyAndShortVersion}\.{ObjectType}{ObjectIdAndVersion})";
 
-            private static readonly string Etp11Prefix =                      $@"(?:{Etp11Root}(?:/{Etp11Dataspace})?/{FamilyAndShortVersion})";
-            private static readonly string Etp12Prefix =                      $@"(?:{Etp12Root}(?:/{Etp12Dataspace})?)";
+            private static readonly string Etp11Prefix =                      $@"(?<{PrefixGroup}>{Etp11Root}(?:/{Etp11Dataspace})?/{FamilyAndShortVersion})";
+            private static readonly string Etp12Prefix =                      $@"(?<{PrefixGroup}>{Etp12Root}(?:/{Etp12Dataspace})?)";
 
             private static readonly string Etp11PrefixWithObject =            $@"(?:{Etp11Prefix}/{Etp11Object})";
             private static readonly string Etp12PrefixWithObject =            $@"(?:{Etp12Prefix}/{Etp12Object})";
@@ -128,6 +130,9 @@ namespace Energistics.Etp.Common.Datatypes
 
             // Alternate URIs
 
+            private static readonly string Etp11AlternatePrefixUri =          $@"(?<{AlternatePrefixUriGroup}>^{Etp11Root}(?:/|(?:/{Etp11Dataspace}|/{FamilyAndShortVersion}|/{Etp11Dataspace}/{FamilyAndShortVersion})/?)(?:{Query}|{Hash}|{Query}{Hash})$)";
+            private static readonly string Etp12AlternatePrefixUri =          $@"(?<{AlternatePrefixUriGroup}>^{Etp12Root}(?:/|/{Etp12Dataspace}/?)(?:{Query}|{Hash}|{Query}{Hash})$)";
+
             private static readonly string Etp11QueryWithSuffixUri =          $@"(?:^{Etp11Query}{Hash}$)";
             private static readonly string Etp12QueryWithSuffixUri =          $@"(?:^{Etp12Query}{Hash}$)";
 
@@ -143,8 +148,8 @@ namespace Energistics.Etp.Common.Datatypes
             private static readonly string Etp11TemplateWithSuffixUri =       $@"(?<{TemplateUriGroup}>^{Etp11PrefixWithTemplate}{Suffix}$)";
             private static readonly string Etp12TemplateWithSuffixUri =       $@"(?<{TemplateUriGroup}>^{Etp12PrefixWithTemplate}{Suffix}$)";
 
-            private static readonly string Etp11AlternateUri =                $@"(?<{AlternateUriGroup}>^(?:{Etp11QueryWithSuffixUri}|{Etp11ObjectWithSuffixUri}|{Etp11ObjectHierarchyWithSuffixUri}|{Etp11TemplateWithSuffixUri})$)";
-            private static readonly string Etp12AlternateUri =                $@"(?<{AlternateUriGroup}>^(?:{Etp12QueryWithSuffixUri}|{Etp12ObjectWithSuffixUri}|{Etp12ObjectHierarchyWithSuffixUri}|{Etp12TemplateWithSuffixUri})$)";
+            private static readonly string Etp11AlternateUri =                $@"(?<{AlternateUriGroup}>^(?:{Etp11AlternatePrefixUri}|{Etp11QueryWithSuffixUri}|{Etp11ObjectWithSuffixUri}|{Etp11ObjectHierarchyWithSuffixUri}|{Etp11TemplateWithSuffixUri})$)";
+            private static readonly string Etp12AlternateUri =                $@"(?<{AlternateUriGroup}>^(?:{Etp12AlternatePrefixUri}|{Etp12QueryWithSuffixUri}|{Etp12ObjectWithSuffixUri}|{Etp12ObjectHierarchyWithSuffixUri}|{Etp12TemplateWithSuffixUri})$)";
 
             // Complete Patterns
 
@@ -220,16 +225,24 @@ namespace Energistics.Etp.Common.Datatypes
             else
                 EtpVersion = EtpVersion.v12;
 
+            Query = GetFirstMatch(uriMatch, Definition.QueryGroup) ?? string.Empty;
+            Hash = GetFirstMatch(uriMatch, Definition.HashGroup) ?? string.Empty;
+
             IsRoot = IsRootUri(uri);
-            IsPrefix = !WasGroupMatched(uriMatch, Definition.ObjectGroup);
+            IsPrefix = WasGroupMatched(uriMatch, Definition.PrefixUriGroup);
             IsCanonical = WasGroupMatched(uriMatch, Definition.CanonicalUriGroup);
             IsCanonicalQuery = WasGroupMatched(uriMatch, Definition.QueryUriGroup);
             IsAlternate = WasGroupMatched(uriMatch, Definition.AlternateUriGroup);
+            IsAlternatePrefix = WasGroupMatched(uriMatch, Definition.AlternatePrefixUriGroup);
             IsHierarchical = WasGroupMatched(uriMatch, Definition.ObjectHierarchyUriGroup);
             IsTemplate = WasGroupMatched(uriMatch, Definition.TemplateUriGroup) || IsCanonicalQuery;
 
-            Query = GetFirstMatch(uriMatch, Definition.QueryGroup) ?? string.Empty;
-            Hash = GetFirstMatch(uriMatch, Definition.HashGroup) ?? string.Empty;
+            if (IsPrefix)
+                UriPrefix = Uri;
+            else if (IsAlternatePrefix)
+                UriPrefix = UriWithoutSuffix;
+            else
+                UriPrefix = GetFirstMatch(uriMatch, Definition.PrefixGroup) + "/";
 
             Dataspace = GetFirstMatch(uriMatch, Definition.DataspaceGroup) ?? string.Empty;
 
@@ -284,6 +297,11 @@ namespace Energistics.Etp.Common.Datatypes
         /// </summary>
         /// <value>The URI.</value>
         public string Uri { get; }
+
+        /// <summary>
+        /// Gets the URI's prefix.
+        /// </summary>
+        public string UriPrefix { get; }
 
         /// <summary>
         /// Gets the URI without any query or hash suffix.
@@ -422,6 +440,13 @@ namespace Energistics.Etp.Common.Datatypes
         public bool IsAlternate { get; }
 
         /// <summary>
+        /// Gets a value indicating whether this instance is a alternate prefix URI.
+        /// An alternate prefix URI is a prefix URI that contains a hash and/or query.
+        /// </summary>
+        /// <value><c>true</c> if this instance is an alternate prefix URI; otherwise, <c>false</c>.</value>
+        public bool IsAlternatePrefix { get; }
+
+        /// <summary>
         /// Gets a value indicating whether this instance is an alternate URI.
         /// Hierarchical object URIs have more than one path segment with an object defined.
         /// </summary>
@@ -523,6 +548,7 @@ namespace Energistics.Etp.Common.Datatypes
         public EtpUri Append(string family, string version, string objectType, string objectId = null, string objectVersion = null, bool encode = false)
         {
             objectType = EtpContentType.FormatObjectType(objectType, version);
+            CorrectCommonObjectFamilyAndVersion(objectType, ref family, ref version);
 
             if (encode && objectId != null)
                 objectId = WebUtility.UrlEncode(objectId);
@@ -556,6 +582,45 @@ namespace Energistics.Etp.Common.Datatypes
         }
 
         /// <summary>
+        /// Creates a prefix URI for the specified ETP version with the specified family, version and dataspace.
+        /// </summary>
+        /// <param name="etpVersion">The ETP version.</param>
+        /// <param name="family">The family.</param>
+        /// <param name="version">The version.</param>
+        /// <param name="dataspace">The dataspace.</param>
+        /// <returns>The ETP URI Prefix.</returns>
+        private static string CreatePrefixUri(EtpVersion etpVersion, string family, string version, string dataspace)
+        {
+            var sb = new StringBuilder();
+            var appendSlash = false;
+            if (etpVersion == EtpVersion.v11)
+                sb.Append($"{RootUri11.Uri}");
+            else
+                sb.Append($"{RootUri12.Uri}");
+
+            if (!string.IsNullOrEmpty(dataspace))
+            {
+                if (etpVersion == EtpVersion.v11)
+                    sb.Append(dataspace);
+                else
+                    sb.Append($"dataspace({dataspace})");
+
+                appendSlash = true;
+            }
+
+            if (etpVersion == EtpVersion.v11 && !string.IsNullOrEmpty(family) && !string.IsNullOrEmpty(version))
+            {
+                if (appendSlash)
+                    sb.Append("/");
+
+                var shortVersion = EtpDataObjectType.TryGetFamilyShortVersionFromVersion(family, version);
+                sb.Append($"{family}{shortVersion}");
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
         /// Converts the URI to an ETP 1.1 URI.
         /// </summary>
         /// <returns>The converted URI.</returns>
@@ -564,23 +629,10 @@ namespace Energistics.Etp.Common.Datatypes
             if (IsEtp11 || !IsValid)
                 return this;
 
-            var sb = new StringBuilder();
-            var appendSlash = false;
-            sb.Append($"{RootUri11.Uri}");
-            if (!string.IsNullOrEmpty(Dataspace))
-            {
-                sb.Append(Dataspace);
-                appendSlash = true;
-            }
-            if (!string.IsNullOrEmpty(NamespaceFamily) && !string.IsNullOrEmpty(NamespaceVersion))
-            {
-                if (appendSlash)
-                    sb.Append("/");
+            var prefix = CreatePrefixUri(EtpVersion.v11, NamespaceFamily, NamespaceVersion, Dataspace);
 
-                var shortVersion = EtpDataObjectType.TryGetFamilyShortVersionFromVersion(NamespaceFamily, NamespaceVersion);
-                sb.Append($"{NamespaceFamily}{shortVersion}");
-                appendSlash = true;
-            }
+            var sb = new StringBuilder(prefix);
+            var appendSlash = prefix[prefix.Length - 1] != '/';
 
             foreach (var segment in GetObjectIds())
             {
@@ -607,15 +659,11 @@ namespace Energistics.Etp.Common.Datatypes
             if (IsEtp12 || !IsValid)
                 return this;
 
-            var sb = new StringBuilder();
-            sb.Append(RootUri12.Uri);
+            var prefix = CreatePrefixUri(EtpVersion.v12, NamespaceFamily, NamespaceVersion, Dataspace);
 
-            var appendSlash = false;
-            if (!string.IsNullOrEmpty(Dataspace))
-            {
-                sb.Append($"dataspace({Dataspace})");
-                appendSlash = true;
-            }
+            var sb = new StringBuilder(prefix);
+            var appendSlash = prefix[prefix.Length - 1] != '/';
+
             foreach (var segment in GetObjectIds())
             {
                 if (appendSlash)
@@ -637,6 +685,58 @@ namespace Energistics.Etp.Common.Datatypes
             sb.Append(Hash);
 
             return new EtpUri(sb.ToString());
+        }
+
+        /// <summary>
+        /// Converts the URI to a canonical URI or canonical query URI.
+        /// </summary>
+        /// <param name="encode">Whether or not to encode the object ID.</param>
+        /// <returns>The URI as a canonical URI or canonical query URI.</returns>
+        public EtpUri AsCanonical(bool encode = false)
+        {
+            if (!IsValid || IsCanonical || IsCanonicalQuery)
+                return this;
+
+            if (IsAlternatePrefix) // Alternate prefix URI
+            {
+                return new EtpUri(UriPrefix);
+            }
+            else if (ObjectId == null) // Query URI
+            {
+                EtpUri canonical;
+                var segments = GetObjectIds().ToList();
+                if (segments.Count > 1 && segments[segments.Count - 2].ObjectId != null)
+                {
+                    var s = segments[segments.Count - 2];
+                    var prefix = CreatePrefixUri(EtpVersion, s.Family, s.Version, Dataspace);
+                    canonical = new EtpUri($"{prefix}{Query}");
+                    canonical = canonical.Append(s.Family, s.Version, s.ObjectType, s.ObjectId, s.ObjectVersion, encode);
+                }
+                else
+                {
+                    var prefix = CreatePrefixUri(EtpVersion, Family, Version, Dataspace);
+                    canonical = new EtpUri($"{prefix}{Query}");
+                }
+                return canonical.Append(Family, Version, ObjectType, null, null, encode);
+            }
+            else
+            {
+                var prefix = CreatePrefixUri(EtpVersion, Family, Version, Dataspace);
+                return new EtpUri(prefix).Append(Family, Version, ObjectType, ObjectId, ObjectVersion, encode);
+            }
+        }
+
+        /// <summary>
+        /// Converts the URI to a canonical query URI.
+        /// </summary>
+        /// <param name="encode">Whether or not to encode the object ID.</param>
+        /// <returns>The URI as a canonical query URI.</returns>
+        public EtpUri AsCanonicalQuery(bool encode = false)
+        {
+            if (!IsValid || IsCanonicalQuery)
+                return this;
+
+            return new EtpUri(UriPrefix).Append(Family, Version, ObjectType, ObjectId, ObjectVersion, encode);
         }
 
         /// <summary>
@@ -724,23 +824,6 @@ namespace Energistics.Etp.Common.Datatypes
         }
 
         /// <summary>
-        /// Gets the last matching value in the URI for the specified capture group.
-        /// </summary>
-        /// <param name="match">The regex match results.</param>
-        /// <param name="groupName">The capture group name.</param>
-        /// <returns>The last matching value if successfully matched; <c>null</c> if not matched.</returns>
-        private static string GetLastMatch(Match match, string groupName)
-        {
-            if (!match.Success)
-                return null;
-            var group = match.Groups[groupName];
-            if (!group.Success)
-                return null;
-
-            return group.Captures[group.Captures.Count - 1].Value;
-        }
-
-        /// <summary>
         /// Gets an array of all matches in the URI for the specified capture group.
         /// </summary>
         /// <param name="match">The regex match results.</param>
@@ -816,11 +899,7 @@ namespace Energistics.Etp.Common.Datatypes
                 objectId = WebUtility.UrlDecode(objectId);
             var objectVersion = GetFirstMatch(match, Definition.ObjectVersionGroup);
 
-            if (objectType != null && EmlCommonObjects.Contains(objectType)) // Special case for ETP 1.1 hierarchical URIs with EML common objects
-            {
-                defaultFamily = "eml";
-                defaultVersion = "2.1";
-            }
+            CorrectCommonObjectFamilyAndVersion(objectType, ref defaultFamily, ref defaultVersion);
 
             var family = GetFirstMatch(match, Definition.FamilyGroup) ?? defaultFamily;
             family = EtpDataObjectType.TryGetFamily(family);
@@ -831,6 +910,26 @@ namespace Energistics.Etp.Common.Datatypes
             objectType = EtpContentType.FormatObjectType(objectType, version);
 
             return new Segment(family, version, objectType, objectId, objectVersion);
+        }
+
+        /// <summary>
+        /// Ensures that EML Common objects have the correct family and version.
+        /// </summary>
+        /// <param name="family">The input and output family.</param>
+        /// <param name="version">The input and output version.</param>
+        private static void CorrectCommonObjectFamilyAndVersion(string objectType, ref string family, ref string version)
+        {
+            if (string.IsNullOrEmpty(objectType))
+                return;
+
+            if (!EmlCommonObjects.Contains(objectType))
+                return;
+
+            if (string.Equals(family, "eml", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            family = "eml";
+            version = "2.1";
         }
 
         /// <summary>
