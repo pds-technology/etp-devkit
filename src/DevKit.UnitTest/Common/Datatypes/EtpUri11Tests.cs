@@ -23,7 +23,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Energistics.Etp.Common.Datatypes
 {
     [TestClass]
-    public class EtpUri11Tests
+    public class EtpUri11Tests : EtpUriTestBase
     {
         [TestMethod]
         public void EtpUri_11_IsRoot_Can_Detect_Root_Uri()
@@ -32,7 +32,7 @@ namespace Energistics.Etp.Common.Datatypes
             var etpUri = new EtpUri(uri);
 
             Assert.IsTrue(etpUri.IsEtp11);
-            Assert.IsTrue(etpUri.IsRoot);
+            Assert.IsTrue(etpUri.IsRootUri);
             Assert.IsTrue(etpUri.IsValid);
             Assert.AreEqual(EtpUri.RootUri11, etpUri);
 
@@ -40,7 +40,7 @@ namespace Energistics.Etp.Common.Datatypes
             etpUri = new EtpUri(uri);
 
             Assert.IsTrue(etpUri.IsEtp11);
-            Assert.IsTrue(etpUri.IsRoot);
+            Assert.IsTrue(etpUri.IsRootUri);
             Assert.IsTrue(etpUri.IsValid);
             Assert.AreEqual(EtpUri.RootUri11, etpUri);
         }
@@ -81,7 +81,7 @@ namespace Energistics.Etp.Common.Datatypes
             var uri = new EtpUri("eml://custom-database/witsml14");
 
             Assert.IsTrue(uri.IsValid);
-            Assert.IsTrue(uri.IsPrefix);
+            Assert.IsTrue(uri.IsBaseUri);
             Assert.AreEqual(uri, uri.Parent);
             Assert.AreEqual("1.4.1.1", uri.Version);
             Assert.AreEqual("custom-database", uri.Dataspace);
@@ -93,7 +93,7 @@ namespace Energistics.Etp.Common.Datatypes
             var uri = new EtpUri("eml://custom-database/second-level/witsml14");
 
             Assert.IsTrue(uri.IsValid);
-            Assert.IsTrue(uri.IsPrefix);
+            Assert.IsTrue(uri.IsBaseUri);
             Assert.AreEqual(uri, uri.Parent);
             Assert.AreEqual("1.4.1.1", uri.Version);
             Assert.AreEqual("custom-database/second-level", uri.Dataspace);
@@ -105,7 +105,7 @@ namespace Energistics.Etp.Common.Datatypes
             var uri = new EtpUri("eml://witsml20");
 
             Assert.IsTrue(uri.IsValid);
-            Assert.IsTrue(uri.IsPrefix);
+            Assert.IsTrue(uri.IsBaseUri);
             Assert.AreEqual(uri, uri.Parent);
             Assert.AreEqual("2.0", uri.Version);
         }
@@ -122,7 +122,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.AreEqual("Well", uri.ObjectType);
             Assert.AreEqual("2.0", uri.Version);
 
-            Assert.IsTrue(uri.IsCanonical);
+            Assert.IsTrue(uri.IsCanonicalUri);
 
             // Assert Equals and GetHashCode
             Assert.IsTrue(uri.Equals(clone));
@@ -216,7 +216,7 @@ namespace Energistics.Etp.Common.Datatypes
             var uri = new EtpUri("eml://witsml14");
 
             Assert.IsTrue(uri.IsValid);
-            Assert.IsTrue(uri.IsPrefix);
+            Assert.IsTrue(uri.IsBaseUri);
             Assert.AreEqual("1.4.1.1", uri.Version);
         }
 
@@ -227,7 +227,7 @@ namespace Energistics.Etp.Common.Datatypes
             var uriWell = uri14.Append(uri14.Family, uri14.Version, "well", null);
 
             Assert.IsTrue(uriWell.IsValid);
-            Assert.IsFalse(uriWell.IsPrefix);
+            Assert.IsFalse(uriWell.IsBaseUri);
             Assert.AreEqual("1.4.1.1", uriWell.Version);
             Assert.AreEqual("well", uriWell.ObjectType);
 
@@ -241,7 +241,7 @@ namespace Energistics.Etp.Common.Datatypes
             var uri = new EtpUri("eml://witsml14").Append("witsml", "1.4.1.1", "well", "w-01");
 
             Assert.IsTrue(uri.IsValid);
-            Assert.IsFalse(uri.IsPrefix);
+            Assert.IsFalse(uri.IsBaseUri);
             Assert.AreEqual("1.4.1.1", uri.Version);
             Assert.AreEqual("well", uri.ObjectType);
             Assert.AreEqual("w-01", uri.ObjectId);
@@ -553,37 +553,37 @@ namespace Energistics.Etp.Common.Datatypes
         }
 
         [TestMethod]
-        public void EtpUri_11_Uri_Prefix_Returns_Correct_Prefix()
+        public void EtpUri_11_Uri_Base_Returns_Correct_Base()
         {
             var uuid = Uuid();
 
             var prefix = "eml://";
             var uri = new EtpUri("eml://");
-            Assert.AreEqual(prefix, uri.UriPrefix);
+            Assert.AreEqual(prefix, uri.UriBase);
 
             prefix = "eml://data-space";
             uri = new EtpUri("eml://data-space");
-            Assert.AreEqual(prefix, uri.UriPrefix);
+            Assert.AreEqual(prefix, uri.UriBase);
 
             prefix = "eml://data-space/level-two";
             uri = new EtpUri("eml://data-space/level-two");
-            Assert.AreEqual(prefix, uri.UriPrefix);
+            Assert.AreEqual(prefix, uri.UriBase);
 
             prefix = "eml://data-space/level-two/witsml14";
             uri = new EtpUri("eml://data-space/level-two/witsml14");
-            Assert.AreEqual(prefix, uri.UriPrefix);
+            Assert.AreEqual(prefix, uri.UriBase);
 
             prefix = "eml://witsml14";
             uri = new EtpUri("eml://witsml14");
-            Assert.AreEqual(prefix, uri.UriPrefix);
+            Assert.AreEqual(prefix, uri.UriBase);
 
             prefix = $"eml://data-space/level-two/witsml14/";
             uri = new EtpUri($"eml://data-space/level-two/witsml14/well({uuid})");
-            Assert.AreEqual(prefix, uri.UriPrefix);
+            Assert.AreEqual(prefix, uri.UriBase);
 
             prefix = $"eml://witsml14/";
             uri = new EtpUri($"eml://witsml14/well({uuid})");
-            Assert.AreEqual(prefix, uri.UriPrefix);
+            Assert.AreEqual(prefix, uri.UriBase);
         }
 
         [TestMethod]
@@ -688,655 +688,246 @@ namespace Energistics.Etp.Common.Datatypes
             canonical = new EtpUri($"eml://some-data/space/witsml20/Wellbore({uuid2})/Log?query");
             Assert.AreEqual(canonical, original.AsCanonical());
 
+            // Special Cases
+
             original = new EtpUri($"eml://some-data/space/witsml20/Well({uuid})/DataAssuranceRecord({uuid2})");
             canonical = new EtpUri($"eml://some-data/space/eml21/DataAssuranceRecord({uuid2})");
+            Assert.AreEqual(canonical, original.AsCanonical());
+
+            original = new EtpUri($"eml://some-data/space/witsml14/well({uuid})/wellbore({uuid2})");
+            canonical = new EtpUri($"eml://some-data/space/witsml14/well({uuid})/wellbore({uuid2})");
             Assert.AreEqual(canonical, original.AsCanonical());
         }
 
         [TestMethod]
-        public void EtpUri_11_Valid_Uris()
+        public void EtpUri_11_Uris()
         {
             var uuid = Uuid();
 
+            ///////////////////////////
+            // Invalid URI
+            ///////////////////////////
+            
+            var uri = new EtpUri("http://www.energistics.org");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
+
+            ///////////////////////////
             // Root URIs
-            Assert.IsTrue(new EtpUri("eml://").IsValid);
+            ///////////////////////////
 
+            uri = new EtpUri("eml:");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
+
+            uri = new EtpUri("eml://");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsRootUri: true, IsDataspaceUri: true, IsBaseUri: true, IsCanonicalUri: true);
+
+            uri = new EtpUri("eml://?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsRootUri: true, IsDataspaceUri: true, IsBaseUri: true, IsAlternateUri: true, HasQuery: true);
+
+            uri = new EtpUri("eml://#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsRootUri: true, IsDataspaceUri: true, IsBaseUri: true, IsAlternateUri: true, HasHash: true);
+
+            ///////////////////////////
             // Dataspace URIs
-            Assert.IsTrue(new EtpUri("eml://data-space/").IsValid);
+            ///////////////////////////
 
-            // Prefix URIs
-            Assert.IsTrue(new EtpUri("eml://data-space/witsml14").IsValid);
-            Assert.IsTrue(new EtpUri("eml://data-space/second-level/witsml14").IsValid);
-            Assert.IsTrue(new EtpUri("eml://witsml14").IsValid);
+            uri = new EtpUri("eml://data-space/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
 
-            // Canonical URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})").IsValid);
+            uri = new EtpUri("eml://data-space/second-level/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
 
-            // Canonical Query URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well?query").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore?query").IsValid);
+            uri = new EtpUri("eml://data-space");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsDataspaceUri: true, IsBaseUri: true, IsCanonicalUri: true);
 
-            // Hierarcical URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})?query").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})#hash").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})?query").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})#hash").IsValid);
+            uri = new EtpUri("eml://data-space?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsDataspaceUri: true, IsBaseUri: true, IsAlternateUri: true, HasQuery: true);
 
-            // Hierarchical Query URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log?query").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log#hash").IsValid);
+            uri = new EtpUri("eml://data-space#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsDataspaceUri: true, IsBaseUri: true, IsAlternateUri: true, HasHash: true);
 
+            uri = new EtpUri("eml://data-space/second-level");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsDataspaceUri: true, IsBaseUri: true, IsCanonicalUri: true);
+
+            uri = new EtpUri("eml://data-space/second-level?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsDataspaceUri: true, IsBaseUri: true, IsAlternateUri: true, HasQuery: true);
+
+            uri = new EtpUri("eml://data-space/second-level#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsDataspaceUri: true, IsBaseUri: true, IsAlternateUri: true, HasHash: true);
+
+            ///////////////////////////
+            // Family Version URIs
+            ///////////////////////////
+
+            uri = new EtpUri("eml://witsml20/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
+
+            uri = new EtpUri("eml://data-space/witsml20/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
+
+            uri = new EtpUri("eml://data-space/second-level/witsml20/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
+
+            uri = new EtpUri("eml://witsml20");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFamilyVersionUri: true, IsBaseUri: true, IsCanonicalUri: true);
+
+            uri = new EtpUri("eml://witsml20?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFamilyVersionUri: true, IsBaseUri: true, IsAlternateUri: true, HasQuery: true);
+
+            uri = new EtpUri("eml://witsml20#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFamilyVersionUri: true, IsBaseUri: true, IsAlternateUri: true, HasHash: true);
+
+            uri = new EtpUri("eml://data-space/witsml20");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFamilyVersionUri: true, IsBaseUri: true, IsCanonicalUri: true);
+
+            uri = new EtpUri("eml://data-space/witsml20?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFamilyVersionUri: true, IsBaseUri: true, IsAlternateUri: true, HasQuery: true);
+
+            uri = new EtpUri("eml://data-space/witsml20#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFamilyVersionUri: true, IsBaseUri: true, IsAlternateUri: true, HasHash: true);
+
+            ///////////////////////////
+            // Object URIs
+            ///////////////////////////
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsCanonicalUri: true, IsObjectUri: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsAlternateUri: true, IsObjectUri: true, HasQuery: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsAlternateUri: true, IsObjectUri: true, HasHash: true);
+
+            ///////////////////////////
+            // Object Hierarchy URIs
+            ///////////////////////////
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore({Uuid()})/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore({Uuid()})/Log({Uuid()})/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore({Uuid()})");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsAlternateUri: true, IsObjectUri: true, IsHierarchicalUri: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore({Uuid()})?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsAlternateUri: true, IsObjectUri: true, IsHierarchicalUri: true, HasQuery: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore({Uuid()})#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsAlternateUri: true, IsObjectUri: true, IsHierarchicalUri: true, HasHash: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore({Uuid()})/Log({Uuid()})");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsAlternateUri: true, IsObjectUri: true, IsHierarchicalUri: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore({Uuid()})/Log({Uuid()})?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsAlternateUri: true, IsObjectUri: true, IsHierarchicalUri: true, HasQuery: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore({Uuid()})/Log({Uuid()})#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsAlternateUri: true, IsObjectUri: true, IsHierarchicalUri: true, HasHash: true);
+
+            ///////////////////////////
+            // Folder and Query URIs
+            ///////////////////////////
+
+            uri = new EtpUri($"eml://witsml20/Well/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore({Uuid()})/Log/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
+
+            uri = new EtpUri($"eml://witsml20/Well");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsTemplateUri: true);
+
+            uri = new EtpUri($"eml://witsml20/Well?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsTemplateUri: true, HasQuery: true);
+
+            uri = new EtpUri($"eml://witsml20/Well#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsQueryUri: true, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasHash: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsHierarchicalUri: true, IsTemplateUri: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsHierarchicalUri: true, IsTemplateUri: true, HasQuery: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsQueryUri: true, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true, HasHash: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore({Uuid()})/Log");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore({Uuid()})/Log?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true, HasQuery: true);
+
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore({Uuid()})/Log#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true, HasHash: true);
+
+            ///////////////////////////
             // Template URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore?query").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore#hash").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log?query").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log#hash").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})?query").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})#hash").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log?query").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log#hash").IsValid);
+            ///////////////////////////
+            
+            uri = new EtpUri($"eml://witsml20/Well/Wellbore/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
 
-            // Alternate Prefix URIs
-            Assert.IsTrue(new EtpUri("eml://?query").IsValid);
-            Assert.IsTrue(new EtpUri("eml://data-space/?query").IsValid);
-            Assert.IsTrue(new EtpUri("eml://data-space/witsml14?query").IsValid);
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore/Log/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
 
-            // Alternate URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})?query").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well#hash").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})#hash").IsValid);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore#hash").IsValid);
-        }
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore/Log({Uuid()})/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
 
+            uri = new EtpUri($"eml://witsml20/Well/Wellbore({uuid})/Log/");
+            AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v11);
 
-        [TestMethod]
-        public void EtpUri_11_Etp11_Uris()
-        {
-            var uuid = Uuid();
+            uri = new EtpUri($"eml://witsml20/Well/Wellbore");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true);
 
-            // Root URIs
-            Assert.IsTrue(new EtpUri("eml://").IsEtp11);
+            uri = new EtpUri($"eml://witsml20/Well/Wellbore?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasQuery: true);
 
-            // Dataspace URIs
-            Assert.IsTrue(new EtpUri("eml://data-space/").IsEtp11);
+            uri = new EtpUri($"eml://witsml20/Well/Wellbore#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasHash: true);
 
-            // Prefix URIs
-            Assert.IsTrue(new EtpUri("eml://data-space/witsml14").IsEtp11);
-            Assert.IsTrue(new EtpUri("eml://data-space/second-level/witsml14").IsEtp11);
-            Assert.IsTrue(new EtpUri("eml://witsml14").IsEtp11);
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore/Log");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true);
 
-            // Canonical URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})").IsEtp11);
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore/Log?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasQuery: true);
 
-            // Canonical Query URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well?query").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore?query").IsEtp11);
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore/Log#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasHash: true);
 
-            // Hierarcical URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})?query").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})#hash").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})?query").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})#hash").IsEtp11);
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore/Log({Uuid()})");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsObjectUri: true, IsAlternateUri: true, IsTemplateUri: true);
 
-            // Hierarchical Query URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log?query").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log#hash").IsEtp11);
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore/Log({Uuid()})?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsObjectUri: true, IsAlternateUri: true, IsTemplateUri: true, HasQuery: true);
 
-            // Template URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore?query").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore#hash").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log?query").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log#hash").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})?query").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})#hash").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log?query").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log#hash").IsEtp11);
+            uri = new EtpUri($"eml://witsml20/Well({uuid})/Wellbore/Log({Uuid()})#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsObjectUri: true, IsAlternateUri: true, IsTemplateUri: true, HasHash: true);
 
-            // Alternate Prefix URIs
-            Assert.IsTrue(new EtpUri("eml://?query").IsEtp11);
-            Assert.IsTrue(new EtpUri("eml://data-space/?query").IsEtp11);
-            Assert.IsTrue(new EtpUri("eml://data-space/witsml14?query").IsEtp11);
+            uri = new EtpUri($"eml://witsml20/Well/Wellbore({uuid})/Log");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true);
 
-            // Alternate URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})?query").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well#hash").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})#hash").IsEtp11);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore#hash").IsEtp11);
-        }
+            uri = new EtpUri($"eml://witsml20/Well/Wellbore({uuid})/Log?query");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasQuery: true);
 
-        [TestMethod]
-        public void EtpUri_11_Root_Uris()
-        {
-            var uuid = Uuid();
+            uri = new EtpUri($"eml://witsml20/Well/Wellbore({uuid})/Log#hash");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasHash: true);
 
-            // Root URIs
-            Assert.IsTrue(new EtpUri("eml://").IsRoot);
-
-            // Dataspace URIs
-            Assert.IsFalse(new EtpUri("eml://data-space/").IsRoot);
-
-            // Prefix URIs
-            Assert.IsFalse(new EtpUri("eml://data-space/witsml14").IsRoot);
-            Assert.IsFalse(new EtpUri("eml://data-space/second-level/witsml14").IsRoot);
-            Assert.IsFalse(new EtpUri("eml://witsml14").IsRoot);
-
-            // Canonical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})").IsRoot);
-
-            // Canonical Query URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well?query").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore?query").IsRoot);
-
-            // Hierarcical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})?query").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})#hash").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})?query").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})#hash").IsRoot);
-
-            // Hierarchical Query URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log?query").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log#hash").IsRoot);
-
-            // Template URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore?query").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore#hash").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log?query").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log#hash").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})?query").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})#hash").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log?query").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log#hash").IsRoot);
-
-            // Alternate Prefix URIs
-            Assert.IsFalse(new EtpUri("eml://?query").IsRoot);
-            Assert.IsFalse(new EtpUri("eml://data-space/?query").IsRoot);
-            Assert.IsFalse(new EtpUri("eml://data-space/witsml14?query").IsRoot);
-
-            // Alternate URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})?query").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well#hash").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})#hash").IsRoot);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore#hash").IsRoot);
-        }
-
-        [TestMethod]
-        public void EtpUri_11_Prefix_Uris()
-        {
-            var uuid = Uuid();
-
-            // Root URIs
-            Assert.IsTrue(new EtpUri("eml://").IsPrefix);
-
-            // Dataspace URIs
-            Assert.IsTrue(new EtpUri("eml://data-space/").IsPrefix);
-
-            // Prefix URIs
-            Assert.IsTrue(new EtpUri("eml://data-space/witsml14").IsPrefix);
-            Assert.IsTrue(new EtpUri("eml://data-space/second-level/witsml14").IsPrefix);
-            Assert.IsTrue(new EtpUri("eml://witsml14").IsPrefix);
-
-            // Canonical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})").IsPrefix);
-
-            // Canonical Query URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well?query").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore?query").IsPrefix);
-
-            // Hierarcical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})?query").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})#hash").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})?query").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})#hash").IsPrefix);
-
-            // Hierarchical Query URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log?query").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log#hash").IsPrefix);
-
-            // Template URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore?query").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore#hash").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log?query").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log#hash").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})?query").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})#hash").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log?query").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log#hash").IsPrefix);
-
-            // Alternate Prefix URIs
-            Assert.IsFalse(new EtpUri("eml://?query").IsPrefix);
-            Assert.IsFalse(new EtpUri("eml://data-space/?query").IsPrefix);
-            Assert.IsFalse(new EtpUri("eml://data-space/witsml14?query").IsPrefix);
-
-            // Alternate URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})?query").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well#hash").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})#hash").IsPrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore#hash").IsPrefix);
-        }
-
-        [TestMethod]
-        public void EtpUri_11_Canonical_Uris()
-        {
-            var uuid = Uuid();
-
-            // Root URIs
-            Assert.IsTrue(new EtpUri("eml://").IsCanonical);
-
-            // Dataspace URIs
-            Assert.IsTrue(new EtpUri("eml://data-space/").IsCanonical);
-
-            // Prefix URIs
-            Assert.IsTrue(new EtpUri("eml://data-space/witsml14").IsCanonical);
-            Assert.IsTrue(new EtpUri("eml://data-space/second-level/witsml14").IsCanonical);
-            Assert.IsTrue(new EtpUri("eml://witsml14").IsCanonical);
-
-            // Canonical URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})").IsCanonical);
-
-            // Canonical Query URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well?query").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore?query").IsCanonical);
-
-            // Hierarcical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})?query").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})#hash").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})?query").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})#hash").IsCanonical);
-
-            // Hierarchical Query URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log?query").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log#hash").IsCanonical);
-
-            // Template URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore?query").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore#hash").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log?query").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log#hash").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})?query").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})#hash").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log?query").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log#hash").IsCanonical);
-
-            // Alternate Prefix URIs
-            Assert.IsFalse(new EtpUri("eml://?query").IsCanonical);
-            Assert.IsFalse(new EtpUri("eml://data-space/?query").IsCanonical);
-            Assert.IsFalse(new EtpUri("eml://data-space/witsml14?query").IsCanonical);
-
-            // Alternate URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})?query").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well#hash").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})#hash").IsCanonical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore#hash").IsCanonical);
-        }
-
-        [TestMethod]
-        public void EtpUri_11_Query_Uris()
-        {
-            var uuid = Uuid();
-
-            // Root URIs
-            Assert.IsFalse(new EtpUri("eml://").IsCanonicalQuery);
-
-            // Dataspace URIs
-            Assert.IsFalse(new EtpUri("eml://data-space/").IsCanonicalQuery);
-
-            // Prefix URIs
-            Assert.IsFalse(new EtpUri("eml://data-space/witsml14").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri("eml://data-space/second-level/witsml14").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri("eml://witsml14").IsCanonicalQuery);
-
-            // Canonical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})").IsCanonicalQuery);
-
-            // Canonical Query URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well").IsCanonicalQuery);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well?query").IsCanonicalQuery);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore").IsCanonicalQuery);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore?query").IsCanonicalQuery);
-
-            // Hierarcical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})?query").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})#hash").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})?query").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})#hash").IsCanonicalQuery);
-
-            // Hierarchical Query URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log?query").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log#hash").IsCanonicalQuery);
-
-            // Template URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore?query").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore#hash").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log?query").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log#hash").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})?query").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})#hash").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log?query").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log#hash").IsCanonicalQuery);
-
-            // Alternate Prefix URIs
-            Assert.IsFalse(new EtpUri("eml://?query").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri("eml://data-space/?query").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri("eml://data-space/witsml14?query").IsCanonicalQuery);
-
-            // Alternate URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})?query").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well#hash").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})#hash").IsCanonicalQuery);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore#hash").IsCanonicalQuery);
-        }
-
-        [TestMethod]
-        public void EtpUri_11_Alternate_Uris()
-        {
-            var uuid = Uuid();
-
-            // Root URIs
-            Assert.IsFalse(new EtpUri("eml://").IsAlternate);
-
-            // Dataspace URIs
-            Assert.IsFalse(new EtpUri("eml://data-space/").IsAlternate);
-
-            // Prefix URIs
-            Assert.IsFalse(new EtpUri("eml://data-space/witsml14").IsAlternate);
-            Assert.IsFalse(new EtpUri("eml://data-space/second-level/witsml14").IsAlternate);
-            Assert.IsFalse(new EtpUri("eml://witsml14").IsAlternate);
-
-            // Canonical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})").IsAlternate);
-
-            // Canonical Query URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well").IsAlternate);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well?query").IsAlternate);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore").IsAlternate);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore?query").IsAlternate);
-
-            // Hierarcical URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})?query").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})#hash").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})?query").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})#hash").IsAlternate);
-
-            // Hierarchical Query URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log?query").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log#hash").IsAlternate);
-
-            // Template URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore?query").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore#hash").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log?query").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log#hash").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})?query").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})#hash").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log?query").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log#hash").IsAlternate);
-
-            // Alternate Prefix URIs
-            Assert.IsTrue(new EtpUri("eml://?query").IsAlternate);
-            Assert.IsTrue(new EtpUri("eml://data-space/?query").IsAlternate);
-            Assert.IsTrue(new EtpUri("eml://data-space/witsml14?query").IsAlternate);
-
-            // Alternate URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})?query").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well#hash").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})#hash").IsAlternate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore#hash").IsAlternate);
-        }
-
-        [TestMethod]
-        public void EtpUri_11_Alternate_Prefix_Uris()
-        {
-            var uuid = Uuid();
-
-            // Root URIs
-            Assert.IsFalse(new EtpUri("eml://").IsAlternatePrefix);
-
-            // Dataspace URIs
-            Assert.IsFalse(new EtpUri("eml://data-space/").IsAlternatePrefix);
-
-            // Prefix URIs
-            Assert.IsFalse(new EtpUri("eml://data-space/witsml14").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri("eml://data-space/second-level/witsml14").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri("eml://witsml14").IsAlternatePrefix);
-
-            // Canonical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})").IsAlternatePrefix);
-
-            // Canonical Query URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well?query").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore?query").IsAlternatePrefix);
-
-            // Hierarcical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})?query").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})#hash").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})?query").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})#hash").IsAlternatePrefix);
-
-            // Hierarchical Query URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log?query").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log#hash").IsAlternatePrefix);
-
-            // Template URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore?query").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore#hash").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log?query").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log#hash").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})?query").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})#hash").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log?query").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log#hash").IsAlternatePrefix);
-
-            // Alternate Prefix URIs
-            Assert.IsTrue(new EtpUri("eml://?query").IsAlternatePrefix);
-            Assert.IsTrue(new EtpUri("eml://data-space/?query").IsAlternatePrefix);
-            Assert.IsTrue(new EtpUri("eml://data-space/witsml14?query").IsAlternatePrefix);
-
-            // Alternate URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})?query").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well#hash").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})#hash").IsAlternatePrefix);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore#hash").IsAlternatePrefix);
-        }
-
-        [TestMethod]
-        public void EtpUri_11_Hierarchical_Uris()
-        {
-            var uuid = Uuid();
-
-            // Root URIs
-            Assert.IsFalse(new EtpUri("eml://").IsHierarchical);
-
-            // Dataspace URIs
-            Assert.IsFalse(new EtpUri("eml://data-space/").IsHierarchical);
-
-            // Prefix URIs
-            Assert.IsFalse(new EtpUri("eml://data-space/witsml14").IsHierarchical);
-            Assert.IsFalse(new EtpUri("eml://data-space/second-level/witsml14").IsHierarchical);
-            Assert.IsFalse(new EtpUri("eml://witsml14").IsHierarchical);
-
-            // Canonical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})").IsHierarchical);
-
-            // Canonical Query URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well?query").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore?query").IsHierarchical);
-
-            // Hierarcical URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})").IsHierarchical);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})?query").IsHierarchical);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})#hash").IsHierarchical);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})").IsHierarchical);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})?query").IsHierarchical);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})#hash").IsHierarchical);
-
-            // Hierarchical Query URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log").IsHierarchical);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log?query").IsHierarchical);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log#hash").IsHierarchical);
-
-            // Template URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore?query").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore#hash").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log?query").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log#hash").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})?query").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})#hash").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log?query").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log#hash").IsHierarchical);
-
-            // Alternate Prefix URIs
-            Assert.IsFalse(new EtpUri("eml://?query").IsHierarchical);
-            Assert.IsFalse(new EtpUri("eml://data-space/?query").IsHierarchical);
-            Assert.IsFalse(new EtpUri("eml://data-space/witsml14?query").IsHierarchical);
-
-            // Alternate URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})?query").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well#hash").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})#hash").IsHierarchical);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore#hash").IsHierarchical);
-        }
-
-        [TestMethod]
-        public void EtpUri_11_Template_Uris()
-        {
-            var uuid = Uuid();
-
-            // Root URIs
-            Assert.IsFalse(new EtpUri("eml://").IsTemplate);
-
-            // Dataspace URIs
-            Assert.IsFalse(new EtpUri("eml://data-space/").IsTemplate);
-
-            // Prefix URIs
-            Assert.IsFalse(new EtpUri("eml://data-space/witsml14").IsTemplate);
-            Assert.IsFalse(new EtpUri("eml://data-space/second-level/witsml14").IsTemplate);
-            Assert.IsFalse(new EtpUri("eml://witsml14").IsTemplate);
-
-            // Canonical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})").IsTemplate);
-
-            // Canonical Query URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well?query").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore?query").IsTemplate);
-
-            // Hierarcical URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})").IsTemplate);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})?query").IsTemplate);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})#hash").IsTemplate);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})").IsTemplate);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})?query").IsTemplate);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log({Uuid()})#hash").IsTemplate);
-
-            // Hierarchical Query URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log?query").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore({Uuid()})/log#hash").IsTemplate);
-
-            // Template URIs
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore?query").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore#hash").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log?query").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log#hash").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})?query").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well({uuid})/wellbore/log({Uuid()})#hash").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log?query").IsTemplate);
-            Assert.IsTrue(new EtpUri($"eml://witsml14/well/wellbore({uuid})/log#hash").IsTemplate);
-
-            // Alternate Prefix URIs
-            Assert.IsFalse(new EtpUri("eml://?query").IsTemplate);
-            Assert.IsFalse(new EtpUri("eml://data-space/?query").IsTemplate);
-            Assert.IsFalse(new EtpUri("eml://data-space/witsml14?query").IsTemplate);
-
-            // Alternate URIs
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})?query").IsTemplate);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well#hash").IsTemplate);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})#hash").IsTemplate);
-            Assert.IsFalse(new EtpUri($"eml://witsml14/well({uuid})/wellbore#hash").IsTemplate);
-        }
-
-        private string Uuid()
-        {
-            return Guid.NewGuid().ToString();
+            ///////////////////////////
+            // Special Cases
+            ///////////////////////////
+            
+            uri = new EtpUri($"eml://some-data/space/witsml14/well({uuid})/wellbore({Uuid()})");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v11, IsCanonicalUri: true, IsObjectUri: true, IsHierarchicalUri: true);
         }
     }
 }

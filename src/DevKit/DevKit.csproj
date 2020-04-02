@@ -243,6 +243,7 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
+    <Compile Include="Common\Datatypes\EtpUri.Definition.cs" />
     <None Include="DevKit.nuspec" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
