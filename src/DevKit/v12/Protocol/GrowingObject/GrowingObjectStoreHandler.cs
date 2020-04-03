@@ -64,7 +64,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
                 Format = format ?? "xml",
             };
 
-            return Session.Send12MultipartResponse(header, message, parts, errors, (m, i) => m.Parts = i);
+            return SendMultipartResponse(header, message, parts, errors, (m, i) => m.Parts = i);
         }
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
                 Format = format ?? "xml",
             };
 
-            return Session.Send12MultipartResponse(header, message, parts, (m, i) => m.Parts = i);
+            return SendMultipartResponse(header, message, parts, (m, i) => m.Parts = i);
         }
 
         /// <summary>
@@ -110,13 +110,13 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
                     info.CustomData = new Dictionary<string, DataValue>();
             }
 
-            return Session.Send12MultipartResponse(header, message, metadata, errors, (m, i) => m.Metadata = i);
+            return SendMultipartResponse(header, message, metadata, errors, (m, i) => m.Metadata = i);
         }
 
         /// <summary>
         /// Handles the GetParts event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetParts, ObjectPart, ErrorInfo> OnGetParts;
+        public event ProtocolEventWithErrorsHandler<GetParts, ObjectPart, ErrorInfo> OnGetParts;
 
         /// <summary>
         /// Handles the GetPartsByRange event from a customer.
@@ -126,12 +126,12 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the PutParts event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<PutParts> OnPutParts;
+        public event ProtocolEventWithErrorsHandler<PutParts, ErrorInfo> OnPutParts;
 
         /// <summary>
         /// Handles the DeleteParts event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<DeleteParts> OnDeleteParts;
+        public event ProtocolEventWithErrorsHandler<DeleteParts, ErrorInfo> OnDeleteParts;
 
         /// <summary>
         /// Handles the DeletePartsByRange event from a customer.
@@ -146,7 +146,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the GetPartsMetadata event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetPartsMetadata, PartsMetadataInfo, ErrorInfo> OnGetPartsMetadata;
+        public event ProtocolEventWithErrorsHandler<GetPartsMetadata, PartsMetadataInfo, ErrorInfo> OnGetPartsMetadata;
 
         /// <summary>
         /// Handles the GetParts message from a customer.
@@ -213,7 +213,25 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="message">The PutParts message.</param>
         protected virtual void HandlePutParts(IMessageHeader header, PutParts message)
         {
-            Notify(OnPutParts, header, message);
+            var args = Notify(OnPutParts, header, message, new Dictionary<string, ErrorInfo>());
+            if (args.Cancel)
+                return;
+
+            if (!HandlePutParts(header, message, args.Errors))
+                return;
+
+            SendMultipartResponse(header, message, args.Errors);
+        }
+
+        /// <summary>
+        /// Handles the PutParts message from a customer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="errors">The errors.</param>
+        protected virtual bool HandlePutParts(IMessageHeader header, PutParts message, IDictionary<string, ErrorInfo> errors)
+        {
+            return true;
         }
 
         /// <summary>
@@ -223,7 +241,24 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="message">The DeleteParts message.</param>
         protected virtual void HandleDeleteParts(IMessageHeader header, DeleteParts message)
         {
-            Notify(OnDeleteParts, header, message);
+            var args = Notify(OnDeleteParts, header, message, new Dictionary<string, ErrorInfo>());
+            if (args.Cancel)
+                return;
+            if (!HandleDeleteParts(header, message, args.Errors))
+                return;
+
+            SendMultipartResponse(header, message, args.Errors);
+        }
+
+        /// <summary>
+        /// Handles the DeleteParts message from a customer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="errors">The errors.</param>
+        protected virtual bool HandleDeleteParts(IMessageHeader header, DeleteParts message, IDictionary<string, ErrorInfo> errors)
+        {
+            return true;
         }
 
         /// <summary>

@@ -81,7 +81,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
                 ServerSortOrder = sortOrder ?? string.Empty
             };
 
-            return Session.Send12MultipartResponse(header, response, objects, (m, i) => m.DataObjects = i);
+            return SendMultipartResponse(header, response, objects, (m, i) => m.DataObjects = i);
         }
 
         /// <summary>
@@ -128,7 +128,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <param name="header">The message header.</param>
         /// <param name="message">The message.</param>
         /// <param name="response">The response.</param>
-        protected virtual bool HandleFindObjects(IMessageHeader header, FindObjects findObjects, DataObjectResponse response)
+        protected virtual bool HandleFindObjects(IMessageHeader header, FindObjects message, DataObjectResponse response)
         {
             return true;
         }

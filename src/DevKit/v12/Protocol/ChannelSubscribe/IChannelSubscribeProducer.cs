@@ -35,7 +35,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Handles the GetChannelMetadata event from a consumer.
         /// </summary>
-        event ProtocolEventHandler<GetChannelMetadata, ChannelMetadataRecord, ErrorInfo> OnGetChannelMetadata;
+        event ProtocolEventWithErrorsHandler<GetChannelMetadata, ChannelMetadataRecord, ErrorInfo> OnGetChannelMetadata;
 
         /// <summary>
         /// Sends a GetChannelMetadataResponse message to a consumer.
@@ -49,7 +49,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Handles the SubscribeChannels event from a consumer.
         /// </summary>
-        event ProtocolEventHandler<SubscribeChannels> OnSubscribeChannels;
+        event ProtocolEventWithErrorsHandler<SubscribeChannels, ErrorInfo> OnSubscribeChannels;
 
         /// <summary>
         /// Sends a RealtimeData message to a consumer.
@@ -70,7 +70,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Handles the UnsubscribeChannels event from a consumer.
         /// </summary>
-        event ProtocolEventHandler<UnsubscribeChannels, long, ErrorInfo> OnUnsubscribeChannels;
+        event ProtocolEventWithErrorsHandler<UnsubscribeChannels, long, ErrorInfo> OnUnsubscribeChannels;
 
         /// <summary>
         /// Sends a SubscriptionsStopped message to a consumer.

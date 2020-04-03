@@ -34,7 +34,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <summary>
         /// Handles the OpenChannels event from a producer.
         /// </summary>
-        event ProtocolEventHandler<OpenChannels, OpenChannelInfo, ErrorInfo> OnOpenChannels;
+        event ProtocolEventWithErrorsHandler<OpenChannels, OpenChannelInfo, ErrorInfo> OnOpenChannels;
 
         /// <summary>
         /// Sends a OpenChannelsResponse message to a producer.

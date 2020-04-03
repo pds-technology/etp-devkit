@@ -64,7 +64,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the GetParts event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetParts, ObjectPart, ErrorInfo> OnGetParts;
+        event ProtocolEventWithErrorsHandler<GetParts, ObjectPart, ErrorInfo> OnGetParts;
 
         /// <summary>
         /// Handles the GetPartsByRange event from a customer.
@@ -74,12 +74,12 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the PutParts event from a customer.
         /// </summary>
-        event ProtocolEventHandler<PutParts> OnPutParts;
+        event ProtocolEventWithErrorsHandler<PutParts, ErrorInfo> OnPutParts;
 
         /// <summary>
         /// Handles the DeleteParts event from a customer.
         /// </summary>
-        event ProtocolEventHandler<DeleteParts> OnDeleteParts;
+        event ProtocolEventWithErrorsHandler<DeleteParts, ErrorInfo> OnDeleteParts;
 
         /// <summary>
         /// Handles the DeletePartsByRange event from a customer.
@@ -94,6 +94,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the GetPartsMetadata event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetPartsMetadata, PartsMetadataInfo, ErrorInfo> OnGetPartsMetadata;
+        event ProtocolEventWithErrorsHandler<GetPartsMetadata, PartsMetadataInfo, ErrorInfo> OnGetPartsMetadata;
     }
 }

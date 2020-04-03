@@ -64,7 +64,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
                 Format = format ?? "xml",
             };
 
-            return Session.Send12MultipartResponse(header, message, parts, (m, i) => m.Parts = i);
+            return SendMultipartResponse(header, message, parts, (m, i) => m.Parts = i);
         }
 
         /// <summary>
@@ -85,7 +85,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
                 ChangeTime = changeTime
             };
 
-            return Session.Send12MultipartResponse(header, message, uids, (m, i) => m.Uids = i);
+            return SendMultipartResponse(header, message, uids, (m, i) => m.Uids = i);
         }
 
         /// <summary>
@@ -137,7 +137,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
                 Format = format ?? "xml",
             };
 
-            return Session.Send12MultipartResponse(header, message, parts, (m, i) => m.Parts = i);
+            return SendMultipartResponse(header, message, parts, (m, i) => m.Parts = i);
         }
 
         /// <summary>

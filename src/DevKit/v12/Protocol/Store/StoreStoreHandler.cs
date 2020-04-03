@@ -58,23 +58,23 @@ namespace Energistics.Etp.v12.Protocol.Store
             {
             };
 
-            return Session.Send12MultipartResponse(header, response, dataObjects, errors, (m, i) => m.DataObjects = i);
+            return SendMultipartResponse(header, response, dataObjects, errors, (m, i) => m.DataObjects = i);
         }
 
         /// <summary>
         /// Handles the GetDataObjects event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetDataObjects, DataObject, ErrorInfo> OnGetDataObjects;
+        public event ProtocolEventWithErrorsHandler<GetDataObjects, DataObject, ErrorInfo> OnGetDataObjects;
 
         /// <summary>
         /// Handles the PutDataObjects event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<PutDataObjects> OnPutDataObjects;
+        public event ProtocolEventWithErrorsHandler<PutDataObjects, ErrorInfo> OnPutDataObjects;
 
         /// <summary>
         /// Handles the DeleteDataObjects event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<DeleteDataObjects> OnDeleteDataObjects;
+        public event ProtocolEventWithErrorsHandler<DeleteDataObjects, ErrorInfo> OnDeleteDataObjects;
 
         /// <summary>
         /// Sends a Chunk message to a customer.
@@ -135,20 +135,56 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// Handles the PutDataObjects message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="putDataObjects">The PutDataObjects message.</param>
-        protected virtual void HandlePutDataObjects(IMessageHeader header, PutDataObjects putDataObjects)
+        /// <param name="message">The PutDataObjects message.</param>
+        protected virtual void HandlePutDataObjects(IMessageHeader header, PutDataObjects message)
         {
-            Notify(OnPutDataObjects, header, putDataObjects);
+            var args = Notify(OnPutDataObjects, header, message, new Dictionary<string, ErrorInfo>());
+            if (args.Cancel)
+                return;
+
+            if (!HandlePutDataObjects(header, message, args.Errors))
+                return;
+
+            SendMultipartResponse(header, message, args.Errors);
+        }
+
+        /// <summary>
+        /// Handles the PutParts message from a customer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="errors">The errors.</param>
+        protected virtual bool HandlePutDataObjects(IMessageHeader header, PutDataObjects message, IDictionary<string, ErrorInfo> errors)
+        {
+            return true;
         }
 
         /// <summary>
         /// Handles the DeleteDataObjects message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="deleteDataObjects">The DeleteDataObjects message.</param>
-        protected virtual void HandleDeleteDataObjects(IMessageHeader header, DeleteDataObjects deleteDataObjects)
+        /// <param name="message">The DeleteDataObjects message.</param>
+        protected virtual void HandleDeleteDataObjects(IMessageHeader header, DeleteDataObjects message)
         {
-            Notify(OnDeleteDataObjects, header, deleteDataObjects);
+            var args = Notify(OnDeleteDataObjects, header, message, new Dictionary<string, ErrorInfo>());
+            if (args.Cancel)
+                return;
+
+            if (!HandleDeleteDataObjects(header, message, args.Errors))
+                return;
+
+            SendMultipartResponse(header, message, args.Errors);
+        }
+
+        /// <summary>
+        /// Handles the DeleteDataObjects message from a customer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="errors">The errors.</param>
+        protected virtual bool HandleDeleteDataObjects(IMessageHeader header, DeleteDataObjects message, IDictionary<string, ErrorInfo> errors)
+        {
+            return true;
         }
 
         /// <summary>

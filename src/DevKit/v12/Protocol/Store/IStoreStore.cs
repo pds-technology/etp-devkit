@@ -44,17 +44,17 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <summary>
         /// Handles the GetDataObjects event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetDataObjects, DataObject, ErrorInfo> OnGetDataObjects;
+        event ProtocolEventWithErrorsHandler<GetDataObjects, DataObject, ErrorInfo> OnGetDataObjects;
 
         /// <summary>
         /// Handles the PutDataObjects event from a customer.
         /// </summary>
-        event ProtocolEventHandler<PutDataObjects> OnPutDataObjects;
+        event ProtocolEventWithErrorsHandler<PutDataObjects, ErrorInfo> OnPutDataObjects;
 
         /// <summary>
         /// Handles the DeleteDataObjects event from a customer.
         /// </summary>
-        event ProtocolEventHandler<DeleteDataObjects> OnDeleteDataObjects;
+        event ProtocolEventWithErrorsHandler<DeleteDataObjects, ErrorInfo> OnDeleteDataObjects;
 
         /// <summary>
         /// Sends a Chunk message to a customer.

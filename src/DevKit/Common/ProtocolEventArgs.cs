@@ -88,14 +88,39 @@ namespace Energistics.Etp.Common
         public TContext Context { get; }
     }
 
+    /// <summary>
+    /// Provides data for protocol handler events that can report errors.
+    /// </summary>
+    /// <typeparam name="T">The type of the message.</typeparam>
+    /// <typeparam name="TErrorInfo">The type of the error info.</typeparam>
+    /// <seealso cref="System.EventArgs" />
+    public class ProtocolEventWithErrorsArgs<T, TErrorInfo> : ProtocolEventArgs<T> where T : ISpecificRecord
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ProtocolEventArgs{T, TContext}"/> class.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message body.</param>
+        /// <param name="context">The additional message context.</param>
+        public ProtocolEventWithErrorsArgs(IMessageHeader header, T message, IDictionary<string, TErrorInfo> errors) : base(header, message)
+        {
+            Errors = errors;
+        }
+
+        /// <summary>
+        /// Gets the errors.
+        /// </summary>
+        public IDictionary<string, TErrorInfo> Errors { get; }
+    }
 
     /// <summary>
-    /// Provides data for protocol handler events.
+    /// Provides data for protocol handler events that can report errors.
     /// </summary>
     /// <typeparam name="T">The type of the message.</typeparam>
     /// <typeparam name="TContext">The type of the context.</typeparam>
+    /// <typeparam name="TErrorInfo">The type of the error info.</typeparam>
     /// <seealso cref="System.EventArgs" />
-    public class ProtocolEventArgs<T, TContext, TErrorInfo> : ProtocolEventArgs<T, IDictionary<string, TContext>>
+    public class ProtocolEventWithErrorsArgs<T, TContext, TErrorInfo> : ProtocolEventArgs<T, IDictionary<string, TContext>>
         where T : ISpecificRecord
         where TErrorInfo : IErrorInfo
     {
@@ -106,7 +131,7 @@ namespace Energistics.Etp.Common
         /// <param name="message">The message body.</param>
         /// <param name="context">The additional message context.</param>
         /// <param name="errors">The errors.</param>
-        public ProtocolEventArgs(IMessageHeader header, T message, IDictionary<string, TContext> context, IDictionary<string, TErrorInfo> errors)
+        public ProtocolEventWithErrorsArgs(IMessageHeader header, T message, IDictionary<string, TContext> context, IDictionary<string, TErrorInfo> errors)
             : base(header, message, context)
         {
             Errors = errors;

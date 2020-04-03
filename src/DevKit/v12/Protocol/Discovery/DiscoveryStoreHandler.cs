@@ -71,7 +71,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
             var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse, request.MessageId);
             var response = new GetResourcesResponse();
 
-            return Session.Send12MultipartResponse(header, response, resources, (m, i) => m.Resources = i);
+            return SendMultipartResponse(header, response, resources, (m, i) => m.Resources = i);
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
             if (args.Cancel)
                 return;
 
-            if (!HandleGetGraphResources(header, message, args.Context))
+            if (!HandleGetResources(header, message, args.Context))
                 return;
 
             GetResourcesResponse(header, args.Context);
@@ -102,7 +102,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// <param name="header">The message header.</param>
         /// <param name="message">The message.</param>
         /// <param name="response">The response.</param>
-        protected virtual bool HandleGetGraphResources(IMessageHeader header, GetResources message, IList<Resource> response)
+        protected virtual bool HandleGetResources(IMessageHeader header, GetResources message, IList<Resource> response)
         {
             return true;
         }

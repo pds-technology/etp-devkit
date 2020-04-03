@@ -229,12 +229,13 @@ namespace Energistics.Etp.Common
         /// Initializes a <see cref="IErrorInfo"/> instance for an invalid object.
         /// </summary>
         /// <param name="uri">The URI.</param>
+        /// <param name="message">The optional error message.</param>
         /// <returns>The initialized <see cref="IErrorInfo"/> instance.</returns>
-        public static TErrorInfo InvalidObject<TErrorInfo>(this TErrorInfo errorInfo, string uri)
+        public static TErrorInfo InvalidObject<TErrorInfo>(this TErrorInfo errorInfo, string uri, string message = null)
             where TErrorInfo : IErrorInfo
         {
             return errorInfo.Set(EtpErrorCodes.InvalidObject,
-                                 $"Invalid Object. URI: {uri}");
+                                 $"Invalid Object. URI: {uri}{(message == null ? string.Empty : $"; {message}")}");
         }
 
         /// <summary>

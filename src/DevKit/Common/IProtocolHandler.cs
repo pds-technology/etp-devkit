@@ -86,12 +86,11 @@ namespace Energistics.Etp.Common
         long Acknowledge(long correlationId, MessageFlags messageFlag = MessageFlags.None);
 
         /// <summary>
-        /// Sends a ProtocolException message with the specified error code, message and correlation identifier.
+        /// Sends a ProtocolException message with the specified exception details.
         /// </summary>
-        /// <param name="errorInfo">The error info.</param>
-        /// <param name="correlationId">The correlation identifier.</param>
+        /// <param name="exception">The ETP exception.</param>
         /// <returns>The message identifier.</returns>
-        long ProtocolException(IErrorInfo errorInfo, long correlationId = 0);
+        long ProtocolException(EtpException exception);
 
         /// <summary>
         /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.

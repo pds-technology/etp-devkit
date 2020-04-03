@@ -33,6 +33,15 @@ namespace Energistics.Etp.Common
     /// Represents the method that will handle a protocol handler event.
     /// </summary>
     /// <typeparam name="T">The type of the message.</typeparam>
+    /// <typeparam name="TErrorInfo">The type of error info.</typeparam>
+    /// <param name="sender">The sender.</param>
+    /// <param name="e">The <see cref="ProtocolEventWithErrorsArgs{T, E}"/> instance containing the event data.</param>
+    public delegate void ProtocolEventWithErrorsHandler<T, TErrorInfo>(object sender, ProtocolEventWithErrorsArgs<T, TErrorInfo> e) where T : ISpecificRecord;
+
+    /// <summary>
+    /// Represents the method that will handle a protocol handler event.
+    /// </summary>
+    /// <typeparam name="T">The type of the message.</typeparam>
     /// <typeparam name="TContext">The type of the context.</typeparam>
     /// <param name="sender">The sender.</param>
     /// <param name="e">The <see cref="ProtocolEventArgs{T, V}"/> instance containing the event data.</param>
@@ -45,8 +54,8 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TContext">The type of the context.</typeparam>
     /// <typeparam name="TErrorInfo">The type of error info.</typeparam>
     /// <param name="sender">The sender.</param>
-    /// <param name="e">The <see cref="ProtocolEventArgs{T, V, E}"/> instance containing the event data.</param>
-    public delegate void ProtocolEventHandler<T, TContext, TErrorInfo>(object sender, ProtocolEventArgs<T, TContext, TErrorInfo> e)
+    /// <param name="e">The <see cref="ProtocolEventWithErrorsArgs{T, V, E}"/> instance containing the event data.</param>
+    public delegate void ProtocolEventWithErrorsHandler<T, TContext, TErrorInfo>(object sender, ProtocolEventWithErrorsArgs<T, TContext, TErrorInfo> e)
         where T : ISpecificRecord
         where TErrorInfo : IErrorInfo;
 }

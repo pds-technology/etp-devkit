@@ -45,7 +45,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <summary>
         /// Handles the OpenChannels event from a store.
         /// </summary>
-        public event ProtocolEventHandler<OpenChannels, OpenChannelInfo, ErrorInfo> OnOpenChannels;
+        public event ProtocolEventWithErrorsHandler<OpenChannels, OpenChannelInfo, ErrorInfo> OnOpenChannels;
 
         /// <summary>
         /// Sends a OpenChannelsResponse message to a store.
@@ -62,7 +62,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
             {
             };
 
-            return Session.Send12MultipartResponse(header, message, channels, errors, (m, i) => m.Channels = i);
+            return SendMultipartResponse(header, message, channels, errors, (m, i) => m.Channels = i);
         }
 
         /// <summary>

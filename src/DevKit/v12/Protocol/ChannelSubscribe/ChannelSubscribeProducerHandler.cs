@@ -47,7 +47,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Handles the GetChannelMetadata event from a consumer.
         /// </summary>
-        public event ProtocolEventHandler<GetChannelMetadata, ChannelMetadataRecord, ErrorInfo> OnGetChannelMetadata;
+        public event ProtocolEventWithErrorsHandler<GetChannelMetadata, ChannelMetadataRecord, ErrorInfo> OnGetChannelMetadata;
 
         /// <summary>
         /// Sends a GetChannelMetadataResponse message to a consumer.
@@ -64,13 +64,13 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
             {
             };
 
-            return Session.Send12MultipartResponse(header, message, metadata, errors, (m, i) => m.Metadata = i);
+            return SendMultipartResponse(header, message, metadata, errors, (m, i) => m.Metadata = i);
         }
 
         /// <summary>
         /// Handles the SubscribeChannels event from a consumer.
         /// </summary>
-        public event ProtocolEventHandler<SubscribeChannels> OnSubscribeChannels;
+        public event ProtocolEventWithErrorsHandler<SubscribeChannels, ErrorInfo> OnSubscribeChannels;
 
         /// <summary>
         /// Sends a RealtimeData message to a consumer.
@@ -113,7 +113,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Handles the UnsubscribeChannels event from a consumer.
         /// </summary>
-        public event ProtocolEventHandler<UnsubscribeChannels, long, ErrorInfo> OnUnsubscribeChannels;
+        public event ProtocolEventWithErrorsHandler<UnsubscribeChannels, long, ErrorInfo> OnUnsubscribeChannels;
 
         /// <summary>
         /// Sends a SubscriptionsStopped message to a consumer.
@@ -129,7 +129,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
             {
             };
 
-            return Session.Send12MultipartResponse(header, message, channelIds, errors, (m, i) => m.ChannelIds = i);
+            return SendMultipartResponse(header, message, channelIds, errors, (m, i) => m.ChannelIds = i);
         }
 
         /// <summary>
@@ -193,10 +193,28 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// Handles the SubscribeChannels message from a consumer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="subscribeChannels">The SubscribeChannels message.</param>
-        protected virtual void HandleSubscribeChannels(IMessageHeader header, SubscribeChannels subscribeChannels)
+        /// <param name="message">The SubscribeChannels message.</param>
+        protected virtual void HandleSubscribeChannels(IMessageHeader header, SubscribeChannels message)
         {
-            Notify(OnSubscribeChannels, header, subscribeChannels);
+            var args = Notify(OnSubscribeChannels, header, message, new Dictionary<string, ErrorInfo>());
+            if (args.Cancel)
+                return;
+
+            if (!HandleSubscribeChannels(header, message, args.Errors))
+                return;
+
+            SendMultipartResponse(header, message, args.Errors);
+        }
+
+        /// <summary>
+        /// Handles the SubscribeChannels message from a consumer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="errors">The errors.</param>
+        protected virtual bool HandleSubscribeChannels(IMessageHeader header, SubscribeChannels message, IDictionary<string, ErrorInfo> errors)
+        {
+            return true;
         }
 
         /// <summary>

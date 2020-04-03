@@ -69,14 +69,14 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <returns>The message identifier.</returns>
         public virtual long FindResourcesResponse(IMessageHeader request, IList<Resource> resources, string sortOrder)
         {
-
             var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResourcesResponse, request.MessageId);
+
             var response = new FindResourcesResponse
             {
                 ServerSortOrder = string.Empty,
             };
 
-            return Session.Send12MultipartResponse(header, response, resources, (m, i) => m.Resources = i);
+            return SendMultipartResponse(header, response, resources, (m, i) => m.Resources = i);
         }
 
         /// <summary>
@@ -95,12 +95,10 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
             if (args.Cancel)
                 return;
 
-            HandleFindResources(header, message, args.Context);
+            if (!HandleFindResources(header, message, args.Context))
+                return;
 
-            if (!args.Cancel)
-            {
-                FindResourcesResponse(header, args.Context.Resources, args.Context.ServerSortOrder);
-            }
+            FindResourcesResponse(header, args.Context.Resources, args.Context.ServerSortOrder);
         }
 
         /// <summary>
@@ -109,8 +107,9 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <param name="header">The message header.</param>
         /// <param name="message">The message.</param>
         /// <param name="response">The response.</param>
-        protected virtual void HandleFindResources(IMessageHeader header, FindResources message, ResourceResponse response)
+        protected virtual bool HandleFindResources(IMessageHeader header, FindResources message, ResourceResponse response)
         {
+            return true;
         }
     }
 }

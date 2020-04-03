@@ -18,13 +18,16 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
 using Avro.IO;
 using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Datatypes.Object;
+using log4net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -400,110 +403,37 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
-        /// Sends an ETP 1.2 multipart response for item maps including possible errors.
+        /// Converts this <see cref="IErrorInfo"/> to an error message.
         /// </summary>
-        /// <typeparam name="TMessage">The type of the message being sent.</typeparam>
-        /// <typeparam name="TItem">The type of map item.</typeparam>
-        /// <param name="session">The session to send the responses on.</param>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="items">The items to send.</param>
-        /// <param name="errors">The errors to send, if any.</param>
-        /// <param name="setItems">The action to use to update the message with the specified items.</param>
-        public static long Send12MultipartResponse<TMessage, TItem>(this IEtpSession session, IMessageHeader header, TMessage message, IDictionary<string, TItem> items, IDictionary<string, v12.Datatypes.ErrorInfo> errors, Action<TMessage, IDictionary<string, TItem>> setItems)
-            where TMessage : ISpecificRecord
+        /// <param name="errorInfo">The <see cref="IErrorInfo"/> instance to convert to an error message.</param>
+        /// <param name="ex">The exception to include, if any.</param>
+        public static string ToErrorMessage(this IErrorInfo errorInfo)
         {
-            header.MessageFlags = (int)MessageFlags.MultiPart;
-
-            var messageId = 0L;
-
-            if (items.Count == 0)
+            object error = $"Error {errorInfo.Code}";
+            if (Enum.IsDefined(typeof(EtpErrorCodes), errorInfo.Code))
             {
-                var isFinal = errors.Count == 0;
-                if (isFinal)
-                    header.MessageFlags = (int)MessageFlags.MultiPartAndFinalPart;
+                var value = (EtpErrorCodes)errorInfo.Code;
+                FieldInfo fi = typeof(EtpErrorCodes).GetField(value.ToString());
 
-                setItems(message, new Dictionary<string, TItem>());
-
-                messageId = session.SendMessage(header, message);
+                DescriptionAttribute description = (DescriptionAttribute)fi.GetCustomAttributes(typeof(DescriptionAttribute), false).FirstOrDefault();
+                error = description?.Description ?? error;
             }
 
-            var count = 0;
-            foreach (var kvp in items)
-            {
-                var isFinal = errors.Count == 0 && count == items.Count - 1;
-                if (isFinal)
-                    header.MessageFlags = (int)MessageFlags.MultiPartAndFinalPart;
-
-                count++;
-
-                setItems(message, new Dictionary<string, TItem> { [kvp.Key] = kvp.Value });
-
-                messageId = session.SendMessage(header, message);
-            }
-
-            header.MessageType = Convert.ToInt32(v12.MessageTypes.Core.ProtocolException);
-
-            var exception = new v12.Protocol.Core.ProtocolException();
-
-            count = 0;
-            foreach (var kvp in errors)
-            {
-                var isFinal = count == errors.Count - 1;
-                if (isFinal)
-                    header.MessageFlags = (int)MessageFlags.MultiPartAndFinalPart;
-
-                count++;
-
-                exception.Errors = new Dictionary<string, v12.Datatypes.ErrorInfo> { [kvp.Key] = kvp.Value };
-
-                messageId = session.SendMessage(header, exception);
-            }
-
-            return messageId;
+            return $"{error}: {errorInfo.Message}";
         }
 
         /// <summary>
-        /// Sends an ETP 1.2 multipart response for a list of items.
+        /// Logs information from the specified <see cref="IErrorInfo"/> instance.
         /// </summary>
-        /// <typeparam name="TMessage">The type of the message being sent.</typeparam>
-        /// <typeparam name="TItem">The type of item.</typeparam>
-        /// <param name="session">The session to send the responses on.</param>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="items">The items to send.</param>
-        /// <param name="setItems">The action to use to update the message with the specified items.</param>
-        public static long Send12MultipartResponse<TMessage, TItem>(this IEtpSession session, IMessageHeader header, TMessage message, IList<TItem> items, Action<TMessage, IList<TItem>> setItems)
-            where TMessage : ISpecificRecord
+        /// <param name="logger">The logger to use.</param>
+        /// <param name="errorInfo">The <see cref="IErrorInfo"/> instance to log to.</param>
+        /// <param name="ex">The exception to log, if any.</param>
+        public static void LogErrorInfo(this ILog logger, IErrorInfo errorInfo, Exception ex = null)
         {
-            header.MessageFlags = (int)MessageFlags.MultiPart;
-
-            var messageId = 0L;
-
-            if (items.Count == 0)
-            {
-                header.MessageFlags = (int)MessageFlags.MultiPartAndFinalPart;
-
-                setItems(message, new List<TItem>());
-
-                messageId = session.SendMessage(header, message);
-            }
-
-            var count = 0;
-            for (int i = 0; i < items.Count; i++)
-            {
-                var isFinal = i == items.Count - 1;
-                if (isFinal)
-                    header.MessageFlags = (int)MessageFlags.MultiPartAndFinalPart;
-
-                count++;
-
-                setItems(message, new List<TItem> { items[i] });
-
-                messageId = session.SendMessage(header, message);
-            }
-
-            return messageId;
+            if (ex == null)
+                logger.Debug(errorInfo.ToErrorMessage());
+            else
+                logger.Debug(errorInfo.ToErrorMessage(), ex);
         }
     }
 }

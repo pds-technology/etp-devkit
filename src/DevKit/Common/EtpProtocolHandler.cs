@@ -104,29 +104,15 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
-        /// Sends a ProtocolException message with the specified error code, message and correlation identifier.
+        /// Sends a ProtocolException message with the specified exception details.
         /// </summary>
-        /// <param name="errorCode">The error code.</param>
-        /// <param name="errorMessage">The error message.</param>
-        /// <param name="correlationId">The correlation identifier.</param>
+        /// <param name="exception">The ETP exception.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long ProtocolException(int errorCode, string errorMessage, long correlationId = 0)
+        public virtual long ProtocolException(EtpException exception)
         {
-            var errorInfo = Session.Adapter.CreateErrorInfo().Set(errorCode, errorMessage);
-            return ProtocolException(errorInfo, correlationId);
-        }
+            var header = CreateMessageHeader(Protocol, v11.MessageTypes.Core.ProtocolException, exception.CorrelationId);
 
-        /// <summary>
-        /// Sends a ProtocolException message with the specified error code, message and correlation identifier.
-        /// </summary>
-        /// <param name="errorInfo">The error info.</param>
-        /// <param name="correlationId">The correlation identifier.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long ProtocolException(IErrorInfo errorInfo, long correlationId = 0)
-        {
-            var header = CreateMessageHeader(Protocol, v11.MessageTypes.Core.ProtocolException, correlationId);
-
-            var error = Session.Adapter.CreateProtocolException(errorInfo);
+            var error = Session.Adapter.CreateProtocolException(exception.ErrorInfo);
 
             return Session.SendMessage(header, error);
         }
@@ -221,18 +207,38 @@ namespace Energistics.Etp.Common
         /// Notifies subscribers of the specified event handler.
         /// </summary>
         /// <typeparam name="T">The type of the message.</typeparam>
+        /// <typeparam name="TErrorInfo">The error info type.</typeparam>
+        /// <param name="handler">The message handler.</param>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message body.</param>
+        /// <param name="errors">The errors, if any.</param>
+        /// <returns>The protocol event args.</returns>
+        protected ProtocolEventWithErrorsArgs<T, TErrorInfo> Notify<T, TErrorInfo>(ProtocolEventWithErrorsHandler<T, TErrorInfo> handler, IMessageHeader header, T message, IDictionary<string, TErrorInfo> errors)
+            where T : ISpecificRecord
+            where TErrorInfo : IErrorInfo
+        {
+            var args = new ProtocolEventWithErrorsArgs<T, TErrorInfo>(header, message, errors);
+            handler?.Invoke(this, args);
+            return args;
+        }
+
+        /// <summary>
+        /// Notifies subscribers of the specified event handler.
+        /// </summary>
+        /// <typeparam name="T">The type of the message.</typeparam>
         /// <typeparam name="TContext">The type of the context.</typeparam>
         /// <typeparam name="TErrorInfo">The error info type.</typeparam>
         /// <param name="handler">The message handler.</param>
         /// <param name="header">The message header.</param>
         /// <param name="message">The message body.</param>
         /// <param name="context">The message context.</param>
+        /// <param name="errors">The errors, if any.</param>
         /// <returns>The protocol event args.</returns>
-        protected ProtocolEventArgs<T, TContext, TErrorInfo> Notify<T, TContext, TErrorInfo>(ProtocolEventHandler<T, TContext, TErrorInfo> handler, IMessageHeader header, T message, IDictionary<string, TContext> context, IDictionary<string, TErrorInfo> errors)
+        protected ProtocolEventWithErrorsArgs<T, TContext, TErrorInfo> Notify<T, TContext, TErrorInfo>(ProtocolEventWithErrorsHandler<T, TContext, TErrorInfo> handler, IMessageHeader header, T message, IDictionary<string, TContext> context, IDictionary<string, TErrorInfo> errors)
             where T : ISpecificRecord
             where TErrorInfo : IErrorInfo
         {
-            var args = new ProtocolEventArgs<T, TContext, TErrorInfo>(header, message, context, errors);
+            var args = new ProtocolEventWithErrorsArgs<T, TContext, TErrorInfo>(header, message, context, errors);
             handler?.Invoke(this, args);
             return args;
         }

@@ -78,7 +78,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
                 Format = format ?? "xml",
             };
 
-            return Session.Send12MultipartResponse(header, response, parts, (m, i) => m.Parts = i);
+            return SendMultipartResponse(header, response, parts, (m, i) => m.Parts = i);
         }
 
         /// <summary>
