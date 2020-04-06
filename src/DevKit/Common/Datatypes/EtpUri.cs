@@ -127,12 +127,23 @@ namespace Energistics.Etp.Common.Datatypes
             IsFolderUri = WasGroupMatched(uriMatch, Definition.FolderUriGroup);
             IsHierarchicalUri = WasGroupMatched(uriMatch, Definition.HierarchicalUriGroup) || WasGroupMatched(uriMatch, Definition.TemplateUriGroup);
 
-            IsCanonicalUri = WasGroupMatched(uriMatch, Definition.CanonicalUriGroup)
+            HasEmptyObjectId = WasGroupMatched(uriMatch, Definition.EmptyIdGroup);
+
+            var canonical = WasGroupMatched(uriMatch, Definition.CanonicalUriGroup)
                                 || (IsObjectUri && NamespaceVersion.StartsWith("1")); // Special case for 1.x URIs.
+
+            if (WasGroupMatched(uriMatch, Definition.DataspaceGroup) && string.IsNullOrEmpty(Dataspace)) // Disallow eml:///dataspace()
+                canonical = false;
+            if (HasEmptyObjectId || WasGroupMatched(uriMatch, Definition.EmptyVersionGroup)) // Disallow empty object IDs or empty object versions
+                canonical = false;
+
+            IsCanonicalUri = canonical;
 
             IsAlternateUri = !IsCanonicalUri; // Allow for special cases.
             IsHierarchicalUri = WasGroupMatched(uriMatch, Definition.HierarchicalUriGroup);
-            IsTemplateUri = WasGroupMatched(uriMatch, Definition.FolderUriGroup) || WasGroupMatched(uriMatch, Definition.TemplateUriGroup);
+            IsFolderTemplateUri = WasGroupMatched(uriMatch, Definition.FolderUriGroup) || WasGroupMatched(uriMatch, Definition.FolderTemplateUriGroup);
+            IsObjectTemplateUri = WasGroupMatched(uriMatch, Definition.ObjectTemplateUriGroup);
+            IsTemplateUri = IsFolderTemplateUri || IsObjectTemplateUri;
 
             if (IsBaseUri)
                 UriBase = UriWithoutSuffix;
@@ -351,10 +362,24 @@ namespace Energistics.Etp.Common.Datatypes
 
         /// <summary>
         /// Gets a value indicating whether this instance is a template URI.
-        /// Template object URIs have more than one path segment that is a folder.
+        /// Template URIs have more than one path segment that is a folder.
         /// </summary>
         /// <value><c>true</c> if this instance is a template URI; otherwise, <c>false</c>.</value>
         public bool IsTemplateUri { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is an object template URI.
+        /// Object template URIs are template URIs that end with an object.
+        /// </summary>
+        /// <value><c>true</c> if this instance is an object template URI; otherwise, <c>false</c>.</value>
+        public bool IsObjectTemplateUri { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is an folder template URI.
+        /// Folder template URIs are template URIs that end with a folder.
+        /// </summary>
+        /// <value><c>true</c> if this instance is a folder template URI; otherwise, <c>false</c>.</value>
+        public bool IsFolderTemplateUri { get; }
 
         /// <summary>
         /// Gets a value indicating whether this instance has a query.
@@ -367,6 +392,19 @@ namespace Energistics.Etp.Common.Datatypes
         /// </summary>
         /// <value><c>true</c> if this instance has a hash; <c>false</c> otherwise.</value>
         public bool HasHash => !string.IsNullOrEmpty(Hash);
+
+        /// <summary>
+        /// Gets a value indicating whether this instance has a query or a hash.
+        /// </summary>
+        /// <value><c>true</c> if this instance has a query or a hash; <c>false</c> otherwise.</value>
+        public bool HasQueryOrHash => HasQuery || HasHash;
+
+        /// <summary>
+        /// Gets a value indicating whether this instance has one or more empty object IDs.
+        /// ETP 1.1 example: eml://witsml20/Well()
+        /// </summary>
+        /// <value><c>true</c> if this instance has one or more empty object IDs; <c>false</c> otherwise.</value>
+        public bool HasEmptyObjectId { get; }
 
         /// <summary>
         /// Gets the parent URI.
@@ -605,9 +643,11 @@ namespace Energistics.Etp.Common.Datatypes
             if (!IsValid || IsCanonicalUri)
                 return this;
 
+
             if (IsBaseUri) // Alternate Base URI
             {
-                return new EtpUri(UriBase);
+                var @base = CreateBaseUri(EtpVersion, NamespaceFamily, NamespaceVersion, Dataspace);
+                return new EtpUri(@base);
             }
             else if (ObjectId == null) // Query or Template URI
             {
@@ -616,21 +656,23 @@ namespace Energistics.Etp.Common.Datatypes
                 if (segments.Count > 1 && segments[segments.Count - 2].ObjectId != null)
                 {
                     var s = segments[segments.Count - 2];
-                    var Base = CreateBaseUri(EtpVersion, s.Family, s.Version, Dataspace);
-                    canonical = new EtpUri($"{Base}{Query}");
-                    canonical = canonical.Append(s.Family, s.Version, s.ObjectType, s.ObjectId, s.ObjectVersion, encode);
+                    var @base = CreateBaseUri(EtpVersion, s.Family, s.Version, Dataspace);
+                    canonical = new EtpUri($"{@base}{Query}");
+                    var objectVersion = string.IsNullOrEmpty(s.ObjectVersion) ? null : s.ObjectVersion;
+                    canonical = canonical.Append(s.Family, s.Version, s.ObjectType, s.ObjectId, objectVersion, encode);
                 }
                 else
                 {
-                    var Base = CreateBaseUri(EtpVersion, Family, Version, Dataspace);
-                    canonical = new EtpUri($"{Base}{Query}");
+                    var @base = CreateBaseUri(EtpVersion, Family, Version, Dataspace);
+                    canonical = new EtpUri($"{@base}{Query}");
                 }
                 return canonical.Append(Family, Version, ObjectType, null, null, encode);
             }
             else // Object URI
             {
-                var Base = CreateBaseUri(EtpVersion, Family, Version, Dataspace);
-                return new EtpUri(Base).Append(Family, Version, ObjectType, ObjectId, ObjectVersion, encode);
+                var @base = CreateBaseUri(EtpVersion, Family, Version, Dataspace);
+                var objectVersion = string.IsNullOrEmpty(ObjectVersion) ? null : ObjectVersion;
+                return new EtpUri(@base).Append(Family, Version, ObjectType, ObjectId, objectVersion, encode);
             }
         }
 

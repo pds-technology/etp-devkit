@@ -25,7 +25,7 @@ namespace Energistics.Etp.Common.Datatypes
     [TestClass]
     public class EtpUriTestBase
     {
-        public void AssertUri(EtpUri uri, bool IsValid, EtpVersion EtpVersion, bool IsRootUri = false, bool IsDataspaceUri = false, bool IsFamilyVersionUri = false, bool IsObjectUri = false, bool IsQueryUri = false, bool IsFolderUri = false, bool IsBaseUri = false, bool IsCanonicalUri = false, bool IsAlternateUri = false, bool IsHierarchicalUri = false, bool IsTemplateUri = false, bool HasQuery = false, bool HasHash = false)
+        public void AssertUri(EtpUri uri, bool IsValid, EtpVersion EtpVersion, bool IsRootUri = false, bool IsDataspaceUri = false, bool IsFamilyVersionUri = false, bool IsObjectUri = false, bool IsQueryUri = false, bool IsFolderUri = false, bool IsBaseUri = false, bool IsCanonicalUri = false, bool IsAlternateUri = false, bool IsHierarchicalUri = false, bool IsTemplateUri = false, bool IsObjectTemplateUri = false, bool IsFolderTemplateUri = false, bool HasEmptyObjectId = false, bool HasQuery = false, bool HasHash = false)
         {
             Assert.AreEqual(IsValid, uri.IsValid, $"IsValid: {uri}");
             if (!uri.IsValid)
@@ -48,6 +48,9 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.AreEqual(IsAlternateUri, uri.IsAlternateUri, $"IsAlternateUri: {uri}");
             Assert.AreEqual(IsHierarchicalUri, uri.IsHierarchicalUri, $"IsHierarchicalUri: {uri}");
             Assert.AreEqual(IsTemplateUri, uri.IsTemplateUri, $"IsTemplateUri: {uri}");
+            Assert.AreEqual(IsObjectTemplateUri, uri.IsObjectTemplateUri, $"IsObjectTemplateUri: {uri}");
+            Assert.AreEqual(IsFolderTemplateUri, uri.IsFolderTemplateUri, $"IsFolderTemplateUri: {uri}");
+            Assert.AreEqual(HasEmptyObjectId, uri.HasEmptyObjectId, $"HasEmptyObjectId: {uri}");
             Assert.AreEqual(HasQuery, uri.HasQuery, $"HasQuery: {uri}");
             Assert.AreEqual(HasHash, uri.HasHash, $"HasHash: {uri}");
         }

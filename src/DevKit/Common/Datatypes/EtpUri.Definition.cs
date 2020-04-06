@@ -38,6 +38,8 @@ namespace Energistics.Etp.Common.Datatypes
             public static readonly string QueryGroup =                          "query";
             public static readonly string HashGroup =                           "hash";
             public static readonly string DataspaceGroup =                      "dataspace";
+            public static readonly string EmptyIdGroup =                        "emptyId";
+            public static readonly string EmptyVersionGroup =                   "emptyVersion";
 
             // URIs
 
@@ -48,6 +50,8 @@ namespace Energistics.Etp.Common.Datatypes
             public static readonly string HierarchicalUriGroup =                "hierarchicalUri";
             public static readonly string FolderUriGroup =                      "folderUri";
             public static readonly string QueryUriGroup =                       "queryUri";
+            public static readonly string ObjectTemplateUriGroup =              "objectTemplateUri";
+            public static readonly string FolderTemplateUriGroup =              "folderTemplateUri";
             public static readonly string TemplateUriGroup =                    "templateUri";
 
             public static readonly string CanonicalUriGroup =                   "canonicalUri";
@@ -59,9 +63,13 @@ namespace Energistics.Etp.Common.Datatypes
 
             private static readonly string FamilyAndShortVersion =              $@"(?:(?<{FamilyGroup}>witsml|resqml|prodml|eml)(?<{ShortVersionGroup}>\d\d))";
 
+            private static readonly string IdVersionChars =                     $@"[^ ?#),]";
+            private static readonly string ObjectId =                           $@"(?<{ObjectIdGroup}>{IdVersionChars}+|(?<{EmptyIdGroup}>{IdVersionChars}*))";
+            private static readonly string ObjectVersion =                      $@"(?<{ObjectVersionGroup}>{IdVersionChars}+|(?<{EmptyVersionGroup}>{IdVersionChars}*))";
+
             private static readonly string ObjectType =                         $@"(?:(?:obj_|cs_|part_)?(?<{ObjectTypeGroup}>\w+))";
-            private static readonly string ObjectId =                           $@"(?:\((?<{ObjectIdGroup}>[^ ?#),]+)\))";
-            private static readonly string ObjectIdAndVersion =                 $@"(?:\((?<{ObjectIdGroup}>[^ ?#),]+)(?:,(?<{ObjectVersionGroup}>[^?#)]*))?\))";
+            private static readonly string ObjectIdOnly =                       $@"(?:\({ObjectId}\))";
+            private static readonly string ObjectIdAndVersion =                 $@"(?:\({ObjectId}(?:,{ObjectVersion})?\))";
 
             private static readonly string Query =                              $@"(?:(?<{QueryGroup}>\?[^#]*))";
             private static readonly string Hash =                               $@"(?:(?<{HashGroup}>#.*))";
@@ -71,9 +79,9 @@ namespace Energistics.Etp.Common.Datatypes
             private static readonly string Etp12Root =                          $@"(?:eml:|eml://)";
 
             private static readonly string Etp11Dataspace =                     $@"(?:(?!witsml|resqml|prodml|eml)(?<{DataspaceGroup}>[^?#)/]+(?:/(?!witsml|resqml|prodml|eml)[^?#)/]+)*))";
-            private static readonly string Etp12Dataspace =                     $@"(?:dataspace\((?<{DataspaceGroup}>[^?#)]+)\))";
+            private static readonly string Etp12Dataspace =                     $@"(?:dataspace\((?<{DataspaceGroup}>[^?#)]*)\))";
 
-            private static readonly string Etp11Object =                        $@"(?<{ObjectOrFolderGroup}>{ObjectType}{ObjectId})";
+            private static readonly string Etp11Object =                        $@"(?<{ObjectOrFolderGroup}>{ObjectType}{ObjectIdOnly})";
             private static readonly string Etp12Object =                        $@"(?<{ObjectOrFolderGroup}>{FamilyAndShortVersion}\.{ObjectType}{ObjectIdAndVersion})";
 
             private static readonly string Etp11Folder =                        $@"(?<{ObjectOrFolderGroup}>{ObjectType})";
@@ -136,11 +144,11 @@ namespace Energistics.Etp.Common.Datatypes
 
             // Template URIs
 
-            private static readonly string Etp11FolderTemplateUri =             $@"(?<{FolderUriGroup}>{Etp11Base}(?:/{Etp11ObjectOrFolder})+/{Etp11Folder})";
-            private static readonly string Etp12FolderTemplateUri =             $@"(?<{FolderUriGroup}>{Etp12Base}(?:/{Etp12ObjectOrFolder})+/{Etp12Folder})";
+            private static readonly string Etp11FolderTemplateUri =             $@"(?<{FolderTemplateUriGroup}>{Etp11Base}(?:/{Etp11ObjectOrFolder})+/{Etp11Folder})";
+            private static readonly string Etp12FolderTemplateUri =             $@"(?<{FolderTemplateUriGroup}>{Etp12Base}(?:/{Etp12ObjectOrFolder})+/{Etp12Folder})";
 
-            private static readonly string Etp11ObjectTemplateUri =             $@"(?<{ObjectUriGroup}>{Etp11Base}(?:/{Etp11ObjectOrFolder})+/{Etp11Object})";
-            private static readonly string Etp12ObjectTemplateUri =             $@"(?<{ObjectUriGroup}>{Etp12Base}(?:/{Etp12ObjectOrFolder})+/{Etp12Object})";
+            private static readonly string Etp11ObjectTemplateUri =             $@"(?<{ObjectTemplateUriGroup}>{Etp11Base}(?:/{Etp11ObjectOrFolder})+/{Etp11Object})";
+            private static readonly string Etp12ObjectTemplateUri =             $@"(?<{ObjectTemplateUriGroup}>{Etp12Base}(?:/{Etp12ObjectOrFolder})+/{Etp12Object})";
 
             private static readonly string Etp11TemplateUri =                   $@"(?<{TemplateUriGroup}>{Etp11FolderTemplateUri}|{Etp11ObjectTemplateUri})";
             private static readonly string Etp12TemplateUri =                   $@"(?<{TemplateUriGroup}>{Etp12FolderTemplateUri}|{Etp12ObjectTemplateUri})";
@@ -157,7 +165,7 @@ namespace Energistics.Etp.Common.Datatypes
 
             // Complete Patterns
 
-            private static readonly string EtpRootUri =                         $@"(?:{Etp11RootUri}|{Etp12RootUri})";
+            private static readonly string EtpRootUri =                         $@"(?:^(?:{Etp11RootUri}|{Etp12RootUri})$)";
 
             private static readonly string Etp11Uri =                           $@"(?<{Etp11UriGroup}>{Etp11CanonicalUri}|{Etp11AlternateUri})";
             private static readonly string Etp12Uri =                           $@"(?<{Etp12UriGroup}>{Etp12CanonicalUri}|{Etp12AlternateUri})";

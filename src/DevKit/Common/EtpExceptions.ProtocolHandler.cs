@@ -25,7 +25,7 @@ namespace Energistics.Etp.Common
     /// <summary>
     /// Defines static helper methods that can be used to throw <see cref="EtpException"/> instances.
     /// </summary>
-    public static class EtpExceptions
+    public static partial class EtpExceptions
     {
         /// <summary>
         /// Sends a ProtocolException message for a unset type.

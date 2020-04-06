@@ -23,353 +23,321 @@ using Energistics.Etp.Common.Protocol.Core;
 namespace Energistics.Etp.Common
 {
     /// <summary>
-    /// Defines static helper methods that can be used to send <see cref="IProtocolException"/> messages.
+    /// Defines static helper methods that can be used to throw <see cref="EtpException"/> instances.
     /// </summary>
-    public static class EtpProtocolExceptions
+    public static partial class EtpExceptions
     {
         /// <summary>
         /// Sends a ProtocolException message for a unset type.
         /// </summary>
-        /// <param name="handler">The handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="header">The message header.</param>
         /// <returns>The message identifier.</returns>
-        public static long Unset(this IProtocolHandler handler, IMessageHeader header)
+        public static void UnsetException(this IEtpAdapter etpAdapter, IMessageHeader header)
         {
-            try { handler.UnsetException(header); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().Unset(header.MessageType);
+            throw new EtpException(errorInfo, header.MessageId);
         }
 
         /// <summary>
         /// Sends a ProtocolException message for a no role type.
         /// </summary>
-        /// <param name="handler">The handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="header">The message header.</param>
         /// <returns>The message identifier.</returns>
-        public static long NoRole(this IProtocolHandler handler, IMessageHeader header)
+        public static void NoRoleException(this IEtpAdapter etpAdapter, IMessageHeader header)
         {
-            try { handler.NoRoleException(header); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().NoRole(header.MessageType);
+            throw new EtpException(errorInfo, header.MessageId);
         }
 
         /// <summary>
         /// Sends a ProtocolException message for a no supported protocols type.
         /// </summary>
-        /// <param name="handler">The handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="header">The message header.</param>
         /// <returns>The message identifier.</returns>
-        public static long NoSupportedProtocols(this IProtocolHandler handler, IMessageHeader header)
+        public static void NoSupportedProtocolsException(this IEtpAdapter etpAdapter, IMessageHeader header)
         {
-            try { handler.NoSupportedProtocolsException(header); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().NoSupportedProtocols(header.MessageType);
+            throw new EtpException(errorInfo, header.MessageId);
         }
 
         /// <summary>
         /// Sends a ProtocolException message for an invalid message type.
         /// </summary>
-        /// <param name="handler">The handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="header">The message header.</param>
         /// <returns>The message identifier.</returns>
-        public static long InvalidMessage(this IProtocolHandler handler, IMessageHeader header)
+        public static void InvalidMessageException(this IEtpAdapter etpAdapter, IMessageHeader header)
         {
-            try { handler.InvalidMessageException(header); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().InvalidMessage(header.MessageType);
+            throw new EtpException(errorInfo, header.MessageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for an unsupported protocol.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long UnsupportedProtocol(this IProtocolHandler handler, object value, long messageId = 0)
+        public static void UnsupportedProtocolException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
-            try { handler.UnsupportedProtocolException(value, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().UnsupportedProtocol(value);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for an invalid argument.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long InvalidArgument(this IProtocolHandler handler, object value, long messageId = 0)
+        public static void InvalidArgumentException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
-            try { handler.InvalidArgumentException(value, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().InvalidArgument(value);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for permission denied.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long PermissionDenied(this IProtocolHandler handler, object value, long messageId = 0)
+        public static void PermissionDeniedException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
-            try { handler.PermissionDeniedException(value, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().PermissionDenied(value);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for not supported.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long NotSupported(this IProtocolHandler handler, object value, long messageId = 0)
+        public static void NotSupportedException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
-            try { handler.NotSupportedException(value, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().NotSupported(value);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for an invalid state.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long InvalidState(this IProtocolHandler handler, object value, long messageId = 0)
+        public static void InvalidStateException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
-            try { handler.InvalidStateException(value, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().InvalidState(value);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for an invalid URI.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long InvalidUri(this IProtocolHandler handler, object value, long messageId = 0)
+        public static void InvalidUriException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
-            try { handler.InvalidUriException(value, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().InvalidUri(value);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for an expired token.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long ExpiredToken(this IProtocolHandler handler, object value, long messageId = 0)
+        public static void ExpiredTokenException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
-            try { handler.ExpiredTokenException(value, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().ExpiredToken(value);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for object not found.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long NotFound(this IProtocolHandler handler, object value, long messageId = 0)
+        public static void NotFoundException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
-            try { handler.NotFoundException(value, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().NotFound(value);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for limit exceeded.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long LimitExceeded(this IProtocolHandler handler, object value, long messageId = 0)
+        public static void LimitExceededException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
-            try { handler.LimitExceededException(value, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().LimitExceeded(value);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException" /> message for compression not supported.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="requestedCompression">The requested compression.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException" /> message identifier.</returns>
-        public static long CompressionNotSupported(this IProtocolHandler handler, string requestedCompression, long messageId = 0)
+        public static void CompressionNotSupportedException(this IEtpAdapter etpAdapter, string requestedCompression, long messageId = 0)
         {
-            try { handler.CompressionNotSupportedException(requestedCompression, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().CompressionNotSupported(requestedCompression);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for an invalid object.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
-        /// <param name="exception">The exception.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
+        /// <param name="ex">The exception.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="message">The optional error message.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long InvalidObject(this IProtocolHandler handler, Exception exception, string uri, string message = null, long messageId = 0)
+        public static void InvalidObjectException(this IEtpAdapter etpAdapter, Exception ex, string uri, string message = null, long messageId = 0)
         {
-            try { handler.InvalidObjectException(exception, uri, message, messageId); }
-            catch (EtpException ex)
+            var errorInfo = etpAdapter.CreateErrorInfo().InvalidObject(uri, message);
+            if (ex != null)
             {
-                if (exception != null)
-                {
-                    (handler as EtpProtocolHandler)?.Logger?.LogErrorInfo(ex.ErrorInfo, ex);
-                }
-
-                return handler.ProtocolException(ex);
+                (etpAdapter as EtpProtocolHandler)?.Logger?.LogErrorInfo(errorInfo, ex);
             }
-            return 0;
+
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for an invalid ChannelId.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long InvalidChannelId(this IProtocolHandler handler, object value, long messageId = 0)
+        public static void InvalidChannelIdException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
-            try { handler.InvalidChannelIdException(value, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().InvalidChannelId(value);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for an unsupported object.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
-        /// <param name="exception">The exception.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
+        /// <param name="ex">The exception.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long UnsupportedObject(this IProtocolHandler handler, Exception exception, string uri, long messageId = 0)
+        public static void UnsupportedObjectException(this IEtpAdapter etpAdapter, Exception ex, string uri, long messageId = 0)
         {
-            try { handler.UnsupportedObjectException(exception, uri, messageId); }
-            catch (EtpException ex)
+            var errorInfo = etpAdapter.CreateErrorInfo().UnsupportedObject(uri);
+            if (ex != null)
             {
-                if (exception != null)
-                {
-                    (handler as EtpProtocolHandler)?.Logger?.LogErrorInfo(ex.ErrorInfo, ex);
-                }
-
-                return handler.ProtocolException(ex);
+                (etpAdapter as EtpProtocolHandler)?.Logger?.LogErrorInfo(errorInfo, ex);
             }
-            return 0;
+
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for an invalid object X.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
-        /// <param name="exception">The exception.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
+        /// <param name="ex">The exception.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long InvalidObjectX(this IProtocolHandler handler, Exception exception, string uri, long messageId = 0)
+        public static void InvalidObjectXException(this IEtpAdapter etpAdapter, Exception ex, string uri, long messageId = 0)
         {
-            try { handler.InvalidObjectXException(exception, uri, messageId); }
-            catch (EtpException ex)
+            var errorInfo = etpAdapter.CreateErrorInfo().InvalidObjectX(uri);
+            if (ex != null)
             {
-                if (exception != null)
-                {
-                    (handler as EtpProtocolHandler)?.Logger?.LogErrorInfo(ex.ErrorInfo, ex);
-                }
-
-                return handler.ProtocolException(ex);
+                (etpAdapter as EtpProtocolHandler)?.Logger?.LogErrorInfo(errorInfo, ex);
             }
-            return 0;
+
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for no cascade delete.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long NoCascadeDelete(this IProtocolHandler handler, string uri, long messageId = 0)
+        public static void NoCascadeDeleteException(this IEtpAdapter etpAdapter, string uri, long messageId = 0)
         {
-            try { handler.NoCascadeDeleteException(uri, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().NoCascadeDelete(uri);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for no plural object.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long NoPluralObject(this IProtocolHandler handler, string uri, long messageId = 0)
+        public static void NoPluralObjectException(this IEtpAdapter etpAdapter, string uri, long messageId = 0)
         {
-            try { handler.NoPluralObjectException(uri, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().NoPluralObject(uri);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for ignoring the growing portion.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long GrowingPortionIgnored(this IProtocolHandler handler, string uri, long messageId = 0)
+        public static void GrowingPortionIgnoredException(this IEtpAdapter etpAdapter, string uri, long messageId = 0)
         {
-            try { handler.GrowingPortionIgnoredException(uri, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().GrowingPortionIgnored(uri);
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for retention period exceeded.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long RetentionPeriodExceeded(this IProtocolHandler handler, long messageId = 0)
+        public static void RetentionPeriodExceededException(this IEtpAdapter etpAdapter, long messageId = 0)
         {
-            try { handler.RetentionPeriodExceededException(messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().RetentionPeriodExceeded();
+            throw new EtpException(errorInfo, messageId);
         }
 
         /// <summary>
         /// Sends a <see cref="IProtocolException"/> message for not growing object.
         /// </summary>
-        /// <param name="handler">The protocol handler.</param>
+        /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
         /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
-        public static long NotGrowingObject(this IProtocolHandler handler, string uri, long messageId = 0)
+        public static void NotGrowingObjectException(this IEtpAdapter etpAdapter, string uri, long messageId = 0)
         {
-            try { handler.NotGrowingObjectException(uri, messageId); }
-            catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            var errorInfo = etpAdapter.CreateErrorInfo().NotGrowingObject(uri);
+            throw new EtpException(errorInfo, messageId);
         }
     }
 }

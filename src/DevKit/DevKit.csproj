@@ -99,7 +99,8 @@
     <Compile Include="Common\EtpAdapterBase.cs" />
     <Compile Include="Common\EtpErrorInfos.cs" />
     <Compile Include="Common\EtpException.cs" />
-    <Compile Include="Common\EtpExceptions.cs" />
+    <Compile Include="Common\EtpExceptions.EtpAdapter.cs" />
+    <Compile Include="Common\EtpExceptions.ProtocolHandler.cs" />
     <Compile Include="Common\EtpProtocolExceptions.cs" />
     <Compile Include="Common\EtpWebServerBase.cs" />
     <Compile Include="Common\EtpBase.cs" />

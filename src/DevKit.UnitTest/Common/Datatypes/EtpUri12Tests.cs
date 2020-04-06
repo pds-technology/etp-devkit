@@ -461,7 +461,7 @@ namespace Energistics.Etp.Common.Datatypes
             uri11 = new EtpUri($"eml://some-data/space/witsml20/Well({uuid})");
             Assert.AreEqual(uri11, uri12.AsEtp11());
 
-            uri12 = new EtpUri($"eml:///dataspace(some-data/space)/witsml20.Well({uuid}, 1.0)");
+            uri12 = new EtpUri($"eml:///dataspace(some-data/space)/witsml20.Well({uuid},1.0)");
             uri11 = new EtpUri($"eml://some-data/space/witsml20/Well({uuid})");
             Assert.AreEqual(uri11, uri12.AsEtp11());
 
@@ -473,16 +473,22 @@ namespace Energistics.Etp.Common.Datatypes
             uri11 = new EtpUri($"eml://some-data/space/witsml20/Well({uuid})/Wellbore({uuid2})");
             Assert.AreEqual(uri11, uri12.AsEtp11());
 
-            uri12 = new EtpUri($"eml:///dataspace(some-data/space)/witsml20.Well({uuid})/eml21.DataAssuranceRecord({uuid2})");
-            uri11 = new EtpUri($"eml://some-data/space/witsml20/Well({uuid})/DataAssuranceRecord({uuid2})");
-            Assert.AreEqual(uri11, uri12.AsEtp11());
-
             uri12 = new EtpUri($"eml:///dataspace(some-data/space)/eml21.DataAssuranceRecord({uuid})");
             uri11 = new EtpUri($"eml://some-data/space/eml21/DataAssuranceRecord({uuid})");
             Assert.AreEqual(uri11, uri12.AsEtp11());
 
             uri12 = new EtpUri($"eml:///witsml20.Well({uuid})?query#hash");
             uri11 = new EtpUri($"eml://witsml20/Well({uuid})?query#hash");
+            Assert.AreEqual(uri11, uri12.AsEtp11());
+
+            // Special Cases
+
+            uri12 = new EtpUri($"eml:///dataspace(some-data/space)/witsml20.Well({uuid})/eml21.DataAssuranceRecord({uuid2})");
+            uri11 = new EtpUri($"eml://some-data/space/witsml20/Well({uuid})/DataAssuranceRecord({uuid2})");
+            Assert.AreEqual(uri11, uri12.AsEtp11());
+
+            uri12 = new EtpUri($"eml:///dataspace()/witsml20.Well({uuid})");
+            uri11 = new EtpUri($"eml://witsml20/Well({uuid})");
             Assert.AreEqual(uri11, uri12.AsEtp11());
         }
 
@@ -619,12 +625,28 @@ namespace Energistics.Etp.Common.Datatypes
 
             // Special Cases
 
+            original = new EtpUri($"eml:///dataspace()/witsml20.Well({uuid})");
+            canonical = new EtpUri($"eml:///witsml20.Well({uuid})");
+            Assert.AreEqual(canonical, original.AsCanonical());
+
+            original = new EtpUri($"eml:///dataspace()/witsml20.Well({uuid},)");
+            canonical = new EtpUri($"eml:///witsml20.Well({uuid})");
+            Assert.AreEqual(canonical, original.AsCanonical());
+
             original = new EtpUri($"eml:///dataspace(some-data/space)/witsml20.Well({uuid})/eml21.DataAssuranceRecord({uuid2})");
             canonical = new EtpUri($"eml:///dataspace(some-data/space)/eml21.DataAssuranceRecord({uuid2})");
             Assert.AreEqual(canonical, original.AsCanonical());
 
             original = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well({uuid})/witsml14.wellbore({uuid2})");
             canonical = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well({uuid})/witsml14.wellbore({uuid2})");
+            Assert.AreEqual(canonical, original.AsCanonical());
+
+            original = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well()");
+            canonical = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well()");
+            Assert.AreEqual(canonical, original.AsCanonical());
+
+            original = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well(,)");
+            canonical = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well()");
             Assert.AreEqual(canonical, original.AsCanonical());
         }
 
@@ -647,6 +669,7 @@ namespace Energistics.Etp.Common.Datatypes
             uri = new EtpUri("eml:");
             AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v12);
 
+
             uri = new EtpUri("eml:///");
             AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsRootUri: true, IsDataspaceUri: true, IsBaseUri: true, IsCanonicalUri: true);
 
@@ -665,6 +688,7 @@ namespace Energistics.Etp.Common.Datatypes
 
             uri = new EtpUri("eml:///dataspace(data-space/second-level)/");
             AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v12);
+
 
             uri = new EtpUri("eml:///dataspace(data-space)");
             AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsDataspaceUri: true, IsBaseUri: true, IsCanonicalUri: true);
@@ -691,6 +715,7 @@ namespace Energistics.Etp.Common.Datatypes
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/");
             AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v12);
 
+
             uri = new EtpUri($"eml:///witsml20.Well({uuid})");
             AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsCanonicalUri: true, IsObjectUri: true);
 
@@ -713,6 +738,7 @@ namespace Energistics.Etp.Common.Datatypes
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore({Uuid()})/witsml20.Log({Uuid()})/");
             AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v12);
+
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore({Uuid()})");
             AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsObjectUri: true, IsHierarchicalUri: true);
@@ -752,42 +778,43 @@ namespace Energistics.Etp.Common.Datatypes
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore({Uuid()})/witsml20.Log/");
             AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v12);
 
+
             uri = new EtpUri($"eml:///witsml20.Well");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsTemplateUri: true, IsFolderTemplateUri: true);
 
             uri = new EtpUri($"eml:///witsml20.Well?query");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsTemplateUri: true, HasQuery: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsTemplateUri: true, IsFolderTemplateUri: true, HasQuery: true);
 
             uri = new EtpUri($"eml:///witsml20.Well#hash");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasHash: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true, HasHash: true);
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsHierarchicalUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsHierarchicalUri: true, IsTemplateUri: true, IsFolderTemplateUri: true);
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore?query");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsHierarchicalUri: true, IsTemplateUri: true, HasQuery: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsHierarchicalUri: true, IsTemplateUri: true, IsFolderTemplateUri: true, HasQuery: true);
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore#hash");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true, HasHash: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true, IsFolderTemplateUri: true, HasHash: true);
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore({Uuid()})/witsml20.Log");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true, IsFolderTemplateUri: true);
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore({Uuid()})/witsml20.Log?query");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true, HasQuery: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true, IsFolderTemplateUri: true, HasQuery: true);
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore({Uuid()})/witsml20.Log#hash");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true, HasHash: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true, IsFolderTemplateUri: true, HasHash: true);
 
 
             uri = new EtpUri($"eml:///dataspace(data-space/second-level)/witsml20.Well");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsTemplateUri: true, IsFolderTemplateUri: true);
 
             uri = new EtpUri($"eml:///dataspace(data-space/second-level)/witsml20.Well({uuid})/witsml20.Wellbore");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsHierarchicalUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsQueryUri: true, IsFolderUri: true, IsCanonicalUri: true, IsHierarchicalUri: true, IsTemplateUri: true, IsFolderTemplateUri: true);
 
             uri = new EtpUri($"eml:///dataspace(data-space/second-level)/witsml20.Well({uuid})/witsml20.Wellbore({Uuid()})/witsml20.Log");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsHierarchicalUri: true, IsTemplateUri: true, IsFolderTemplateUri: true);
 
             ///////////////////////////
             // Template URIs
@@ -805,58 +832,71 @@ namespace Energistics.Etp.Common.Datatypes
             uri = new EtpUri($"eml:///witsml20.Well/witsml20.Wellbore({uuid})/witsml20.Log/");
             AssertUri(uri, IsValid: false, EtpVersion: EtpVersion.v12);
 
+
             uri = new EtpUri($"eml:///witsml20.Well/witsml20.Wellbore");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true);
 
             uri = new EtpUri($"eml:///witsml20.Well/witsml20.Wellbore?query");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasQuery: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true, HasQuery: true);
 
             uri = new EtpUri($"eml:///witsml20.Well/witsml20.Wellbore#hash");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasHash: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true, HasHash: true);
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore/witsml20.Log");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true);
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore/witsml20.Log?query");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasQuery: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true, HasQuery: true);
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore/witsml20.Log#hash");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasHash: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true, HasHash: true);
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore/witsml20.Log({Uuid()})");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsObjectUri: true, IsAlternateUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsObjectTemplateUri: true);
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore/witsml20.Log({Uuid()})?query");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsObjectUri: true, IsAlternateUri: true, IsTemplateUri: true, HasQuery: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsObjectTemplateUri: true, HasQuery: true);
 
             uri = new EtpUri($"eml:///witsml20.Well({uuid})/witsml20.Wellbore/witsml20.Log({Uuid()})#hash");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsObjectUri: true, IsAlternateUri: true, IsTemplateUri: true, HasHash: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsObjectTemplateUri: true, HasHash: true);
 
             uri = new EtpUri($"eml:///witsml20.Well/witsml20.Wellbore({uuid})/witsml20.Log");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true);
 
             uri = new EtpUri($"eml:///witsml20.Well/witsml20.Wellbore({uuid})/witsml20.Log?query");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasQuery: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true, HasQuery: true);
 
             uri = new EtpUri($"eml:///witsml20.Well/witsml20.Wellbore({uuid})/witsml20.Log#hash");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true, HasHash: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true, HasHash: true);
 
 
             uri = new EtpUri($"eml:///dataspace(data-space/second-level)/witsml20.Well/witsml20.Wellbore");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true);
 
             uri = new EtpUri($"eml:///dataspace(data-space/second-level)/witsml20.Well({uuid})/witsml20.Wellbore/witsml20.Log");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true);
 
             uri = new EtpUri($"eml:///dataspace(data-space/second-level)/witsml20.Well({uuid})/witsml20.Wellbore/witsml20.Log({Uuid()})");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsObjectUri: true, IsAlternateUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsObjectTemplateUri: true);
 
             uri = new EtpUri($"eml:///dataspace(data-space/second-level)/witsml20.Well/witsml20.Wellbore({uuid})/witsml20.Log");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsFolderUri: true, IsAlternateUri: true, IsTemplateUri: true);
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsTemplateUri: true, IsFolderTemplateUri: true);
 
             ///////////////////////////
             // Special Cases
             ///////////////////////////
+
+            uri = new EtpUri($"eml:///dataspace()/witsml14.well({uuid})");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsObjectUri: true);
+
+            uri = new EtpUri($"eml:///witsml14.well()");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsObjectUri: true, HasEmptyObjectId: true);
+
+            uri = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well({uuid},)");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsObjectUri: true);
+
+            uri = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well({uuid},)");
+            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsObjectUri: true);
 
             uri = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well({uuid})/witsml14.wellbore({Uuid()})");
             AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsCanonicalUri: true, IsObjectUri: true, IsHierarchicalUri: true);
