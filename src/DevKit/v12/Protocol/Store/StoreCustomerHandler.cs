@@ -50,14 +50,19 @@ namespace Energistics.Etp.v12.Protocol.Store
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetDataObjects);
 
-            var getObject = new GetDataObjects
+            var message = new GetDataObjects
             {
                 Uris = uris.ToMap(),
                 Format = format ?? "xml",
             };
 
-            return Session.SendMessage(header, getObject);
+            return Session.SendMessage(header, message);
         }
+
+        /// <summary>
+        /// Handles the GetDataObjectsResponse event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<GetDataObjectsResponse> OnGetDataObjectsResponse;
 
         /// <summary>
         /// Sends a PutDataObjects message to a store.
@@ -68,12 +73,12 @@ namespace Energistics.Etp.v12.Protocol.Store
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.PutDataObjects);
 
-            var putObject = new PutDataObjects
+            var message = new PutDataObjects
             {
                 DataObjects = dataObjects.ToMap(),
             };
 
-            return Session.SendMessage(header, putObject);
+            return Session.SendMessage(header, message);
         }
 
         /// <summary>
@@ -85,18 +90,13 @@ namespace Energistics.Etp.v12.Protocol.Store
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.DeleteDataObjects);
 
-            var deleteObject = new DeleteDataObjects
+            var message = new DeleteDataObjects
             {
                 Uris = uris.ToMap(),
             };
 
-            return Session.SendMessage(header, deleteObject);
+            return Session.SendMessage(header, message);
         }
-
-        /// <summary>
-        /// Handles the GetDataObjectsResponse event from a store.
-        /// </summary>
-        public event ProtocolEventHandler<GetDataObjectsResponse> OnGetDataObjectsResponse;
 
         /// <summary>
         /// Sends a Chunk message to a store.

@@ -32,6 +32,11 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
     public interface IStoreNotificationStore : IProtocolHandler
     {
         /// <summary>
+        /// Handles the SubscribeNotifications event from a customer.
+        /// </summary>
+        event ProtocolEventHandler<SubscribeNotifications> OnSubscribeNotifications;
+
+        /// <summary>
         /// Sends an ObjectChanged message to a customer.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
@@ -80,11 +85,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <param name="subscriptions">The unsolicited subscriptions.</param>
         /// <returns>The message identifier.</returns>
         long UnsolicitedStoreNotifications(IList<SubscriptionInfo> subscriptions);
-
-        /// <summary>
-        /// Handles the SubscribeNotifications event from a customer.
-        /// </summary>
-        event ProtocolEventHandler<SubscribeNotifications> OnSubscribeNotifications;
 
         /// <summary>
         /// Handles the UnsubscribeNotifications event from a customer.

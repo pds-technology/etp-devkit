@@ -60,6 +60,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         }
 
         /// <summary>
+        /// Handles the FindParts event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<FindParts, PartsResponse> OnFindParts;
+
+        /// <summary>
         /// Sends a FindPartsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
@@ -80,11 +85,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
 
             return SendMultipartResponse(header, response, parts, (m, i) => m.Parts = i);
         }
-
-        /// <summary>
-        /// Handles the FindParts event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<FindParts, PartsResponse> OnFindParts;
 
         /// <summary>
         /// Handles the FindParts message from a customer.

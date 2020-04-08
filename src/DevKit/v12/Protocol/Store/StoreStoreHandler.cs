@@ -44,6 +44,11 @@ namespace Energistics.Etp.v12.Protocol.Store
         }
 
         /// <summary>
+        /// Handles the GetDataObjects event from a customer.
+        /// </summary>
+        public event ProtocolEventWithErrorsHandler<GetDataObjects, DataObject, ErrorInfo> OnGetDataObjects;
+
+        /// <summary>
         /// Sends an GetDataObjectsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
@@ -60,11 +65,6 @@ namespace Energistics.Etp.v12.Protocol.Store
 
             return SendMultipartResponse(header, response, dataObjects, errors, (m, i) => m.DataObjects = i);
         }
-
-        /// <summary>
-        /// Handles the GetDataObjects event from a customer.
-        /// </summary>
-        public event ProtocolEventWithErrorsHandler<GetDataObjects, DataObject, ErrorInfo> OnGetDataObjects;
 
         /// <summary>
         /// Handles the PutDataObjects event from a customer.
@@ -149,7 +149,7 @@ namespace Energistics.Etp.v12.Protocol.Store
         }
 
         /// <summary>
-        /// Handles the PutParts message from a customer.
+        /// Handles the PutDataObjects message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The message.</param>

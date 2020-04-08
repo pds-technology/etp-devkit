@@ -41,6 +41,11 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         }
 
         /// <summary>
+        /// Handles the SubscribeNotification event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<SubscribeNotifications> OnSubscribeNotifications;
+
+        /// <summary>
         /// Sends an ObjectChanged message to a customer.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
@@ -123,6 +128,11 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         }
 
         /// <summary>
+        /// Handles the UnsubscribeNotification event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<UnsubscribeNotifications> OnUnsubscribeNotifications;
+
+        /// <summary>
         /// Sends a SubscriptionEnded message to a customer.
         /// </summary>
         /// <param name="requestUuid">The UUID of the subscription that has ended.</param>
@@ -155,16 +165,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
 
             return Session.SendMessage(header, message);
         }
-
-        /// <summary>
-        /// Handles the SubscribeNotification event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<SubscribeNotifications> OnSubscribeNotifications;
-
-        /// <summary>
-        /// Handles the UnsubscribeNotification event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<UnsubscribeNotifications> OnUnsubscribeNotifications;
 
         /// <summary>
         /// Handles the SubscribeNotificatiosn message from a customer.

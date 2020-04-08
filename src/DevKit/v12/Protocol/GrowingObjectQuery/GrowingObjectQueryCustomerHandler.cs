@@ -50,14 +50,14 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         {
             var header = CreateMessageHeader(Protocols.GrowingObjectQuery, MessageTypes.GrowingObjectQuery.FindParts);
 
-            var findParts = new FindParts()
+            var message = new FindParts()
             {
                 Uri = uri,
                 Format = format ?? "xml",
             };
             
-            return Session.SendMessage(header, findParts,
-                h => _requests[h.MessageId] = findParts // Cache requested URIs by message ID
+            return Session.SendMessage(header, message,
+                h => _requests[h.MessageId] = message // Cache requested URIs by message ID
             );
         }
 
@@ -67,6 +67,31 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         public event ProtocolEventHandler<FindPartsResponse, FindParts> OnFindPartsResponse;
 
         /// <summary>
+        /// Handles the FindPartsResponse message from a store.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The FindPartsResponse message.</param>
+        protected virtual void HandleFindPartsResponse(IMessageHeader header, FindPartsResponse message)
+        {
+            var request = GetRequest(header);
+            var args = Notify(OnFindPartsResponse, header, message, request);
+            if (args.Cancel)
+                return;
+
+            HandleFindPartsResponse(header, message, request);
+        }
+
+        /// <summary>
+        /// Handles the FindPartsResponse message from a store.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The FindPartsResponse message.</param>
+        /// <param name="request">The FindParts request.</param>
+        protected virtual void HandleFindPartsResponse(IMessageHeader header, FindPartsResponse message, FindParts request)
+        {
+        }
+
+        /// <summary>
         /// Handle any final cleanup related to the final message in response to a request.
         /// </summary>
         /// <param name="correlationId">The correlation ID of the request</param>
@@ -74,26 +99,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         {
             FindParts request;
             _requests.TryRemove(correlationId, out request);
-        }
-
-        /// <summary>
-        /// Handles the FindPartsResponse message from a store.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="findPartsResponse">The FindPartsResponse message.</param>
-        protected virtual void HandleFindPartsResponse(IMessageHeader header, FindPartsResponse findPartsResponse)
-        {
-            var request = GetRequest(header);
-            var args = Notify(OnFindPartsResponse, header, findPartsResponse, request);
-            HandleFindPartsResponse(args);
-        }
-
-        /// <summary>
-        /// Handles the FindPartsResponse message from a store.
-        /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{FindPartsResponse}"/> instance containing the event data.</param>
-        protected virtual void HandleFindPartsResponse(ProtocolEventArgs<FindPartsResponse, FindParts> args)
-        {
         }
 
         /// <summary>

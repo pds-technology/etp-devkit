@@ -43,6 +43,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
+        /// Handles the SubscribePartNotification event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<SubscribePartNotification> OnSubscribePartNotification;
+
+        /// <summary>
         /// Sends a PartsChanged message to a customer.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
@@ -141,6 +146,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
+        /// Handles the UnsubscribePartNotification event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<UnsubscribePartNotification> OnUnsubscribePartNotification;
+
+        /// <summary>
         /// Sends a PartSubscriptionEnded message to a customer.
         /// </summary>
         /// <param name="requestUuid">The UUID of the subscription that has ended.</param>
@@ -173,16 +183,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
 
             return Session.SendMessage(header, message);
         }
-
-        /// <summary>
-        /// Handles the SubscribePartNotification event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<SubscribePartNotification> OnSubscribePartNotification;
-
-        /// <summary>
-        /// Handles the UnsubscribePartNotification event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<UnsubscribePartNotification> OnUnsubscribePartNotification;
 
         /// <summary>
         /// Handles the SubscribePartNotification message from a customer.

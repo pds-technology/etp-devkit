@@ -33,6 +33,11 @@ namespace Energistics.Etp.v12.Protocol.Store
     public interface IStoreStore : IProtocolHandler
     {
         /// <summary>
+        /// Handles the GetDataObjects event from a customer.
+        /// </summary>
+        event ProtocolEventWithErrorsHandler<GetDataObjects, DataObject, ErrorInfo> OnGetDataObjects;
+
+        /// <summary>
         /// Sends an GetDataObjectsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
@@ -40,11 +45,6 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <param name="errors">The errors.</param>
         /// <returns>The message identifier.</returns>
         long GetDataObjectsResponse(IMessageHeader request, IDictionary<string, DataObject> dataObjects, IDictionary<string, ErrorInfo> errors);
-
-        /// <summary>
-        /// Handles the GetDataObjects event from a customer.
-        /// </summary>
-        event ProtocolEventWithErrorsHandler<GetDataObjects, DataObject, ErrorInfo> OnGetDataObjects;
 
         /// <summary>
         /// Handles the PutDataObjects event from a customer.

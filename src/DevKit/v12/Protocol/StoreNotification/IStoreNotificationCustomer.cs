@@ -38,13 +38,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         long SubscribeNotifications(SubscriptionInfo request);
 
         /// <summary>
-        /// Sends a UnsubscribeNotifications message to a store.
-        /// </summary>
-        /// <param name="requestUuid">The request identifier.</param>
-        /// <returns>The message identifier.</returns>
-        long UnsubscribeNotifications(Guid requestUuid);
-
-        /// <summary>
         /// Handles the ObjectChanged event from a store.
         /// </summary>
         event ProtocolEventHandler<ObjectChanged> OnObjectChanged;
@@ -63,6 +56,13 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// Handles the ObjectAccessRevoked event from a store.
         /// </summary>
         event ProtocolEventHandler<ObjectAccessRevoked> OnObjectAccessRevoked;
+
+        /// <summary>
+        /// Sends a UnsubscribeNotifications message to a store.
+        /// </summary>
+        /// <param name="requestUuid">The request identifier.</param>
+        /// <returns>The message identifier.</returns>
+        long UnsubscribeNotifications(Guid requestUuid);
 
         /// <summary>
         /// Handles the SubscriptionEnded event from a store.

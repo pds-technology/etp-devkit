@@ -21,42 +21,42 @@ using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
-namespace Energistics.Etp.v12.Protocol.Discovery
+namespace Energistics.Etp.v12.Protocol.SupportedTypes
 {
     /// <summary>
-    /// Base implementation of the <see cref="IDiscoveryCustomer"/> interface.
+    /// Base implementation of the <see cref="ISupportedTypesCustomer"/> interface.
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
-    /// <seealso cref="Energistics.Etp.v12.Protocol.Discovery.IDiscoveryCustomer" />
-    public class DiscoveryCustomerHandler : Etp12ProtocolHandler, IDiscoveryCustomer
+    /// <seealso cref="Energistics.Etp.v12.Protocol.SupportedTypes.ISupportedTypesCustomer" />
+    public class SupportedTypesCustomerHandler : Etp12ProtocolHandler, ISupportedTypesCustomer
     {
-        private readonly ConcurrentDictionary<long, GetResources> _requests = new ConcurrentDictionary<long, GetResources>();
+        private readonly ConcurrentDictionary<long, GetSupportedTypes> _requests = new ConcurrentDictionary<long, GetSupportedTypes>();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DiscoveryCustomerHandler"/> class.
+        /// Initializes a new instance of the <see cref="SupportedTypesCustomerHandler"/> class.
         /// </summary>
-        public DiscoveryCustomerHandler() : base((int)Protocols.Discovery, "customer", "store")
+        public SupportedTypesCustomerHandler() : base((int)Protocols.SupportedTypes, "customer", "store")
         {
-            RegisterMessageHandler<GetResourcesResponse>(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse, HandleGetResourcesResponse);
+            RegisterMessageHandler<GetSupportedTypesResponse>(Protocols.SupportedTypes, MessageTypes.SupportedTypes.GetSupportedTypesResponse, HandleGetSupportedTypesResponse);
         }
 
         /// <summary>
-        /// Sends a GetResources message to a store.
+        /// Sends a GetSupportedTypes message to a store.
         /// </summary>
-        /// <param name="context">The context information.</param>
-        /// <param name="scope">The scope.</param>
-        /// <param name="lastChangedFilter">An optional parameter to filter discovery on a date when an object last changed.</param>
+        /// <param name="uri">The uri to to discover instantiated or supported data types from.</param>
+        /// <param name="scope">The scope to return supported types for.</param>
+        /// <param name="returnEmptyTypes">Whether the store should return data types that it supports but for which it currently has no data.</param>
         /// <param name="countObjects">if set to <c>true</c>, request object counts.</param>
         /// <returns>The message identifier.</returns>
-        public virtual long GetResources(ContextInfo context, ContextScopeKind scope, long? lastChangedFilter = null, bool countObjects = false)
+        public virtual long GetSupportedTypes(string uri, ContextScopeKind scope, bool returnEmptyTypes = false, bool countObjects = false)
         {
-            var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResources);
+            var header = CreateMessageHeader(Protocols.SupportedTypes, MessageTypes.SupportedTypes.GetSupportedTypes);
 
-            var message = new GetResources
+            var message = new GetSupportedTypes
             {
-                Context = context,
+                Uri = uri,
                 Scope = scope,
-                LastChangedFilter = lastChangedFilter,
+                ReturnEmptyTypes = returnEmptyTypes,
                 CountObjects = countObjects,
             };
 
@@ -66,23 +66,23 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         }
 
         /// <summary>
-        /// Handles the GetResourcesResponse event from a store.
+        /// Handles the GetSupportedTypesResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<GetResourcesResponse, GetResources> OnGetResourcesResponse;
+        public event ProtocolEventHandler<GetSupportedTypesResponse, GetSupportedTypes> OnGetSupportedTypesResponse;
 
         /// <summary>
         /// Handles the GetResourcesResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The GetResourcesResponse message.</param>
-        protected virtual void HandleGetResourcesResponse(IMessageHeader header, GetResourcesResponse message)
+        protected virtual void HandleGetSupportedTypesResponse(IMessageHeader header, GetSupportedTypesResponse message)
         {
             var request = GetRequest(header);
-            var args = Notify(OnGetResourcesResponse, header, message, request);
+            var args = Notify(OnGetSupportedTypesResponse, header, message, request);
             if (args.Cancel)
                 return;
 
-            HandleGetResourcesResponse(header, message, request);
+            HandleGetSupportedTypesResponse(header, message, request);
         }
 
         /// <summary>
@@ -91,7 +91,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// <param name="header">The message header.</param>
         /// <param name="message">The GetResourcesResponse message.</param>
         /// <param name="request">The GetResources request.</param>
-        protected virtual void HandleGetResourcesResponse(IMessageHeader header, GetResourcesResponse message, GetResources request)
+        protected virtual void HandleGetSupportedTypesResponse(IMessageHeader header, GetSupportedTypesResponse message, GetSupportedTypes request)
         {
         }
 
@@ -101,7 +101,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// <param name="correlationId">The correlation ID of the request</param>
         protected override void HandleFinalResponse(long correlationId)
         {
-            GetResources request;
+            GetSupportedTypes request;
             _requests.TryRemove(correlationId, out request);
         }
 
@@ -110,9 +110,9 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <returns>The request.</returns>
-        private GetResources GetRequest(IMessageHeader header)
+        private GetSupportedTypes GetRequest(IMessageHeader header)
         {
-            GetResources request;
+            GetSupportedTypes request;
             _requests.TryGetValue(header.CorrelationId, out request);
             return request;
         }

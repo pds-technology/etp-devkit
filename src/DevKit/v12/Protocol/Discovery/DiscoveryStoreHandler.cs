@@ -61,6 +61,11 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         }
 
         /// <summary>
+        /// Handles the GetResources event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<GetResources, IList<Resource>> OnGetResources;
+
+        /// <summary>
         /// Sends a GetResourcesResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
@@ -73,11 +78,6 @@ namespace Energistics.Etp.v12.Protocol.Discovery
 
             return SendMultipartResponse(header, response, resources, (m, i) => m.Resources = i);
         }
-
-        /// <summary>
-        /// Handles the GetResources event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<GetResources, IList<Resource>> OnGetResources;
 
         /// <summary>
         /// Handles the GetResources message from a customer.

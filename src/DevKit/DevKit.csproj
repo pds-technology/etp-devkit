@@ -128,8 +128,24 @@
     <Compile Include="Native\EtpSelfHostedWebServer.cs" />
     <Compile Include="v11\Protocol\IEtp11ProtocolHandler.cs" />
     <Compile Include="v11\Protocol\Etp11ProtocolHandler.cs" />
+    <Compile Include="v12\Protocol\DataArray\DataArrayCustomerHandler.cs" />
+    <Compile Include="v12\Protocol\DataArray\DataArrayStoreHandler.cs" />
+    <Compile Include="v12\Protocol\DataArray\IDataArrayCustomer.cs" />
+    <Compile Include="v12\Protocol\DataArray\IDataArrayStore.cs" />
+    <Compile Include="v12\Protocol\Dataspace\IDataspaceCustomer.cs" />
+    <Compile Include="v12\Protocol\Dataspace\IDataspaceStore.cs" />
+    <Compile Include="v12\Protocol\Dataspace\DataspaceCustomerHandler.cs" />
+    <Compile Include="v12\Protocol\Dataspace\DataspaceStoreHandler.cs" />
     <Compile Include="v12\Protocol\Etp12ProtocolHandler.cs" />
     <Compile Include="v12\Protocol\IEtp12ProtocolHandler.cs" />
+    <Compile Include="v12\Protocol\SupportedTypes\SupportedTypesCustomerHandler.cs" />
+    <Compile Include="v12\Protocol\SupportedTypes\SupportedTypesStoreHandler.cs" />
+    <Compile Include="v12\Protocol\SupportedTypes\ISupportedTypesCustomer.cs" />
+    <Compile Include="v12\Protocol\SupportedTypes\ISupportedTypesStore.cs" />
+    <Compile Include="v12\Protocol\Transaction\TransactionCustomerHandler.cs" />
+    <Compile Include="v12\Protocol\Transaction\TransactionStoreHandler.cs" />
+    <Compile Include="v12\Protocol\Transaction\ITransactionCustomer.cs" />
+    <Compile Include="v12\Protocol\Transaction\ITransactionStore.cs" />
     <Compile Include="WebSocket4Net\HttpConnectProxy.cs" />
     <Compile Include="v11\Datatypes\ChannelData\StreamingStartIndexConverter.cs" />
     <Compile Include="Common\Datatypes\NullableAttributeConverter.cs" />
@@ -262,6 +278,7 @@
       <Name>ETP.Messages</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

@@ -32,6 +32,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
     public interface IGrowingObjectNotificationStore : IProtocolHandler
     {
         /// <summary>
+        /// Handles the SubscribePartNotification event from a customer.
+        /// </summary>
+        event ProtocolEventHandler<SubscribePartNotification> OnSubscribePartNotification;
+
+        /// <summary>
         /// Sends a PartsChanged message to a customer.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
@@ -78,6 +83,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         long PartsReplacedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, long changeTime, string format = "xml");
 
         /// <summary>
+        /// Handles the UnsubscribePartNotification event from a customer.
+        /// </summary>
+        event ProtocolEventHandler<UnsubscribePartNotification> OnUnsubscribePartNotification;
+
+        /// <summary>
         /// Sends a PartSubscriptionEnded message to a customer.
         /// </summary>
         /// <param name="requestUuid">The UUID of the subscription that has ended.</param>
@@ -90,15 +100,5 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="subscriptions">The unsolicited subscriptions.</param>
         /// <returns>The message identifier.</returns>
         long UnsolicitedPartNotifications(IList<SubscriptionInfo> subscriptions);
-
-        /// <summary>
-        /// Handles the SubscribePartNotification event from a customer.
-        /// </summary>
-        event ProtocolEventHandler<SubscribePartNotification> OnSubscribePartNotification;
-
-        /// <summary>
-        /// Handles the UnsubscribePartNotification event from a customer.
-        /// </summary>
-        event ProtocolEventHandler<UnsubscribePartNotification> OnUnsubscribePartNotification;
     }
 }

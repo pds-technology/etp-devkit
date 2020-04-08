@@ -47,6 +47,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
+        /// Handles the GetParts event from a customer.
+        /// </summary>
+        public event ProtocolEventWithErrorsHandler<GetParts, ObjectPart, ErrorInfo> OnGetParts;
+
+        /// <summary>
         /// Sends a a list of parts as a response for GetParts to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
@@ -68,6 +73,21 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
+        /// Handles the PutParts event from a customer.
+        /// </summary>
+        public event ProtocolEventWithErrorsHandler<PutParts, ErrorInfo> OnPutParts;
+
+        /// <summary>
+        /// Handles the DeleteParts event from a customer.
+        /// </summary>
+        public event ProtocolEventWithErrorsHandler<DeleteParts, ErrorInfo> OnDeleteParts;
+
+        /// <summary>
+        /// Handles the GetPartsByRange event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<GetPartsByRange, IList<ObjectPart>> OnGetPartsByRange;
+
+        /// <summary>
         /// Sends a a list of parts as a response for GetPartsByRange to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
@@ -86,6 +106,21 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
 
             return SendMultipartResponse(header, message, parts, (m, i) => m.Parts = i);
         }
+
+        /// <summary>
+        /// Handles the DeletePartsByRange event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<DeletePartsByRange> OnDeletePartsByRange;
+
+        /// <summary>
+        /// Handles the ReplacePartsByRange event from a customer.
+        /// </summary>
+        public event ProtocolEventHandler<ReplacePartsByRange> OnReplacePartsByRange;
+
+        /// <summary>
+        /// Handles the GetPartsMetadata event from a customer.
+        /// </summary>
+        public event ProtocolEventWithErrorsHandler<GetPartsMetadata, PartsMetadataInfo, ErrorInfo> OnGetPartsMetadata;
 
         /// <summary>
         /// Sends the metadata describing the parts in the requested growing objects to a customer.
@@ -114,41 +149,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
-        /// Handles the GetParts event from a customer.
-        /// </summary>
-        public event ProtocolEventWithErrorsHandler<GetParts, ObjectPart, ErrorInfo> OnGetParts;
-
-        /// <summary>
-        /// Handles the GetPartsByRange event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<GetPartsByRange, IList<ObjectPart>> OnGetPartsByRange;
-
-        /// <summary>
-        /// Handles the PutParts event from a customer.
-        /// </summary>
-        public event ProtocolEventWithErrorsHandler<PutParts, ErrorInfo> OnPutParts;
-
-        /// <summary>
-        /// Handles the DeleteParts event from a customer.
-        /// </summary>
-        public event ProtocolEventWithErrorsHandler<DeleteParts, ErrorInfo> OnDeleteParts;
-
-        /// <summary>
-        /// Handles the DeletePartsByRange event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<DeletePartsByRange> OnDeletePartsByRange;
-
-        /// <summary>
-        /// Handles the ReplacePartsByRange event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<ReplacePartsByRange> OnReplacePartsByRange;
-
-        /// <summary>
-        /// Handles the GetPartsMetadata event from a customer.
-        /// </summary>
-        public event ProtocolEventWithErrorsHandler<GetPartsMetadata, PartsMetadataInfo, ErrorInfo> OnGetPartsMetadata;
-
-        /// <summary>
         /// Handles the GetParts message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
@@ -174,34 +174,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="response">The response.</param>
         /// <param name="errors">The errors.</param>
         protected virtual bool HandleGetParts(IMessageHeader header, GetParts message, IDictionary<string, ObjectPart> response, IDictionary<string, ErrorInfo> errors)
-        {
-            return true;
-        }
-
-        /// <summary>
-        /// Handles the GetPartsByRange message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The GetPartsByRange message.</param>
-        protected virtual void HandleGetPartsByRange(IMessageHeader header, GetPartsByRange message)
-        {
-            var args = Notify(OnGetPartsByRange, header, message, new List<ObjectPart>());
-            if (args.Cancel)
-                return;
-
-            if (!HandleGetPartsByRange(header, message, args.Context))
-                return;
-
-            GetPartsByRangeResponse(header, message.Uri, args.Context);
-        }
-
-        /// <summary>
-        /// Handles the GetPartsByRange message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        protected virtual bool HandleGetPartsByRange(IMessageHeader header, GetPartsByRange message, IList<ObjectPart> response)
         {
             return true;
         }
@@ -261,6 +233,35 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
             return true;
         }
 
+
+        /// <summary>
+        /// Handles the GetPartsByRange message from a customer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The GetPartsByRange message.</param>
+        protected virtual void HandleGetPartsByRange(IMessageHeader header, GetPartsByRange message)
+        {
+            var args = Notify(OnGetPartsByRange, header, message, new List<ObjectPart>());
+            if (args.Cancel)
+                return;
+
+            if (!HandleGetPartsByRange(header, message, args.Context))
+                return;
+
+            GetPartsByRangeResponse(header, message.Uri, args.Context);
+        }
+
+        /// <summary>
+        /// Handles the GetPartsByRange message from a customer.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="response">The response.</param>
+        protected virtual bool HandleGetPartsByRange(IMessageHeader header, GetPartsByRange message, IList<ObjectPart> response)
+        {
+            return true;
+        }
+
         /// <summary>
         /// Handles the DeletePartsByRange message from a customer.
         /// </summary>
@@ -280,6 +281,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         {
             Notify(OnReplacePartsByRange, header, message);
         }
+
 
         /// <summary>
         /// Handles the GetPartsMetadata message from a customer.

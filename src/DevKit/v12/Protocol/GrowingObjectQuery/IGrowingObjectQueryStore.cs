@@ -31,6 +31,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
     public interface IGrowingObjectQueryStore : IProtocolHandler
     {
         /// <summary>
+        /// Handles the FindParts event from a customer.
+        /// </summary>
+        event ProtocolEventHandler<FindParts, PartsResponse> OnFindParts;
+
+        /// <summary>
         /// Sends a FindPartsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
@@ -40,11 +45,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The message identifier.</returns>
         long FindPartsResponse(IMessageHeader request, string uri, IList<ObjectPart> parts, string sortOrder, string format = "xml");
-
-        /// <summary>
-        /// Handles the FindParts event from a customer.
-        /// </summary>
-        event ProtocolEventHandler<FindParts, PartsResponse> OnFindParts;
     }
 
 

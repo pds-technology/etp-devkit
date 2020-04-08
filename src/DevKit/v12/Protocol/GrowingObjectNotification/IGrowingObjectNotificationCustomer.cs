@@ -38,13 +38,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         long SubscribePartNotification(SubscriptionInfo request);
 
         /// <summary>
-        /// Sends an UnsubscribePartNotification message to a store.
-        /// </summary>
-        /// <param name="requestUuid">The request UUID.</param>
-        /// <returns>The message identifier.</returns>
-        long UnsubscribePartNotification(Guid requestUuid);
-
-        /// <summary>
         /// Handles the PartsChanged event from a store.
         /// </summary>
         event ProtocolEventHandler<PartsChanged> OnPartsChanged;
@@ -63,6 +56,13 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// Handles the PartsReplacedByRange event from a store.
         /// </summary>
         event ProtocolEventHandler<PartsReplacedByRange> OnPartsReplacedByRange;
+
+        /// <summary>
+        /// Sends an UnsubscribePartNotification message to a store.
+        /// </summary>
+        /// <param name="requestUuid">The request UUID.</param>
+        /// <returns>The message identifier.</returns>
+        long UnsubscribePartNotification(Guid requestUuid);
 
         /// <summary>
         /// Handles the PartSubscriptionEnded event from a store.

@@ -61,23 +61,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         }
 
         /// <summary>
-        /// Sends a UnsubscribeNotifications message to a store.
-        /// </summary>
-        /// <param name="requestUuid">The request identifier.</param>
-        /// <returns>The message identifier.</returns>
-        public long UnsubscribeNotifications(Guid requestUuid)
-        {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsubscribeNotifications);
-
-            var message = new UnsubscribeNotifications
-            {
-                RequestUuid = requestUuid.ToUuid()
-            };
-
-            return Session.SendMessage(header, message);
-        }
-
-        /// <summary>
         /// Handles the ObjectChanged event from a store.
         /// </summary>
         public event ProtocolEventHandler<ObjectChanged> OnObjectChanged;
@@ -96,6 +79,23 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// Handles the ObjectAccessRevoked event from a store.
         /// </summary>
         public event ProtocolEventHandler<ObjectAccessRevoked> OnObjectAccessRevoked;
+
+        /// <summary>
+        /// Sends a UnsubscribeNotifications message to a store.
+        /// </summary>
+        /// <param name="requestUuid">The request identifier.</param>
+        /// <returns>The message identifier.</returns>
+        public long UnsubscribeNotifications(Guid requestUuid)
+        {
+            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsubscribeNotifications);
+
+            var message = new UnsubscribeNotifications
+            {
+                RequestUuid = requestUuid.ToUuid()
+            };
+
+            return Session.SendMessage(header, message);
+        }
 
         /// <summary>
         /// Handles the SubscriptionEnded event from a store.

@@ -51,14 +51,14 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         {
             var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjects);
 
-            var findObjects = new FindObjects()
+            var message = new FindObjects()
             {
                 Uri = uri,
                 Format = format ?? "xml",
             };
             
-            return Session.SendMessage(header, findObjects,
-                h => _requests[h.MessageId] = findObjects // Cache requested URIs by message ID
+            return Session.SendMessage(header, message,
+                h => _requests[h.MessageId] = message // Cache requested URIs by message ID
             );
         }
 
@@ -86,19 +86,24 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// Handles the FindObjectsResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="findObjectsResponse">The FindObjectsResponse message.</param>
-        protected virtual void HandleFindObjectsResponse(IMessageHeader header, FindObjectsResponse findObjectsResponse)
+        /// <param name="message">The FindObjectsResponse message.</param>
+        protected virtual void HandleFindObjectsResponse(IMessageHeader header, FindObjectsResponse message)
         {
             var request = GetRequest(header);
-            var args = Notify(OnFindObjectsResponse, header, findObjectsResponse, request);
-            HandleFindObjectsResponse(args);
+            var args = Notify(OnFindObjectsResponse, header, message, request);
+            if (args.Cancel)
+                return;
+
+            HandleFindObjectsResponse(header, message, request);
         }
 
         /// <summary>
         /// Handles the FindObjectsResponse message from a store.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{FindObjectsResponse}"/> instance containing the event data.</param>
-        protected virtual void HandleFindObjectsResponse(ProtocolEventArgs<FindObjectsResponse, FindObjects> args)
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The FindObjectsResponse message.</param>
+        /// <param name="request">The FindObjects request.</param>
+        protected virtual void HandleFindObjectsResponse(IMessageHeader header, FindObjectsResponse message, FindObjects request)
         {
         }
 

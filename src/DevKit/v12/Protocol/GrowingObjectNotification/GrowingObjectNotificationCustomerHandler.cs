@@ -61,23 +61,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
-        /// Sends an UnsubscribePartNotification message to a store.
-        /// </summary>
-        /// <param name="requestUuid">The request UUID.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long UnsubscribePartNotification(Guid requestUuid)
-        {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsubscribePartNotification);
-
-            var cancelNotification = new UnsubscribePartNotification
-            {
-                RequestUuid = requestUuid.ToUuid(),
-            };
-
-            return Session.SendMessage(header, cancelNotification);
-        }
-
-        /// <summary>
         /// Handles the PartsChanged event from a store.
         /// </summary>
         public event ProtocolEventHandler<PartsChanged> OnPartsChanged;
@@ -96,6 +79,23 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// Handles the PartsReplacedByRange event from a store.
         /// </summary>
         public event ProtocolEventHandler<PartsReplacedByRange> OnPartsReplacedByRange;
+
+        /// <summary>
+        /// Sends an UnsubscribePartNotification message to a store.
+        /// </summary>
+        /// <param name="requestUuid">The request UUID.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long UnsubscribePartNotification(Guid requestUuid)
+        {
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsubscribePartNotification);
+
+            var cancelNotification = new UnsubscribePartNotification
+            {
+                RequestUuid = requestUuid.ToUuid(),
+            };
+
+            return Session.SendMessage(header, cancelNotification);
+        }
 
         /// <summary>
         /// Handles the PartSubscriptionEnded event from a store.

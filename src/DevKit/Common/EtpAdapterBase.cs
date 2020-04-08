@@ -125,7 +125,8 @@ namespace Energistics.Etp.Common
         /// </summary>
         protected void RegisterStandardMessageDecoders()
         {
-            var messageNamespacePrefix = $"Energistics.Etp.{SupportedVersion}.Protocol";
+            var mainMessageNamespacePrefix = $"Energistics.Etp.{SupportedVersion}.Protocol";
+            var privateMessageNamespacePrefix = $"Energistics.Etp.{SupportedVersion}.PrivateProtocols";
 
             var protocolsEnumType = SupportedVersion == EtpVersion.v11 ? typeof(v11.Protocols) : typeof(v12.Protocols);
             var protocolNames = Enum.GetNames(protocolsEnumType);
@@ -137,9 +138,14 @@ namespace Energistics.Etp.Common
             var assembly = protocolsEnumType.Assembly;
 
             // Get the message types defined in the appropriate namespace.
-            var messageTypes = assembly.GetExportedTypes().Where(type =>
-                type.Namespace.StartsWith(messageNamespacePrefix) &&
-                typeof(ISpecificRecord).IsAssignableFrom(type)).ToList();
+            var mainMessageTypes = assembly.GetExportedTypes().Where(type =>
+                type.Namespace.StartsWith(mainMessageNamespacePrefix) &&
+                typeof(ISpecificRecord).IsAssignableFrom(type));
+            var privateMessageTypes = assembly.GetExportedTypes().Where(type =>
+                type.Namespace.StartsWith(privateMessageNamespacePrefix) &&
+                typeof(ISpecificRecord).IsAssignableFrom(type));
+
+            var messageTypes = mainMessageTypes.Concat(privateMessageTypes).ToList();
 
             // Loops through the message types to find the corresponding Protocols enum value and MessageTypes enum value
             foreach (var messageType in messageTypes)

@@ -44,23 +44,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
-        /// Gets the metadata for growing object parts from a store.
-        /// </summary>
-        /// <param name="uris">The collection of growing object URIs.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long GetPartsMetadata(IList<string> uris)
-        {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadata);
-
-            var message = new GetPartsMetadata
-            {
-                Uris = uris.ToDictionary(uri => uri, uri => string.Empty),
-            };
-
-            return Session.SendMessage(header, message);
-        }
-
-        /// <summary>
         /// Gets parts in a growing object by UID from a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
@@ -80,6 +63,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
 
             return Session.SendMessage(header, message);
         }
+
+        /// <summary>
+        /// Handles the GetPartsResponse event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<GetPartsResponse> OnGetPartsResponse;
 
         /// <summary>
         /// Gets all parts in a growing object within an index range from a store.
@@ -103,6 +91,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
 
             return Session.SendMessage(header, message);
         }
+
+        /// <summary>
+        /// Handles the GetPartsByRangeResponse event from a store.
+        /// </summary>
+        public event ProtocolEventHandler<GetPartsByRangeResponse> OnGetPartsByRangeResponse;
 
         /// <summary>
         /// Adds or updates parts in a growing object in a store.
@@ -191,14 +184,21 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
-        /// Handles the GetPartsResponse event from a store.
+        /// Gets the metadata for growing object parts from a store.
         /// </summary>
-        public event ProtocolEventHandler<GetPartsResponse> OnGetPartsResponse;
+        /// <param name="uris">The collection of growing object URIs.</param>
+        /// <returns>The message identifier.</returns>
+        public virtual long GetPartsMetadata(IList<string> uris)
+        {
+            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadata);
 
-        /// <summary>
-        /// Handles the GetPartsByRangeResponse event from a store.
-        /// </summary>
-        public event ProtocolEventHandler<GetPartsByRangeResponse> OnGetPartsByRangeResponse;
+            var message = new GetPartsMetadata
+            {
+                Uris = uris.ToDictionary(uri => uri, uri => string.Empty),
+            };
+
+            return Session.SendMessage(header, message);
+        }
 
         /// <summary>
         /// Handles the GetPartsMetadataResponse event from a store.
@@ -234,5 +234,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         {
             Notify(OnGetPartsMetadataResponse, header, message);
         }
+
     }
 }

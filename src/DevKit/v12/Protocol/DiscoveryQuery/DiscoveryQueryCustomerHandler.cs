@@ -51,13 +51,13 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         {
             var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResources);
 
-            var findResources = new FindResources()
+            var message = new FindResources()
             {
                 Uri = uri
             };
             
-            return Session.SendMessage(header, findResources,
-                h => _requests[h.MessageId] = findResources // Cache requested URIs by message ID
+            return Session.SendMessage(header, message,
+                h => _requests[h.MessageId] = message // Cache requested URIs by message ID
             );
         }
 
@@ -80,19 +80,24 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// Handles the FindResourcesResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="findResourcesResponse">The FindResourcesResponse message.</param>
-        protected virtual void HandleFindResourcesResponse(IMessageHeader header, FindResourcesResponse findResourcesResponse)
+        /// <param name="message">The FindResourcesResponse message.</param>
+        protected virtual void HandleFindResourcesResponse(IMessageHeader header, FindResourcesResponse message)
         {
             var request = GetRequest(header);
-            var args = Notify(OnFindResourcesResponse, header, findResourcesResponse, request);
-            HandleFindResourcesResponse(args);
+            var args = Notify(OnFindResourcesResponse, header, message, request);
+            if (args.Cancel)
+                return;
+
+            HandleFindResourcesResponse(header, message, request);
         }
 
         /// <summary>
         /// Handles the FindResourcesResponse message from a store.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{FindResourcesResponse}"/> instance containing the event data.</param>
-        protected virtual void HandleFindResourcesResponse(ProtocolEventArgs<FindResourcesResponse, FindResources> args)
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The FindResourcesResponse message.</param>
+        /// <param name="request">The FindResources request.</param>
+        protected virtual void HandleFindResourcesResponse(IMessageHeader header, FindResourcesResponse message, FindResources request)
         {
         }
 

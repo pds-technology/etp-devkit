@@ -41,6 +41,6 @@ namespace Energistics.Etp.Common.Datatypes
         /// <summary>
         /// The data space resource type.
         /// </summary>
-        DataSpace
+        Dataspace
     }
 }

@@ -31,13 +31,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
     public interface IGrowingObjectCustomer : IProtocolHandler
     {
         /// <summary>
-        /// Gets the metadata for growing object parts from a store.
-        /// </summary>
-        /// <param name="uris">The collection of growing object URIs.</param>
-        /// <returns>The message identifier.</returns>
-        long GetPartsMetadata(IList<string> uris);
-
-        /// <summary>
         /// Gets parts in a growing object by UID from a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
@@ -47,14 +40,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         long GetParts(string uri, IList<string> uids, string format = "xml");
 
         /// <summary>
-        /// Gets all parts in a growing object within an index range from a store.
+        /// Handles the GetPartsResponse event from a store.
         /// </summary>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="indexInterval">The index interval.</param>
-        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
-        /// <param name="format">The format of the response (XML or JSON).</param>
-        /// <returns>The message identifier.</returns>
-        long GetPartsByRange(string uri, IndexInterval indexInterval, bool includeOverlappingIntervals = false, string format = "xml");
+        event ProtocolEventHandler<GetPartsResponse> OnGetPartsResponse;
 
         /// <summary>
         /// Adds or updates parts in a growing object in a store.
@@ -72,6 +60,21 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="uids">The UIDs of the parts within the growing object to delete.</param>
         /// <returns>The message identifier.</returns>
         long DeleteParts(string uri, IList<string> uids);
+
+        /// <summary>
+        /// Gets all parts in a growing object within an index range from a store.
+        /// </summary>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="indexInterval">The index interval.</param>
+        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
+        /// <param name="format">The format of the response (XML or JSON).</param>
+        /// <returns>The message identifier.</returns>
+        long GetPartsByRange(string uri, IndexInterval indexInterval, bool includeOverlappingIntervals = false, string format = "xml");
+
+        /// <summary>
+        /// Handles the GetPartsByRangeResponse event from a store.
+        /// </summary>
+        event ProtocolEventHandler<GetPartsByRangeResponse> OnGetPartsByRangeResponse;
 
         /// <summary>
         /// Deletes all parts in a range of index values from a growing object from a store.
@@ -94,14 +97,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         long ReplacePartsByRange(string uri, IndexInterval deleteInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, string format = "xml");
 
         /// <summary>
-        /// Handles the GetPartsResponse event from a store.
+        /// Gets the metadata for growing object parts from a store.
         /// </summary>
-        event ProtocolEventHandler<GetPartsResponse> OnGetPartsResponse;
-
-        /// <summary>
-        /// Handles the GetPartsByRangeResponse event from a store.
-        /// </summary>
-        event ProtocolEventHandler<GetPartsByRangeResponse> OnGetPartsByRangeResponse;
+        /// <param name="uris">The collection of growing object URIs.</param>
+        /// <returns>The message identifier.</returns>
+        long GetPartsMetadata(IList<string> uris);
 
         /// <summary>
         /// Handles the GetPartsMetadataResponse event from a store.

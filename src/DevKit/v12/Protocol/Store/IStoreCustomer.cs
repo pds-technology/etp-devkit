@@ -32,7 +32,7 @@ namespace Energistics.Etp.v12.Protocol.Store
     public interface IStoreCustomer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a GetObject message to a store.
+        /// Sends a GetDataObjects message to a store.
         /// </summary>
         /// <param name="uris">The URI.</param>
         /// <param name="format">The format of the response (XML or JSON).</param>
@@ -40,23 +40,23 @@ namespace Energistics.Etp.v12.Protocol.Store
         long GetDataObjects(IList<string> uris, string format = "xml");
 
         /// <summary>
-        /// Sends a PutObject message to a store.
+        /// Handles the GetDataObjectsResponse event from a store.
+        /// </summary>
+        event ProtocolEventHandler<GetDataObjectsResponse> OnGetDataObjectsResponse;
+
+        /// <summary>
+        /// Sends a PutDataObjects message to a store.
         /// </summary>
         /// <param name="dataObjects">The data objects.</param>
         /// <returns>The message identifier.</returns>
         long PutDataObjects(IList<DataObject> dataObjects);
 
         /// <summary>
-        /// Sends a DeleteObject message to a store.
+        /// Sends a DeleteDataObjects message to a store.
         /// </summary>
         /// <param name="uris">The URI.</param>
         /// <returns>The message identifier.</returns>
         long DeleteDataObjects(IList<string> uris);
-
-        /// <summary>
-        /// Handles the GetDataObjectsResponse event from a store.
-        /// </summary>
-        event ProtocolEventHandler<GetDataObjectsResponse> OnGetDataObjectsResponse;
 
         /// <summary>
         /// Sends a Chunk message to a store.
