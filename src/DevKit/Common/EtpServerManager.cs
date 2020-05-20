@@ -19,33 +19,44 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using Energistics.Etp.Common.Datatypes;
 
 namespace Energistics.Etp.Common
 {
     /// <summary>
-    /// Provides common functionality for ETP web servers.
+    /// Provides common functionality for managing ETP servers.
     /// </summary>
     /// <seealso cref="EtpBase" />
-    public abstract class EtpWebServerBase : EtpBase, IEtpWebServer
+    public class EtpServerManager : EtpBase, IEtpServerManager
     {
         private readonly IEtpAdapter _v11Adapter = new v11.Etp11Adapter();
         private readonly IEtpAdapter _v12Adapter = new v12.Etp12Adapter();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EtpWebServerBase"/> class.
+        /// Initializes a new instance of the <see cref="EtpServerManager"/> class.
         /// </summary>
         /// <param name="application">The server application name.</param>
         /// <param name="version">The server application version.</param>
-        protected EtpWebServerBase(string application, string version) : base(false)
+        public EtpServerManager(string application, string version) : base(false)
         {
             ApplicationName = application;
             ApplicationVersion = version;
 
-            SupportedEncodings = new List<string> { "binary", "JSON" };
-            SupportedCompression = "gzip";
+            EndpointCapabilities = new EtpEndpointCapabilities();
+
+            SupportedAvroEncodings = new List<string> { "binary", "JSON" };
+            SupportedFormats = new List<string> { "xml" };
+            SupportedCompression = new List<string> { "gzip" };
+            SupportedObjects = new List<IDataObjectType>();
 
             DummyHandlers = new Dictionary<Type, IProtocolHandler>();
+
+            var macAddress = NetworkInterface.GetAllNetworkInterfaces()
+                            .Where(nic => nic.OperationalStatus == OperationalStatus.Up)
+                            .OrderByDescending(nic => nic.GetIPStatistics().BytesSent + nic.GetIPStatistics().BytesReceived)
+                            .FirstOrDefault()?.GetPhysicalAddress().ToString();
+            ServerKey = $"Application: {application}; Version: {version}; Type: {GetType().FullName}; MAC Address: {macAddress}";
         }
 
         /// <summary>
@@ -61,14 +72,42 @@ namespace Energistics.Etp.Common
         public string ApplicationVersion { get; private set; }
 
         /// <summary>
-        /// The supported compression method.
+        /// Gets the endpoint capabilities supported by this server manager.
         /// </summary>
-        public string SupportedCompression { get; set; }
+        /// <returns>A dictionary of endpoint capabilities supported by this server manager.</returns>
+        public EtpEndpointCapabilities EndpointCapabilities { get; set; }
 
         /// <summary>
-        /// Gets or sets the list of supported encodings.
+        /// The server key used to generate the server instance identifier for all ETP session servers for this instance.
         /// </summary>
-        public IList<string> SupportedEncodings { get; set; }
+        public string ServerKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of supported Avro message encodings.
+        /// </summary>
+        public IList<string> SupportedAvroEncodings { get; set; }
+
+        /// <summary>
+        /// Gets the protocols supported by this server manager.
+        /// </summary>
+        /// <returns>A list of protocols supported by this server manager.</returns>
+        public IList<ISupportedProtocol> SupportedProtocols { get; set; }
+
+        /// <summary>
+        /// The list of supported compression methods.
+        /// </summary>
+        public IList<string> SupportedCompression { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of objects supported by this server manager.
+        /// </summary>
+        /// <value>The objects supported by this server manager.</value>
+        public IList<IDataObjectType> SupportedObjects { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of supported formats.
+        /// </summary>
+        public IList<string> SupportedFormats { get; set; }
 
         /// <summary>
         /// Occurs when an ETP session is connected.
@@ -79,6 +118,34 @@ namespace Energistics.Etp.Common
         /// Occurs when an ETP session is closed.
         /// </summary>
         public event EventHandler<IEtpSession> SessionClosed;
+
+        /// <summary>
+        /// Initializes an <see cref="IEtpServer"/> instance.
+        /// </summary>
+        /// <param name="server">The <see cref="IEtpServer"/> instance to initialize.</param>
+        public virtual void InitializeServer(IEtpServer server)
+        {
+            Logger.Debug(Log("[{0}] Socket session connected.", server.SessionKey));
+
+            server.InstanceSupportedObjects = SupportedObjects;
+            server.InstanceSupportedFormats = SupportedFormats;
+            server.InstanceSupportedCompression = SupportedCompression;
+            server.InitializeInstanceCapabilities(EndpointCapabilities);
+
+            RegisterAll(server);
+
+            InvokeSessionConnected(server);
+        }
+
+        /// <summary>
+        /// Notifies the manager that a <see cref="IEtpServer"/> instance has disconnected.
+        /// </summary>
+        /// <param name="server">The <see cref="IEtpServer"/> instance that has disconnected.</param>
+        public virtual void ServerDisconnected(IEtpServer server)
+        {
+            Logger.Debug(Log("[{0}] Socket session closed.", server.SessionKey));
+            InvokeSessionClosed(server);
+        }
 
         /// <summary>
         /// Resolves the ETP adapter for the specified ETP version.
@@ -139,10 +206,10 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="version">The ETP version.</param>
         /// <returns>A list of supported protocols.</returns>
-        public IList<ISupportedProtocol> GetSupportedProtocols(EtpVersion version)
+        public IReadOnlyList<ISupportedProtocol> GetSupportedProtocols(EtpVersion version)
         {
-            var adapter = ResolveEtpAdapter(version);
-            return adapter.GetSupportedProtocols(DummyHandlers.Values, false);
+            var supportedProtocols = EtpExtensions.GetSupportedProtocols(DummyHandlers.Values, version);
+            return supportedProtocols.Cast<ISupportedProtocol>().ToList();
         }
 
         /// <summary>
@@ -162,6 +229,7 @@ namespace Energistics.Etp.Common
         {
             SessionClosed?.Invoke(this, session);
         }
+
         /// <summary>
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>

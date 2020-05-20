@@ -31,10 +31,10 @@ namespace Energistics.Etp.v11.Protocol
         /// Initializes a new instance of the <see cref="Etp11ProtocolHandler"/> class.
         /// </summary>
         /// <param name="protocol">The protocol.</param>
-        /// <param name="role">The role.</param>
-        /// <param name="requestedRole">The requested role.</param>
-        protected Etp11ProtocolHandler(int protocol, string role, string requestedRole)
-            : base(EtpVersion.v11, protocol, role, requestedRole)
+        /// <param name="role">This handler's role in the protocol.</param>
+        /// <param name="counterpartRole">The role for this handler's counterpart in the protocol.</param>
+        protected Etp11ProtocolHandler(int protocol, string role, string counterpartRole)
+            : base(EtpVersion.v11, protocol, role, counterpartRole)
         {
         }
     }

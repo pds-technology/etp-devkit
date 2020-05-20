@@ -42,7 +42,7 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
         /// <param name="uid">The ID of the element within the list.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public long GrowingObjectGet(string uri, string uid)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectGet);
@@ -64,7 +64,7 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         /// <param name="endIndex">The end index.</param>
         /// <param name="uom">The unit of measure.</param>
         /// <param name="depthDatum">The depth datum.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public long GrowingObjectGetRange(string uri, object startIndex, object endIndex, string uom, string depthDatum)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectGetRange);
@@ -87,7 +87,7 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         /// <param name="uri">The URI of the parent object.</param>
         /// <param name="contentType">The content type string for the parent object.</param>
         /// <param name="data">The data (list items) to be added to the growing object.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public long GrowingObjectPut(string uri, string contentType, byte[] data)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectPut);
@@ -108,7 +108,7 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
         /// <param name="uid">The ID of the element within the list.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public long GrowingObjectDelete(string uri, string uid)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectDelete);
@@ -130,7 +130,7 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         /// <param name="endIndex">The end index.</param>
         /// <param name="uom">The unit of measure.</param>
         /// <param name="depthDatum">The depth datum.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public long GrowingObjectDeleteRange(string uri, object startIndex, object endIndex, string uom, string depthDatum)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectDeleteRange);

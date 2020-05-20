@@ -31,12 +31,17 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
     public interface IDiscoveryQueryStore : IProtocolHandler
     {
         /// <summary>
+        /// Indicates to a customer the maximum number of response messages a store will return.
+        /// </summary>
+        long MaxResponseCount { get; set; }
+
+        /// <summary>
         /// Sends a FindResourcesResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
         /// <param name="sortOrder">The sort order.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long FindResourcesResponse(IMessageHeader request, IList<Resource> resources, string sortOrder);
 
         /// <summary>

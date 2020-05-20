@@ -34,21 +34,21 @@ namespace Energistics.Etp.v11.Protocol.Store
         /// </summary>
         /// <param name="uri">The URI.</param>
         /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetObject(string uri, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
         /// Sends a PutObject message to a store.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PutObject(DataObject dataObject);
 
         /// <summary>
         /// Sends a DeleteObject message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long DeleteObject(string uri);
 
         /// <summary>

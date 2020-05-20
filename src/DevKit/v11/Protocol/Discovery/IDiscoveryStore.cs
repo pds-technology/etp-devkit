@@ -35,7 +35,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetResourcesResponse(IMessageHeader request, IList<Resource> resources);
 
         /// <summary>

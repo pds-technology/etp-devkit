@@ -44,14 +44,14 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// Sends a ChannelMetadata message to a consumer.
         /// </summary>
         /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ChannelMetadata(IList<ChannelMetadataRecord> channelMetadataRecords);
 
         /// <summary>
         /// Sends a ChannelData message to a consumer.
         /// </summary>
         /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ChannelData(IList<DataItem> dataItems);
     }
 }

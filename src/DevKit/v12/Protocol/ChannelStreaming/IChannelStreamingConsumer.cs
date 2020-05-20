@@ -31,13 +31,13 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// <summary>
         /// Sends a StartStreaming message to a producer.
         /// </summary>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long StartStreaming();
 
         /// <summary>
         /// Sends a StopStreaming message to a producer.
         /// </summary>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long StopStreaming();
 
         /// <summary>

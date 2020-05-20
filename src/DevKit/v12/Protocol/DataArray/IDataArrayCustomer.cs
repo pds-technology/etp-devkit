@@ -34,7 +34,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// Sends a GetDataArrays message to a store.
         /// </summary>
         /// <param name="dataArrays">The data arrays.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetDataArrays(IList<DataArrayIdentifier> dataArrays);
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// Sends a GetDataSubarrays message to a store.
         /// </summary>
         /// <param name="dataSubarrays">The data subarrays.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetDataSubarrays(IList<GetDataSubarraysType> dataSubarrays);
 
         /// <summary>
@@ -58,28 +58,28 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// Sends a PutDataArrays message to a store.
         /// </summary>
         /// <param name="dataArrays">The data arrays.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PutDataArrays(IList<PutDataArraysType> dataArrays);
 
         /// <summary>
         /// Sends a PutUninitializedDataArray message to a store.
         /// </summary>
         /// <param name="dataArrays">The data arrays.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PutUninitializedDataArray(IList<PutUninitializedDataArrayType> dataArrays);
 
         /// <summary>
         /// Sends a PutDataSubarrays message to a store.
         /// </summary>
         /// <param name="dataSubarrays">The data subarrays.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PutDataSubarrays(IList<PutDataSubarraysType> dataSubarrays);
 
         /// <summary>
         /// Sends a GetDataArrayMetadata message to a store.
         /// </summary>
         /// <param name="dataArrays">The data arrays.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetDataArrayMetadata(IList<DataArrayIdentifier> dataArrays);
 
         /// <summary>

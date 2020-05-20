@@ -47,7 +47,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// Sends a SubscribeNotifications message to a store.
         /// </summary>
         /// <param name="request">The subscription request.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public long SubscribeNotifications(SubscriptionInfo request)
         {
             var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotifications);
@@ -84,7 +84,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// Sends a UnsubscribeNotifications message to a store.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public long UnsubscribeNotifications(Guid requestUuid)
         {
             var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsubscribeNotifications);

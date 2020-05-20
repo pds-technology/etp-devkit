@@ -44,12 +44,12 @@ namespace Energistics.Etp.Native
         /// <param name="webSocket">The web socket.</param>
         /// <param name="application">The server application name.</param>
         /// <param name="version">The server application version.</param>
+        /// <param name="instanceKey">The instance key to use in generating the server instance identifier.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
-        public EtpServer(WebSocket webSocket, string application, string version, IDictionary<string, string> headers)
-            : base(EtpWebSocketValidation.GetEtpVersion(webSocket.SubProtocol), webSocket, application, version, headers, false)
+        public EtpServer(WebSocket webSocket, string application, string version, string instanceKey, IDictionary<string, string> headers)
+            : base(EtpWebSocketValidation.GetEtpVersion(webSocket.SubProtocol), webSocket, application, version, instanceKey, headers, false)
         {
-            //var etpVersion = EtpWebSocketValidation.GetEtpVersion(Socket.SubProtocol);
-            ServerInstanceId = Guid.NewGuid().ToString();
+            SessionId = Guid.NewGuid().ToString();
         }
 
         /// <summary>
@@ -63,12 +63,12 @@ namespace Energistics.Etp.Native
         /// </summary>
         protected override void RegisterNewConnection()
         {
-            Logger.Debug(Log("[{0}] Socket session connected.", ServerInstanceId));
+            Logger.Debug(Log("[{0}] Socket session connected.", SessionKey));
 
             InvokeSocketOpened();
 
             // keep track of connected clients
-            Clients.AddOrUpdate(ServerInstanceId, this, (id, client) => this);
+            Clients.AddOrUpdate(SessionId, this, (id, client) => this);
         }
 
         /// <summary>
@@ -79,11 +79,11 @@ namespace Energistics.Etp.Native
             EtpServer item;
 
             // remove client after connection ends
-            if (Clients.TryRemove(ServerInstanceId, out item))
+            if (Clients.TryRemove(SessionId, out item))
             {
                 if (item != this)
                 {
-                    Clients.AddOrUpdate(item.ServerInstanceId, item, (id, client) => item);
+                    Clients.AddOrUpdate(item.SessionId, item, (id, client) => item);
                 }
             }
         }

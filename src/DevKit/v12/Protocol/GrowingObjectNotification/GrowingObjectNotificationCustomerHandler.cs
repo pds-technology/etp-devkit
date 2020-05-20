@@ -47,7 +47,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// Sends a SubscribePartNotification message to a store.
         /// </summary>
         /// <param name="request">The subscription request.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long SubscribePartNotification(SubscriptionInfo request)
         {
             var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotification);
@@ -84,7 +84,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// Sends an UnsubscribePartNotification message to a store.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long UnsubscribePartNotification(Guid requestUuid)
         {
             var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsubscribePartNotification);

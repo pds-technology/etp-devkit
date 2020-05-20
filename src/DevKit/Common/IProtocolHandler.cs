@@ -48,29 +48,28 @@ namespace Energistics.Etp.Common
         int Protocol { get; }
 
         /// <summary>
-        /// Gets the role.
+        /// Gets this handler's role in the protocol.
         /// </summary>
-        /// <value>The role.</value>
+        /// <value>This handler's role in the protocol.</value>
         string Role { get; }
 
         /// <summary>
-        /// Gets the requested role.
+        /// Gets the role for this handler's counterpart in the protocol.
         /// </summary>
-        /// <value>The requested role.</value>
-        string RequestedRole { get; }
+        /// <value>The role for this handler's counterpart in the protocol.</value>
+        string CounterpartRole { get; }
 
         /// <summary>
         /// Gets the capabilities supported by the protocol handler.
         /// </summary>
-        /// <returns>A collection of protocol capabilities.</returns>
-        IDictionary<string, IDataValue> GetCapabilities();
+        /// <param name="capabilities">The protocol's capabilities.</param>
+        void GetCapabilities(EtpProtocolCapabilities capabilities);
 
         /// <summary>
         /// Called when the ETP session is opened.
         /// </summary>
-        /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols);
+        /// <param name="counterpartCapabilities">The counterpart's protocol capabilities.</param>
+        void OnSessionOpened(EtpProtocolCapabilities counterpartCapabilities);
 
         /// <summary>
         /// Called when the ETP session is opened.
@@ -82,14 +81,14 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long Acknowledge(long correlationId, MessageFlags messageFlag = MessageFlags.None);
 
         /// <summary>
         /// Sends a ProtocolException message with the specified exception details.
         /// </summary>
         /// <param name="exception">The ETP exception.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ProtocolException(EtpException exception);
 
         /// <summary>

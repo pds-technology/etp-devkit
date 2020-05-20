@@ -42,7 +42,7 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         /// Sends a NotificationRequest message to a store.
         /// </summary>
         /// <param name="request">The request.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public long NotificationRequest(NotificationRequestRecord request)
         {
             var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.NotificationRequest);
@@ -59,7 +59,7 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         /// Sends a CancelNotification message to a store.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public long CancelNotification(string requestUuid)
         {
             var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.CancelNotification);

@@ -34,7 +34,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// Sends a SubscribeNotifications message to a store.
         /// </summary>
         /// <param name="request">The subscription request.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long SubscribeNotifications(SubscriptionInfo request);
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// Sends a UnsubscribeNotifications message to a store.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long UnsubscribeNotifications(Guid requestUuid);
 
         /// <summary>

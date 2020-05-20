@@ -36,6 +36,8 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// </summary>
         public ChannelSubscribeConsumerHandler() : base((int)Protocols.ChannelSubscribe, "consumer", "producer")
         {
+            MaxDataItemCount = EtpSettings.DefaultMaxDataItemCount;
+
             ChannelMetadataRecords = new List<ChannelMetadataRecord>(0);
 
             RegisterMessageHandler<GetChannelMetadataResponse>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetChannelMetadataResponse, HandleGetChannelMetadataResponse);
@@ -43,6 +45,44 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
             RegisterMessageHandler<ReplaceRange>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.ReplaceRange, HandleReplaceRange);
             RegisterMessageHandler<SubscriptionsStopped>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.SubscriptionsStopped, HandleSubscriptionsStopped);
             RegisterMessageHandler<GetRangesResponse>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRangesResponse, HandleGetRangesResponse);
+        }
+
+        /// <summary>
+        /// Sets limits on maximum indexCount (number of indexes "back" from the current index that a producer will provide) for StreamingStartIndex.
+        /// </summary>
+        public long StoreMaxIndexCount { get; private set; }
+
+        /// <summary>
+        /// Indicates the maximum time in integer number of seconds a store allows no streaming data to occur before setting the channelStatus to 'inactive'.
+        /// </summary>
+        public long StoreStreamingTimeoutPeriod { get; private set; }
+
+        /// <summary>
+        /// Maximum number of data points to return in each message.
+        /// </summary>
+        public long MaxDataItemCount { get; set; }
+
+        /// <summary>
+        /// Gets the capabilities supported by the protocol handler.
+        /// </summary>
+        /// <param name="capabilities">The protocol's capabilities.</param>
+        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
+        {
+            base.GetCapabilities(capabilities);
+
+            capabilities.MaxDataItemCount = MaxDataItemCount;
+        }
+
+        /// <summary>
+        /// Sets properties based on counterpart capabilities.
+        /// </summary>
+        /// <param name="counterpartCapabilities">The counterpart's protocol capabilities.</param>
+        public override void OnSessionOpened(EtpProtocolCapabilities counterpartCapabilities)
+        {
+            base.OnSessionOpened(counterpartCapabilities);
+
+            StoreMaxIndexCount = counterpartCapabilities.MaxIndexCount ?? long.MaxValue;
+            StoreStreamingTimeoutPeriod = counterpartCapabilities.StreamingTimeoutPeriod ?? long.MaxValue;
         }
 
         /// <summary>
@@ -55,7 +95,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// Sends a GetChannelMetadata message to a producer with the specified URIs.
         /// </summary>
         /// <param name="uris">The list of URIs.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetChannelMetadata(IList<string> uris)
         {
             var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetChannelMetadata);
@@ -77,7 +117,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// Sends a SubscribeChannels message to a producer.
         /// </summary>
         /// <param name="channels">The list of channels.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long SubscribeChannels(IList<ChannelSubscribeInfo> channels)
         {
             var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.SubscribeChannels);
@@ -104,7 +144,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// Sends a UnsubscribeChannels message to a producer.
         /// </summary>
         /// <param name="channelIds">The list of channel identifiers.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long UnsubscribeChannels(IList<long> channelIds)
         {
             var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.UnsubscribeChannels);
@@ -127,7 +167,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
         /// <param name="channelRanges">The list of channelRanges.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetRanges(Guid requestUuid, IList<ChannelRangeInfo> channelRanges)
         {
             var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRanges);
@@ -150,7 +190,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// Sends a CancelGetRanges message to a producer.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long CancelGetRanges(Guid requestUuid)
         {
             var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.CancelGetRanges);

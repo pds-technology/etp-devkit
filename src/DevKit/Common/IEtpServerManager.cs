@@ -24,13 +24,13 @@ using System.Collections.Generic;
 namespace Energistics.Etp.Common
 {
     /// <summary>
-    /// Defines the properties and methods needed to manage an ETP web server.
+    /// Defines the properties and methods needed to manage ETP servers.
     /// </summary>
     /// <seealso cref="System.IDisposable" />
-    public interface IEtpWebServer : IDisposable
+    public interface IEtpServerManager : IDisposable
     {
         /// <summary>
-        /// Gets the logger for the web server.
+        /// Gets the logger for the server manager.
         /// </summary>
         ILog Logger { get; }
 
@@ -47,21 +47,44 @@ namespace Energistics.Etp.Common
         string ApplicationVersion { get; }
 
         /// <summary>
-        /// Gets or sets the supported compression type.
+        /// Gets the endpoint capabilities supported by this server manager.
         /// </summary>
-        string SupportedCompression { get; set; }
+        /// <returns>A dictionary of endpoint capabilities supported by this server manager.</returns>
+        EtpEndpointCapabilities EndpointCapabilities { get; set; }
 
         /// <summary>
-        /// Gets or sets the list of supported objects.
+        /// The server key used to generate the server instance identifier for all ETP session servers for this instance.
         /// </summary>
-        /// <value>The supported objects.</value>
+        string ServerKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of supported Avro message encodings.
+        /// </summary>
+        /// <value>The avro encodings supported by this server manager.</value>
+        IList<string> SupportedAvroEncodings { get; set; }
+
+        /// <summary>
+        /// Gets the protocols supported by this server manager.
+        /// </summary>
+        /// <returns>A list of protocols supported by this server manager.</returns>
+        IList<ISupportedProtocol> SupportedProtocols { get; set; }
+
+        /// <summary>
+        /// Gets or sets the compression types supported by this server manager.
+        /// </summary>
+        IList<string> SupportedCompression { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of objects supported by this server manager.
+        /// </summary>
+        /// <value>The objects supported by this server manager.</value>
         IList<IDataObjectType> SupportedObjects { get; set; }
 
         /// <summary>
-        /// Gets or sets the list of supported encodings.
+        /// Gets or sets the list of formats supported by this server manager.
         /// </summary>
-        /// <value>The supported encodings.</value>
-        IList<string> SupportedEncodings { get; set; }
+        /// <value>The formats supported by this server manager.</value>
+        IList<string> SupportedFormats { get; set; }
 
         /// <summary>
         /// Gets or sets a delegate to process logging messages.
@@ -83,6 +106,18 @@ namespace Energistics.Etp.Common
         /// <param name="args">The format parameter values.</param>
         /// <returns>The formatted message.</returns>
         string Log(string message, params object[] args);
+
+        /// <summary>
+        /// Initializes an <see cref="IEtpServer"/> instance.
+        /// </summary>
+        /// <param name="server">The <see cref="IEtpServer"/> instance to initialize.</param>
+        void InitializeServer(IEtpServer server);
+
+        /// <summary>
+        /// Notifies the manager that a <see cref="IEtpServer"/> instance has disconnected.
+        /// </summary>
+        /// <param name="server">The <see cref="IEtpServer"/> instance that has disconnected.</param>
+        void ServerDisconnected(IEtpServer server);
 
         /// <summary>
         /// Occurs when an ETP session is connected.
@@ -120,6 +155,6 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="version">The ETP version.</param>
         /// <returns>A list of supported protocols.</returns>
-        IList<ISupportedProtocol> GetSupportedProtocols(EtpVersion version);
+        IReadOnlyList<ISupportedProtocol> GetSupportedProtocols(EtpVersion version);
     }
 }

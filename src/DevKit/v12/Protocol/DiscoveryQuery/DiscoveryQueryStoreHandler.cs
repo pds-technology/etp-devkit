@@ -42,22 +42,21 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
             RegisterMessageHandler<FindResources>(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResources, HandleFindResources);
         }
 
+
         /// <summary>
-        /// Gets the maximum response count.
+        /// Indicates to a customer the maximum number of response messages a store will return.
         /// </summary>
-        public int MaxResponseCount { get; set; }
+        public long MaxResponseCount { get; set; }
 
         /// <summary>
         /// Gets the capabilities supported by the protocol handler.
         /// </summary>
-        /// <returns>A collection of protocol capabilities.</returns>
-        public override IDictionary<string, IDataValue> GetCapabilities()
+        /// <param name="capabilities">The protocol's capabilities.</param>
+        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
         {
-            var capabilities = base.GetCapabilities();
+            base.GetCapabilities(capabilities);
 
-            capabilities[EtpSettings.MaxResponseCountKey] = new DataValue { Item = MaxResponseCount };
-
-            return capabilities;
+            capabilities.MaxResponseCount = MaxResponseCount;
         }
 
         /// <summary>
@@ -66,7 +65,7 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <param name="request">The request.</param>
         /// <param name="resources">The list of <see cref="Resource" /> objects.</param>
         /// <param name="sortOrder">The sort order.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long FindResourcesResponse(IMessageHeader request, IList<Resource> resources, string sortOrder)
         {
             var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResourcesResponse, request.MessageId);

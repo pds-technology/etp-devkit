@@ -42,7 +42,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <param name="request">The request.</param>
         /// <param name="channels">The channels.</param>
         /// <param name="errors">The errors.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long OpenChannelsResponse(IMessageHeader request, IDictionary<string, OpenChannelInfo> channels, IDictionary<string, ErrorInfo> errors);
 
         /// <summary>

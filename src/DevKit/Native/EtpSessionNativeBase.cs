@@ -35,7 +35,6 @@ namespace Energistics.Etp.Native
     public abstract class EtpSessionNativeBase : EtpSession
     {
         private const int BufferSize = 4096;
-        private int _socketOpenedEventCount = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpSessionNativeBase"/> class.
@@ -44,10 +43,11 @@ namespace Energistics.Etp.Native
         /// <param name="etpVersion">The ETP version.</param>
         /// <param name="application">The server application name.</param>
         /// <param name="version">The server application version.</param>
+        /// <param name="instanceKey">The instance key to use in generating the instance identifier.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
         /// <param name="isClient">Whether or not this is the client-side of the session.</param>
-        public EtpSessionNativeBase(EtpVersion etpVersion, WebSocket webSocket, string application, string version, IDictionary<string, string> headers, bool isClient)
-            : base(etpVersion, application, version, headers, isClient, !isClient)
+        public EtpSessionNativeBase(EtpVersion etpVersion, WebSocket webSocket, string application, string version, string instanceKey, IDictionary<string, string> headers, bool isClient)
+            : base(etpVersion, application, version, instanceKey, headers, isClient, !isClient)
         {
             Socket = webSocket;
         }
@@ -56,21 +56,6 @@ namespace Energistics.Etp.Native
         /// The websocket for the session.
         /// </summary>
         protected WebSocket Socket { get; private set; }
-
-        /// <summary>
-        /// Occurs when the WebSocket is opened.
-        /// </summary>
-        public event EventHandler SocketOpened;
-
-        /// <summary>
-        /// Occurs when the WebSocket is closed.
-        /// </summary>
-        public event EventHandler SocketClosed;
-
-        /// <summary>
-        /// Occurs when the WebSocket has an error.
-        /// </summary>
-        public event EventHandler<Exception> SocketError;
 
         /// <summary>
         /// Gets a value indicating whether the connection is open.
@@ -84,7 +69,7 @@ namespace Energistics.Etp.Native
         /// Asynchronously closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        protected override async Task CloseAsyncCore(string reason)
+        protected override async Task CloseWebSocketAsyncCore(string reason)
         {
             if (!IsOpen)
                 return;
@@ -92,7 +77,7 @@ namespace Energistics.Etp.Native
             try
             {
                 await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None).ConfigureAwait(CaptureAsyncContext);
-                Logger.Debug(Log("[{0}] Socket session closed.", ServerInstanceId));
+                Logger.Debug(Log("[{0}] Socket session closed.", SessionKey));
                 InvokeSocketClosed();
             }
             catch (Exception ex)
@@ -203,7 +188,7 @@ namespace Energistics.Etp.Native
         /// <param name="data">The data.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="length">The length.</param>
-        protected override async Task SendAsync(byte[] data, int offset, int length)
+        protected override async Task<bool> SendAsync(byte[] data, int offset, int length)
         {
             CheckDisposed();
 
@@ -212,12 +197,14 @@ namespace Energistics.Etp.Native
             try
             {
                 await Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None).ConfigureAwait(CaptureAsyncContext);
+                return true;
             }
             catch (Exception ex)
             {
                 if (ex.ExceptionMeansConnectionTerminated())
                 {
                     InvokeSocketClosed();
+                    return false;
                 }
                 else
                 {
@@ -233,7 +220,7 @@ namespace Energistics.Etp.Native
         /// Sends the specified messages.
         /// </summary>
         /// <param name="message">The message.</param>
-        protected override async Task SendAsync(string message)
+        protected override async Task<bool> SendAsync(string message)
         {
             CheckDisposed();
 
@@ -242,12 +229,14 @@ namespace Energistics.Etp.Native
             try
             {
                 await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None).ConfigureAwait(CaptureAsyncContext);
+                return true;
             }
             catch (Exception ex)
             {
                 if (ex.ExceptionMeansConnectionTerminated())
                 {
                     InvokeSocketClosed();
+                    return false;
                 }
                 else
                 {
@@ -257,40 +246,6 @@ namespace Energistics.Etp.Native
                 }
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Raises the SocketOpened event.
-        /// </summary>
-        protected void InvokeSocketOpened()
-        {
-            var prevSocketOpenedEventCount = Interlocked.CompareExchange(ref _socketOpenedEventCount, 1, 0);
-
-            if (prevSocketOpenedEventCount == 0)
-                SocketOpened?.Invoke(this, EventArgs.Empty);
-        }
-
-        /// <summary>
-        /// Raises the SocketClosed event.
-        /// </summary>
-        protected void InvokeSocketClosed()
-        {
-            var prevSocketOpenedEventCount = Interlocked.CompareExchange(ref _socketOpenedEventCount, 0, 1);
-
-            if (prevSocketOpenedEventCount == 1)
-                SocketClosed?.Invoke(this, EventArgs.Empty);
-        }
-
-        /// <summary>
-        /// Raises the SocketError event.
-        /// </summary>
-        /// <param name="ex">The socket exception.</param>
-        protected void InvokeSocketError(Exception ex)
-        {
-            var prevSocketOpenedEventCount = Interlocked.CompareExchange(ref _socketOpenedEventCount, 0, 1);
-
-            if (prevSocketOpenedEventCount == 1)
-                SocketError?.Invoke(this, ex);
         }
     }
 }

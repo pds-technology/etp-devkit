@@ -33,6 +33,11 @@ namespace Energistics.Etp.v12.Protocol.Store
     public interface IStoreStore : IProtocolHandler
     {
         /// <summary>
+        /// Indicates to a customer the maximum number of response messages a store will return.
+        /// </summary>
+        long MaxResponseCount { get; set; }
+
+        /// <summary>
         /// Handles the GetDataObjects event from a customer.
         /// </summary>
         event ProtocolEventWithErrorsHandler<GetDataObjects, DataObject, ErrorInfo> OnGetDataObjects;
@@ -43,7 +48,7 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <param name="request">The request.</param>
         /// <param name="dataObjects">The data objects.</param>
         /// <param name="errors">The errors.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetDataObjectsResponse(IMessageHeader request, IDictionary<string, DataObject> dataObjects, IDictionary<string, ErrorInfo> errors);
 
         /// <summary>
@@ -63,7 +68,7 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <param name="blobId">The blob ID.</param>
         /// <param name="data">The chunk data.</param>
         /// <param name="messageFlags">The message flags.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long Chunk(IMessageHeader request, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>

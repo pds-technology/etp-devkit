@@ -53,18 +53,12 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether this instance is a Simple Streamer.
+        /// Gets a value indicating whether this instance is simple streamer.
         /// </summary>
         /// <value>
-        /// <c>true</c> if this instance is a Simple Streamer; otherwise, <c>false</c>.
+        /// <c>true</c> if this instance is simple streamer; otherwise, <c>false</c>.
         /// </value>
         public bool IsSimpleStreamer { get; set; }
-
-        /// <summary>
-        /// Gets or sets the default describe URI.
-        /// </summary>
-        /// <value>The default describe URI.</value>
-        public string DefaultDescribeUri { get; set; }
 
         /// <summary>
         /// Gets the maximum data items.
@@ -81,18 +75,13 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// <summary>
         /// Gets the capabilities supported by the protocol handler.
         /// </summary>
-        /// <returns>A collection of protocol capabilities.</returns>
-        public override IDictionary<string, IDataValue> GetCapabilities()
+        /// <param name="capabilities">The protocol's capabilities.</param>
+        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
         {
-            var capabilities = base.GetCapabilities();
+            base.GetCapabilities(capabilities);
 
             if (IsSimpleStreamer)
-                capabilities[SimpleStreamer] = new DataValue { Item = true };
-
-            if (!string.IsNullOrWhiteSpace(DefaultDescribeUri))
-                capabilities[DefaultUri] = new DataValue { Item = DefaultDescribeUri };
-
-            return capabilities;
+                capabilities.SimpleStreamer = true;
         }
 
         /// <summary>
@@ -101,7 +90,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// <param name="request">The request.</param>
         /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
         /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelMetadata(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelMetadata, request.MessageId, messageFlag);
@@ -120,7 +109,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// <param name="request">The request.</param>
         /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
         /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelData(IMessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart)
         {
             var correlationId = 0L;
@@ -146,7 +135,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
         /// <param name="dataItems">The data items.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelDataChange(long channelId, long startIndex, long endIndex, IList<DataItem> dataItems)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelDataChange);
@@ -167,7 +156,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="status">The channel status.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelStatusChange(long channelId, ChannelStatuses status)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelStatusChange);
@@ -186,7 +175,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="reason">The reason.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelRemove(long channelId, string reason = null)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelRemove);

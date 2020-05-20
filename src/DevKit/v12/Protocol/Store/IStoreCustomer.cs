@@ -36,7 +36,7 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// </summary>
         /// <param name="uris">The URI.</param>
         /// <param name="format">The format of the response (XML or JSON).</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetDataObjects(IList<string> uris, string format = "xml");
 
         /// <summary>
@@ -48,14 +48,14 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// Sends a PutDataObjects message to a store.
         /// </summary>
         /// <param name="dataObjects">The data objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PutDataObjects(IList<DataObject> dataObjects);
 
         /// <summary>
         /// Sends a DeleteDataObjects message to a store.
         /// </summary>
         /// <param name="uris">The URI.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long DeleteDataObjects(IList<string> uris);
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <param name="blobId">The blob ID.</param>
         /// <param name="data">The chunk data.</param>
         /// <param name="messageFlags">The message flags.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long Chunk(IMessageHeader request, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>

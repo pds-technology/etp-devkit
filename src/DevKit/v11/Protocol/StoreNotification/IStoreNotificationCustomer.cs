@@ -33,14 +33,14 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         /// Sends a NotificationRequest message to a store.
         /// </summary>
         /// <param name="request">The request.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long NotificationRequest(NotificationRequestRecord request);
 
         /// <summary>
         /// Sends a CancelNotification message to a store.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long CancelNotification(string requestUuid);
 
         /// <summary>

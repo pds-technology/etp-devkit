@@ -31,6 +31,11 @@ namespace Energistics.Etp.v12.Protocol.Discovery
     public interface IDiscoveryStore : IProtocolHandler
     {
         /// <summary>
+        /// Indicates to a customer the maximum number of response messages a store will return.
+        /// </summary>
+        long MaxResponseCount { get; set; }
+
+        /// <summary>
         /// Handles the GetResources event from a customer.
         /// </summary>
         event ProtocolEventHandler<GetResources, IList<Resource>> OnGetResources;
@@ -40,7 +45,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetResourcesResponse(IMessageHeader request, IList<Resource> resources);
     }
 }

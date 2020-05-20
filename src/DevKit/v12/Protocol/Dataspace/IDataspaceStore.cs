@@ -40,7 +40,7 @@ namespace Energistics.Etp.v12.Protocol.Dataspace
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="dataspaces">The dataspaces.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetDataspacesResponse(IMessageHeader request, IList<Datatypes.Object.Dataspace> dataspaces);
 
         /// <summary>

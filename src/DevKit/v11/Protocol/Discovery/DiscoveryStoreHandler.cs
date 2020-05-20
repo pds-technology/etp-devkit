@@ -32,11 +32,6 @@ namespace Energistics.Etp.v11.Protocol.Discovery
     public class DiscoveryStoreHandler : Etp11ProtocolHandler, IDiscoveryStore
     {
         /// <summary>
-        /// The MaxGetResourcesResponse protocol capability key.
-        /// </summary>
-        public const string MaxGetResourcesResponse = "MaxGetResourcesResponse";
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="DiscoveryStoreHandler"/> class.
         /// </summary>
         public DiscoveryStoreHandler() : base((int)Protocols.Discovery, "store", "customer")
@@ -49,7 +44,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="resources">The list of <see cref="Resource" /> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetResourcesResponse(IMessageHeader request, IList<Resource> resources)
         {
             if (!resources.Any())

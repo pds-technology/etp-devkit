@@ -59,7 +59,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="parts">The UIDs and data of the parts being returned.</param>
         /// <param name="errors">The errors, if any.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetPartsResponse(IMessageHeader request, string uri, IDictionary<string, ObjectPart> parts, IDictionary<string, ErrorInfo> errors, string format = "xml")
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsResponse, request.MessageId);
@@ -94,7 +94,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="uri">The URI of the parent object.</param>
         /// <param name="parts">The UIDs and data of the parts being returned.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetPartsByRangeResponse(IMessageHeader request, string uri, IList<ObjectPart> parts, string format = "xml")
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRangeResponse, request.MessageId);
@@ -128,7 +128,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="request">The request.</param>
         /// <param name="metadata">The parts metadata.</param>
         /// <param name="errors">The errors, if any.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetPartsMetadataResponse(IMessageHeader request, IDictionary<string, PartsMetadataInfo> metadata, IDictionary<string, ErrorInfo> errors)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadataResponse, request.MessageId);

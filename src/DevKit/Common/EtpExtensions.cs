@@ -56,6 +56,30 @@ namespace Energistics.Etp.Common
             return (((long)protocol) << 32) + messageType;
         }
 
+        private static IReadOnlyDictionary<string, string> RoleCounterparts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["client"] = "server",
+            ["server"] = "client",
+            ["producer"] = "consumer",
+            ["consumer"] = "producer",
+            ["customer"] = "store",
+            ["store"] = "customer",
+        };
+
+        /// <summary>
+        /// Gets the name of the counterpart role for the specified role.
+        /// </summary>
+        /// <param name="role"></param>
+        /// <returns></returns>
+        public static string GetCounterpartRole(string role)
+        {
+            string counterpartRole;
+            if (RoleCounterparts.TryGetValue(role, out counterpartRole))
+                return counterpartRole;
+
+            return null;
+        }
+
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings()
         {
             ContractResolver = new EtpContractResolver(),
@@ -215,33 +239,38 @@ namespace Energistics.Etp.Common
         /// <param name="protocol">The requested protocol.</param>
         /// <param name="role">The requested role.</param>
         /// <returns>A value indicating whether the specified protocol and role combination is supported.</returns>
-        public static bool Contains(this IList<ISupportedProtocol> supportedProtocols, int protocol, string role)
+        public static bool Contains(this IReadOnlyList<ISupportedProtocol> supportedProtocols, int protocol, string role)
         {
             return supportedProtocols.Any(x => x.Protocol == protocol &&
                 string.Equals(x.Role, role, StringComparison.InvariantCultureIgnoreCase));
         }
 
         /// <summary>
-        /// Determines whether the list of supported protocols indicates the producer is a simple streamer.
+        /// Gets the protocol capabilities for the requested protocol from the list of supported protocols.
         /// </summary>
         /// <param name="supportedProtocols">The supported protocols.</param>
-        /// <returns></returns>
-        public static bool IsSimpleStreamer(this IList<ISupportedProtocol> supportedProtocols)
+        /// <param name="protocol">The protocol to get the capabilities for.</param>
+        /// <returns>An <see cref="EtpProtocolCapabilities"/> instance containing the protocol's capabilities.</returns>
+        public static EtpProtocolCapabilities ProtocolCapabilities(this IList<ISupportedProtocol> supportedProtocols, int protocol)
         {
-            const int protocol = (int) v11.Protocols.ChannelStreaming;
-            const string keyword = v11.Protocol.ChannelStreaming.ChannelStreamingProducerHandler.SimpleStreamer;
-
-            return supportedProtocols
-                .Where(x => x.Protocol == protocol && x.ProtocolCapabilities != null)
-                .Any(x =>
+            var capabilities = new Dictionary<string, IDataValue>();
+            var protocolCapabilities = supportedProtocols?.FirstOrDefault(x => x.Protocol == protocol)?.ProtocolCapabilities;
+            if (protocolCapabilities != null)
+            {
+                foreach (var key in protocolCapabilities.Keys)
                 {
-                    return x.ProtocolCapabilities.Keys
-                        .Cast<string>()
-                        .Where(key => keyword.Equals(key, StringComparison.InvariantCultureIgnoreCase))
-                        .Select(key => x.ProtocolCapabilities[key])
-                        .Cast<IDataValue>()
-                        .Any(dataValue => Convert.ToBoolean(dataValue.Item));
-                });
+                    if (!(key is string))
+                        continue;
+
+                    var value = protocolCapabilities[key];
+                    if (value == null || !(value is IDataValue))
+                        continue;
+
+                    capabilities[(string)key] = (IDataValue)value;
+                }
+            }
+
+            return new EtpProtocolCapabilities(capabilities);
         }
 
         /// <summary>
@@ -378,25 +407,23 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Gets a list of protocols supported by the specified <see cref="IProtocolHandler"/>s.
         /// </summary>
-        /// <param name="adapter">The ETP adapter.</param>
         /// <param name="handlers">The <see cref="IProtocolHandler"/>s.</param>
-        /// <param name="isClient">Whether the client or server roles should be checked in the protocol handlers.</param>
+        /// <param name="supportedVersion">The supported ETP version.</param>
         /// <returns>The list of supported protocols.</returns>
-        public static IList<ISupportedProtocol> GetSupportedProtocols(this IEtpAdapter adapter, IEnumerable<IProtocolHandler> handlers, bool isClient)
+        public static IReadOnlyList<EtpSessionProtocol> GetSupportedProtocols(IEnumerable<IProtocolHandler> handlers, EtpVersion supportedVersion)
         {
-            var supportedProtocols = new List<ISupportedProtocol>();
+            var supportedProtocols = new List<EtpSessionProtocol>();
 
             // Skip Core protocol (0)
-            foreach (var handler in handlers.Where(x => x.Protocol > 0))
+            foreach (var handler in handlers.Where(x => x.Protocol > 0 && x.SupportedVersion == supportedVersion))
             {
-                var role = isClient ? handler.RequestedRole : handler.Role;
-
-                if (supportedProtocols.Contains(handler.Protocol, role))
+                if (supportedProtocols.Contains(handler.Protocol, handler.Role))
                     continue;
 
-                var supportedProtocol = adapter.GetSupportedProtocol(handler, role);
-                if (supportedProtocol != null)
-                    supportedProtocols.Add(supportedProtocol);
+                var capabilities = new EtpProtocolCapabilities();
+                handler.GetCapabilities(capabilities);
+
+                supportedProtocols.Add(new EtpSessionProtocol(handler.Protocol, handler.SupportedVersion.AsVersion(), handler.Role, handler.CounterpartRole, capabilities, null));
             }
 
             return supportedProtocols;
@@ -434,6 +461,21 @@ namespace Energistics.Etp.Common
                 logger.Debug(errorInfo.ToErrorMessage());
             else
                 logger.Debug(errorInfo.ToErrorMessage(), ex);
+        }
+
+        /// <summary>
+        /// Converts an <see cref="EtpVersion"/> to an <see cref="IVersion"/>.
+        /// </summary>
+        /// <param name="version">The version to convert.</param>
+        /// <returns>The converted version.</returns>
+        public static IVersion AsVersion(this EtpVersion version)
+        {
+            switch (version)
+            {
+                case EtpVersion.v11: return new v11.Datatypes.Version { Major = 1, Minor = 1 };
+                case EtpVersion.v12: return new v12.Datatypes.Version { Major = 1, Minor = 2 };
+                default: return null;
+            }
         }
     }
 }

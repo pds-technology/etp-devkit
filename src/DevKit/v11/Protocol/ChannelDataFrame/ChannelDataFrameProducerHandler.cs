@@ -42,7 +42,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// Sends a ChannelMetadata message to a consumer.
         /// </summary>
         /// <param name="channelMetadata">The channel metadata.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelMetadata(ChannelMetadata channelMetadata)
         {
             var header = CreateMessageHeader(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.ChannelMetadata);
@@ -55,7 +55,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// </summary>
         /// <param name="channelIds">The channel ids.</param>
         /// <param name="dataFrames">The data frames.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelDataFrameSet(IList<long> channelIds, IList<DataFrame> dataFrames)
         {
             var header = CreateMessageHeader(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.ChannelDataFrameSet);

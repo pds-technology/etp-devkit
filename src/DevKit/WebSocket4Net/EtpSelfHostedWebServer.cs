@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
+using log4net;
+using Nito.AsyncEx;
 using SuperSocket.SocketBase;
 using SuperSocket.SocketBase.Config;
 using SuperWebSocket;
@@ -32,7 +34,7 @@ namespace Energistics.Etp.WebSocket4Net
     /// A wrapper for the SuperWebSocket library providing a base ETP server implementation.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.EtpWebServerBase" />
-    public class EtpSelfHostedWebServer : EtpWebServerBase, IEtpSelfHostedWebServer
+    public class EtpSelfHostedWebServer : IEtpSelfHostedWebServer
     {
         private static readonly object EtpSessionKey = typeof(IEtpSession);
         private readonly object _sync = new object();
@@ -45,8 +47,11 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="application">The server application name.</param>
         /// <param name="version">The server application version.</param>
         public EtpSelfHostedWebServer(int port, string application, string version)
-            : base(application, version)
         {
+            Logger = LogManager.GetLogger(GetType());
+
+            ServerManager = new EtpServerManager(application, version);
+
             _server = new WebSocketServer(EtpSettings.EtpSubProtocols.Select(p => new BasicSubProtocol(p)));
 
             _server.Setup(new ServerConfig
@@ -65,9 +70,20 @@ namespace Energistics.Etp.WebSocket4Net
         }
 
         /// <summary>
+        /// Gets the logger used by this instance.
+        /// </summary>
+        /// <value>The logger instance.</value>
+        public ILog Logger { get; }
+
+        /// <summary>
+        /// Gets the server manager for this instance.
+        /// </summary>
+        public IEtpServerManager ServerManager { get; }
+
+        /// <summary>
         /// The root URL for the server.
         /// </summary>
-        public Uri Uri { get; private set; }
+        public Uri Uri { get; }
 
         /// <summary>
         /// Gets a value indicating whether the WebSocket server is running.
@@ -89,7 +105,7 @@ namespace Energistics.Etp.WebSocket4Net
         /// </summary>
         public void Start()
         {
-            StartAsync().Wait();
+            AsyncContext.Run(() => StartAsync());
         }
 
         /// <summary>
@@ -112,7 +128,7 @@ namespace Energistics.Etp.WebSocket4Net
         /// </summary>
         public void Stop()
         {
-            StopAsync().Wait();
+            AsyncContext.Run(() => StopAsync());
         }
 
         /// <summary>
@@ -132,48 +148,22 @@ namespace Energistics.Etp.WebSocket4Net
         }
 
         /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
-        /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && _server != null)
-            {
-                // Unregister event handlers
-                _server.NewSessionConnected -= OnNewSessionConnected;
-                //_server.NewMessageReceived -= OnNewMessageReceived;
-                _server.NewDataReceived -= OnNewDataReceived;
-                _server.SessionClosed -= OnSessionClosed;
-
-                Stop();
-                _server.Dispose();
-            }
-
-            _server = null;
-            base.Dispose(disposing);
-        }
-
-        /// <summary>
         /// Called when a WebSocket session is connected.
         /// </summary>
         /// <param name="session">The session.</param>
         private void OnNewSessionConnected(WebSocketSession session)
         {
-            Logger.Debug(Log("[{0}] Socket session connected.", session.SessionID));
-
             lock (_sync)
             {
                 var headers = new Dictionary<string, string>();
                 foreach (var item in session.Items)
                     headers[item.Key.ToString()] = item.Value.ToString();
 
-                var server = new EtpServer(session, ApplicationName, ApplicationVersion, headers);
-                server.SupportedObjects = SupportedObjects;
-
-                RegisterAll(server);
+                var server = new EtpServer(session, ServerManager.ApplicationName, ServerManager.ApplicationVersion, ServerManager.ServerKey, headers);
 
                 session.Items[EtpSessionKey] = server;
-                InvokeSessionConnected(server);
+
+                ServerManager.InitializeServer(server);
             }
         }
 
@@ -184,17 +174,15 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="value">The value.</param>
         private void OnSessionClosed(WebSocketSession session, CloseReason value)
         {
-            Logger.Debug(Log("[{0}] Socket session closed.", session.SessionID));
-
             lock (_sync)
             {
-                var etpSession = GetEtpSession(session);
+                var server = GetEtpServer(session);
 
-                if (etpSession != null)
+                if (server != null)
                 {
                     session.Items.Remove(EtpSessionKey);
-                    InvokeSessionClosed(etpSession);
-                    etpSession.Dispose();
+                    ServerManager.ServerDisconnected(server);
+                    server.Dispose();
                 }
             }
         }
@@ -206,8 +194,8 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="message">The message.</param>
         private void OnNewMessageReceived(WebSocketSession session, string message)
         {
-            var etpSession = GetEtpSession(session);
-            etpSession?.OnMessageReceived(message);
+            var server = GetEtpServer(session);
+            server?.OnMessageReceived(message);
         }
 
         /// <summary>
@@ -217,8 +205,8 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="data">The data.</param>
         private void OnNewDataReceived(WebSocketSession session, byte[] data)
         {
-            var etpSession = GetEtpSession(session);
-            etpSession?.OnDataReceived(data);
+            var server = GetEtpServer(session);
+            server?.OnDataReceived(data);
         }
 
         /// <summary>
@@ -233,14 +221,14 @@ namespace Energistics.Etp.WebSocket4Net
             {
                 foreach (var session in _server.GetAllSessions())
                 {
-                    var etpSession = GetEtpSession(session);
+                    var server = GetEtpServer(session);
                     session.Items.Remove(EtpSessionKey);
 
-                    if (etpSession == null) continue;
+                    if (server == null) continue;
 
-                    InvokeSessionClosed(etpSession);
-                    etpSession.Close(reason);
-                    etpSession.Dispose();
+                    server.CloseWebSocket(reason);
+                    ServerManager.ServerDisconnected(server);
+                    server.Dispose();
                 }
             }
         }
@@ -249,21 +237,79 @@ namespace Energistics.Etp.WebSocket4Net
         /// Gets the ETP session associated with the specified WebSocket session.
         /// </summary>
         /// <param name="session">The WebSocket session.</param>
-        /// <returns>The <see cref="IEtpSession"/> associated with the WebSocket session.</returns>
-        private IEtpSession GetEtpSession(WebSocketSession session)
+        /// <returns>The <see cref="IEtpServer"/> associated with the WebSocket session.</returns>
+        private IEtpServer GetEtpServer(WebSocketSession session)
         {
-            IEtpSession etpSession = null;
+            IEtpServer etpSession = null;
             object item;
 
             lock (_sync)
             {
                 if (session.Items.TryGetValue(EtpSessionKey, out item))
                 {
-                    etpSession = item as IEtpSession;
+                    etpSession = item as IEtpServer;
                 }
             }
 
             return etpSession;
         }
+
+        #region IDisposable Support
+
+        private bool _disposedValue; // To detect redundant calls
+
+        /// <summary>
+        /// Checks whether the current instance has been disposed.
+        /// </summary>
+        /// <exception cref="System.ObjectDisposedException"></exception>
+        protected virtual void CheckDisposed()
+        {
+            if (_disposedValue)
+            {
+                throw new ObjectDisposedException(GetType().Name);
+            }
+        }
+
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing && !_disposedValue && _server != null)
+            {
+                Logger.Trace($"Disposing {GetType().Name}");
+
+                // Unregister event handlers
+                _server.NewSessionConnected -= OnNewSessionConnected;
+                //_server.NewMessageReceived -= OnNewMessageReceived;
+                _server.NewDataReceived -= OnNewDataReceived;
+                _server.SessionClosed -= OnSessionClosed;
+
+                Stop();
+                _server.Dispose();
+            }
+
+            _disposedValue = true;
+        }
+
+        // NOTE: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        // ~EtpBase() {
+        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+        //   Dispose(false);
+        // }
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // NOTE: uncomment the following line if the finalizer is overridden above.
+            // GC.SuppressFinalize(this);
+        }
+
+        #endregion
     }
 }

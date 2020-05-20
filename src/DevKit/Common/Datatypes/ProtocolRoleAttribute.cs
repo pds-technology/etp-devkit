@@ -31,13 +31,13 @@ namespace Energistics.Etp.Common.Datatypes
         /// Initializes a new instance of the <see cref="ProtocolRoleAttribute"/> class.
         /// </summary>
         /// <param name="protocol">The protocol.</param>
-        /// <param name="role">The role.</param>
-        /// <param name="requestedRole">The requested role.</param>
-        public ProtocolRoleAttribute(int protocol, string role, string requestedRole)
+        /// <param name="role">The role in the protocol.</param>
+        /// <param name="counterpartRole">The counterpart's role in the protocol.</param>
+        public ProtocolRoleAttribute(int protocol, string role, string counterpartRole)
         {
             Protocol = protocol;
             Role = role;
-            RequestedRole = requestedRole;
+            CounterpartRole = counterpartRole;
         }
 
         /// <summary>
@@ -47,15 +47,15 @@ namespace Energistics.Etp.Common.Datatypes
         public int Protocol { get; }
 
         /// <summary>
-        /// Gets the role.
+        /// Gets the role in the protocol.
         /// </summary>
-        /// <value>The role.</value>
+        /// <value>The role in the protocol.</value>
         public string Role { get; }
 
         /// <summary>
-        /// Gets the requested role.
+        /// Gets the counterpart's role in the protocol.
         /// </summary>
-        /// <value>The requested role.</value>
-        public string RequestedRole { get; }
+        /// <value>The counterpart's role in the protocol.</value>
+        public string CounterpartRole { get; }
     }
 }

@@ -34,7 +34,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// <param name="uri">The URI.</param>
         /// <param name="fromIndex">From index.</param>
         /// <param name="toIndex">To index.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long RequestChannelData(string uri, long? fromIndex = null, long? toIndex = null);
 
         /// <summary>

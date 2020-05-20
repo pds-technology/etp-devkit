@@ -73,11 +73,12 @@ namespace Energistics.Etp
         /// <param name="uri">The ETP server URI.</param>
         /// <param name="application">The client application name.</param>
         /// <param name="version">The client application version.</param>
+        /// <param name="instanceKey">The instance key to use in generating the client instance identifier.</param>
         /// <param name="etpSubProtocol">The ETP sub protocol.</param>
         /// <returns>The <see cref="IEtpClient"/></returns>
-        public static IEtpClient CreateClient(string uri, string application, string version, string etpSubProtocol)
+        public static IEtpClient CreateClient(string uri, string application, string version, string instanceKey, string etpSubProtocol)
         {
-            return CreateClient(Settings.Default.DefaultWebSocketType, uri, application, version, etpSubProtocol, EmptyHeaders);
+            return CreateClient(Settings.Default.DefaultWebSocketType, uri, application, version, instanceKey, etpSubProtocol, EmptyHeaders);
         }
 
         /// <summary>
@@ -87,11 +88,12 @@ namespace Energistics.Etp
         /// <param name="uri">The ETP server URI.</param>
         /// <param name="application">The client application name.</param>
         /// <param name="version">The client application version.</param>
+        /// <param name="instanceKey">The instance key to use in generating the client instance identifier.</param>
         /// <param name="etpSubProtocol">The ETP sub protocol.</param>
         /// <returns>The <see cref="IEtpClient"/></returns>
-        public static IEtpClient CreateClient(WebSocketType webSocketType, string uri, string application, string version, string etpSubProtocol)
+        public static IEtpClient CreateClient(WebSocketType webSocketType, string uri, string application, string version, string instanceKey, string etpSubProtocol)
         {
-            return CreateClient(webSocketType, uri, application, version, etpSubProtocol, EmptyHeaders);
+            return CreateClient(webSocketType, uri, application, version, instanceKey, etpSubProtocol, EmptyHeaders);
         }
 
         /// <summary>
@@ -100,12 +102,13 @@ namespace Energistics.Etp
         /// <param name="uri">The ETP server URI.</param>
         /// <param name="application">The client application name.</param>
         /// <param name="version">The client application version.</param>
+        /// <param name="instanceKey">The instance key to use in generating the client instance identifier.</param>
         /// <param name="etpSubProtocol">The ETP sub protocol.</param>
         /// <param name="headers">The WebSocket headers.</param>
         /// <returns>The <see cref="IEtpClient"/></returns>
-        public static IEtpClient CreateClient(string uri, string application, string version, string etpSubProtocol, IDictionary<string, string> headers)
+        public static IEtpClient CreateClient(string uri, string application, string version, string instanceKey, string etpSubProtocol, IDictionary<string, string> headers)
         {
-            return CreateClient(Settings.Default.DefaultWebSocketType, uri, application, version, etpSubProtocol, headers);
+            return CreateClient(Settings.Default.DefaultWebSocketType, uri, application, version, instanceKey, etpSubProtocol, headers);
         }
 
         /// <summary>
@@ -115,10 +118,11 @@ namespace Energistics.Etp
         /// <param name="uri">The ETP server URI.</param>
         /// <param name="application">The client application name.</param>
         /// <param name="version">The client application version.</param>
+        /// <param name="instanceKey">The instance key to use in generating the client instance identifier.</param>
         /// <param name="etpSubProtocol">The ETP sub protocol.</param>
         /// <param name="headers">The WebSocket headers.</param>
         /// <returns>The <see cref="IEtpClient"/></returns>
-        public static IEtpClient CreateClient(WebSocketType webSocketType, string uri, string application, string version, string etpSubProtocol, IDictionary<string, string> headers)
+        public static IEtpClient CreateClient(WebSocketType webSocketType, string uri, string application, string version, string instanceKey, string etpSubProtocol, IDictionary<string, string> headers)
         {
             if (webSocketType == WebSocketType.Native && !IsNativeSupported)
                 webSocketType = FallbackWebSocketType;
@@ -126,9 +130,9 @@ namespace Energistics.Etp
             switch (webSocketType)
             {
                 case WebSocketType.Native:
-                    return new Native.EtpClient(uri, application, version, etpSubProtocol, headers);
+                    return new Native.EtpClient(uri, application, version, instanceKey, etpSubProtocol, headers);
                 case WebSocketType.WebSocket4Net:
-                    return new WebSocket4Net.EtpClient(uri, application, version, etpSubProtocol, headers);
+                    return new WebSocket4Net.EtpClient(uri, application, version, instanceKey, etpSubProtocol, headers);
 
                 default:
                     throw new ArgumentException($"Unrecognized WebSocket type: {webSocketType}", "webSocketType");
@@ -156,6 +160,7 @@ namespace Energistics.Etp
         /// <param name="port">The port.</param>
         /// <param name="application">The server application name.</param>
         /// <param name="version">The server application version.</param>
+        /// <param name="serverInstanceId">The server instance identifier for all ETP session servers for this instance.</param>
         /// <returns>The <see cref="IEtpSelfHostedWebServer"/></returns>
         public static IEtpSelfHostedWebServer CreateSelfHostedWebServer(WebSocketType webSocketType, int port, string application, string version)
         {

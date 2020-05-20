@@ -16,17 +16,16 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using Energistics.Etp.Common;
+using Energistics.Etp.Properties;
+using Nito.AsyncEx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
-using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
-using Energistics.Etp.Common;
-using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.Properties;
 
 namespace Energistics.Etp.Native
 {
@@ -42,7 +41,6 @@ namespace Energistics.Etp.Native
             { Settings.Default.EtpEncodingHeader, Settings.Default.EtpEncodingBinary }
         };
 
-        private string _supportedCompression;
         private Task _connectionHandlingTask;
 
         private CancellationTokenSource _source;
@@ -53,8 +51,9 @@ namespace Energistics.Etp.Native
         /// <param name="uri">The ETP server URI.</param>
         /// <param name="application">The client application name.</param>
         /// <param name="version">The client application version.</param>
+        /// <param name="instanceKey">The instance key to use in generating the client instance identifier.</param>
         /// <param name="etpSubProtocol">The ETP sub protocol.</param>
-        public EtpClient(string uri, string application, string version, string etpSubProtocol) : this(uri, application, version, etpSubProtocol, EmptyHeaders)
+        public EtpClient(string uri, string application, string version, string instanceKey, string etpSubProtocol) : this(uri, application, version, etpSubProtocol, instanceKey, EmptyHeaders)
         {
         }
 
@@ -64,10 +63,11 @@ namespace Energistics.Etp.Native
         /// <param name="uri">The ETP server URI.</param>
         /// <param name="application">The client application name.</param>
         /// <param name="version">The client application version.</param>
+        /// <param name="instanceKey">The instance key to use in generating the client instance identifier.</param>
         /// <param name="etpSubProtocol">The ETP sub protocol.</param>
         /// <param name="headers">The WebSocket headers.</param>
-        public EtpClient(string uri, string application, string version, string etpSubProtocol, IDictionary<string, string> headers)
-            : base(EtpWebSocketValidation.GetEtpVersion(etpSubProtocol), new ClientWebSocket(), application, version, headers, true)
+        public EtpClient(string uri, string application, string version, string instanceKey, string etpSubProtocol, IDictionary<string, string> headers)
+            : base(EtpWebSocketValidation.GetEtpVersion(etpSubProtocol), new ClientWebSocket(), application, version, instanceKey, headers, true)
         {
             var headerItems = Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList();
 
@@ -97,7 +97,7 @@ namespace Energistics.Etp.Native
         /// </summary>
         public void Open()
         {
-            OpenAsync().Wait();
+            AsyncContext.Run(() => OpenAsync());
         }
 
         /// <summary>
@@ -116,7 +116,8 @@ namespace Energistics.Etp.Native
             try
             {
                 //////////////////////////////////////////////////////////////////////
-                // Work around based on https://stackoverflow.com/questions/40502921
+                // Work around to avoid websocket connections timing out
+                // based on https://stackoverflow.com/questions/40502921
 
                 var prevIdleTime = ServicePointManager.MaxServicePointIdleTime;
                 ServicePointManager.MaxServicePointIdleTime = Timeout.Infinite;
@@ -154,7 +155,7 @@ namespace Energistics.Etp.Native
                 TaskScheduler.Default).Unwrap();
 
             Logger.Trace(Log("Requesting session..."));
-            Adapter.RequestSession(this, ApplicationName, ApplicationVersion, _supportedCompression);
+            Adapter.RequestSession(this);
 
             InvokeSocketOpened();
 
@@ -165,7 +166,7 @@ namespace Energistics.Etp.Native
         /// Asynchronously closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        protected override async Task CloseAsyncCore(string reason)
+        protected override async Task CloseWebSocketAsyncCore(string reason)
         {
             _source?.Cancel();
 
@@ -185,7 +186,7 @@ namespace Energistics.Etp.Native
             }
 
             if (IsOpen)
-                await base.CloseAsyncCore(reason).ConfigureAwait(CaptureAsyncContext);
+                await base.CloseWebSocketAsyncCore(reason).ConfigureAwait(CaptureAsyncContext);
         }
 
         /// <summary>
@@ -229,41 +230,23 @@ namespace Energistics.Etp.Native
         }
 
         /// <summary>
-        /// Sets the supported compression type, e.g. gzip.
-        /// </summary>
-        /// <param name="supportedCompression">The supported compression.</param>
-        public void SetSupportedCompression(string supportedCompression)
-        {
-            _supportedCompression = supportedCompression;
-        }
-
-        /// <summary>
         /// Called to let derived classes cleanup after a connection has ended.
         /// </summary>
         protected override void CleanupAfterConnection()
         {
-            Logger.Trace(Log("[{0}] Socket closed.", ServerInstanceId));
-            ServerInstanceId = null;
+            Logger.Trace(Log("[{0}] Socket closed.", SessionKey));
+            SessionId = null;
         }
 
         /// <summary>
         /// Called when the ETP session is opened.
         /// </summary>
-        /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        public override void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols)
+        /// <param name="openedSuccessfully"><c>true</c> if the session opened without errors; <c>false</c> if there were errors when opening the session.</param>
+        public override void OnSessionOpened(bool openedSuccessfully)
         {
-            Logger.Trace(Log("[{0}] Socket opened.", ServerInstanceId));
+            Logger.Trace(Log("[{0}] Socket opened", SessionKey));
 
-            base.OnSessionOpened(requestedProtocols, supportedProtocols);
-        }
-
-        /// <summary>
-        /// Handles the unsupported protocols.
-        /// </summary>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        protected override void HandleUnsupportedProtocols(IList<ISupportedProtocol> supportedProtocols)
-        {
+            base.OnSessionOpened(openedSuccessfully);
         }
 
         /// <summary>
@@ -274,7 +257,7 @@ namespace Energistics.Etp.Native
         {
             if (disposing)
             {
-                Close("Shutting down");
+                CloseWebSocket("Shutting down");
 
                 Socket?.Dispose();
             }

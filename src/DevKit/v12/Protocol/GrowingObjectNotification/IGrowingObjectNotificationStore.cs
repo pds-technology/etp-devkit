@@ -45,7 +45,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="changeKind">The change kind.</param>
         /// <param name="changeTime">The change time.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PartsChanged(Guid requestUuid, string uri, IList<ObjectPart> parts, ObjectChangeKind changeKind, long changeTime, string format = "xml");
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="uri">The URI of the growing object.</param>
         /// <param name="uids">The UIDs of the deleted parts.</param>
         /// <param name="changeTime">The change time.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PartsDeleted(Guid requestUuid, string uri, IList<string> uids, long changeTime);
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="deletedInterval">The index interval for the deleted range.</param>
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals were included; otherwise, <c>false</c>.</param>
         /// <param name="changeTime">The change time.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PartsDeletedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, long changeTime);
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="parts">The map of UIDs and data of the parts that were put.</param>
         /// <param name="changeTime">The change time.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PartsReplacedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, long changeTime, string format = "xml");
 
         /// <summary>
@@ -91,14 +91,14 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// Sends a PartSubscriptionEnded message to a customer.
         /// </summary>
         /// <param name="requestUuid">The UUID of the subscription that has ended.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PartSubscriptionEnded(Guid requestUuid);
 
         /// <summary>
         /// Sends an UnsolicitedPartNotifications message to a customer.
         /// </summary>
         /// <param name="subscriptions">The unsolicited subscriptions.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long UnsolicitedPartNotifications(IList<SubscriptionInfo> subscriptions);
     }
 }

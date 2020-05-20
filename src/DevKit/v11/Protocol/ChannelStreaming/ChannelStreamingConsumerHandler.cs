@@ -51,11 +51,30 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         protected IList<ChannelMetadataRecord> ChannelMetadataRecords { get; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the producer is a Simple Streamer.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if the producer is a Simple Streamer; otherwise, <c>false</c>.
+        /// </value>
+        public bool ProducerIsSimpleStreamer { get; private set; }
+
+        /// <summary>
+        /// Sets <see cref="ProducerIsSimpleStreamer"/>.
+        /// </summary>
+        /// <param name="counterpartCapabilities">The counterpart's protocol capabilities.</param>
+        public override void OnSessionOpened(EtpProtocolCapabilities counterpartCapabilities)
+        {
+            base.OnSessionOpened(counterpartCapabilities);
+
+            ProducerIsSimpleStreamer = counterpartCapabilities.SimpleStreamer ?? false;
+        }
+
+        /// <summary>
         /// Sends a Start message to a producer with the specified throttling parameters.
         /// </summary>
         /// <param name="maxDataItems">The maximum data items.</param>
         /// <param name="maxMessageRate">The maximum message rate.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long Start(int maxDataItems = 10000, int maxMessageRate = 1000)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.Start);
@@ -74,7 +93,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// Sends a ChannelDescribe message to a producer with the specified URIs.
         /// </summary>
         /// <param name="uris">The list of URIs.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelDescribe(IList<string> uris)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelDescribe);
@@ -91,7 +110,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// Sends a ChannelStreamingStart message to a producer.
         /// </summary>
         /// <param name="channelStreamingInfos">The list of <see cref="ChannelStreamingInfo" /> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelStreamingStart(IList<ChannelStreamingInfo> channelStreamingInfos)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelStreamingStart);
@@ -108,7 +127,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// Sends a ChannelStreamingStop message to a producer.
         /// </summary>
         /// <param name="channelIds">The list of channel identifiers.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelStreamingStop(IList<long> channelIds)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelStreamingStop);
@@ -125,7 +144,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// Sends a ChannelRangeRequest message to a producer.
         /// </summary>
         /// <param name="channelRangeInfos">The list of <see cref="ChannelRangeInfo" /> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelRangeRequest(IList<ChannelRangeInfo> channelRangeInfos)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelRangeRequest);

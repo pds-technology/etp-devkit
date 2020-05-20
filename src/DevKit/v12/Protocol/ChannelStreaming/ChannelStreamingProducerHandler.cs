@@ -36,7 +36,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// </summary>
         public ChannelStreamingProducerHandler() : base((int)Protocols.ChannelStreaming, "producer", "consumer")
         {
-            MaxDataItems = EtpSettings.DefaultMaxDataItems;
+            MaxDataItemCount = EtpSettings.DefaultMaxDataItemCount;
 
             RegisterMessageHandler<StartStreaming>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.StartStreaming, HandleStartStreaming);
             RegisterMessageHandler<StopStreaming>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.StopStreaming, HandleStopStreaming);
@@ -45,19 +45,17 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// <summary>
         /// Gets the maximum data items.
         /// </summary>
-        public int MaxDataItems { get; set; }
+        public long MaxDataItemCount { get; set; }
 
         /// <summary>
         /// Gets the capabilities supported by the protocol handler.
         /// </summary>
-        /// <returns>A collection of protocol capabilities.</returns>
-        public override IDictionary<string, IDataValue> GetCapabilities()
+        /// <param name="capabilities">The protocol's capabilities.</param>
+        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
         {
-            var capabilities = base.GetCapabilities();
+            base.GetCapabilities(capabilities);
 
-            capabilities[EtpSettings.MaxDataItemsKey] = new DataValue { Item = MaxDataItems };
-
-            return capabilities;
+            capabilities.MaxDataItemCount = MaxDataItemCount;
         }
 
         /// <summary>
@@ -74,7 +72,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// Sends a ChannelMetadata message to a consumer.
         /// </summary>
         /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelMetadata(IList<ChannelMetadataRecord> channelMetadataRecords)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelMetadata);
@@ -91,7 +89,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// Sends a ChannelData message to a consumer.
         /// </summary>
         /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ChannelData(IList<DataItem> dataItems)
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelData);

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
+using log4net;
 
 namespace Energistics.Etp.Common
 {
@@ -29,7 +30,7 @@ namespace Energistics.Etp.Common
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.EtpBase" />
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    public abstract class EtpProtocolHandler : EtpBase, IProtocolHandler
+    public abstract class EtpProtocolHandler : IProtocolHandler
     {
         private readonly Dictionary<long, Action<IMessageHeader, ISpecificRecord>> MessageHandlers = new Dictionary<long, Action<IMessageHeader, ISpecificRecord>>();
 
@@ -38,18 +39,25 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="version">The ETP version.</param>
         /// <param name="protocol">The protocol.</param>
-        /// <param name="role">The role.</param>
-        /// <param name="requestedRole">The requested role.</param>
-        protected EtpProtocolHandler(EtpVersion version, int protocol, string role, string requestedRole) : base(false)
+        /// <param name="role">This handler's role in the protocol.</param>
+        /// <param name="counterpartRole">The role for this handler's counterpart in the protocol.</param>
+        protected EtpProtocolHandler(EtpVersion version, int protocol, string role, string counterpartRole)
         {
             SupportedVersion = version;
             Protocol = protocol;
             Role = role;
-            RequestedRole = requestedRole;
+            CounterpartRole = counterpartRole;
+            Logger = LogManager.GetLogger(GetType());
 
             RegisterMessageHandler<IProtocolException>(v11.Protocols.Core, v11.MessageTypes.Core.ProtocolException, HandleProtocolException);
             RegisterMessageHandler<IAcknowledge>(v11.Protocols.Core, v11.MessageTypes.Core.Acknowledge, HandleAcknowledge);
         }
+
+        /// <summary>
+        /// Gets the logger used by this instance.
+        /// </summary>
+        /// <value>The logger instance.</value>
+        public ILog Logger { get; private set; }
 
         /// <summary>
         /// The ETP version supported by this handler.
@@ -69,24 +77,39 @@ namespace Energistics.Etp.Common
         public int Protocol { get; }
 
         /// <summary>
-        /// Gets the role.
+        /// Gets this handler's role in the protocol.
         /// </summary>
-        /// <value>The role.</value>
+        /// <value>This handler's role in the protocol.</value>
         public string Role { get; }
 
         /// <summary>
-        /// Gets the requested role.
+        /// Gets the role for this handler's counterpart in the protocol.
         /// </summary>
-        /// <value>The requested role.</value>
-        public string RequestedRole { get; }
+        /// <value>The role for this handler's counterpart in the protocol.</value>
+        public string CounterpartRole { get; }
 
         /// <summary>
         /// Gets the capabilities supported by the protocol handler.
         /// </summary>
-        /// <returns>A collection of protocol capabilities.</returns>
-        public virtual IDictionary<string, IDataValue> GetCapabilities()
+        /// <param name="capabilities">The protocol's capabilities.</param>
+        public virtual void GetCapabilities(EtpProtocolCapabilities capabilities)
         {
-            return new Dictionary<string, IDataValue>();
+
+        }
+
+        /// <summary>
+        /// Called when the ETP session is opened.
+        /// </summary>
+        /// <param name="counterpartCapabilities">The counterpart's protocol capabilities.</param>
+        public virtual void OnSessionOpened(EtpProtocolCapabilities counterpartCapabilities)
+        {
+        }
+
+        /// <summary>
+        /// Called when the ETP session is closed.
+        /// </summary>
+        public virtual void OnSessionClosed()
+        {
         }
 
         /// <summary>
@@ -94,7 +117,7 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="correlationId">The correlation identifier.</param>
         /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long Acknowledge(long correlationId, MessageFlags messageFlag = MessageFlags.None)
         {
             var header = CreateMessageHeader(Protocol, v11.MessageTypes.Core.Acknowledge, correlationId, messageFlag);
@@ -107,7 +130,7 @@ namespace Energistics.Etp.Common
         /// Sends a ProtocolException message with the specified exception details.
         /// </summary>
         /// <param name="exception">The ETP exception.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ProtocolException(EtpException exception)
         {
             var header = CreateMessageHeader(Protocol, v11.MessageTypes.Core.ProtocolException, exception.CorrelationId);
@@ -160,7 +183,7 @@ namespace Energistics.Etp.Common
         protected virtual void HandleProtocolException(IMessageHeader header, IProtocolException protocolException)
         {
             Notify(OnProtocolException, header, protocolException);
-            Logger.DebugFormat("[{0}] Protocol exception: {1} - {2}", Session.ServerInstanceId, protocolException.ErrorCode, protocolException.ErrorMessage);
+            Logger.DebugFormat("[{0}] Protocol exception: {1} - {2}", Session.SessionKey, protocolException.ErrorCode, protocolException.ErrorMessage);
         }
 
         /// <summary>
@@ -327,6 +350,43 @@ namespace Energistics.Etp.Common
             var messageKey = EtpExtensions.CreateMessageKey(Convert.ToInt32(protocol), Convert.ToInt32(messageType));
 
             MessageHandlers[messageKey] = (h, b) => messageHandler(h, (T)b);
+        }
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+        }
+
+        private bool _disposedValue; // To detect redundant calls
+
+        /// <summary>
+        /// Checks whether the current instance has been disposed.
+        /// </summary>
+        /// <exception cref="System.ObjectDisposedException"></exception>
+        protected virtual void CheckDisposed()
+        {
+            if (_disposedValue)
+            {
+                throw new ObjectDisposedException(GetType().Name);
+            }
+        }
+
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                Logger.Trace($"Disposing {GetType().Name}");
+
+                _disposedValue = true;
+            }
         }
     }
 }

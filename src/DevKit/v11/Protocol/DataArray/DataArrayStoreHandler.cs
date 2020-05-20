@@ -46,7 +46,7 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// </summary>
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="data">The data array.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public long DataArray(IList<long> dimensions, AnyArray data)
         {
             var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.DataArray);

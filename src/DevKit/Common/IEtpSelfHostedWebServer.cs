@@ -24,9 +24,14 @@ namespace Energistics.Etp.Common
     /// <summary>
     /// Defines the properties and methods needed to manage a self-hosted ETP web server.
     /// </summary>
-    /// <seealso cref="IEtpWebServer" />
-    public interface IEtpSelfHostedWebServer : IEtpWebServer
+    /// <seealso cref="IEtpServerManager" />
+    public interface IEtpSelfHostedWebServer : IDisposable
     {
+        /// <summary>
+        /// Gets the server manager for this instance.
+        /// </summary>
+        IEtpServerManager ServerManager { get; }
+
         /// <summary>
         /// The root URI for the server.
         /// </summary>

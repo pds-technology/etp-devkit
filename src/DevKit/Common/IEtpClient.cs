@@ -29,12 +29,6 @@ namespace Energistics.Etp.Common
     public interface IEtpClient : IEtpSession
     {
         /// <summary>
-        /// Sets the supported compression type, e.g. gzip.
-        /// </summary>
-        /// <param name="supportedCompression">The supported compression.</param>
-        void SetSupportedCompression(string supportedCompression);
-
-        /// <summary>
         /// Sets the proxy server host name and port number.
         /// </summary>
         /// <param name="host">The host name.</param>
@@ -59,20 +53,5 @@ namespace Energistics.Etp.Common
         /// Asynchronously opens the WebSocket connection.
         /// </summary>
         Task<bool> OpenAsync();
-
-        /// <summary>
-        /// Occurs when the WebSocket is opened.
-        /// </summary>
-        event EventHandler SocketOpened;
-
-        /// <summary>
-        /// Occurs when the WebSocket is closed.
-        /// </summary>
-        event EventHandler SocketClosed;
-
-        /// <summary>
-        /// Occurs when the WebSocket has an error.
-        /// </summary>
-        event EventHandler<Exception> SocketError;
     }
 }

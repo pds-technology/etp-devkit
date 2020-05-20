@@ -45,19 +45,17 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// <summary>
         /// Gets the maximum response count.
         /// </summary>
-        public int MaxResponseCount { get; set; }
+        public long MaxResponseCount { get; set; }
 
         /// <summary>
         /// Gets the capabilities supported by the protocol handler.
         /// </summary>
-        /// <returns>A collection of protocol capabilities.</returns>
-        public override IDictionary<string, IDataValue> GetCapabilities()
+        /// <param name="capabilities">The protocol's capabilities.</param>
+        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
         {
-            var capabilities = base.GetCapabilities();
+            base.GetCapabilities(capabilities);
 
-            capabilities[EtpSettings.MaxResponseCountKey] = new DataValue { Item = MaxResponseCount };
-
-            return capabilities;
+            capabilities.MaxResponseCount = MaxResponseCount;
         }
 
         /// <summary>
@@ -70,7 +68,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="resources">The list of <see cref="Resource" /> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetResourcesResponse(IMessageHeader request, IList<Resource> resources)
         {
             var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse, request.MessageId);

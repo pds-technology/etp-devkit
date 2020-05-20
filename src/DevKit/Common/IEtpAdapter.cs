@@ -20,6 +20,7 @@ using Avro.IO;
 using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
+using System.Collections.Generic;
 
 namespace Energistics.Etp.Common
 {
@@ -29,9 +30,7 @@ namespace Energistics.Etp.Common
 
         void RegisterCore(IEtpSession session);
 
-        void RequestSession(IEtpSession session, string applicationName, string applicationVersion, string requestedCompression);
-
-        ISupportedProtocol GetSupportedProtocol(IProtocolHandler handler, string role);
+        void RequestSession(IEtpSession session);
 
         IMessageHeader CreateMessageHeader();
 

@@ -40,7 +40,7 @@ namespace Energistics.Etp.v12.Protocol.SupportedTypes
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="supportedTypes">The list of <see cref="SupportedType"/> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetSupportedTypesResponse(IMessageHeader request, IList<SupportedType> supportedTypes);
     }
 }

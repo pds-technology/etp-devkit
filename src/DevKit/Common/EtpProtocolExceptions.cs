@@ -32,12 +32,12 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="handler">The handler.</param>
         /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public static long Unset(this IProtocolHandler handler, IMessageHeader header)
         {
             try { handler.UnsetException(header); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -45,12 +45,12 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="handler">The handler.</param>
         /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public static long NoRole(this IProtocolHandler handler, IMessageHeader header)
         {
             try { handler.NoRoleException(header); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -58,12 +58,12 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="handler">The handler.</param>
         /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public static long NoSupportedProtocols(this IProtocolHandler handler, IMessageHeader header)
         {
             try { handler.NoSupportedProtocolsException(header); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -71,12 +71,12 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="handler">The handler.</param>
         /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public static long InvalidMessage(this IProtocolHandler handler, IMessageHeader header)
         {
             try { handler.InvalidMessageException(header); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -85,12 +85,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long UnsupportedProtocol(this IProtocolHandler handler, object value, long messageId = 0)
         {
             try { handler.UnsupportedProtocolException(value, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -99,12 +99,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long InvalidArgument(this IProtocolHandler handler, object value, long messageId = 0)
         {
             try { handler.InvalidArgumentException(value, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -113,12 +113,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long PermissionDenied(this IProtocolHandler handler, object value, long messageId = 0)
         {
             try { handler.PermissionDeniedException(value, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -127,12 +127,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long NotSupported(this IProtocolHandler handler, object value, long messageId = 0)
         {
             try { handler.NotSupportedException(value, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -141,12 +141,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long InvalidState(this IProtocolHandler handler, object value, long messageId = 0)
         {
             try { handler.InvalidStateException(value, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -155,12 +155,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long InvalidUri(this IProtocolHandler handler, object value, long messageId = 0)
         {
             try { handler.InvalidUriException(value, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -169,12 +169,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long ExpiredToken(this IProtocolHandler handler, object value, long messageId = 0)
         {
             try { handler.ExpiredTokenException(value, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -183,12 +183,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long NotFound(this IProtocolHandler handler, object value, long messageId = 0)
         {
             try { handler.NotFoundException(value, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -197,12 +197,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long LimitExceeded(this IProtocolHandler handler, object value, long messageId = 0)
         {
             try { handler.LimitExceededException(value, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -216,7 +216,7 @@ namespace Energistics.Etp.Common
         {
             try { handler.CompressionNotSupportedException(requestedCompression, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -227,7 +227,7 @@ namespace Energistics.Etp.Common
         /// <param name="uri">The URI.</param>
         /// <param name="message">The optional error message.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long InvalidObject(this IProtocolHandler handler, Exception exception, string uri, string message = null, long messageId = 0)
         {
             try { handler.InvalidObjectException(exception, uri, message, messageId); }
@@ -240,7 +240,7 @@ namespace Energistics.Etp.Common
 
                 return handler.ProtocolException(ex);
             }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -249,12 +249,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long InvalidChannelId(this IProtocolHandler handler, object value, long messageId = 0)
         {
             try { handler.InvalidChannelIdException(value, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -264,7 +264,7 @@ namespace Energistics.Etp.Common
         /// <param name="exception">The exception.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long UnsupportedObject(this IProtocolHandler handler, Exception exception, string uri, long messageId = 0)
         {
             try { handler.UnsupportedObjectException(exception, uri, messageId); }
@@ -277,7 +277,7 @@ namespace Energistics.Etp.Common
 
                 return handler.ProtocolException(ex);
             }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -287,7 +287,7 @@ namespace Energistics.Etp.Common
         /// <param name="exception">The exception.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long InvalidObjectX(this IProtocolHandler handler, Exception exception, string uri, long messageId = 0)
         {
             try { handler.InvalidObjectXException(exception, uri, messageId); }
@@ -300,7 +300,7 @@ namespace Energistics.Etp.Common
 
                 return handler.ProtocolException(ex);
             }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -309,12 +309,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long NoCascadeDelete(this IProtocolHandler handler, string uri, long messageId = 0)
         {
             try { handler.NoCascadeDeleteException(uri, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -323,12 +323,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long NoPluralObject(this IProtocolHandler handler, string uri, long messageId = 0)
         {
             try { handler.NoPluralObjectException(uri, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -337,12 +337,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long GrowingPortionIgnored(this IProtocolHandler handler, string uri, long messageId = 0)
         {
             try { handler.GrowingPortionIgnoredException(uri, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -350,12 +350,12 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="handler">The protocol handler.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long RetentionPeriodExceeded(this IProtocolHandler handler, long messageId = 0)
         {
             try { handler.RetentionPeriodExceededException(messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
 
         /// <summary>
@@ -364,12 +364,12 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static long NotGrowingObject(this IProtocolHandler handler, string uri, long messageId = 0)
         {
             try { handler.NotGrowingObjectException(uri, messageId); }
             catch (EtpException ex) { return handler.ProtocolException(ex); }
-            return 0;
+            return -1;
         }
     }
 }

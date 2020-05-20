@@ -55,7 +55,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// <param name="request">The request.</param>
         /// <param name="dataArrays">The data arrays.</param>
         /// <param name="errors">The errors.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetDataArraysResponse(IMessageHeader request, IDictionary<string, Datatypes.DataArrayTypes.DataArray> dataArrays, IDictionary<string, ErrorInfo> errors)
         {
             var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.GetDataArraysResponse, request.MessageId);
@@ -78,7 +78,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// <param name="request">The request.</param>
         /// <param name="dataSubarrays">The data subarrays.</param>
         /// <param name="errors">The errors.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetDataSubarraysResponse(IMessageHeader request, IDictionary<string, Datatypes.DataArrayTypes.DataArray> dataSubarrays, IDictionary<string, ErrorInfo> errors)
         {
             var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.GetDataSubarraysResponse, request.MessageId);
@@ -116,7 +116,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// <param name="request">The request.</param>
         /// <param name="arrayMetadata">The array metadata.</param>
         /// <param name="errors">The errors.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetDataArrayMetadataResponse(IMessageHeader request, IDictionary<string, DataArrayMetadata> arrayMetadata, IDictionary<string, ErrorInfo> errors)
         {
             var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.GetDataArrayMetadataResponse, request.MessageId);

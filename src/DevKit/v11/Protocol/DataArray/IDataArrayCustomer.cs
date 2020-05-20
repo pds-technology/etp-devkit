@@ -30,7 +30,7 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// Gets the data array by URI.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetDataArray(string uri);
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// <param name="uri">The URI.</param>
         /// <param name="start">The start.</param>
         /// <param name="count">The count.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetDataArraySlice(string uri, IList<long> start, IList<long> count);
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// <param name="uri">The URI.</param>
         /// <param name="data">The data array.</param>
         /// <param name="dimensions">The dimensions.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PutDataArray(string uri, AnyArray data, IList<long> dimensions);
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="start">The start.</param>
         /// <param name="count">The count.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PutDataArraySlice(string uri, AnyArray data, IList<long> dimensions, IList<long> start, IList<long> count);
 
         /// <summary>

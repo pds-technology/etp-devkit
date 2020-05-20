@@ -32,11 +32,9 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="handler">The handler.</param>
         /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
         public static void UnsetException(this IProtocolHandler handler, IMessageHeader header)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().Unset(header.MessageType);
-            throw new EtpException(errorInfo, header.MessageId);
+            handler.Session.Adapter.UnsetException(header);
         }
 
         /// <summary>
@@ -44,11 +42,9 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="handler">The handler.</param>
         /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
         public static void NoRoleException(this IProtocolHandler handler, IMessageHeader header)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().NoRole(header.MessageType);
-            throw new EtpException(errorInfo, header.MessageId);
+            handler.Session.Adapter.NoRoleException(header);
         }
 
         /// <summary>
@@ -56,11 +52,9 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="handler">The handler.</param>
         /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
         public static void NoSupportedProtocolsException(this IProtocolHandler handler, IMessageHeader header)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().NoSupportedProtocols(header.MessageType);
-            throw new EtpException(errorInfo, header.MessageId);
+            handler.Session.Adapter.NoSupportedProtocolsException(header);
         }
 
         /// <summary>
@@ -68,11 +62,9 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="handler">The handler.</param>
         /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
         public static void InvalidMessageException(this IProtocolHandler handler, IMessageHeader header)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().InvalidMessage(header.MessageType);
-            throw new EtpException(errorInfo, header.MessageId);
+            handler.Session.Adapter.InvalidMessageException(header);
         }
 
         /// <summary>
@@ -81,11 +73,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void UnsupportedProtocolException(this IProtocolHandler handler, object value, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().UnsupportedProtocol(value);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.UnsupportedProtocolException(value, messageId);
         }
 
         /// <summary>
@@ -94,11 +84,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void InvalidArgumentException(this IProtocolHandler handler, object value, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().InvalidArgument(value);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.InvalidArgumentException(value, messageId);
         }
 
         /// <summary>
@@ -107,11 +95,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void PermissionDeniedException(this IProtocolHandler handler, object value, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().PermissionDenied(value);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.PermissionDeniedException(value, messageId);
         }
 
         /// <summary>
@@ -120,11 +106,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void NotSupportedException(this IProtocolHandler handler, object value, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().NotSupported(value);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.NotSupportedException(value, messageId);
         }
 
         /// <summary>
@@ -133,11 +117,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void InvalidStateException(this IProtocolHandler handler, object value, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().InvalidState(value);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.InvalidStateException(value, messageId);
         }
 
         /// <summary>
@@ -146,11 +128,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void InvalidUriException(this IProtocolHandler handler, object value, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().InvalidUri(value);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.InvalidUriException(value, messageId);
         }
 
         /// <summary>
@@ -159,11 +139,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void ExpiredTokenException(this IProtocolHandler handler, object value, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().ExpiredToken(value);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.ExpiredTokenException(value, messageId);
         }
 
         /// <summary>
@@ -172,11 +150,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void NotFoundException(this IProtocolHandler handler, object value, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().NotFound(value);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.NotFoundException(value, messageId);
         }
 
         /// <summary>
@@ -185,11 +161,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void LimitExceededException(this IProtocolHandler handler, object value, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().LimitExceeded(value);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.LimitExceededException(value, messageId);
         }
 
         /// <summary>
@@ -198,11 +172,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="requestedCompression">The requested compression.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException" /> message identifier.</returns>
         public static void CompressionNotSupportedException(this IProtocolHandler handler, string requestedCompression, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().CompressionNotSupported(requestedCompression);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.CompressionNotSupportedException(requestedCompression, messageId);
         }
 
         /// <summary>
@@ -213,16 +185,9 @@ namespace Energistics.Etp.Common
         /// <param name="uri">The URI.</param>
         /// <param name="message">The optional error message.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void InvalidObjectException(this IProtocolHandler handler, Exception ex, string uri, string message = null, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().InvalidObject(uri, message);
-            if (ex != null)
-            {
-                (handler as EtpProtocolHandler)?.Logger?.LogErrorInfo(errorInfo, ex);
-            }
-
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.InvalidObjectException(ex, uri, message, messageId);
         }
 
         /// <summary>
@@ -231,11 +196,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void InvalidChannelIdException(this IProtocolHandler handler, object value, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().InvalidChannelId(value);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.InvalidChannelIdException(value, messageId);
         }
 
         /// <summary>
@@ -245,16 +208,9 @@ namespace Energistics.Etp.Common
         /// <param name="ex">The exception.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void UnsupportedObjectException(this IProtocolHandler handler, Exception ex, string uri, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().UnsupportedObject(uri);
-            if (ex != null)
-            {
-                (handler as EtpProtocolHandler)?.Logger?.LogErrorInfo(errorInfo, ex);
-            }
-
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.UnsupportedObjectException(ex, uri, messageId);
         }
 
         /// <summary>
@@ -264,16 +220,9 @@ namespace Energistics.Etp.Common
         /// <param name="ex">The exception.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void InvalidObjectXException(this IProtocolHandler handler, Exception ex, string uri, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().InvalidObjectX(uri);
-            if (ex != null)
-            {
-                (handler as EtpProtocolHandler)?.Logger?.LogErrorInfo(errorInfo, ex);
-            }
-
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.InvalidObjectXException(ex, uri, messageId);
         }
 
         /// <summary>
@@ -282,11 +231,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void NoCascadeDeleteException(this IProtocolHandler handler, string uri, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().NoCascadeDelete(uri);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.NoCascadeDeleteException(uri, messageId);
         }
 
         /// <summary>
@@ -295,11 +242,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void NoPluralObjectException(this IProtocolHandler handler, string uri, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().NoPluralObject(uri);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.NoPluralObjectException(uri, messageId);
         }
 
         /// <summary>
@@ -308,11 +253,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void GrowingPortionIgnoredException(this IProtocolHandler handler, string uri, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().GrowingPortionIgnored(uri);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.GrowingPortionIgnoredException(uri, messageId);
         }
 
         /// <summary>
@@ -320,11 +263,9 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="handler">The protocol handler.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void RetentionPeriodExceededException(this IProtocolHandler handler, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().RetentionPeriodExceeded();
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.RetentionPeriodExceededException(messageId);
         }
 
         /// <summary>
@@ -333,11 +274,9 @@ namespace Energistics.Etp.Common
         /// <param name="handler">The protocol handler.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void NotGrowingObjectException(this IProtocolHandler handler, string uri, long messageId = 0)
         {
-            var errorInfo = handler.Session.Adapter.CreateErrorInfo().NotGrowingObject(uri);
-            throw new EtpException(errorInfo, messageId);
+            handler.Session.Adapter.NotGrowingObjectException(uri, messageId);
         }
     }
 }

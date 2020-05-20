@@ -37,10 +37,28 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// </summary>
         public StoreStoreHandler() : base((int)Protocols.Store, "store", "customer")
         {
+            MaxResponseCount = EtpSettings.DefaultMaxResponseCount;
+
             RegisterMessageHandler<GetDataObjects>(Protocols.Store, MessageTypes.Store.GetDataObjects, HandleGetDataObjects);
             RegisterMessageHandler<PutDataObjects>(Protocols.Store, MessageTypes.Store.PutDataObjects, HandlePutDataObjects);
             RegisterMessageHandler<DeleteDataObjects>(Protocols.Store, MessageTypes.Store.DeleteDataObjects, HandleDeleteDataObjects);
             RegisterMessageHandler<Chunk>(Protocols.Store, MessageTypes.Store.Chunk, HandleChunk);
+        }
+
+        /// <summary>
+        /// Gets the maximum response count.
+        /// </summary>
+        public long MaxResponseCount { get; set; }
+
+        /// <summary>
+        /// Gets the capabilities supported by the protocol handler.
+        /// </summary>
+        /// <param name="capabilities">The protocol's capabilities.</param>
+        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
+        {
+            base.GetCapabilities(capabilities);
+
+            capabilities.MaxResponseCount = MaxResponseCount;
         }
 
         /// <summary>
@@ -54,7 +72,7 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <param name="request">The request.</param>
         /// <param name="dataObjects">The data objects.</param>
         /// <param name="errors">The errors.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetDataObjectsResponse(IMessageHeader request, IDictionary<string, DataObject> dataObjects, IDictionary<string, ErrorInfo> errors)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetDataObjectsResponse, request.MessageId);
@@ -83,7 +101,7 @@ namespace Energistics.Etp.v12.Protocol.Store
         /// <param name="blobId">The blob ID.</param>
         /// <param name="data">The chunk data.</param>
         /// <param name="messageFlags">The message flags.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long Chunk(IMessageHeader request, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.Chunk, request.MessageId, messageFlags);

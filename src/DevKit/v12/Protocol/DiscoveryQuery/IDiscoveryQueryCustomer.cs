@@ -32,7 +32,7 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// Sends a FindResources message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long FindResources(string uri);
 
         /// <summary>

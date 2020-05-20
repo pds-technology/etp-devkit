@@ -42,7 +42,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <param name="request">The request.</param>
         /// <param name="objects">The list of <see cref="DataObject"/> objects.</param>
         /// <param name="sortOrder">The sort order.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long FindObjectsResponse(IMessageHeader request, IList<DataObject> objects, string sortOrder);
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <param name="blobId">The blob ID.</param>
         /// <param name="data">The chunk data.</param>
         /// <param name="messageFlags">The message flags.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long Chunk(IMessageHeader request, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart);
     }
 

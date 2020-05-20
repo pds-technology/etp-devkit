@@ -44,7 +44,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// Sends a GetDataArrays message to a store.
         /// </summary>
         /// <param name="dataArrays">The data arrays.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetDataArrays(IList<DataArrayIdentifier> dataArrays)
         {
             var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.GetDataArrays);
@@ -66,7 +66,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// Sends a GetDataSubarrays message to a store.
         /// </summary>
         /// <param name="dataSubarrays">The data subarrays.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetDataSubarrays(IList<GetDataSubarraysType> dataSubarrays)
         {
             var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.GetDataSubarrays);
@@ -88,7 +88,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// Sends a PutDataArrays message to a store.
         /// </summary>
         /// <param name="dataArrays">The data arrays.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long PutDataArrays(IList<PutDataArraysType> dataArrays)
         {
             var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.PutDataArrays);
@@ -105,7 +105,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// Sends a PutUninitializedDataArray message to a store.
         /// </summary>
         /// <param name="dataArrays">The data arrays.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long PutUninitializedDataArray(IList<PutUninitializedDataArrayType> dataArrays)
         {
             var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.PutUninitializedDataArray);
@@ -122,7 +122,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// Sends a PutDataSubarrays message to a store.
         /// </summary>
         /// <param name="dataSubarrays">The data subarrays.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long PutDataSubarrays(IList<PutDataSubarraysType> dataSubarrays)
         {
             var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.PutDataSubarrays);
@@ -139,7 +139,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// Sends a GetDataArrayMetadata message to a store.
         /// </summary>
         /// <param name="dataArrays">The data arrays.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetDataArrayMetadata(IList<DataArrayIdentifier> dataArrays)
         {
             var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.GetDataArrayMetadata);

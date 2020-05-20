@@ -33,7 +33,7 @@ namespace Energistics.Etp.v12.Protocol.Dataspace
         /// Sends a GetDataspaces message to a store.
         /// </summary>
         /// <param name="lastChangedFilter">An optional filter to limit the dataspaces returned by date last changed.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetDataspaces(long? lastChangedFilter);
 
         /// <summary>
@@ -45,14 +45,14 @@ namespace Energistics.Etp.v12.Protocol.Dataspace
         /// Sends a PutDataspaces message to a store.
         /// </summary>
         /// <param name="dataspaces">The dataspaces.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PutDataspaces(IList<Datatypes.Object.Dataspace> dataspaces);
 
         /// <summary>
         /// Sends a DeleteDataspaces message to a store.
         /// </summary>
         /// <param name="uids">The UIDs.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long DeleteDataspaces(IList<string> uids);
     }
 }

@@ -39,10 +39,16 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         bool IsSimpleStreamer { get; set; }
 
         /// <summary>
-        /// Gets or sets the default describe URI.
+        /// Gets the maximum data items.
         /// </summary>
-        /// <value>The default describe URI.</value>
-        string DefaultDescribeUri { get; set; }
+        /// <value>The maximum data items.</value>
+        int MaxDataItems { get; }
+
+        /// <summary>
+        /// Gets the maximum message rate.
+        /// </summary>
+        /// <value>The maximum message rate.</value>
+        int MaxMessageRate { get; }
 
         /// <summary>
         /// Sends a ChannelMetadata message to a consumer.
@@ -50,7 +56,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// <param name="request">The request.</param>
         /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
         /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ChannelMetadata(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
@@ -59,7 +65,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// <param name="request">The request.</param>
         /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
         /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ChannelData(IMessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart);
 
         /// <summary>
@@ -69,7 +75,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
         /// <param name="dataItems">The data items.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ChannelDataChange(long channelId, long startIndex, long endIndex, IList<DataItem> dataItems);
 
         /// <summary>
@@ -77,7 +83,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="status">The channel status.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ChannelStatusChange(long channelId, ChannelStatuses status);
 
         /// <summary>
@@ -85,7 +91,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="reason">The reason.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ChannelRemove(long channelId, string reason = null);
 
         /// <summary>

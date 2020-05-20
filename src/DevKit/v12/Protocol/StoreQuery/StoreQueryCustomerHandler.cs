@@ -46,7 +46,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// </summary>
         /// <param name="uri">The URI.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long FindObjects(string uri, string format = "xml")
         {
             var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjects);

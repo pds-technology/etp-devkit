@@ -34,7 +34,7 @@ namespace Energistics.Etp.v12.Protocol.Transaction
         /// </summary>
         /// <param name="readOnly">Whether or not this transaction is read-only.</param>
         /// <param name="message">The message accompanying the transaction.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long StartTransaction(bool readOnly, string message);
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace Energistics.Etp.v12.Protocol.Transaction
         /// Sends a CommitTransaction message to a store.
         /// </summary>
         /// <param name="transactionUuid">The transaction UUID.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long CommitTransaction(Guid transactionUuid);
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace Energistics.Etp.v12.Protocol.Transaction
         /// Sends a RollbackTransaction message to a store.
         /// </summary>
         /// <param name="transactionUuid">The transaction UUID.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long RollbackTransaction(Guid transactionUuid);
     }
 }

@@ -37,59 +37,42 @@ namespace Energistics.Etp.v12.Protocol.Core
         /// </summary>
         public CoreServerHandler() : base((int)Protocols.Core, "server", "client")
         {
-            RequestedProtocols = new List<ISupportedProtocol>(0);
-
             RegisterMessageHandler<RequestSession>(Protocols.Core, MessageTypes.Core.RequestSession, HandleRequestSession);
             RegisterMessageHandler<CloseSession>(Protocols.Core, MessageTypes.Core.CloseSession, HandleCloseSession);
             RegisterMessageHandler<RenewSecurityToken>(Protocols.Core, MessageTypes.Core.RenewSecurityToken, HandleRenewSecurityToken);
         }
 
         /// <summary>
-        /// Gets the name of the client application.
-        /// </summary>
-        /// <value>The name of the client application.</value>
-        public string ClientApplicationName { get; private set; }
-
-        /// <summary>
-        /// Gets the requested protocols.
-        /// </summary>
-        /// <value>The requested protocols.</value>
-        public IList<ISupportedProtocol> RequestedProtocols { get; private set; }
-
-        /// <summary>
-        /// Gets the list of supported protocols.
-        /// </summary>
-        /// <value>The supported protocols.</value>
-        public IList<ISupportedProtocol> SupportedProtocols { get; private set; }
-
-        /// <summary>
         /// Sends an OpenSession message to a client.
         /// </summary>
         /// <param name="request">The request.</param>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long OpenSession(IMessageHeader request, IList<ISupportedProtocol> supportedProtocols)
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        public virtual long OpenSession(IMessageHeader request)
         {
             var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.OpenSession, request.MessageId);
 
+            var capabilities = new EtpEndpointCapabilities();
+            Session.GetInstanceCapabilities(capabilities);
+
             var openSession = new OpenSession
             {
-                ApplicationName = Session.ApplicationName,
-                ApplicationVersion = Session.ApplicationVersion,
-                SupportedProtocols = supportedProtocols.Cast<SupportedProtocol>().ToList(),
-                SupportedObjects = Session.SupportedObjects.Select(o => o.DataObjectType).ToList(),
-                SupportedCompression = Session.SupportedCompression ?? string.Empty,
+                ApplicationName = Session.ServerApplicationName,
+                ApplicationVersion = Session.ServerApplicationVersion,
                 ServerInstanceId = Guid.Parse(Session.ServerInstanceId).ToUuid(),
+                SupportedProtocols = Session.SessionSupportedProtocols.Select(sp => sp.AsSupportedProtocol<SupportedProtocol, Datatypes.Version, DataValue>()).ToList(),
+                SupportedObjects = Session.SessionSupportedObjects.Select(o => (string)o.DataObjectType).ToList(),
+                SupportedCompression = Session.SessionSupportedCompression ?? string.Empty,
+                SupportedFormats = Session.SessionSupportedFormats.ToList(),
+                EndpointCapabilities = capabilities.AsDataValueDictionary<DataValue>(),
             };
 
-            SupportedProtocols = supportedProtocols;
+            Logger.Verbose($"[{Session.SessionKey}] Sending open session");
 
             var messageId = Session.SendMessage(header, openSession);
 
-            if (messageId == header.MessageId)
-            {
-                Session.OnSessionOpened(RequestedProtocols, SupportedProtocols);
-            }
+            Logger.Verbose($"[{Session.SessionKey}] Received {header.MessageId} and Sent {messageId}");
+
+            Session.OnSessionOpened(messageId >= 0);
 
             return messageId;
         }
@@ -98,7 +81,7 @@ namespace Energistics.Etp.v12.Protocol.Core
         /// Sends a CloseSession message to a client.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long CloseSession(string reason = null)
         {
             var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.CloseSession);
@@ -110,11 +93,7 @@ namespace Energistics.Etp.v12.Protocol.Core
 
             var messageId = Session.SendMessage(header, closeSession);
 
-            if (messageId == header.MessageId)
-            {
-                Notify(OnCloseSession, header, closeSession);
-                Session.OnSessionClosed();
-            }
+            Session.OnSessionClosed(messageId >= 0);
 
             return messageId;
         }
@@ -141,43 +120,44 @@ namespace Energistics.Etp.v12.Protocol.Core
         /// <param name="requestSession">The RequestSession message.</param>
         protected virtual void HandleRequestSession(IMessageHeader header, RequestSession requestSession)
         {
-            ClientApplicationName = requestSession.ApplicationName;
-            RequestedProtocols = requestSession.RequestedProtocols.Cast<ISupportedProtocol>().ToList();
-            Notify(OnRequestSession, header, requestSession);
+            var success = Session.InitializeSession(
+                Session.SessionId,
+                requestSession.ApplicationName,
+                requestSession.ApplicationVersion,
+                requestSession.ClientInstanceId.ToGuid().ToString(),
+                requestSession.RequestedProtocols.Cast<ISupportedProtocol>().ToList(),
+                requestSession.SupportedObjects.Select(o => (IDataObjectType)new EtpDataObjectType(o)).ToList(),
+                requestSession.SupportedCompression?.Split(';') ?? new string[0],
+                requestSession.SupportedFormats?.ToList() ?? new List<string> { "xml" },
+                new EtpEndpointCapabilities(requestSession.EndpointCapabilities.ToDictionary(kvp => kvp.Key, kvp => (IDataValue)kvp.Value))
+            );
 
-            var protocols = RequestedProtocols
-                .Select(x => new { x.Protocol, x.Role })
-                .ToArray();
+            var args = Notify(OnRequestSession, header, requestSession);
+            if (args.Cancel)
+                return;
 
-            // Only return details for requested protocols
-            var supportedProtocols = Session.GetSupportedProtocols()
-                .Where(x => protocols.Any(y => x.Protocol == y.Protocol && string.Equals(x.Role, y.Role, StringComparison.InvariantCultureIgnoreCase)))
-                .ToList();
-
-            // Did the client request compression
-            if (!string.IsNullOrWhiteSpace(requestSession.SupportedCompression))
+            if (success)
             {
-                // Currently, only gzip compression is supported
-                if (!string.Equals(EtpExtensions.GzipEncoding, requestSession.SupportedCompression, StringComparison.InvariantCultureIgnoreCase))
+                if (Session.SessionSupportedProtocols.Count == 0)
                 {
-                    this.CompressionNotSupported(requestSession.SupportedCompression, header.MessageId);
-                    return;
+                    this.NoSupportedProtocols(header);
+                    Session.OnSessionOpened(false);
                 }
-
-                Session.SupportedCompression = EtpExtensions.GzipEncoding;
+                else if (Session.SessionSupportedFormats.Count == 0)
+                {
+                    this.InvalidState("No supported formats", header.MessageId);
+                    Session.OnSessionOpened(false);
+                }
+                else
+                {
+                    OpenSession(header);
+                }
             }
-
-            OpenSession(header, supportedProtocols);
-
-            // Only send OpenSession if there are protocols supported
-            //if (supportedProtocols.Any())
-            //{
-            //    OpenSession(header, supportedProtocols);
-            //}
-            //else // Otherwise, ProtocolException is sent
-            //{
-            //    ProtocolException((int)ErrorCodes.ENOSUPPORTEDPROTOCOLS, "No protocols supported", header.MessageId);
-            //}
+            else
+            {
+                this.InvalidState("Error initializing session", header.MessageId);
+                Session.OnSessionOpened(false);
+            }
         }
 
         /// <summary>
@@ -188,8 +168,8 @@ namespace Energistics.Etp.v12.Protocol.Core
         protected virtual void HandleCloseSession(IMessageHeader header, CloseSession closeSession)
         {
             Notify(OnCloseSession, header, closeSession);
-            Session.OnSessionClosed();
-            Session.Close(closeSession.Reason);
+            Session.OnSessionClosed(true);
+            Session.CloseWebSocket(closeSession.Reason);
         }
 
         /// <summary>

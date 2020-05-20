@@ -12,7 +12,7 @@ namespace Energistics.Etp.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.8.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.5.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -80,27 +80,162 @@ namespace Energistics.Etp.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("50000")]
-        public int DefaultMaxDataItems {
+        public long DefaultMaxDataItemCount {
             get {
-                return ((int)(this["DefaultMaxDataItems"]));
+                return ((long)(this["DefaultMaxDataItemCount"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("10000")]
-        public int DefaultMaxResponseCount {
+        public long DefaultMaxResponseCount {
             get {
-                return ((int)(this["DefaultMaxResponseCount"]));
+                return ((long)(this["DefaultMaxResponseCount"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Native")]
-        public Energistics.Etp.Common.Datatypes.WebSocketType DefaultWebSocketType {
+        public global::Energistics.Etp.Common.Datatypes.WebSocketType DefaultWebSocketType {
             get {
-                return ((Energistics.Etp.Common.Datatypes.WebSocketType)(this["DefaultWebSocketType"]));
+                return ((global::Energistics.Etp.Common.Datatypes.WebSocketType)(this["DefaultWebSocketType"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10485760")]
+        public long DefaultMaxDataObjectSize {
+            get {
+                return ((long)(this["DefaultMaxDataObjectSize"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1048576")]
+        public long DefaultMaxPartSize {
+            get {
+                return ((long)(this["DefaultMaxPartSize"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool SupportsAlternateRequestUris {
+            get {
+                return ((bool)(this["SupportsAlternateRequestUris"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public long DefaultMaxMultipartMessageTimeInterval {
+            get {
+                return ((long)(this["DefaultMaxMultipartMessageTimeInterval"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("4194304")]
+        public long DefaultMaxWebSocketFramePayloadSize {
+            get {
+                return ((long)(this["DefaultMaxWebSocketFramePayloadSize"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("16777216")]
+        public long DefaultMaxWebSocketMessagePayloadSize {
+            get {
+                return ((long)(this["DefaultMaxWebSocketMessagePayloadSize"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("100")]
+        public long DefaultMaxIndexCount {
+            get {
+                return ((long)(this["DefaultMaxIndexCount"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("600")]
+        public long DefaultChangeDetectionPeriod {
+            get {
+                return ((long)(this["DefaultChangeDetectionPeriod"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3600")]
+        public long DefaultChangeNotificationRetentionPeriod {
+            get {
+                return ((long)(this["DefaultChangeNotificationRetentionPeriod"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("86400")]
+        public long DefaultDeleteNotificationRetentionPeriod {
+            get {
+                return ((long)(this["DefaultDeleteNotificationRetentionPeriod"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("600")]
+        public long DefaultTransactionTimeout {
+            get {
+                return ((long)(this["DefaultTransactionTimeout"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3600")]
+        public long DefaultStreamingTimeoutPeriod {
+            get {
+                return ((long)(this["DefaultStreamingTimeoutPeriod"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3600")]
+        public long DefaultGrowingTimeoutPeriod {
+            get {
+                return ((long)(this["DefaultGrowingTimeoutPeriod"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1048576")]
+        public long DefaultMaxDataArraySize {
+            get {
+                return ((long)(this["DefaultMaxDataArraySize"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("600")]
+        public long DefaultFrameChangeDetectionPeriod {
+            get {
+                return ((long)(this["DefaultFrameChangeDetectionPeriod"]));
             }
         }
     }

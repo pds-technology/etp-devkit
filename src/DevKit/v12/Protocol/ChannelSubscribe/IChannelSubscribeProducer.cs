@@ -33,6 +33,21 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
     public interface IChannelSubscribeProducer : IProtocolHandler
     {
         /// <summary>
+        /// Sets limits on maximum indexCount (number of indexes "back" from the current index that a producer will provide) for StreamingStartIndex.
+        /// </summary>
+        long MaxIndexCount { get; set; }
+
+        /// <summary>
+        /// Indicates the maximum time in integer number of seconds a store allows no streaming data to occur before setting the channelStatus to 'inactive'.
+        /// </summary>
+        long StreamingTimeoutPeriod { get; set; }
+
+        /// <summary>
+        /// Maximum number of data points to return in each message.
+        /// </summary>
+        long CustomerMaxDataItemCount { get; }
+
+        /// <summary>
         /// Handles the GetChannelMetadata event from a consumer.
         /// </summary>
         event ProtocolEventWithErrorsHandler<GetChannelMetadata, ChannelMetadataRecord, ErrorInfo> OnGetChannelMetadata;
@@ -43,7 +58,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <param name="request">The request.</param>
         /// <param name="metadata">The channel metadata records.</param>
         /// <param name="errors">The errors.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetChannelMetadataResponse(IMessageHeader request, IDictionary<string, ChannelMetadataRecord> metadata, IDictionary<string, ErrorInfo> errors);
 
         /// <summary>
@@ -55,7 +70,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// Sends a RealtimeData message to a consumer.
         /// </summary>
         /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long RealtimeData(IList<DataItem> dataItems);
 
         /// <summary>
@@ -64,7 +79,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <param name="channelIds">The IDs of the channels that are changing.</param>
         /// <param name="changedInterval">The indexes that define the interval that is changing.</param>
         /// <param name="dataItems">The channel data of the changed interval.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ReplaceRange(IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> dataItems);
 
         /// <summary>
@@ -78,7 +93,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <param name="request">The request.</param>
         /// <param name="channelIds">The channel identifiers.</param>
         /// <param name="errors">The errors if any.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long SubscriptionsStopped(IMessageHeader request, IDictionary<string, long> channelIds, IDictionary<string, ErrorInfo> errors);
 
         /// <summary>
@@ -91,7 +106,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="dataItems">The data items.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetRangesResponse(IMessageHeader request, IList<DataItem> dataItems);
 
         /// <summary>

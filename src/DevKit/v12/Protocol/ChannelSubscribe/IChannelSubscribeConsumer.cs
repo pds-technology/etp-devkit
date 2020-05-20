@@ -32,10 +32,25 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
     public interface IChannelSubscribeConsumer : IProtocolHandler
     {
         /// <summary>
+        /// Sets limits on maximum indexCount (number of indexes "back" from the current index that a producer will provide) for StreamingStartIndex.
+        /// </summary>
+        long StoreMaxIndexCount { get; }
+
+        /// <summary>
+        /// Indicates the maximum time in integer number of seconds a store allows no streaming data to occur before setting the channelStatus to 'inactive'.
+        /// </summary>
+        long StoreStreamingTimeoutPeriod { get; }
+
+        /// <summary>
+        /// Maximum number of data points to return in each message.
+        /// </summary>
+        long MaxDataItemCount { get; set; }
+
+        /// <summary>
         /// Sends a GetChannelMetadata message to a producer with the specified URIs.
         /// </summary>
         /// <param name="uris">The list of URIs.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetChannelMetadata(IList<string> uris);
 
         /// <summary>
@@ -47,7 +62,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// Sends a SubscribeChannels message to a producer.
         /// </summary>
         /// <param name="channels">The list of channels.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long SubscribeChannels(IList<ChannelSubscribeInfo> channels);
 
         /// <summary>
@@ -64,7 +79,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// Sends a UnsubscribeChannels message to a producer.
         /// </summary>
         /// <param name="channelIds">The list of channel identifiers.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long UnsubscribeChannels(IList<long> channelIds);
 
         /// <summary>
@@ -77,7 +92,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
         /// <param name="channelRanges">The list of channelRanges.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetRanges(Guid requestUuid, IList<ChannelRangeInfo> channelRanges);
 
         /// <summary>
@@ -89,7 +104,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// Sends a CancelGetRanges message to a producer.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long CancelGetRanges(Guid requestUuid);
     }
 }

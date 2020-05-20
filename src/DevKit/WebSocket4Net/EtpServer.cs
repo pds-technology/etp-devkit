@@ -16,9 +16,11 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
+using SuperSocket.SocketBase;
 using SuperWebSocket;
 
 namespace Energistics.Etp.WebSocket4Net
@@ -45,19 +47,31 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="session">The web socket session.</param>
         /// <param name="application">The serve application name.</param>
         /// <param name="version">The server application version.</param>
+        /// <param name="instanceKey">The instance key to use in generating the server instance identifier.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
-        public EtpServer(WebSocketSession session, string application, string version, IDictionary<string, string> headers)
-            : base(EtpWebSocketValidation.GetEtpVersion(session.SubProtocol.Name), application, version, headers, false, false)
+        public EtpServer(WebSocketSession session, string application, string version, string instanceKey, IDictionary<string, string> headers)
+            : base(EtpWebSocketValidation.GetEtpVersion(session.SubProtocol.Name), application, version, instanceKey, headers, false, false)
         {
-            ServerInstanceId = session.SessionID;
             _session = session;
+            _session.SocketSession.Closed += SocketSessionClosed;
+            SessionId = session.SessionID;
+        }
+
+        /// <summary>
+        /// Handler for the event indicating the socket has been closed.
+        /// </summary>
+        /// <param name="socketSession">The socket session that has closed.</param>
+        /// <param name="closeReason"></param>
+        protected void SocketSessionClosed(ISocketSession socketSession, CloseReason closeReason)
+        {
+            InvokeSocketClosed();
         }
 
         /// <summary>
         /// Asynchronously closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        protected override Task CloseAsyncCore(string reason)
+        protected override Task CloseWebSocketAsyncCore(string reason)
         {
             CheckDisposed();
             _session.CloseWithHandshake(reason);
@@ -70,10 +84,18 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="data">The data.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="length">The length.</param>
-        protected override Task SendAsync(byte[] data, int offset, int length)
+        protected override Task<bool> SendAsync(byte[] data, int offset, int length)
         {
             CheckDisposed();
-            _session.Send(data, offset, length);
+            try
+            {
+                _session.Send(data, offset, length);
+            }
+            catch (Exception ex)
+            {
+                InvokeSocketError(ex);
+                throw;
+            }
             return Task.FromResult(true);
         }
 
@@ -81,10 +103,18 @@ namespace Energistics.Etp.WebSocket4Net
         /// Sends the specified messages.
         /// </summary>
         /// <param name="message">The message.</param>
-        protected override Task SendAsync(string message)
+        protected override Task<bool> SendAsync(string message)
         {
             CheckDisposed();
-            _session.Send(message);
+            try
+            {
+                _session.Send(message);
+            }
+            catch (Exception ex)
+            {
+                InvokeSocketError(ex);
+                throw;
+            }
             return Task.FromResult(true);
         }
 
@@ -96,7 +126,7 @@ namespace Energistics.Etp.WebSocket4Net
         {
             if (disposing)
             {
-                Close("Shutting down");
+                CloseWebSocket("Shutting down");
                 _session?.Close();
             }
 

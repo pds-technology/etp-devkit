@@ -32,25 +32,22 @@ namespace Energistics.Etp.v12.Protocol.Core
         /// <summary>
         /// Sends a RequestSession message to a server.
         /// </summary>
-        /// <param name="applicationName">The application name.</param>
-        /// <param name="applicationVersion">The application version.</param>
         /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <param name="requestedCompression">The requested compression.</param>
-        /// <returns>The message identifier.</returns>
-        long RequestSession(string applicationName, string applicationVersion, IList<ISupportedProtocol> requestedProtocols, string requestedCompression);
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        long RequestSession(IReadOnlyList<EtpSessionProtocol> requestedProtocols);
 
         /// <summary>
         /// Sends a CloseSession message to a server.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long CloseSession(string reason = null);
 
         /// <summary>
         /// Renews the security token.
         /// </summary>
         /// <param name="token">The token.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long RenewSecurityToken(string token);
 
         /// <summary>

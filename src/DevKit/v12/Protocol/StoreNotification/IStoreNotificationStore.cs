@@ -41,7 +41,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
         /// <param name="change">The object change.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ObjectChanged(Guid requestUuid, ObjectChange change);
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <param name="requestUuid">The request UUID.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="changeTime">The change time.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ObjectDeleted(Guid requestUuid, string uri, long changeTime);
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <param name="blobId">The blob ID.</param>
         /// <param name="data">The chunk data.</param>
         /// <param name="messageFlags">The message flags.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long Chunk(IMessageHeader notification, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart);
 
         /// <summary>
@@ -69,21 +69,21 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <param name="requestUuid">The request UUID.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="changeTime">The change time.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ObjectAccessRevoked(Guid requestUuid, string uri, long changeTime);
 
         /// <summary>
         /// Sends a SubscriptionEnded message to a customer.
         /// </summary>
         /// <param name="requestUuid">The UUID of the subscription that has ended.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long SubscriptionEnded(Guid requestUuid);
 
         /// <summary>
         /// Sends an UnsolicitedStoreNotifications message to a customer.
         /// </summary>
         /// <param name="subscriptions">The unsolicited subscriptions.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long UnsolicitedStoreNotifications(IList<SubscriptionInfo> subscriptions);
 
         /// <summary>

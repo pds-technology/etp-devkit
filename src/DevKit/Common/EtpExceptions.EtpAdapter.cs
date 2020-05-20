@@ -32,7 +32,6 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
         public static void UnsetException(this IEtpAdapter etpAdapter, IMessageHeader header)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().Unset(header.MessageType);
@@ -44,7 +43,6 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
         public static void NoRoleException(this IEtpAdapter etpAdapter, IMessageHeader header)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().NoRole(header.MessageType);
@@ -56,7 +54,6 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
         public static void NoSupportedProtocolsException(this IEtpAdapter etpAdapter, IMessageHeader header)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().NoSupportedProtocols(header.MessageType);
@@ -68,7 +65,6 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="header">The message header.</param>
-        /// <returns>The message identifier.</returns>
         public static void InvalidMessageException(this IEtpAdapter etpAdapter, IMessageHeader header)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().InvalidMessage(header.MessageType);
@@ -81,7 +77,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void UnsupportedProtocolException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().UnsupportedProtocol(value);
@@ -94,7 +89,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void InvalidArgumentException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().InvalidArgument(value);
@@ -107,7 +101,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void PermissionDeniedException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().PermissionDenied(value);
@@ -120,7 +113,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void NotSupportedException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().NotSupported(value);
@@ -133,7 +125,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void InvalidStateException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().InvalidState(value);
@@ -146,7 +137,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void InvalidUriException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().InvalidUri(value);
@@ -159,7 +149,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void ExpiredTokenException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().ExpiredToken(value);
@@ -172,7 +161,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void NotFoundException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().NotFound(value);
@@ -185,7 +173,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void LimitExceededException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().LimitExceeded(value);
@@ -198,7 +185,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="requestedCompression">The requested compression.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException" /> message identifier.</returns>
         public static void CompressionNotSupportedException(this IEtpAdapter etpAdapter, string requestedCompression, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().CompressionNotSupported(requestedCompression);
@@ -213,7 +199,7 @@ namespace Energistics.Etp.Common
         /// <param name="uri">The URI.</param>
         /// <param name="message">The optional error message.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
+        /// <returns>The positive <see cref="IProtocolException"/> message identifier on success; otherwise, a negative number.</returns>
         public static void InvalidObjectException(this IEtpAdapter etpAdapter, Exception ex, string uri, string message = null, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().InvalidObject(uri, message);
@@ -231,7 +217,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="value">The argument value.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void InvalidChannelIdException(this IEtpAdapter etpAdapter, object value, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().InvalidChannelId(value);
@@ -245,7 +230,6 @@ namespace Energistics.Etp.Common
         /// <param name="ex">The exception.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void UnsupportedObjectException(this IEtpAdapter etpAdapter, Exception ex, string uri, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().UnsupportedObject(uri);
@@ -264,7 +248,6 @@ namespace Energistics.Etp.Common
         /// <param name="ex">The exception.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void InvalidObjectXException(this IEtpAdapter etpAdapter, Exception ex, string uri, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().InvalidObjectX(uri);
@@ -282,7 +265,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void NoCascadeDeleteException(this IEtpAdapter etpAdapter, string uri, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().NoCascadeDelete(uri);
@@ -295,7 +277,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void NoPluralObjectException(this IEtpAdapter etpAdapter, string uri, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().NoPluralObject(uri);
@@ -308,7 +289,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void GrowingPortionIgnoredException(this IEtpAdapter etpAdapter, string uri, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().GrowingPortionIgnored(uri);
@@ -320,7 +300,6 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void RetentionPeriodExceededException(this IEtpAdapter etpAdapter, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().RetentionPeriodExceeded();
@@ -333,7 +312,6 @@ namespace Energistics.Etp.Common
         /// <param name="etpAdapter">The ETP Adapter.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="messageId">The message identifier.</param>
-        /// <returns>The <see cref="IProtocolException"/> message identifier.</returns>
         public static void NotGrowingObjectException(this IEtpAdapter etpAdapter, string uri, long messageId = 0)
         {
             var errorInfo = etpAdapter.CreateErrorInfo().NotGrowingObject(uri);

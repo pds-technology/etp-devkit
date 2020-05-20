@@ -41,7 +41,7 @@ namespace Energistics.Etp.v12.Protocol.Dataspace
         /// Sends a GetDataspaces message to a store.
         /// </summary>
         /// <param name="lastChangedFilter">An optional filter to limit the dataspaces returned by date last changed.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetDataspaces(long? lastChangedFilter)
         {
             var header = CreateMessageHeader(Protocols.Dataspace, MessageTypes.Dataspace.GetDataspaces);
@@ -63,7 +63,7 @@ namespace Energistics.Etp.v12.Protocol.Dataspace
         /// Sends a PutDataspaces message to a store.
         /// </summary>
         /// <param name="dataspaces">The dataspaces.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long PutDataspaces(IList<Datatypes.Object.Dataspace> dataspaces)
         {
             var header = CreateMessageHeader(Protocols.Dataspace, MessageTypes.Dataspace.PutDataspaces);
@@ -80,7 +80,7 @@ namespace Energistics.Etp.v12.Protocol.Dataspace
         /// Sends a DeleteDataspaces message to a store.
         /// </summary>
         /// <param name="uids">The UIDs.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long DeleteDataspaces(IList<string> uids)
         {
             var header = CreateMessageHeader(Protocols.Dataspace, MessageTypes.Dataspace.DeleteDataspaces);

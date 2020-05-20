@@ -49,7 +49,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="uri">The URI of the parent object.</param>
         /// <param name="uids">The UIDs of the elements within the growing object to get.</param>
         /// <param name="format">The format of the response (XML or JSON).</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetParts(string uri, IList<string> uids, string format = "xml")
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetParts);
@@ -76,7 +76,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="indexInterval">The index interval.</param>
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
         /// <param name="format">The format of the response (XML or JSON).</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetPartsByRange(string uri, IndexInterval indexInterval, bool includeOverlappingIntervals = false, string format = "xml")
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRange);
@@ -103,7 +103,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="uri">The URI of the parent object.</param>
         /// <param name="parts">The UIDs and data of the parts being put.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long PutParts(string uri, IList<ObjectPart> parts, string format = "xml")
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.PutParts);
@@ -123,7 +123,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
         /// <param name="uids">The UIDs of the parts within the growing object to delete.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long DeleteParts(string uri, IList<string> uids)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.DeleteParts);
@@ -143,7 +143,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="uri">The URI of the parent object.</param>
         /// <param name="deleteInterval">The index interval to delete.</param>
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long DeletePartsByRange(string uri, IndexInterval deleteInterval, bool includeOverlappingIntervals = false)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.DeletePartsByRange);
@@ -166,7 +166,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
         /// <param name="parts">The map of UIDs and data of the parts being put.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long ReplacePartsByRange(string uri, IndexInterval deleteInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, string format = "xml")
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.ReplacePartsByRange);
@@ -187,7 +187,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// Gets the metadata for growing object parts from a store.
         /// </summary>
         /// <param name="uris">The collection of growing object URIs.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetPartsMetadata(IList<string> uris)
         {
             var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadata);

@@ -42,7 +42,7 @@ namespace Energistics.Etp.v11.Protocol.Store
         /// </summary>
         /// <param name="uri">The URI.</param>
         /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetObject(string uri, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetObject, messageFlags: messageFlag);
@@ -59,7 +59,7 @@ namespace Energistics.Etp.v11.Protocol.Store
         /// Sends a PutObject message to a store.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long PutObject(DataObject dataObject)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.PutObject);
@@ -76,7 +76,7 @@ namespace Energistics.Etp.v11.Protocol.Store
         /// Sends a DeleteObject message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long DeleteObject(string uri)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.DeleteObject);

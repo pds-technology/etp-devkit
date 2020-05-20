@@ -44,19 +44,17 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// <summary>
         /// Gets the maximum response count.
         /// </summary>
-        public int MaxResponseCount { get; set; }
+        public long MaxResponseCount { get; set; }
 
         /// <summary>
         /// Gets the capabilities supported by the protocol handler.
         /// </summary>
-        /// <returns>A collection of protocol capabilities.</returns>
-        public override IDictionary<string, IDataValue> GetCapabilities()
+        /// <param name="capabilities">The protocol's capabilities.</param>
+        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
         {
-            var capabilities = base.GetCapabilities();
+            base.GetCapabilities(capabilities);
 
-            capabilities[EtpSettings.MaxResponseCountKey] = new DataValue { Item = MaxResponseCount };
-
-            return capabilities;
+            capabilities.MaxResponseCount = MaxResponseCount;
         }
 
         /// <summary>
@@ -72,7 +70,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// <param name="parts">The list of <see cref="ObjectPart"/> objects.</param>
         /// <param name="sortOrder">The sort order.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long FindPartsResponse(IMessageHeader request, string uri, IList<ObjectPart> parts, string sortOrder, string format = "xml")
         {
             var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.GrowingObjectQuery.FindPartsResponse, request.MessageId);

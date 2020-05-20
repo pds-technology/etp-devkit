@@ -43,7 +43,7 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="change">The object change.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public long ChangeNotification(IMessageHeader request, ObjectChange change)
         {
             var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ChangeNotification, request.MessageId);
@@ -61,7 +61,7 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="change">The object change.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public long DeleteNotification(IMessageHeader request, ObjectChange change)
         {
             var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.DeleteNotification, request.MessageId);

@@ -49,7 +49,7 @@ namespace Energistics.Etp.v12.Protocol.Transaction
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="transactionUuid">The transaction UUID.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long StartTransactionResponse(IMessageHeader request, Guid transactionUuid)
         {
             var header = CreateMessageHeader(Protocols.Transaction, MessageTypes.Transaction.StartTransactionResponse, request.MessageId);
@@ -74,7 +74,7 @@ namespace Energistics.Etp.v12.Protocol.Transaction
         /// <param name="transactionUuid">The transaction UUID.</param>
         /// <param name="successful">A flag that indicates the success or failure of the transaction.</param>
         /// <param name="failureReason">An optional description explaining why or how the transaction failed.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long CommitTransactionResponse(IMessageHeader request, Guid transactionUuid, bool successful, string failureReason)
         {
             var header = CreateMessageHeader(Protocols.Transaction, MessageTypes.Transaction.CommitTransactionResponse, request.MessageId);

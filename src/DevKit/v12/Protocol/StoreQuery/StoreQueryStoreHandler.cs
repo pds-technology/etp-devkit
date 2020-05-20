@@ -46,19 +46,17 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <summary>
         /// Gets the maximum response count.
         /// </summary>
-        public int MaxResponseCount { get; set; }
+        public long MaxResponseCount { get; set; }
 
         /// <summary>
         /// Gets the capabilities supported by the protocol handler.
         /// </summary>
-        /// <returns>A collection of protocol capabilities.</returns>
-        public override IDictionary<string, IDataValue> GetCapabilities()
+        /// <param name="capabilities">The protocol's capabilities.</param>
+        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
         {
-            var capabilities = base.GetCapabilities();
+            base.GetCapabilities(capabilities);
 
-            capabilities[EtpSettings.MaxResponseCountKey] = new DataValue { Item = MaxResponseCount };
-
-            return capabilities;
+            capabilities.MaxResponseCount = MaxResponseCount;
         }
 
         /// <summary>
@@ -72,7 +70,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <param name="request">The request.</param>
         /// <param name="objects">The list of <see cref="DataObject" /> objects.</param>
         /// <param name="sortOrder">The sort order.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long FindObjectsResponse(IMessageHeader request, IList<DataObject> objects, string sortOrder)
         {
             var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjectsResponse, request.MessageId);
@@ -91,7 +89,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <param name="blobId">The blob ID.</param>
         /// <param name="data">The chunk data.</param>
         /// <param name="messageFlags">The message flags.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long Chunk(IMessageHeader request, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart)
         {
             var header = CreateMessageHeader(Protocols.Store, MessageTypes.StoreQuery.Chunk, request.MessageId, messageFlags);

@@ -51,7 +51,7 @@ namespace Energistics.Etp.v12.Protocol.Dataspace
         /// <param name="request">The request.</param>
         /// <param name="dataspaces">The dataspaces.</param>
         /// <param name="errors">The errors.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetDataspacesResponse(IMessageHeader request, IList<Datatypes.Object.Dataspace> dataspaces)
         {
             var header = CreateMessageHeader(Protocols.Dataspace, MessageTypes.Dataspace.GetDataspacesResponse, request.MessageId);

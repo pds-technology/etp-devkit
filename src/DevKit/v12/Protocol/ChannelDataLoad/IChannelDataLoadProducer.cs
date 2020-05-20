@@ -35,7 +35,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// Sends a OpenChannels message to a consumer.
         /// </summary>
         /// <param name="channels">The channels.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long OpenChannels(IList<ChannelMetadataRecord> channels);
 
         /// <summary>
@@ -47,14 +47,14 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// Sends a CloseChannel message to a consumer.
         /// </summary>
         /// <param name="channelIds">The channel IDs.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long CloseChannel(IList<long> channelIds);
 
         /// <summary>
         /// Sends a RealtimeData message to a consumer.
         /// </summary>
         /// <param name="dataItems">The data items.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long RealtimeData(IList<DataItem> dataItems);
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <param name="channelIds">The IDs of the channels that are changing.</param>
         /// <param name="changedInterval">The indexes that define the interval that is changing.</param>
         /// <param name="dataItems">The channel data of the changed interval.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ReplaceRange(IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> dataItems);
 
     }

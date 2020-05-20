@@ -31,39 +31,47 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
     public interface IChannelStreamingConsumer : IProtocolHandler
     {
         /// <summary>
+        /// Gets or sets a value indicating whether the producer is a Simple Streamer.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if the producer is a Simple Streamer; otherwise, <c>false</c>.
+        /// </value>
+        bool ProducerIsSimpleStreamer { get; }
+
+        /// <summary>
         /// Sends a Start message to a producer with the specified throttling parameters.
         /// </summary>
         /// <param name="maxDataItems">The maximum data items.</param>
         /// <param name="maxMessageRate">The maximum message rate.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long Start(int maxDataItems = 10000, int maxMessageRate = 1000);
 
         /// <summary>
         /// Sends a ChannelDescribe message to a producer with the specified URIs.
         /// </summary>
         /// <param name="uris">The list of URIs.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ChannelDescribe(IList<string> uris);
 
         /// <summary>
         /// Sends a ChannelStreamingStart message to a producer.
         /// </summary>
         /// <param name="channelStreamingInfos">The list of <see cref="ChannelStreamingInfo"/> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ChannelStreamingStart(IList<ChannelStreamingInfo> channelStreamingInfos);
 
         /// <summary>
         /// Sends a ChannelStreamingStop message to a producer.
         /// </summary>
         /// <param name="channelIds">The list of channel identifiers.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ChannelStreamingStop(IList<long> channelIds);
 
         /// <summary>
         /// Sends a ChannelRangeRequest message to a producer.
         /// </summary>
         /// <param name="channelRangeInfos">The list of <see cref="ChannelRangeInfo"/> objects.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ChannelRangeRequest(IList<ChannelRangeInfo> channelRangeInfos);
 
         /// <summary>

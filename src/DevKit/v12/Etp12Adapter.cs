@@ -16,6 +16,8 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Avro.IO;
@@ -42,34 +44,10 @@ namespace Energistics.Etp.v12
                 session.Register<ICoreServer, CoreServerHandler>();
         }
 
-        public void RequestSession(IEtpSession session, string applicationName, string applicationVersion, string requestedCompression)
+        public void RequestSession(IEtpSession session)
         {
-            var requestedProtocols = session.GetSupportedProtocols();
-
-            session.Handler<ICoreClient>()
-                .RequestSession(applicationName, applicationVersion, requestedProtocols, requestedCompression);
-        }
-
-        public ISupportedProtocol GetSupportedProtocol(IProtocolHandler handler, string role)
-        {
-            if (handler.SupportedVersion != SupportedVersion)
-                return null;
-
-            return new SupportedProtocol
-            {
-                Protocol = handler.Protocol,
-                ProtocolVersion = new Version
-                {
-                    Major = 1,
-                    Minor = 2
-                },
-                ProtocolCapabilities = handler
-                    .GetCapabilities()
-                    .ToDictionary(
-                        x => x.Key,
-                        x => (DataValue) x.Value),
-                Role = role
-            };
+            session.InitializeInstanceSupportedProtocols();
+            session.Handler<ICoreClient>().RequestSession(session.SessionSupportedProtocols);
         }
 
         public IMessageHeader CreateMessageHeader()

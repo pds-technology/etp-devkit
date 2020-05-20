@@ -36,52 +36,28 @@ namespace Energistics.Etp.v11.Protocol.Core
         /// </summary>
         public CoreClientHandler() : base((int)Protocols.Core, "client", "server")
         {
-            RequestedProtocols = new List<ISupportedProtocol>(0);
-            SupportedProtocols = new List<ISupportedProtocol>(0);
-            ServerObjects = new List<string>(0);
-
             RegisterMessageHandler<OpenSession>(Protocols.Core, MessageTypes.Core.OpenSession, HandleOpenSession);
             RegisterMessageHandler<CloseSession>(Protocols.Core, MessageTypes.Core.CloseSession, HandleCloseSession);
         }
 
         /// <summary>
-        /// Gets the list of requested protocols.
-        /// </summary>
-        /// <value>The server protocols.</value>
-        public IList<ISupportedProtocol> RequestedProtocols { get; private set; }
-
-        /// <summary>
-        /// Gets the list of supported protocols.
-        /// </summary>
-        /// <value>The supported protocols.</value>
-        public IList<ISupportedProtocol> SupportedProtocols { get; private set; }
-
-        /// <summary>
-        /// Gets the list of supported server objects.
-        /// </summary>
-        /// <value>The server objects.</value>
-        public IList<string> ServerObjects { get; private set; }
-
-        /// <summary>
         /// Sends a RequestSession message to a server.
         /// </summary>
-        /// <param name="applicationName">The application name.</param>
-        /// <param name="applicationVersion">The application version.</param>
         /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long RequestSession(string applicationName, string applicationVersion, IList<ISupportedProtocol> requestedProtocols)
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        public virtual long RequestSession(IReadOnlyList<EtpSessionProtocol> requestedProtocols)
         {
             var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.RequestSession);
 
             var requestSession = new RequestSession()
             {
-                ApplicationName = applicationName,
-                ApplicationVersion = applicationVersion,
-                RequestedProtocols = requestedProtocols.Cast<SupportedProtocol>().ToList(),
-                SupportedObjects = new List<string>()
+                ApplicationName = Session.ClientApplicationName,
+                ApplicationVersion = Session.ClientApplicationVersion,
+                RequestedProtocols = requestedProtocols.Select(rp => rp.AsSupportedProtocol<SupportedProtocol, Version, DataValue>()).ToList(),
+                SupportedObjects = requestedProtocols.Any(p => p.Role.Equals("store", System.StringComparison.OrdinalIgnoreCase))
+                    ? Session.InstanceSupportedObjects.Select(o => (string)o.ContentType).ToList()
+                    : new List<string>()
             };
-
-            RequestedProtocols = requestedProtocols;
 
             return Session.SendMessage(header, requestSession);
         }
@@ -90,7 +66,7 @@ namespace Energistics.Etp.v11.Protocol.Core
         /// Sends a CloseSession message to a server.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long CloseSession(string reason = null)
         {
             var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.CloseSession);
@@ -102,11 +78,7 @@ namespace Energistics.Etp.v11.Protocol.Core
 
             var messageId = Session.SendMessage(header, closeSession);
 
-            if (messageId == header.MessageId)
-            {
-                Notify(OnCloseSession, header, closeSession);
-                Session.OnSessionClosed();
-            }
+            Session.OnSessionClosed(messageId >= 0);
 
             return messageId;
         }
@@ -115,7 +87,7 @@ namespace Energistics.Etp.v11.Protocol.Core
         /// Renews the security token.
         /// </summary>
         /// <param name="token">The token.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long RenewSecurityToken(string token)
         {
             var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.RenewSecurityToken);
@@ -145,11 +117,20 @@ namespace Energistics.Etp.v11.Protocol.Core
         /// <param name="openSession">The OpenSession message.</param>
         protected virtual void HandleOpenSession(IMessageHeader header, OpenSession openSession)
         {
-            SupportedProtocols = openSession.SupportedProtocols.Cast<ISupportedProtocol>().ToList();
-            ServerObjects = openSession.SupportedObjects;
-            Session.ServerInstanceId = openSession.SessionId;
+            var success = Session.InitializeSession(
+                openSession.SessionId,
+                openSession.ApplicationName,
+                openSession.ApplicationVersion,
+                null,
+                openSession.SupportedProtocols.Cast<ISupportedProtocol>().ToList(),
+                openSession.SupportedObjects.Select(o => (IDataObjectType)new EtpDataObjectType(o)).ToList(),
+                new List<string>(),
+                new List<string> { "xml" },
+                new EtpEndpointCapabilities()
+            );
+
             Notify(OnOpenSession, header, openSession);
-            Session.OnSessionOpened(RequestedProtocols, SupportedProtocols);
+            Session.OnSessionOpened(success);
         }
 
         /// <summary>
@@ -160,8 +141,8 @@ namespace Energistics.Etp.v11.Protocol.Core
         protected virtual void HandleCloseSession(IMessageHeader header, CloseSession closeSession)
         {
             Notify(OnCloseSession, header, closeSession);
-            Session.OnSessionClosed();
-            Session.Close(closeSession.Reason);
+            Session.OnSessionClosed(true);
+            Session.CloseWebSocket(closeSession.Reason);
         }
     }
 }

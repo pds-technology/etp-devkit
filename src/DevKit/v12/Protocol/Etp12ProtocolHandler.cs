@@ -35,10 +35,10 @@ namespace Energistics.Etp.v12.Protocol
         /// Initializes a new instance of the <see cref="Etp12ProtocolHandler"/> class.
         /// </summary>
         /// <param name="protocol">The protocol.</param>
-        /// <param name="role">The role.</param>
-        /// <param name="requestedRole">The requested role.</param>
-        protected Etp12ProtocolHandler(int protocol, string role, string requestedRole)
-            : base(EtpVersion.v12, protocol, role, requestedRole)
+        /// <param name="role">This handler's role in the protocol.</param>
+        /// <param name="counterpartRole">The role for this handler's counterpart in the protocol.</param>
+        protected Etp12ProtocolHandler(int protocol, string role, string counterpartRole)
+            : base(EtpVersion.v12, protocol, role, counterpartRole)
         {
         }
 

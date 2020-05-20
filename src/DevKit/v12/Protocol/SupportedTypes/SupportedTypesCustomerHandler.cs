@@ -47,7 +47,7 @@ namespace Energistics.Etp.v12.Protocol.SupportedTypes
         /// <param name="scope">The scope to return supported types for.</param>
         /// <param name="returnEmptyTypes">Whether the store should return data types that it supports but for which it currently has no data.</param>
         /// <param name="countObjects">if set to <c>true</c>, request object counts.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long GetSupportedTypes(string uri, ContextScopeKind scope, bool returnEmptyTypes = false, bool countObjects = false)
         {
             var header = CreateMessageHeader(Protocols.SupportedTypes, MessageTypes.SupportedTypes.GetSupportedTypes);

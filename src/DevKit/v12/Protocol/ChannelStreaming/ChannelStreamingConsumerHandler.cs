@@ -50,7 +50,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// <summary>
         /// Sends a StartStreaming message to a producer.
         /// </summary>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long StartStreaming()
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.StartStreaming);
@@ -64,7 +64,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// <summary>
         /// Sends a StopStreaming message to a producer.
         /// </summary>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         public virtual long StopStreaming()
         {
             var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.StopStreaming);

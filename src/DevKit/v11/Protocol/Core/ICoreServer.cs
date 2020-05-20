@@ -33,15 +33,14 @@ namespace Energistics.Etp.v11.Protocol.Core
         /// Sends an OpenSession message to a client.
         /// </summary>
         /// <param name="request">The request.</param>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        /// <returns>The message identifier.</returns>
-        long OpenSession(IMessageHeader request, IList<ISupportedProtocol> supportedProtocols);
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        long OpenSession(IMessageHeader request);
 
         /// <summary>
         /// Sends a CloseSession message to a client.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long CloseSession(string reason = null);
 
         /// <summary>

@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Energistics.Etp.Common.Datatypes;
 using log4net;
 
 namespace Energistics.Etp.Common
@@ -40,7 +39,6 @@ namespace Energistics.Etp.Common
         {
             CaptureAsyncContext = captureAsyncContext;
             Logger = LogManager.GetLogger(GetType());
-            SupportedObjects = new List<IDataObjectType>();
             RegisteredHandlers = new Dictionary<Type, Type>();
             RegisteredFactories = new Dictionary<Type, Func<IProtocolHandler>>();
         }
@@ -56,12 +54,6 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <value>The logger instance.</value>
         public ILog Logger { get; private set; }
-
-        /// <summary>
-        /// Gets or sets the list of supported objects.
-        /// </summary>
-        /// <value>The supported objects.</value>
-        public IList<IDataObjectType> SupportedObjects { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether the synchronization context should be captured for async tasks.
@@ -102,22 +94,6 @@ namespace Energistics.Etp.Common
         public string Log(string message, params object[] args)
         {
             return Log(string.Format(message, args));
-        }
-
-        /// <summary>
-        /// Called when the ETP session is opened.
-        /// </summary>
-        /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        public virtual void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols)
-        {
-        }
-
-        /// <summary>
-        /// Called when the ETP session is closed.
-        /// </summary>
-        public virtual void OnSessionClosed()
-        {
         }
 
         /// <summary>
