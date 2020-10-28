@@ -98,6 +98,11 @@ namespace Energistics.Etp.Common.Datatypes
         public string Version { get; }
 
         /// <summary>
+        /// Gets the short version
+        /// </summary>
+        public string ShortVersion => Version?.Replace(".", string.Empty).Substring(0, 2);
+
+        /// <summary>
         /// Gets the format.
         /// </summary>
         /// <value>The format.</value>

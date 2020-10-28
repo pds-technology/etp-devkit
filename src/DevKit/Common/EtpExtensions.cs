@@ -305,7 +305,7 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="dataObject">The data object.</param>
         /// <returns>The decompressed data as a byte array.</returns>
-        private static byte[] GetData(this IDataObject dataObject)
+        public static byte[] GetData(this IDataObject dataObject)
         {
             if (string.IsNullOrWhiteSpace(dataObject.ContentEncoding))
                 return dataObject.Data;
@@ -331,7 +331,7 @@ namespace Energistics.Etp.Common
         /// <param name="dataObject">The data object.</param>
         /// <param name="data">The data.</param>
         /// <param name="compress">if set to <c>true</c> the data will be compressed.</param>
-        private static void SetData(this IDataObject dataObject, byte[] data, bool compress = true)
+        public static void SetData(this IDataObject dataObject, byte[] data, bool compress = true)
         {
             var encoding = string.Empty;
 
