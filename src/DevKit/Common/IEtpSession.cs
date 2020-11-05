@@ -205,5 +205,19 @@ namespace Energistics.Etp.Common
         /// <typeparam name="TContract">The type of the contract.</typeparam>
         /// <param name="factory">The factory.</param>
         void Register<TContract>(Func<TContract> factory) where TContract : IProtocolHandler;
+
+        /// <summary>
+        /// Sets the context object of type <typeparamref name="T"/> for this session.
+        /// </summary>
+        /// <typeparam name="T">The type of the context object.</typeparam>
+        /// <param name="context">The context object.</param>
+        void SetContext<T>(T context);
+
+        /// <summary>
+        /// Getsets the context object of type <typeparamref name="T"/> for this session.
+        /// </summary>
+        /// <typeparam name="T">The type of the context object.</typeparam>
+        /// <returns>The context object.</returns>
+        T GetContext<T>();
     }
 }
