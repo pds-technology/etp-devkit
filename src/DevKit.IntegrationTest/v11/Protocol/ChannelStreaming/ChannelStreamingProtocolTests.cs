@@ -33,7 +33,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
             SetUp(TestSettings.WebSocketType, EtpSettings.Etp11SubProtocol);
 
             // Register protocol handler
-            _server.Register<IChannelStreamingProducer, ChannelStreamingProducer11MockHandler>();
+            _server.ServerManager.Register<IChannelStreamingProducer, ChannelStreamingProducer11MockHandler>();
 
             _server.Start();
         }

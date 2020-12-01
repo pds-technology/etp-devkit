@@ -97,51 +97,7 @@ namespace Energistics.Etp
 
         public bool IsRunning { get { return _proxiedServer.IsRunning; } }
 
-        public ILog Logger { get { return _proxiedServer.Logger; } }
-
-        public string ApplicationName { get { return _proxiedServer.ApplicationName; } }
-
-        public string ApplicationVersion { get { return _proxiedServer.ApplicationVersion; } }
-
-        public string SupportedCompression { get { return _proxiedServer.SupportedCompression; } set { _proxiedServer.SupportedCompression = value; } }
-        public IList<string> SupportedObjects { get { return _proxiedServer.SupportedObjects; } set { _proxiedServer.SupportedObjects = value; } }
-        public IList<string> SupportedEncodings { get { return _proxiedServer.SupportedEncodings; } set { _proxiedServer.SupportedEncodings = value; } }
-        public Action<string> Output { get { return _proxiedServer.Output; } set { _proxiedServer.Output = value; } }
-
-        public event EventHandler<IEtpSession> SessionConnected {  add { _proxiedServer.SessionConnected += value; } remove { _proxiedServer.SessionConnected -= value; } }
-        public event EventHandler<IEtpSession> SessionClosed { add { _proxiedServer.SessionClosed += value; } remove { _proxiedServer.SessionClosed -= value; } }
-
-        public IList<ISupportedProtocol> GetSupportedProtocols(EtpVersion version)
-        {
-            return _proxiedServer.GetSupportedProtocols(version);
-        }
-
-        public string Log(string message)
-        {
-            return _proxiedServer.Log(message);
-        }
-
-        public string Log(string message, params object[] args)
-        {
-            return _proxiedServer.Log(message, args);
-        }
-
-        public void Register<TContract, THandler>()
-            where TContract : IProtocolHandler
-            where THandler : TContract
-        {
-            _proxiedServer.Register<TContract, THandler>();
-        }
-
-        public void Register<TContract>(Func<TContract> factory) where TContract : IProtocolHandler
-        {
-            _proxiedServer.Register<TContract>(factory);
-        }
-
-        public IEtpAdapter ResolveEtpAdapter(EtpVersion version)
-        {
-            return _proxiedServer.ResolveEtpAdapter(version);
-        }
+        public IEtpServerManager ServerManager { get { return _proxiedServer.ServerManager; } }
 
         public void Dispose()
         {

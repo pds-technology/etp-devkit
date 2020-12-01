@@ -295,7 +295,7 @@ namespace Energistics.Etp.Common.Datatypes
         /// <summary>
         /// Gets a value indicating whether this instance is the a dataspace URI.
         /// For ETP 1.1: the root URI or eml://some/data/space
-        /// For ETP 1.2: the root URI or eml:///dataspace(uid)
+        /// For ETP 1.2: the root URI or eml:///dataspace('uid')
         /// </summary>
         /// <value><c>true</c> if this instance is the root URI; otherwise, <c>false</c>.</value>
         public bool IsDataspaceUri { get; }
@@ -310,7 +310,7 @@ namespace Energistics.Etp.Common.Datatypes
         /// <summary>
         /// Gets a value indicating whether this instance uniquely identifies an object.
         /// For ETP 1.1: eml://witsml20/Well(UUID) or eml://witsml20/Well(UUID)/Wellbore(UUID)
-        /// For ETP 1.2: eml://witsml20.Well(UUID) or eml://witsml20.Well(UUID)/witsml20.Wellbore(UUID)
+        /// For ETP 1.2: eml:///witsml20.Well(UUID) or eml:///witsml20.Well(UUID)/witsml20.Wellbore(UUID)
         /// </summary>
         /// <value><c>true</c> if this instance uniquely identifies an object; otherwise, <c>false</c>.</value>
         public bool IsObjectUri { get; }
@@ -318,7 +318,7 @@ namespace Energistics.Etp.Common.Datatypes
         /// <summary>
         /// A query URI has special meaning in ETP 1.2.  It is a folder URI at the Base or top-level object level.
         /// For ETP 1.1: eml://witsml20/Well or eml://witsml20/Well(UUID)/Wellbore
-        /// For ETP 1.2: eml://witsml20.Well or eml://witsml20.Well(UUID)/witsml20.Wellbore
+        /// For ETP 1.2: eml:///witsml20.Well or eml:///witsml20.Well(UUID)/witsml20.Wellbore
         /// </summary>
         /// <value><c>true</c> if this instance is a query URI; otherwise, <c>false</c>.</value>
         public bool IsQueryUri { get; }
@@ -327,7 +327,7 @@ namespace Energistics.Etp.Common.Datatypes
         /// Gets a value indicating whether this instance represents a folder.  A folder is a Base,
         /// object or object hierarchy URI that ends with an object type.
         /// For ETP 1.1: eml://witsml20/Well or eml://witsml20/Well(UUID)/Wellbore(UUID)/Log
-        /// For ETP 1.2: eml://witsml20.Well or eml://witsml20.Well(UUID)/witsml20.Wellbore(UUID)/Log
+        /// For ETP 1.2: eml:///witsml20.Well or eml:///witsml20.Well(UUID)/witsml20.Wellbore(UUID)/Log
         /// </summary>
         /// <value><c>true</c> if this instance uniquely identifies an object; otherwise, <c>false</c>.</value>
         public bool IsFolderUri { get; }
@@ -524,7 +524,7 @@ namespace Energistics.Etp.Common.Datatypes
 
                 string objectIdAndVersion = null;
                 if (objectId != null && objectVersion != null)
-                    objectIdAndVersion = $"({objectId},{objectVersion})";
+                    objectIdAndVersion = $"(uuid={objectId},version='{objectVersion.Replace("'","''")}')";
                 else if (objectId != null)
                     objectIdAndVersion = $"({objectId})";
 
@@ -624,7 +624,7 @@ namespace Energistics.Etp.Common.Datatypes
                 if (!string.IsNullOrEmpty(segment.ObjectId))
                 {
                     if (!string.IsNullOrEmpty(segment.ObjectVersion))
-                        sb.Append($"({segment.ObjectId},{segment.ObjectVersion})");
+                        sb.Append($"(uuid={segment.ObjectId},version='{segment.ObjectVersion.Replace("'","''")}')");
                     else
                         sb.Append($"({segment.ObjectId})");
                 }
@@ -851,7 +851,7 @@ namespace Energistics.Etp.Common.Datatypes
 
             objectType = EtpContentType.FormatObjectType(objectType, version);
 
-            return new Segment(family, version, objectType, objectId, objectVersion);
+            return new Segment(family, version, objectType, objectId, objectVersion?.Replace("''","'"));
         }
 
         /// <summary>

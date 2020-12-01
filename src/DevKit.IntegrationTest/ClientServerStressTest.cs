@@ -61,7 +61,7 @@ namespace Energistics.Etp
 
         protected void CloseStopCleanUp()
         {
-            _client?.Close("Closing");
+            _client?.CloseWebSocket("Closing");
             _server?.Stop();
             CleanUp();
         }
@@ -69,7 +69,7 @@ namespace Energistics.Etp
         protected void StopCloseCleanUp()
         {
             _server?.Stop();
-            _client?.Close("Closing");
+            _client?.CloseWebSocket("Closing");
             CleanUp();
         }
 
@@ -78,7 +78,7 @@ namespace Energistics.Etp
             _server?.Dispose();
             _server = null;
 
-            _client?.Close("Closing");
+            _client?.CloseWebSocket("Closing");
             CleanUp();
         }
 

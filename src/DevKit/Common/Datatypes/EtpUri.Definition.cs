@@ -60,16 +60,15 @@ namespace Energistics.Etp.Common.Datatypes
             public static readonly string Etp12UriGroup =                       "etp12Uri";
 
             // URI Components
-
             private static readonly string FamilyAndShortVersion =              $@"(?:(?<{FamilyGroup}>witsml|resqml|prodml|eml)(?<{ShortVersionGroup}>\d\d))";
 
             private static readonly string IdVersionChars =                     $@"[^ ?#),]";
             private static readonly string ObjectId =                           $@"(?<{ObjectIdGroup}>{IdVersionChars}+|(?<{EmptyIdGroup}>{IdVersionChars}*))";
-            private static readonly string ObjectVersion =                      $@"(?<{ObjectVersionGroup}>{IdVersionChars}+|(?<{EmptyVersionGroup}>{IdVersionChars}*))";
+            private static readonly string ObjectVersion =                      $@"(?:(?:'(?<{ObjectVersionGroup}>[^']*(?:''[^']*)*)')|(?<{ObjectVersionGroup}>(?<{EmptyVersionGroup}>{IdVersionChars}*)))";
 
             private static readonly string ObjectType =                         $@"(?:(?:obj_|cs_|part_)?(?<{ObjectTypeGroup}>\w+))";
             private static readonly string ObjectIdOnly =                       $@"(?:\({ObjectId}\))";
-            private static readonly string ObjectIdAndVersion =                 $@"(?:\({ObjectId}(?:,{ObjectVersion})?\))";
+            private static readonly string ObjectIdWithOptionalVersion =        $@"(?:{ObjectIdOnly}|(?:\(uuid={ObjectId}(?:,version={ObjectVersion})?\)))";
 
             private static readonly string Query =                              $@"(?:(?<{QueryGroup}>\?[^#]*))";
             private static readonly string Hash =                               $@"(?:(?<{HashGroup}>#.*))";
@@ -82,7 +81,7 @@ namespace Energistics.Etp.Common.Datatypes
             private static readonly string Etp12Dataspace =                     $@"(?:dataspace\((?<{DataspaceGroup}>[^?#)]*)\))";
 
             private static readonly string Etp11Object =                        $@"(?<{ObjectOrFolderGroup}>{ObjectType}{ObjectIdOnly})";
-            private static readonly string Etp12Object =                        $@"(?<{ObjectOrFolderGroup}>{FamilyAndShortVersion}\.{ObjectType}{ObjectIdAndVersion})";
+            private static readonly string Etp12Object =                        $@"(?<{ObjectOrFolderGroup}>{FamilyAndShortVersion}\.{ObjectType}{ObjectIdWithOptionalVersion})";
 
             private static readonly string Etp11Folder =                        $@"(?<{ObjectOrFolderGroup}>{ObjectType})";
             private static readonly string Etp12Folder =                        $@"(?<{ObjectOrFolderGroup}>{FamilyAndShortVersion}\.{ObjectType})";

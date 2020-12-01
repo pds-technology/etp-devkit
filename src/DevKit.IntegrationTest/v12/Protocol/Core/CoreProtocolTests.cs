@@ -64,7 +64,8 @@ namespace Energistics.Etp.v12.Protocol.Core
 
             Assert.IsNotNull(args);
             Assert.IsNotNull(args.Message);
-            Assert.IsNotNull(args.Message.SessionId);
+            Assert.Fail();
+            //Assert.IsNotNull(args.Message.SessionId);
         }
 
         //[Ignore]
@@ -99,7 +100,8 @@ namespace Energistics.Etp.v12.Protocol.Core
 
             Assert.IsNotNull(args);
             Assert.IsNotNull(args.Message);
-            Assert.IsNotNull(args.Message.SessionId);
+            Assert.Fail();
+            //Assert.IsNotNull(args.Message.SessionId);
         }
 
         [TestMethod]

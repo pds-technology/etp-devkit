@@ -77,7 +77,7 @@ namespace Energistics.Etp
             using (var server = new EtpSelfHostedWebServer(WebSocketPort, ServerAppName, AppVersion))
             {
                 // Register protocol handlers
-                server.Register<IDiscoveryStore, MockResourceProvider>();
+                server.ServerManager.Register<IDiscoveryStore, MockResourceProvider>();
 
                 while (true)
                 {
@@ -120,7 +120,7 @@ namespace Energistics.Etp
             Console.WriteLine(" D - Discovery - GetResources");
             Console.WriteLine();
 
-            using (var client = EtpFactory.CreateClient(webSocketUri, ClientAppName, AppVersion, EtpSettings.EtpSubProtocolName))
+            using (var client = EtpFactory.CreateClient(webSocketUri, ClientAppName, AppVersion, "ETP DevKit Test App", EtpSettings.EtpSubProtocolName))
             {
                 client.Register<IChannelStreamingConsumer, MockChannelStreamingConsumer>();
                 client.Register<IDiscoveryCustomer, DiscoveryCustomerHandler>();
@@ -139,7 +139,7 @@ namespace Energistics.Etp
                     }
                     else if (IsKey(info, "C"))
                     {
-                        client.Close("EtpClient closed.");
+                        client.CloseWebSocket("EtpClient closed.");
                     }
                     else if (IsKey(info, "S"))
                     {

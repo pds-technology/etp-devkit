@@ -291,6 +291,31 @@ namespace Energistics.Etp.Common.Datatypes
         }
 
         [TestMethod]
+        public void EtpUri_12_Can_Parse_Uri_With_Version()
+        {
+            var uri = new EtpUri("eml:///witsml14.well(uuid=" + Uuid() + ",version='123')");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("1.4.1.1", uri.Version);
+            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("xml", uri.Format);
+            Assert.AreEqual("123", uri.ObjectVersion);
+        }
+
+
+        [TestMethod]
+        public void EtpUri_12_Can_Parse_Uri_With_Version_With_Single_Quotes()
+        {
+            var uri = new EtpUri("eml:///witsml14.well(uuid=" + Uuid() + ",version='1''23')");
+
+            Assert.IsTrue(uri.IsValid);
+            Assert.AreEqual("1.4.1.1", uri.Version);
+            Assert.AreEqual("well", uri.ObjectType);
+            Assert.AreEqual("xml", uri.Format);
+            Assert.AreEqual("1'23", uri.ObjectVersion);
+        }
+
+        [TestMethod]
         public void EtpUri_12_Can_Parse_Uri_With_No_Format_Specified()
         {
             var uri = new EtpUri("eml:///witsml14.well(" + Uuid() + ")");
@@ -461,7 +486,7 @@ namespace Energistics.Etp.Common.Datatypes
             uri11 = new EtpUri($"eml://some-data/space/witsml20/Well({uuid})");
             Assert.AreEqual(uri11, uri12.AsEtp11());
 
-            uri12 = new EtpUri($"eml:///dataspace(some-data/space)/witsml20.Well({uuid},1.0)");
+            uri12 = new EtpUri($"eml:///dataspace(some-data/space)/witsml20.Well(uuid={uuid},version='1.0')");
             uri11 = new EtpUri($"eml://some-data/space/witsml20/Well({uuid})");
             Assert.AreEqual(uri11, uri12.AsEtp11());
 
@@ -629,7 +654,7 @@ namespace Energistics.Etp.Common.Datatypes
             canonical = new EtpUri($"eml:///witsml20.Well({uuid})");
             Assert.AreEqual(canonical, original.AsCanonical());
 
-            original = new EtpUri($"eml:///dataspace()/witsml20.Well({uuid},)");
+            original = new EtpUri($"eml:///dataspace()/witsml20.Well(uuid={uuid},version=)");
             canonical = new EtpUri($"eml:///witsml20.Well({uuid})");
             Assert.AreEqual(canonical, original.AsCanonical());
 
@@ -645,7 +670,7 @@ namespace Energistics.Etp.Common.Datatypes
             canonical = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well()");
             Assert.AreEqual(canonical, original.AsCanonical());
 
-            original = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well(,)");
+            original = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well(uuid=,version=)");
             canonical = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well()");
             Assert.AreEqual(canonical, original.AsCanonical());
         }
@@ -892,10 +917,7 @@ namespace Energistics.Etp.Common.Datatypes
             uri = new EtpUri($"eml:///witsml14.well()");
             AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsObjectUri: true, HasEmptyObjectId: true);
 
-            uri = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well({uuid},)");
-            AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsObjectUri: true);
-
-            uri = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well({uuid},)");
+            uri = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well(uuid={uuid},version=)");
             AssertUri(uri, IsValid: true, EtpVersion: EtpVersion.v12, IsAlternateUri: true, IsObjectUri: true);
 
             uri = new EtpUri($"eml:///dataspace(some-data/space)/witsml14.well({uuid})/witsml14.wellbore({Uuid()})");

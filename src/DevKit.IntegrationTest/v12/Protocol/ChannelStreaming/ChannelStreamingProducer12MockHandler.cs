@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -67,19 +68,21 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
                 },
             };
 
-            ChannelMetadata(header, channelMetaData);
+            throw new NotImplementedException();
 
-            var dataItems = new List<DataItem>
-            {
-                new DataItem()
-                {
-                    Indexes = new List<IndexValue> { new IndexValue { Item = 0L } },
-                    ChannelId = 1,
-                    Value = new DataValue { Item = 1 },
-                    ValueAttributes = new DataAttribute[0],
-                }
-            };
-            ChannelData(header, dataItems, MessageFlags.MultiPartAndFinalPart);
+            //ChannelMetadata(header, channelMetaData);
+
+            //var dataItems = new List<DataItem>
+            //{
+            //    new DataItem()
+            //    {
+            //        Indexes = new List<IndexValue> { new IndexValue { Item = 0L } },
+            //        ChannelId = 1,
+            //        Value = new DataValue { Item = 1 },
+            //        ValueAttributes = new DataAttribute[0],
+            //    }
+            //};
+            //ChannelData(header, dataItems, MessageFlags.MultiPartAndFinalPart);
         }
     }
 }

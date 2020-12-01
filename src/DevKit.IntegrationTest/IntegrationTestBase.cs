@@ -76,7 +76,7 @@ namespace Energistics.Etp
             if (headers == null)
                 headers = Security.Authorization.Basic(TestSettings.Username, TestSettings.Password);
 
-            var client = EtpFactory.CreateClient(webSocketType, url, GetType().AssemblyQualifiedName, version, etpSubProtocol, headers);
+            var client = EtpFactory.CreateClient(webSocketType, url, GetType().AssemblyQualifiedName, version, "ETP DevKit Integration Test", etpSubProtocol, headers);
 
             if (client.SupportedVersion == EtpVersion.v11)
             {

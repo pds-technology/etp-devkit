@@ -35,7 +35,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
             SetUp(TestSettings.WebSocketType, EtpSettings.Etp12SubProtocol);
 
             // Register protocol handler
-            _server.Register<IDiscoveryStore, DiscoveryStore12MockHandler>();
+            _server.ServerManager.Register<IDiscoveryStore, DiscoveryStore12MockHandler>();
 
             _server.Start();
         }
@@ -47,58 +47,59 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         }
 
         [TestMethod]
-        public async Task IDiscoveryCustomer_v12_GetResource_Request_Default_Uri()
+        public void IDiscoveryCustomer_v12_GetResource_Request_Default_Uri()
         {
-            var handler = _client.Handler<IDiscoveryCustomer>();
+            Assert.Fail();
+            //var handler = _client.Handler<IDiscoveryCustomer>();
 
-            // Wait for Open connection
-            var isOpen = await _client.OpenAsyncWithTimeout();
-            Assert.IsTrue(isOpen);
+            //// Wait for Open connection
+            //var isOpen = await _client.OpenAsyncWithTimeout();
+            //Assert.IsTrue(isOpen);
 
-            // Register event handler for root URI
-            var onGetRootResourcesResponse = HandleAsync<GetResourcesResponse, string>(
-                x => handler.OnGetResourcesResponse += x);
+            //// Register event handler for root URI
+            //var onGetRootResourcesResponse = HandleAsync<GetResourcesResponse, string>(
+            //    x => handler.OnGetResourcesResponse += x);
 
-            // Send GetResources message for root URI
-            handler.GetTreeResources(new ContextInfo
-            {
-                Uri = EtpUri.RootUri,
-                ContentTypes = new List<string>()
-            });
+            //// Send GetResources message for root URI
+            //handler.GetTreeResources(new ContextInfo
+            //{
+            //    Uri = EtpUri.RootUri,
+            //    ContentTypes = new List<string>()
+            //});
 
-            // Wait for GetResourcesResponse for top level resources
-            var argsRoot = await onGetRootResourcesResponse.WaitAsync();
+            //// Wait for GetResourcesResponse for top level resources
+            //var argsRoot = await onGetRootResourcesResponse.WaitAsync();
 
-            Assert.IsNotNull(argsRoot);
-            Assert.IsNotNull(argsRoot.Message.Resources?.FirstOrDefault());
-            Assert.IsNotNull(argsRoot.Message.Resources[0].Uri);
+            //Assert.IsNotNull(argsRoot);
+            //Assert.IsNotNull(argsRoot.Message.Resources?.FirstOrDefault());
+            //Assert.IsNotNull(argsRoot.Message.Resources[0].Uri);
 
-            // Register event handler for child resources
-            var onGetChildResourcesResponse = HandleAsync<GetResourcesResponse, string>(
-                x => handler.OnGetResourcesResponse += x);
+            //// Register event handler for child resources
+            //var onGetChildResourcesResponse = HandleAsync<GetResourcesResponse, string>(
+            //    x => handler.OnGetResourcesResponse += x);
 
-            // Send GetResources message for child resources
-            var resource = argsRoot.Message.Resources[0];
-            handler.GetTreeResources(new ContextInfo
-            {
-                Uri = resource.Uri,
-                ContentTypes = new List<string>()
-            });
+            //// Send GetResources message for child resources
+            //var resource = argsRoot.Message.Resources[0];
+            //handler.GetTreeResources(new ContextInfo
+            //{
+            //    Uri = resource.Uri,
+            //    ContentTypes = new List<string>()
+            //});
 
-            // Wait for GetResourcesResponse for child resources
-            var argsChild = await onGetChildResourcesResponse.WaitAsync();
+            //// Wait for GetResourcesResponse for child resources
+            //var argsChild = await onGetChildResourcesResponse.WaitAsync();
 
-            Assert.IsNotNull(argsChild);
+            //Assert.IsNotNull(argsChild);
 
-            if (argsChild.Header.IsNoData())
-            {
-                Assert.IsNull(argsChild.Message.Resources?.FirstOrDefault());
-            }
-            else
-            {
-                Assert.IsNotNull(argsChild.Message.Resources?.FirstOrDefault());
-                Assert.AreNotEqual(resource.Uri, argsChild.Message.Resources[0].Uri);
-            }
+            //if (argsChild.Header.IsNoData())
+            //{
+            //    Assert.IsNull(argsChild.Message.Resources?.FirstOrDefault());
+            //}
+            //else
+            //{
+            //    Assert.IsNotNull(argsChild.Message.Resources?.FirstOrDefault());
+            //    Assert.AreNotEqual(resource.Uri, argsChild.Message.Resources[0].Uri);
+            //}
         }
     }
 }

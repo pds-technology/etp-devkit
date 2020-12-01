@@ -29,15 +29,12 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         {
         }
 
-        public bool ProducerIsSimpleStreamer { get; private set; }
 
         public event ProtocolEventHandler<OpenSession> OnOpenSession;
 
-        public override void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols)
+        public override void OnSessionOpened(EtpProtocolCapabilities counterpartCapabilities)
         {
-            base.OnSessionOpened(requestedProtocols, supportedProtocols);
-
-            ProducerIsSimpleStreamer = supportedProtocols.IsSimpleStreamer();
+            base.OnSessionOpened(counterpartCapabilities);
 
             OnOpenSession?.Invoke(this, new ProtocolEventArgs<OpenSession>(null, null));
         }

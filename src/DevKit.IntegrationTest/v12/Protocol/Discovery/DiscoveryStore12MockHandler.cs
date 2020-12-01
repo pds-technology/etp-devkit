@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -30,47 +31,17 @@ namespace Energistics.Etp.v12.Protocol.Discovery
 
         }
 
-        protected override void HandleGetTreeResources(ProtocolEventArgs<GetTreeResources, IList<Resource>> args)
+        protected override bool HandleGetResources(IMessageHeader header, GetResources message, IList<Resource> response)
         {
-            var witsml20 = new EtpUri("eml://witsml20");
-
-            if (args.Message.Context.Uri == EtpUri.RootUri)
+            if (message.Context.Uri == EtpUri.RootUri12)
             {
-                args.Context.Add(new Resource
-                {
-                    Uuid = null,
-                    Uri = witsml20,
-                    Name = "WITSML Store (2.0)",
-                    TargetCount = 1,
-                    ContentType = witsml20.ContentType,
-                    ResourceType = ResourceKind.UriProtocol,
-                    CustomData = new Dictionary<string, string>(),
-                    LastChanged = 0,
-                    ChannelSubscribable = false,
-                    ObjectNotifiable = false,
-                });
-            }
-            else if (args.Message.Context.Uri == witsml20)
-            {
-                var witsml20well = new EtpUri("eml://witsml20/well");
-                args.Context.Add(new Resource
-                {
-                    Uuid = null,
-                    Uri = witsml20well,
-                    Name = "Well",
-                    TargetCount = 0,
-                    ContentType = witsml20well.ContentType,
-                    ResourceType = ResourceKind.Folder,
-                    CustomData = new Dictionary<string, string>(),
-                    LastChanged = 0,
-                    ChannelSubscribable = false,
-                    ObjectNotifiable = false,
-                });
+                throw new NotImplementedException();
             }
             else
             {
-                args.Cancel = true;
+                return false;
             }
+            //return true;
         }
     }
 }

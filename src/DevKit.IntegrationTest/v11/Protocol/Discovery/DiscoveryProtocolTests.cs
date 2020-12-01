@@ -32,7 +32,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
             SetUp(TestSettings.WebSocketType, EtpSettings.Etp11SubProtocol);
 
             // Register protocol handler
-            _server.Register<IDiscoveryStore, DiscoveryStore11MockHandler>();
+            _server.ServerManager.Register<IDiscoveryStore, DiscoveryStore11MockHandler>();
 
             _server.Start();
         }
@@ -57,7 +57,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
                 x => handler.OnGetResourcesResponse += x);
 
             // Send GetResources message for root URI
-            handler.GetResources(EtpUri.RootUri);
+            handler.GetResources(EtpUri.RootUri11);
 
             // Wait for GetResourcesResponse for top level resources
             var argsRoot = await onGetRootResourcesResponse.WaitAsync();

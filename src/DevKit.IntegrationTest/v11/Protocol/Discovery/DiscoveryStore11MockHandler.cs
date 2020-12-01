@@ -34,7 +34,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
         {
             var witsml20 = new EtpUri("eml://witsml20");
 
-            if (args.Message.Uri == EtpUri.RootUri)
+            if (args.Message.Uri == EtpUri.RootUri11)
             {
                 args.Context.Add(new Resource
                 {
