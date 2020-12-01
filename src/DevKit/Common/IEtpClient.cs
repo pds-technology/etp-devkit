@@ -18,6 +18,7 @@
 
 using System;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 namespace Energistics.Etp.Common
@@ -42,7 +43,8 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="enabledSslProtocols">The enabled SSL and TLS protocols.</param>
         /// <param name="acceptInvalidCertificates">Whether or not to accept invalid certificates.</param>
-        void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates);
+        /// <param name="clientCertificate">The client certificate to use.</param>
+        void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates, X509Certificate2 clientCertificate = null);
 
         /// <summary>
         /// Opens the WebSocket connection.

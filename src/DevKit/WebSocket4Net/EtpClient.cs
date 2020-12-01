@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Properties;
@@ -273,12 +274,15 @@ namespace Energistics.Etp.WebSocket4Net
         /// </summary>
         /// <param name="enabledSslProtocols">The enabled SSL and TLS protocols.</param>
         /// <param name="acceptInvalidCertificates">Whether or not to accept invalid certificates.</param>
-        public void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates)
+        /// <param name="clientCertificate">The client certificate to use.</param>
+        public void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates, X509Certificate2 clientCertificate = null)
         {
             _socket.Security.EnabledSslProtocols = (SslProtocols)enabledSslProtocols;
             _socket.Security.AllowCertificateChainErrors = acceptInvalidCertificates;
             _socket.Security.AllowNameMismatchCertificate = acceptInvalidCertificates;
             _socket.Security.AllowUnstrustedCertificate = acceptInvalidCertificates;
+            if (clientCertificate != null)
+                _socket.Security.Certificates.Add(clientCertificate);
         }
 
         /// <summary>

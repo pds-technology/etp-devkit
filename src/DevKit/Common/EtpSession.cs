@@ -43,6 +43,7 @@ namespace Energistics.Etp.Common
         private int _socketOpenedEventCount = 0;
         private long _messageId;
         private bool? _isJsonEncoding;
+        private readonly List<object> _contextObjects = new List<object>();
         private string _sessionId;
         private string _clientInstanceId;
         private string _serverInstanceId;
@@ -948,6 +949,35 @@ namespace Energistics.Etp.Common
             {
                 _sendLock.Release();
             }
+        }
+
+        /// <summary>
+        /// Sets the context object of type <typeparamref name="T"/> for this session.
+        /// </summary>
+        /// <typeparam name="T">The type of the context object.</typeparam>
+        /// <param name="context">The context object.</param>
+        public void SetContext<T>(T context)
+        {
+            for (int i = 0; i < _contextObjects.Count; i++)
+            {
+                if (_contextObjects[i] is T)
+                {
+                    _contextObjects[i] = context;
+                    return;
+                }
+            }
+
+            _contextObjects.Add(context);
+        }
+
+        /// <summary>
+        /// Getsets the context object of type <typeparamref name="T"/> for this session.
+        /// </summary>
+        /// <typeparam name="T">The type of the context object.</typeparam>
+        /// <returns>The context object.</returns>
+        public T GetContext<T>()
+        {
+            return (T)_contextObjects.FirstOrDefault(o => o is T);
         }
 
         /// <summary>
