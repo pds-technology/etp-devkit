@@ -20,6 +20,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.StoreQuery
 {
@@ -30,30 +31,32 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
     /// <seealso cref="Energistics.Etp.v12.Protocol.StoreQuery.IStoreQueryCustomer" />
     public class StoreQueryCustomerHandler : Etp12ProtocolHandler, IStoreQueryCustomer
     {
-        private readonly ConcurrentDictionary<long, FindObjects> _requests = new ConcurrentDictionary<long, FindObjects>();
+        private readonly ConcurrentDictionary<long, FindDataObjects> _requests = new ConcurrentDictionary<long, FindDataObjects>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreQueryCustomerHandler"/> class.
         /// </summary>
         public StoreQueryCustomerHandler() : base((int)Protocols.StoreQuery, "customer", "store")
         {
-            RegisterMessageHandler<FindObjectsResponse>(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjectsResponse, HandleFindObjectsResponse);
+            RegisterMessageHandler<FindDataObjectsResponse>(Protocols.StoreQuery, MessageTypes.StoreQuery.FindDataObjectsResponse, HandleFindDataObjectsResponse);
             RegisterMessageHandler<Chunk>(Protocols.StoreQuery, MessageTypes.StoreQuery.Chunk, HandleChunk);
         }
 
         /// <summary>
-        /// Sends a FindObjects message to a store.
+        /// Sends a FindDataObjects message to a store.
         /// </summary>
-        /// <param name="uri">The URI.</param>
+        /// <param name="context">The context information.</param>
+        /// <param name="scope">The scope.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long FindObjects(string uri, string format = "xml")
+        public virtual long FindDataObjects(ContextInfo context, ContextScopeKind scope, string format = "xml")
         {
-            var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjects);
+            var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindDataObjects);
 
-            var message = new FindObjects()
+            var message = new FindDataObjects()
             {
-                Uri = uri,
+                Context = context,
+                Scope = scope,
                 Format = format ?? "xml",
             };
             
@@ -63,9 +66,9 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         }
 
         /// <summary>
-        /// Handles the FindObjectsResponse event from a store.
+        /// Handles the FindDataObjectsResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<FindObjectsResponse, FindObjects> OnFindObjectsResponse;
+        public event ProtocolEventHandler<FindDataObjectsResponse, FindDataObjects> OnFindDataObjectsResponse;
 
         /// <summary>
         /// Handles the Chunk event from a store.
@@ -78,32 +81,32 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <param name="correlationId">The correlation ID of the request</param>
         protected override void HandleFinalResponse(long correlationId)
         {
-            FindObjects request;
+            FindDataObjects request;
             _requests.TryRemove(correlationId, out request);
         }
 
         /// <summary>
-        /// Handles the FindObjectsResponse message from a store.
+        /// Handles the FindDataObjectsResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The FindObjectsResponse message.</param>
-        protected virtual void HandleFindObjectsResponse(IMessageHeader header, FindObjectsResponse message)
+        /// <param name="message">The FindDataObjectsResponse message.</param>
+        protected virtual void HandleFindDataObjectsResponse(IMessageHeader header, FindDataObjectsResponse message)
         {
             var request = GetRequest(header);
-            var args = Notify(OnFindObjectsResponse, header, message, request);
+            var args = Notify(OnFindDataObjectsResponse, header, message, request);
             if (args.Cancel)
                 return;
 
-            HandleFindObjectsResponse(header, message, request);
+            HandleFindDataObjectsResponse(header, message, request);
         }
 
         /// <summary>
-        /// Handles the FindObjectsResponse message from a store.
+        /// Handles the FindDataObjectsResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The FindObjectsResponse message.</param>
-        /// <param name="request">The FindObjects request.</param>
-        protected virtual void HandleFindObjectsResponse(IMessageHeader header, FindObjectsResponse message, FindObjects request)
+        /// <param name="message">The FindDataObjectsResponse message.</param>
+        /// <param name="request">The FindDataObjects request.</param>
+        protected virtual void HandleFindDataObjectsResponse(IMessageHeader header, FindDataObjectsResponse message, FindDataObjects request)
         {
         }
 
@@ -122,9 +125,9 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <returns>The requested URI.</returns>
-        private FindObjects GetRequest(IMessageHeader header)
+        private FindDataObjects GetRequest(IMessageHeader header)
         {
-            FindObjects request;
+            FindDataObjects request;
             _requests.TryGetValue(header.CorrelationId, out request);
             return request;
         }

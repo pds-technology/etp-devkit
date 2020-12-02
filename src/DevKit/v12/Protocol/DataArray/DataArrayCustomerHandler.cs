@@ -102,15 +102,15 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         }
 
         /// <summary>
-        /// Sends a PutUninitializedDataArray message to a store.
+        /// Sends a PutUninitializedDataArrays message to a store.
         /// </summary>
         /// <param name="dataArrays">The data arrays.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long PutUninitializedDataArray(IList<PutUninitializedDataArrayType> dataArrays)
+        public virtual long PutUninitializedDataArrays(IList<PutUninitializedDataArrayType> dataArrays)
         {
-            var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.PutUninitializedDataArray);
+            var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.PutUninitializedDataArrays);
 
-            var message = new PutUninitializedDataArray
+            var message = new PutUninitializedDataArrays
             {
                 DataArrays = dataArrays.ToMap(),
             };

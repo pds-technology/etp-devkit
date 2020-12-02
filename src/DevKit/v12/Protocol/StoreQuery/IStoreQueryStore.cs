@@ -32,18 +32,18 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
     public interface IStoreQueryStore : IProtocolHandler
     {
         /// <summary>
-        /// Handles the FindObjects event from a customer.
+        /// Handles the FindDataObjects event from a customer.
         /// </summary>
-        event ProtocolEventHandler<FindObjects, DataObjectResponse> OnFindObjects;
+        event ProtocolEventHandler<FindDataObjects, DataObjectResponse> OnFindDataObjects;
 
         /// <summary>
-        /// Sends a FindObjectsResponse message to a customer.
+        /// Sends a FindDataObjectsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="objects">The list of <see cref="DataObject"/> objects.</param>
         /// <param name="sortOrder">The sort order.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long FindObjectsResponse(IMessageHeader request, IList<DataObject> objects, string sortOrder);
+        long FindDataObjectsResponse(IMessageHeader request, IList<DataObject> objects, string sortOrder);
 
         /// <summary>
         /// Sends a Chunk message to a customer.

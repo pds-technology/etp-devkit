@@ -39,7 +39,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
             RegisterMessageHandler<GetDataArrays>(Protocols.DataArray, MessageTypes.DataArray.GetDataArrays, HandleGetDataArrays);
             RegisterMessageHandler<GetDataSubarrays>(Protocols.DataArray, MessageTypes.DataArray.GetDataSubarrays, HandleGetDataSubarrays);
             RegisterMessageHandler<PutDataArrays>(Protocols.DataArray, MessageTypes.DataArray.PutDataArrays, HandlePutDataArrays);
-            RegisterMessageHandler<PutUninitializedDataArray>(Protocols.DataArray, MessageTypes.DataArray.PutUninitializedDataArray, HandlePutUninitializedDataArray);
+            RegisterMessageHandler<PutUninitializedDataArrays>(Protocols.DataArray, MessageTypes.DataArray.PutUninitializedDataArrays, HandlePutUninitializedDataArrays);
             RegisterMessageHandler<PutDataSubarrays>(Protocols.DataArray, MessageTypes.DataArray.PutDataSubarrays, HandlePutDataSubarrays);
             RegisterMessageHandler<GetDataArrayMetadata>(Protocols.DataArray, MessageTypes.DataArray.GetDataArrayMetadata, HandleGetDataArrayMetadata);
         }
@@ -96,9 +96,9 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         public event ProtocolEventWithErrorsHandler<PutDataArrays, ErrorInfo> OnPutDataArrays;
 
         /// <summary>
-        /// Handles the PutUninitializedDataArray event from a customer.
+        /// Handles the PutUninitializedDataArrays event from a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<PutUninitializedDataArray, ErrorInfo> OnPutUninitializedDataArray;
+        public event ProtocolEventWithErrorsHandler<PutUninitializedDataArrays, ErrorInfo> OnPutUninitializedDataArrays;
 
         /// <summary>
         /// Handles the PutDataSubarrays event from a customer.
@@ -215,29 +215,29 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         }
 
         /// <summary>
-        /// Handles the PutUninitializedDataArray message from a customer.
+        /// Handles the PutUninitializedDataArrays message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The PutUninitializedDataArray message.</param>
-        protected virtual void HandlePutUninitializedDataArray(IMessageHeader header, PutUninitializedDataArray message)
+        protected virtual void HandlePutUninitializedDataArrays(IMessageHeader header, PutUninitializedDataArrays message)
         {
-            var args = Notify(OnPutUninitializedDataArray, header, message, new Dictionary<string, ErrorInfo>());
+            var args = Notify(OnPutUninitializedDataArrays, header, message, new Dictionary<string, ErrorInfo>());
             if (args.Cancel)
                 return;
 
-            if (!HandlePutUninitializedDataArray(header, message, args.Errors))
+            if (!HandlePutUninitializedDataArrays(header, message, args.Errors))
                 return;
 
             SendMultipartResponse(header, message, args.Errors);
         }
 
         /// <summary>
-        /// Handles the PutUninitializedDataArray message from a customer.
+        /// Handles the PutUninitializedDataArrays message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The message.</param>
         /// <param name="errors">The errors.</param>
-        protected virtual bool HandlePutUninitializedDataArray(IMessageHeader header, PutUninitializedDataArray message, IDictionary<string, ErrorInfo> errors)
+        protected virtual bool HandlePutUninitializedDataArrays(IMessageHeader header, PutUninitializedDataArrays message, IDictionary<string, ErrorInfo> errors)
         {
             return true;
         }

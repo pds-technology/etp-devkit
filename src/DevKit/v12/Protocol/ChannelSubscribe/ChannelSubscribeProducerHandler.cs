@@ -111,15 +111,15 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         public event ProtocolEventWithErrorsHandler<SubscribeChannels, ErrorInfo> OnSubscribeChannels;
 
         /// <summary>
-        /// Sends a RealtimeData message to a consumer.
+        /// Sends a ChannelData message to a consumer.
         /// </summary>
         /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long RealtimeData(IList<DataItem> dataItems)
+        public virtual long ChannelData(IList<DataItem> dataItems)
         {
-            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.RealtimeData);
+            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.ChannelData);
 
-            var message = new RealtimeData
+            var message = new ChannelData
             {
                 Data = dataItems
             };
@@ -128,17 +128,17 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Sends a ReplaceRange message to a consumer.
+        /// Sends a RangeReplaced message to a consumer.
         /// </summary>
         /// <param name="channelIds">The IDs of the channels that are changing.</param>
         /// <param name="changedInterval">The indexes that define the interval that is changing.</param>
         /// <param name="dataItems">The channel data of the changed interval.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long ReplaceRange(IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> dataItems)
+        public virtual long RangeReplaced(IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> dataItems)
         {
-            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.ReplaceRange);
+            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.RangeReplaced);
 
-            var message = new ReplaceRange
+            var message = new RangeReplaced
             {
                 ChannelIds = channelIds,
                 ChangedInterval = changedInterval,

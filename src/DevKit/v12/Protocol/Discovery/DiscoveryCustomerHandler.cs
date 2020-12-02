@@ -62,10 +62,10 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// </summary>
         /// <param name="context">The context information.</param>
         /// <param name="scope">The scope.</param>
-        /// <param name="lastChangedFilter">An optional parameter to filter discovery on a date when an object last changed.</param>
+        /// <param name="storeLastWriteFilter">An optional parameter to filter discovery on a date when an object last changed.</param>
         /// <param name="countObjects">if set to <c>true</c>, request object counts.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long GetResources(ContextInfo context, ContextScopeKind scope, long? lastChangedFilter = null, bool countObjects = false)
+        public virtual long GetResources(ContextInfo context, ContextScopeKind scope, long? storeLastWriteFilter = null, bool countObjects = false)
         {
             var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResources);
 
@@ -73,7 +73,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
             {
                 Context = context,
                 Scope = scope,
-                LastChangedFilter = lastChangedFilter,
+                StoreLastWriteFilter = storeLastWriteFilter,
                 CountObjects = countObjects,
             };
 

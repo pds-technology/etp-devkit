@@ -41,8 +41,8 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
             ChannelMetadataRecords = new List<ChannelMetadataRecord>(0);
 
             RegisterMessageHandler<GetChannelMetadataResponse>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetChannelMetadataResponse, HandleGetChannelMetadataResponse);
-            RegisterMessageHandler<RealtimeData>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.RealtimeData, HandleRealtimeData);
-            RegisterMessageHandler<ReplaceRange>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.ReplaceRange, HandleReplaceRange);
+            RegisterMessageHandler<ChannelData>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.ChannelData, HandleChannelData);
+            RegisterMessageHandler<RangeReplaced>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.RangeReplaced, HandleRangeReplaced);
             RegisterMessageHandler<SubscriptionsStopped>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.SubscriptionsStopped, HandleSubscriptionsStopped);
             RegisterMessageHandler<GetRangesResponse>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRangesResponse, HandleGetRangesResponse);
         }
@@ -131,14 +131,14 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the RealtimeData event from a producer.
+        /// Handles the ChannelData event from a producer.
         /// </summary>
-        public event ProtocolEventHandler<RealtimeData> OnRealtimeData;
+        public event ProtocolEventHandler<ChannelData> OnChannelData;
 
         /// <summary>
-        /// Handles the ReplaceRange event from a producer.
+        /// Handles the RangeReplaced event from a producer.
         /// </summary>
-        public event ProtocolEventHandler<ReplaceRange> OnReplaceRange;
+        public event ProtocolEventHandler<RangeReplaced> OnRangeReplaced;
 
         /// <summary>
         /// Sends a UnsubscribeChannels message to a producer.
@@ -217,23 +217,23 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the RealtimeData message from a producer.
+        /// Handles the ChannelData message from a producer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The RealtimeData message.</param>
-        protected virtual void HandleRealtimeData(IMessageHeader header, RealtimeData message)
+        /// <param name="message">The ChannelData message.</param>
+        protected virtual void HandleChannelData(IMessageHeader header, ChannelData message)
         {
-            Notify(OnRealtimeData, header, message);
+            Notify(OnChannelData, header, message);
         }
 
         /// <summary>
-        /// Handles the ChangedData message from a producer.
+        /// Handles the RangeReplaced message from a producer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The ReplaceRange message.</param>
-        protected virtual void HandleReplaceRange(IMessageHeader header, ReplaceRange message)
+        /// <param name="message">The RangeReplaced message.</param>
+        protected virtual void HandleRangeReplaced(IMessageHeader header, RangeReplaced message)
         {
-            Notify(OnReplaceRange, header, message);
+            Notify(OnRangeReplaced, header, message);
         }
 
         /// <summary>

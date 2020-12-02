@@ -66,14 +66,14 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         long SubscribeChannels(IList<ChannelSubscribeInfo> channels);
 
         /// <summary>
-        /// Handles the RealtimeData event from a producer.
+        /// Handles the ChannelData event from a producer.
         /// </summary>
-        event ProtocolEventHandler<RealtimeData> OnRealtimeData;
+        event ProtocolEventHandler<ChannelData> OnChannelData;
 
         /// <summary>
-        /// Handles the ReplaceRange event from a producer.
+        /// Handles the RangeReplaced event from a producer.
         /// </summary>
-        event ProtocolEventHandler<ReplaceRange> OnReplaceRange;
+        event ProtocolEventHandler<RangeReplaced> OnRangeReplaced;
 
         /// <summary>
         /// Sends a UnsubscribeChannels message to a producer.

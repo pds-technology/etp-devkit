@@ -37,8 +37,8 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         public ChannelDataLoadConsumerHandler() : base((int)Protocols.ChannelDataLoad, "consumer", "producer")
         {
             RegisterMessageHandler<OpenChannels>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannels, HandleOpenChannels);
-            RegisterMessageHandler<CloseChannel>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.CloseChannel, HandleCloseChannel);
-            RegisterMessageHandler<RealtimeData>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.RealtimeData, HandleRealtimeData);
+            RegisterMessageHandler<CloseChannels>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.CloseChannels, HandleCloseChannels);
+            RegisterMessageHandler<ChannelData>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ChannelData, HandleChannelData);
             RegisterMessageHandler<ReplaceRange>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ReplaceRange, HandleReplaceRange);
         }
 
@@ -66,14 +66,14 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Handles the CloseChannel event from a store.
+        /// Handles the CloseChannels event from a store.
         /// </summary>
-        public event ProtocolEventHandler<CloseChannel> OnCloseChannel;
+        public event ProtocolEventHandler<CloseChannels> OnCloseChannels;
 
         /// <summary>
-        /// Handles the RealtimeData event from a store.
+        /// Handles the ChannelData event from a store.
         /// </summary>
-        public event ProtocolEventHandler<RealtimeData> OnRealtimeData;
+        public event ProtocolEventHandler<ChannelData> OnChannelData;
 
         /// <summary>
         /// Handles the ReplaceRange event from a store.
@@ -81,15 +81,15 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         public event ProtocolEventHandler<ReplaceRange> OnReplaceRange;
 
         /// <summary>
-        /// Sends a ChannelClosed message to a producer.
+        /// Sends a ChannelsClosed message to a producer.
         /// </summary>
         /// <param name="channelIds">The IDs of the closed channels.</param>
         /// <returns></returns>
-        public virtual long ChannelClosed(IList<long> channelIds)
+        public virtual long ChannelsClosed(IList<long> channelIds)
         {
-            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ChannelClosed);
+            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ChannelsClosed);
 
-            var message = new ChannelClosed
+            var message = new ChannelsClosed
             {
                 Id = channelIds.ToMap(),
             };
@@ -131,19 +131,19 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The CloseChannel message.</param>
-        protected virtual void HandleCloseChannel(IMessageHeader header, CloseChannel message)
+        protected virtual void HandleCloseChannels(IMessageHeader header, CloseChannels message)
         {
-            Notify(OnCloseChannel, header, message);
+            Notify(OnCloseChannels, header, message);
         }
 
         /// <summary>
-        /// Handles the RealtimeData message from a customer.
+        /// Handles the ChannelData message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The RealtimeData message.</param>
-        protected virtual void HandleRealtimeData(IMessageHeader header, RealtimeData message)
+        /// <param name="message">The ChannelData message.</param>
+        protected virtual void HandleChannelData(IMessageHeader header, ChannelData message)
         {
-            Notify(OnRealtimeData, header, message);
+            Notify(OnChannelData, header, message);
         }
 
         /// <summary>

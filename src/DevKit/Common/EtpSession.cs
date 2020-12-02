@@ -273,7 +273,7 @@ namespace Energistics.Etp.Common
         /// Gets or sets the types of objects supported by this instance.
         /// </summary>
         /// <returns>A list of object types supported by this instance.</returns>
-        public IList<IDataObjectType> InstanceSupportedObjects { get; set; } = new List<IDataObjectType>();
+        public IList<IDataObjectType> InstanceSupportedDataObjects { get; set; } = new List<IDataObjectType>();
 
         /// <summary>
         /// Gets the types of compression supported by this instance.
@@ -354,7 +354,7 @@ namespace Energistics.Etp.Common
         /// Gets or sets the negotiated list of supported objects for this session.
         /// </summary>
         /// <value>The negotiated list of supported objects for this session.</value>
-        public IReadOnlyList<IDataObjectType> SessionSupportedObjects { get; private set; }
+        public IReadOnlyList<IDataObjectType> SessionSupportedDataObjects { get; private set; }
 
         /// <summary>
         /// Gets or sets the negotiated list of formats supported for this session.
@@ -533,12 +533,12 @@ namespace Energistics.Etp.Common
         /// <param name="counterpartApplicationVersion">The counterpart's application version.</param>
         /// <param name="counterpartInstanceId">The counterpart's instance ID.</param>
         /// <param name="counterpartSupportedProtocols">The counterpart's supported protocols.</param>
-        /// <param name="counterpartSupportedObjects">The counterpart's supported objects.</param>
+        /// <param name="counterpartSupportedDataObjects">The counterpart's supported data objects.</param>
         /// <param name="counterpartSupportedCompression">The counterpart's supported compression.</param>
         /// <param name="counterpartSupportedFormats">The counterpart's supported formats.</param>
         /// <param name="counterpartEndpointCapabilities">The counterpart's endpoint capabilities.</param>
         /// <returns><c>true</c> if the session was successfully initialized; <c>false</c> otherwise.</returns>
-        public virtual bool InitializeSession(string sessionId, string counterpartApplicationName, string counterpartApplicationVersion, string counterpartInstanceId, IReadOnlyList<ISupportedProtocol> counterpartSupportedProtocols, IReadOnlyList<IDataObjectType> counterpartSupportedObjects, IReadOnlyList<string> counterpartSupportedCompression, IReadOnlyList<string> counterpartSupportedFormats, EtpEndpointCapabilities counterpartEndpointCapabilities)
+        public virtual bool InitializeSession(string sessionId, string counterpartApplicationName, string counterpartApplicationVersion, string counterpartInstanceId, IReadOnlyList<ISupportedProtocol> counterpartSupportedProtocols, IReadOnlyList<IDataObjectType> counterpartSupportedDataObjects, IReadOnlyList<string> counterpartSupportedCompression, IReadOnlyList<string> counterpartSupportedFormats, EtpEndpointCapabilities counterpartEndpointCapabilities)
         {
             var success = true;
 
@@ -559,7 +559,7 @@ namespace Energistics.Etp.Common
             if (!InitializeSessionSupportedProtocols(counterpartSupportedProtocols))
                 success = false;
 
-            if (!InitializeSessionSupportedObjects(counterpartSupportedObjects))
+            if (!InitializeSessionSupportedDataObjects(counterpartSupportedDataObjects))
                 success = false;
 
             if (!InitializeSessionSupportedCompression(counterpartSupportedCompression))
@@ -629,40 +629,40 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Initializes the supported objects for this session.
         /// </summary>
-        /// <param name="counterpartSupportedObjects">The objects supported by the counterpart.</param>
+        /// <param name="counterpartSupportedDataObjects">The data objects supported by the counterpart.</param>
         /// <returns><c>true</c> if initialization was successful; <c>false</c> otherwise.</returns>
-        protected virtual bool InitializeSessionSupportedObjects(IReadOnlyList<IDataObjectType> counterpartSupportedObjects)
+        protected virtual bool InitializeSessionSupportedDataObjects(IReadOnlyList<IDataObjectType> counterpartSupportedDataObjects)
         {
             var success = true;
 
-            var supportedObjects = new List<IDataObjectType>();
-            foreach (var supportedObject in InstanceSupportedObjects)
+            var supportedDataObjects = new List<IDataObjectType>();
+            foreach (var supportedDataObject in InstanceSupportedDataObjects)
             {
-                if (!supportedObject.IsValid || supportedObject.IsBaseType)
+                if (!supportedDataObject.IsValid || supportedDataObject.IsBaseType)
                 {
                     if (SupportedVersion == EtpVersion.v11)
-                        Logger.Warn($"[{SessionKey}] Invalid content type supported by this instance. Content Type: {supportedObject.ContentType}");
+                        Logger.Warn($"[{SessionKey}] Invalid content type supported by this instance. Content Type: {supportedDataObject.ContentType}");
                     else
-                        Logger.Warn($"[{SessionKey}] Invalid data object type supported by this instance. Data Object Type: {supportedObject.DataObjectType}");
+                        Logger.Warn($"[{SessionKey}] Invalid data object type supported by this instance. Data Object Type: {supportedDataObject.DataObjectType}");
 
                     continue;
                 }
 
-                foreach (var counterpartSupportedObject in counterpartSupportedObjects)
+                foreach (var counterpartSupportedDataObject in counterpartSupportedDataObjects)
                 {
-                    if (!counterpartSupportedObject.IsValid || counterpartSupportedObject.IsBaseType)
+                    if (!counterpartSupportedDataObject.IsValid || counterpartSupportedDataObject.IsBaseType)
                         continue;
 
-                    if (supportedObject.IsBaseType ||
-                        !supportedObject.Family.Equals(counterpartSupportedObject.Family, StringComparison.OrdinalIgnoreCase) ||
-                        !supportedObject.Version.Equals(counterpartSupportedObject.Version, StringComparison.OrdinalIgnoreCase))
+                    if (supportedDataObject.IsBaseType ||
+                        !supportedDataObject.Family.Equals(counterpartSupportedDataObject.Family, StringComparison.OrdinalIgnoreCase) ||
+                        !supportedDataObject.Version.Equals(counterpartSupportedDataObject.Version, StringComparison.OrdinalIgnoreCase))
                     {
                         continue;
                     }
 
-                    if (supportedObject.IsWildcard || counterpartSupportedObject.IsWildcard || supportedObject.ObjectType.Equals(counterpartSupportedObject.ObjectType, StringComparison.OrdinalIgnoreCase))
+                    if (supportedDataObject.IsWildcard || counterpartSupportedDataObject.IsWildcard || supportedDataObject.ObjectType.Equals(counterpartSupportedDataObject.ObjectType, StringComparison.OrdinalIgnoreCase))
                     {
-                        supportedObjects.Add(supportedObject);
+                        supportedDataObjects.Add(supportedDataObject);
                     }
                 }
             }

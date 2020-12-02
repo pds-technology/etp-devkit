@@ -38,14 +38,14 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// </summary>
         public GrowingObjectNotificationStoreHandler() : base((int)Protocols.GrowingObjectNotification, "store", "customer")
         {
-            RegisterMessageHandler<SubscribePartNotification>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotification, HandleSubscribePartNotification);
+            RegisterMessageHandler<SubscribePartNotifications>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotifications, HandleSubscribePartNotifications);
             RegisterMessageHandler<UnsubscribePartNotification>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsubscribePartNotification, HandleUnsubscribePartNotification);
         }
 
         /// <summary>
         /// Handles the SubscribePartNotification event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<SubscribePartNotification> OnSubscribePartNotification;
+        public event ProtocolEventHandler<SubscribePartNotifications> OnSubscribePartNotifications;
 
         /// <summary>
         /// Sends a PartsChanged message to a customer.
@@ -91,31 +91,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
             };
 
             return SendMultipartResponse(header, message, uids, (m, i) => m.Uids = i);
-        }
-
-        /// <summary>
-        /// Sends a PartsDeletedByRange message to a customer.
-        /// </summary>
-        /// <param name="requestUuid">The request UUID.</param>
-        /// <param name="uri">The URI.</param>
-        /// <param name="deletedInterval">The index interval for the deleted range.</param>
-        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals were included; otherwise, <c>false</c>.</param>
-        /// <param name="changeTime">The change time.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long PartsDeletedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, long changeTime)
-        {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsDeletedByRange);
-
-            var message = new PartsDeletedByRange
-            {
-                RequestUuid = requestUuid.ToUuid(),
-                Uri = uri,
-                DeletedInterval = deletedInterval,
-                IncludeOverlappingIntervals = includeOverlappingIntervals,
-                ChangeTime = changeTime
-            };
-
-            return Session.SendMessage(header, message);
         }
 
         /// <summary>
@@ -185,13 +160,13 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         }
 
         /// <summary>
-        /// Handles the SubscribePartNotification message from a customer.
+        /// Handles the SubscribePartNotifications message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="request">The SubscribePartNotification message.</param>
-        protected virtual void HandleSubscribePartNotification(IMessageHeader header, SubscribePartNotification request)
+        /// <param name="request">The SubscribePartNotifications message.</param>
+        protected virtual void HandleSubscribePartNotifications(IMessageHeader header, SubscribePartNotifications request)
         {
-            Notify(OnSubscribePartNotification, header, request);
+            Notify(OnSubscribePartNotifications, header, request);
         }
 
         /// <summary>

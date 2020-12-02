@@ -43,15 +43,15 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <summary>
         /// Sends a OpenChannels message to a store.
         /// </summary>
-        /// <param name="channels">The channels.</param>
+        /// <param name="uris">The channel URIs.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long OpenChannels(IList<ChannelMetadataRecord> channels)
+        public virtual long OpenChannels(IList<string> uris)
         {
             var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannels);
 
             var message = new OpenChannels
             {
-                Channels = channels.ToMap(),
+                Uris = uris.ToMap(),
             };
 
             return Session.SendMessage(header, message);
@@ -63,15 +63,15 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         public event ProtocolEventHandler<OpenChannelsResponse> OnOpenChannelsResponse;
 
         /// <summary>
-        /// Sends a CloseChannel message to a consumer.
+        /// Sends a CloseChannels message to a consumer.
         /// </summary>
         /// <param name="channelIds">The channel IDs.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long CloseChannel(IList<long> channelIds)
+        public virtual long CloseChannels(IList<long> channelIds)
         {
-            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.CloseChannel);
+            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.CloseChannels);
 
-            var message = new CloseChannel
+            var message = new CloseChannels
             {
                 Id = channelIds.ToMap(),
             };
@@ -80,15 +80,15 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Sends a RealtimeData message to a store.
+        /// Sends a ChannelData message to a store.
         /// </summary>
         /// <param name="dataItems">The data items.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long RealtimeData(IList<DataItem> dataItems)
+        public virtual long ChannelData(IList<DataItem> dataItems)
         {
-            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.RealtimeData);
+            var header = CreateMessageHeader(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ChannelData);
 
-            var message = new RealtimeData
+            var message = new ChannelData
             {
                 Data = dataItems
             };

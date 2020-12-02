@@ -34,9 +34,9 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <summary>
         /// Sends a OpenChannels message to a consumer.
         /// </summary>
-        /// <param name="channels">The channels.</param>
+        /// <param name="uris">The channel URIs.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long OpenChannels(IList<ChannelMetadataRecord> channels);
+        long OpenChannels(IList<string> uris);
 
         /// <summary>
         /// Handles the OpenChannelsResponse event from a consumer.
@@ -44,18 +44,18 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         event ProtocolEventHandler<OpenChannelsResponse> OnOpenChannelsResponse;
 
         /// <summary>
-        /// Sends a CloseChannel message to a consumer.
+        /// Sends a CloseChannels message to a consumer.
         /// </summary>
         /// <param name="channelIds">The channel IDs.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long CloseChannel(IList<long> channelIds);
+        long CloseChannels(IList<long> channelIds);
 
         /// <summary>
-        /// Sends a RealtimeData message to a consumer.
+        /// Sends a ChannelData message to a consumer.
         /// </summary>
         /// <param name="dataItems">The data items.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long RealtimeData(IList<DataItem> dataItems);
+        long ChannelData(IList<DataItem> dataItems);
 
         /// <summary>
         /// Sends a ReplaceRange message to a consumer.

@@ -62,11 +62,11 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         long PutDataArrays(IList<PutDataArraysType> dataArrays);
 
         /// <summary>
-        /// Sends a PutUninitializedDataArray message to a store.
+        /// Sends a PutUninitializedDataArrays message to a store.
         /// </summary>
         /// <param name="dataArrays">The data arrays.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long PutUninitializedDataArray(IList<PutUninitializedDataArrayType> dataArrays);
+        long PutUninitializedDataArrays(IList<PutUninitializedDataArrayType> dataArrays);
 
         /// <summary>
         /// Sends a PutDataSubarrays message to a store.

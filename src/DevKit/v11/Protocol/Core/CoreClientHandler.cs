@@ -55,7 +55,7 @@ namespace Energistics.Etp.v11.Protocol.Core
                 ApplicationVersion = Session.ClientApplicationVersion,
                 RequestedProtocols = requestedProtocols.Select(rp => rp.AsSupportedProtocol<SupportedProtocol, Version, DataValue>()).ToList(),
                 SupportedObjects = requestedProtocols.Any(p => p.Role.Equals("store", System.StringComparison.OrdinalIgnoreCase))
-                    ? Session.InstanceSupportedObjects.Select(o => (string)o.ContentType).ToList()
+                    ? Session.InstanceSupportedDataObjects.Select(o => (string)o.ContentType).ToList()
                     : new List<string>()
             };
 

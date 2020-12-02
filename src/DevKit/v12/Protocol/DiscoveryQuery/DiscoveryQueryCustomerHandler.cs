@@ -20,6 +20,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
 {
@@ -45,15 +46,17 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <summary>
         /// Sends a FindResources message to a store.
         /// </summary>
-        /// <param name="uri">The URI.</param>
+        /// <param name="context">The context information.</param>
+        /// <param name="scope">The scope.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long FindResources(string uri)
+        public virtual long FindResources(ContextInfo context, ContextScopeKind scope)
         {
             var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResources);
 
             var message = new FindResources()
             {
-                Uri = uri
+                Context = context,
+                Scope = scope,
             };
             
             return Session.SendMessage(header, message,

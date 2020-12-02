@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -46,15 +47,15 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <summary>
         /// Sends a SubscribeNotifications message to a store.
         /// </summary>
-        /// <param name="request">The subscription request.</param>
+        /// <param name="requests">The subscription requests.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public long SubscribeNotifications(SubscriptionInfo request)
+        public long SubscribeNotifications(IList<SubscriptionInfo> requests)
         {
             var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotifications);
 
             var message = new SubscribeNotifications
             {
-                Request = request
+                Request = requests.ToMap()
             };
 
             return Session.SendMessage(header, message);

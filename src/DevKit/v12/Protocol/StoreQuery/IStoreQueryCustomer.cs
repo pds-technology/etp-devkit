@@ -18,6 +18,7 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.StoreQuery
 {
@@ -29,17 +30,18 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
     public interface IStoreQueryCustomer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a FindObjects message to a store.
+        /// Sends a FindDataObjects message to a store.
         /// </summary>
-        /// <param name="uri">The URI.</param>
+        /// <param name="context">The context information.</param>
+        /// <param name="scope">The scope.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long FindObjects(string uri, string format = "xml");
+        long FindDataObjects(ContextInfo context, ContextScopeKind scope, string format = "xml");
 
         /// <summary>
-        /// Handles the FindObjectsResponse event from a store.
+        /// Handles the FindDataObjectsResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<FindObjectsResponse, FindObjects> OnFindObjectsResponse;
+        event ProtocolEventHandler<FindDataObjectsResponse, FindDataObjects> OnFindDataObjectsResponse;
 
         /// <summary>
         /// Handles the Chunk event from a store.

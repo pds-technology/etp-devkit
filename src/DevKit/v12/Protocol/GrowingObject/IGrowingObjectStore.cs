@@ -73,11 +73,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         long GetPartsByRangeResponse(IMessageHeader request, string uri, IList<ObjectPart> parts, string format = "xml");
 
         /// <summary>
-        /// Handles the DeletePartsByRange event from a customer.
-        /// </summary>
-        event ProtocolEventHandler<DeletePartsByRange> OnDeletePartsByRange;
-
-        /// <summary>
         /// Handles the ReplacePartsByRange event from a customer.
         /// </summary>
         event ProtocolEventHandler<ReplacePartsByRange> OnReplacePartsByRange;

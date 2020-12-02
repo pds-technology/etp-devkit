@@ -175,10 +175,10 @@ namespace Energistics.Etp.Common
         IReadOnlyList<EtpSessionProtocol> InstanceSupportedProtocols { get; }
 
         /// <summary>
-        /// Gets or sets the types of objects supported by this instance.
+        /// Gets or sets the types of data objects supported by this instance.
         /// </summary>
-        /// <returns>A list of object types supported by this instance.</returns>
-        IList<IDataObjectType> InstanceSupportedObjects { get; set; }
+        /// <returns>A list of data object types supported by this instance.</returns>
+        IList<IDataObjectType> InstanceSupportedDataObjects { get; set; }
 
         /// <summary>
         /// Gets the types of compression supported by this instance.
@@ -215,10 +215,10 @@ namespace Energistics.Etp.Common
         IReadOnlyList<EtpSessionProtocol> SessionSupportedProtocols { get; }
 
         /// <summary>
-        /// Gets or sets the negotiated list of supported objects for this session.
+        /// Gets or sets the negotiated list of supported data objects for this session.
         /// </summary>
-        /// <value>The negotiated list of supported objects for this session.</value>
-        IReadOnlyList<IDataObjectType> SessionSupportedObjects { get; }
+        /// <value>The negotiated list of supported data objects for this session.</value>
+        IReadOnlyList<IDataObjectType> SessionSupportedDataObjects { get; }
 
         /// <summary>
         /// Gets or sets the negotiated compression type for this session.
@@ -292,12 +292,12 @@ namespace Energistics.Etp.Common
         /// <param name="counterpartApplicationVersion">The counterpart's application version.</param>
         /// <param name="counterpartInstanceId">The counterpart's instance ID.</param>
         /// <param name="counterpartSupportedProtocols">The counterpart's supported protocols.</param>
-        /// <param name="counterpartSupportedObjects">The counterpart's supported objects.</param>
+        /// <param name="counterpartSupportedDataObjects">The counterpart's supported objects.</param>
         /// <param name="counterpartSupportedCompression">The counterpart's supported compression.</param>
         /// <param name="counterpartSupportedFormats">The counterpart's supported formats.</param>
         /// <param name="counterpartEndpointCapabilities">The counterpart's endpoint capabilities.</param>
         /// <returns><c>true</c> if the session was successfully initialized; <c>false</c> otherwise.</returns>
-        bool InitializeSession(string sessionId, string counterpartApplicationName, string counterpartApplicationVersion, string counterpartInstanceId, IReadOnlyList<ISupportedProtocol> counterpartSupportedProtocols, IReadOnlyList<IDataObjectType> counterpartSupportedObjects, IReadOnlyList<string> counterpartSupportedCompression, IReadOnlyList<string> counterpartSupportedFormats, EtpEndpointCapabilities counterpartEndpointCapabilities);
+        bool InitializeSession(string sessionId, string counterpartApplicationName, string counterpartApplicationVersion, string counterpartInstanceId, IReadOnlyList<ISupportedProtocol> counterpartSupportedProtocols, IReadOnlyList<IDataObjectType> counterpartSupportedDataObjects, IReadOnlyList<string> counterpartSupportedCompression, IReadOnlyList<string> counterpartSupportedFormats, EtpEndpointCapabilities counterpartEndpointCapabilities);
 
         /// <summary>
         /// Called when the ETP session is opened.

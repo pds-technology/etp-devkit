@@ -51,8 +51,8 @@ namespace Energistics.Etp.v12.Protocol.Dataspace
         /// <summary>
         /// Sends a DeleteDataspaces message to a store.
         /// </summary>
-        /// <param name="uids">The UIDs.</param>
+        /// <param name="uris">The URIs.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long DeleteDataspaces(IList<string> uids);
+        long DeleteDataspaces(IList<string> uris);
     }
 }

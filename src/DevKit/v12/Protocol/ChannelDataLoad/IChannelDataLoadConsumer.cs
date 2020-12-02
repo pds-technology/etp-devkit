@@ -46,14 +46,14 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         long OpenChannelsResponse(IMessageHeader request, IDictionary<string, OpenChannelInfo> channels, IDictionary<string, ErrorInfo> errors);
 
         /// <summary>
-        /// Handles the CloseChannel event from a producer.
+        /// Handles the CloseChannels event from a producer.
         /// </summary>
-        event ProtocolEventHandler<CloseChannel> OnCloseChannel;
+        event ProtocolEventHandler<CloseChannels> OnCloseChannels;
 
         /// <summary>
-        /// Handles the RealtimeData event from a producer.
+        /// Handles the ChannelData event from a producer.
         /// </summary>
-        event ProtocolEventHandler<RealtimeData> OnRealtimeData;
+        event ProtocolEventHandler<ChannelData> OnChannelData;
 
         /// <summary>
         /// Handles the ReplaceRange event from a producer.
@@ -61,10 +61,10 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         event ProtocolEventHandler<ReplaceRange> OnReplaceRange;
 
         /// <summary>
-        /// Sends a ChannelClosed message to a producer.
+        /// Sends a ChannelsClosed message to a producer.
         /// </summary>
         /// <param name="channelIds">The IDs of the closed channels.</param>
         /// <returns></returns>
-        long ChannelClosed(IList<long> channelIds);
+        long ChannelsClosed(IList<long> channelIds);
     }
 }

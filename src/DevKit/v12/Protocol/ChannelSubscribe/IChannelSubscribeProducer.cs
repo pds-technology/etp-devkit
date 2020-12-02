@@ -67,20 +67,20 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         event ProtocolEventWithErrorsHandler<SubscribeChannels, ErrorInfo> OnSubscribeChannels;
 
         /// <summary>
-        /// Sends a RealtimeData message to a consumer.
+        /// Sends a ChannelData message to a consumer.
         /// </summary>
         /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long RealtimeData(IList<DataItem> dataItems);
+        long ChannelData(IList<DataItem> dataItems);
 
         /// <summary>
-        /// Sends a ReplaceRange message to a consumer.
+        /// Sends a RangeReplaced message to a consumer.
         /// </summary>
         /// <param name="channelIds">The IDs of the channels that are changing.</param>
         /// <param name="changedInterval">The indexes that define the interval that is changing.</param>
         /// <param name="dataItems">The channel data of the changed interval.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long ReplaceRange(IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> dataItems);
+        long RangeReplaced(IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> dataItems);
 
         /// <summary>
         /// Handles the UnsubscribeChannels event from a consumer.

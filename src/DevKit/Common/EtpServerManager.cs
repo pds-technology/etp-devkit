@@ -48,7 +48,7 @@ namespace Energistics.Etp.Common
             SupportedAvroEncodings = new List<string> { "binary", "JSON" };
             SupportedFormats = new List<string> { "xml" };
             SupportedCompression = new List<string> { "gzip" };
-            SupportedObjects = new List<IDataObjectType>();
+            SupportedDataObjects = new List<IDataObjectType>();
 
             DummyHandlers = new Dictionary<Type, IProtocolHandler>();
 
@@ -99,10 +99,10 @@ namespace Energistics.Etp.Common
         public IList<string> SupportedCompression { get; set; }
 
         /// <summary>
-        /// Gets or sets the list of objects supported by this server manager.
+        /// Gets or sets the list of data objects supported by this server manager.
         /// </summary>
-        /// <value>The objects supported by this server manager.</value>
-        public IList<IDataObjectType> SupportedObjects { get; set; }
+        /// <value>The data objects supported by this server manager.</value>
+        public IList<IDataObjectType> SupportedDataObjects { get; set; }
 
         /// <summary>
         /// Gets or sets the list of supported formats.
@@ -127,7 +127,7 @@ namespace Energistics.Etp.Common
         {
             Logger.Debug(Log("[{0}] Socket session connected.", server.SessionKey));
 
-            server.InstanceSupportedObjects = SupportedObjects;
+            server.InstanceSupportedDataObjects = SupportedDataObjects;
             server.InstanceSupportedFormats = SupportedFormats;
             server.InstanceSupportedCompression = SupportedCompression;
             server.InitializeInstanceCapabilities(EndpointCapabilities);

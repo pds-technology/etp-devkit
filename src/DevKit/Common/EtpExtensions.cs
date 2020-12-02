@@ -282,7 +282,7 @@ namespace Energistics.Etp.Common
         {
             return new v12.Datatypes.Uuid
             {
-                Value = guid.ToByteArray()
+                Value = GuidUtility.SwapByteOrder(guid.ToByteArray()),
             };
         }
 
@@ -293,7 +293,7 @@ namespace Energistics.Etp.Common
         /// <returns>A new <see cref="Guid"/> instance.</returns>
         public static Guid ToGuid(this v12.Datatypes.Uuid uuid)
         {
-            return new Guid(uuid.Value);
+            return new Guid(GuidUtility.SwapByteOrder(uuid.Value));
         }
 
         /// <summary>

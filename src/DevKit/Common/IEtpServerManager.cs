@@ -78,7 +78,7 @@ namespace Energistics.Etp.Common
         /// Gets or sets the list of objects supported by this server manager.
         /// </summary>
         /// <value>The objects supported by this server manager.</value>
-        IList<IDataObjectType> SupportedObjects { get; set; }
+        IList<IDataObjectType> SupportedDataObjects { get; set; }
 
         /// <summary>
         /// Gets or sets the list of formats supported by this server manager.

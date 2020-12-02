@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.ChannelData;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.ChannelStreaming
 {
@@ -57,9 +58,9 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
                         },
                     },
                     ChannelName = "test",
-                    DataType = "double",
+                    DataType = DataValueType.typeDouble,
                     Uom = "m",
-                    Status = ChannelStatusKind.Active,
+                    Status = ActiveStatusKind.Active,
                     AxisVectorLengths = new int[0],
                     Source = "ETP DevKit",
                     MeasureClass = "TestClass",

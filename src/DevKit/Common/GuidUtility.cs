@@ -143,12 +143,14 @@ namespace Energistics.Etp.Common
 		public static readonly Guid IsoOidNamespace = new Guid("6ba7b812-9dad-11d1-80b4-00c04fd430c8");
 
 		// Converts a GUID (expressed as a byte array) to/from network order (MSB-first).
-		internal static void SwapByteOrder(byte[] guid)
+		internal static byte[] SwapByteOrder(byte[] guid)
 		{
 			SwapBytes(guid, 0, 3);
 			SwapBytes(guid, 1, 2);
 			SwapBytes(guid, 4, 5);
 			SwapBytes(guid, 6, 7);
+
+			return guid;
 		}
 
 		private static void SwapBytes(byte[] guid, int left, int right)

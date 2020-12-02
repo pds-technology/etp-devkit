@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -37,24 +38,23 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         {
             RegisterMessageHandler<PartsChanged>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsChanged, HandlePartsChanged);
             RegisterMessageHandler<PartsDeleted>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsDeleted, HandlePartsDeleted);
-            RegisterMessageHandler<PartsDeletedByRange>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsDeletedByRange, HandlePartsDeletedByRange);
             RegisterMessageHandler<PartsReplacedByRange>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsReplacedByRange, HandlePartsReplacedByRange);
             RegisterMessageHandler<PartSubscriptionEnded>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartSubscriptionEnded, HandlePartSubscriptionEnded);
             RegisterMessageHandler<UnsolicitedPartNotifications>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsolicitedPartNotifications, HandleUnsolicitedPartNotifications);
         }
 
         /// <summary>
-        /// Sends a SubscribePartNotification message to a store.
+        /// Sends a SubscribePartNotifications message to a store.
         /// </summary>
         /// <param name="request">The subscription request.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long SubscribePartNotification(SubscriptionInfo request)
+        public virtual long SubscribePartNotifications(IList<SubscriptionInfo> request)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotification);
+            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotifications);
 
-            var notificationRequest = new SubscribePartNotification
+            var notificationRequest = new SubscribePartNotifications
             {
-                Request = request,
+                Request = request.ToMap(),
             };
 
             return Session.SendMessage(header, notificationRequest);
@@ -69,11 +69,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// Handles the PartsDeleted event from a store.
         /// </summary>
         public event ProtocolEventHandler<PartsDeleted> OnPartsDeleted;
-
-        /// <summary>
-        /// Handles the PartsDeletedByRange event from a store.
-        /// </summary>
-        public event ProtocolEventHandler<PartsDeletedByRange> OnPartsDeletedByRange;
 
         /// <summary>
         /// Handles the PartsReplacedByRange event from a store.
@@ -125,16 +120,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         protected virtual void HandlePartsDeleted(IMessageHeader header, PartsDeleted notification)
         {
             Notify(OnPartsDeleted, header, notification);
-        }
-
-        /// <summary>
-        /// Handles the PartsDeletedByRange message from a store.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="notification">The PartsDeletedByRange message.</param>
-        protected virtual void HandlePartsDeletedByRange(IMessageHeader header, PartsDeletedByRange notification)
-        {
-            Notify(OnPartsDeletedByRange, header, notification);
         }
 
         /// <summary>

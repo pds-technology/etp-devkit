@@ -41,7 +41,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
             RegisterMessageHandler<GetPartsByRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRange, HandleGetPartsByRange);
             RegisterMessageHandler<PutParts>(Protocols.GrowingObject, MessageTypes.GrowingObject.PutParts, HandlePutParts);
             RegisterMessageHandler<DeleteParts>(Protocols.GrowingObject, MessageTypes.GrowingObject.DeleteParts, HandleDeleteParts);
-            RegisterMessageHandler<DeletePartsByRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.DeletePartsByRange, HandleDeletePartsByRange);
             RegisterMessageHandler<ReplacePartsByRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.ReplacePartsByRange, HandleReplacePartsByRange);
             RegisterMessageHandler<GetPartsMetadata>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadata, HandleGetPartsMetadata);
         }
@@ -106,11 +105,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
 
             return SendMultipartResponse(header, message, parts, (m, i) => m.Parts = i);
         }
-
-        /// <summary>
-        /// Handles the DeletePartsByRange event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<DeletePartsByRange> OnDeletePartsByRange;
 
         /// <summary>
         /// Handles the ReplacePartsByRange event from a customer.
@@ -260,16 +254,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         protected virtual bool HandleGetPartsByRange(IMessageHeader header, GetPartsByRange message, IList<ObjectPart> response)
         {
             return true;
-        }
-
-        /// <summary>
-        /// Handles the DeletePartsByRange message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The DeletePartsByRange message.</param>
-        protected virtual void HandleDeletePartsByRange(IMessageHeader header, DeletePartsByRange message)
-        {
-            Notify(OnDeletePartsByRange, header, message);
         }
 
         /// <summary>

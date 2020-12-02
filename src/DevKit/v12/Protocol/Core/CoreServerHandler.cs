@@ -60,7 +60,7 @@ namespace Energistics.Etp.v12.Protocol.Core
                 ApplicationVersion = Session.ServerApplicationVersion,
                 ServerInstanceId = Guid.Parse(Session.ServerInstanceId).ToUuid(),
                 SupportedProtocols = Session.SessionSupportedProtocols.Select(sp => sp.AsSupportedProtocol<SupportedProtocol, Datatypes.Version, DataValue>()).ToList(),
-                SupportedObjects = Session.SessionSupportedObjects.Select(o => (string)o.DataObjectType).ToList(),
+                SupportedDataObjects = Session.SessionSupportedDataObjects.Select(o => new SupportedDataObject { QualifiedType = (string)o.DataObjectType }).ToList(),
                 SupportedCompression = Session.SessionSupportedCompression ?? string.Empty,
                 SupportedFormats = Session.SessionSupportedFormats.ToList(),
                 EndpointCapabilities = capabilities.AsDataValueDictionary<DataValue>(),
@@ -126,8 +126,8 @@ namespace Energistics.Etp.v12.Protocol.Core
                 requestSession.ApplicationVersion,
                 requestSession.ClientInstanceId.ToGuid().ToString(),
                 requestSession.RequestedProtocols.Cast<ISupportedProtocol>().ToList(),
-                requestSession.SupportedObjects.Select(o => (IDataObjectType)new EtpDataObjectType(o)).ToList(),
-                requestSession.SupportedCompression?.Split(';') ?? new string[0],
+                requestSession.SupportedDataObjects.Select(o => (IDataObjectType)new EtpDataObjectType(o.QualifiedType)).ToList(),
+                requestSession.SupportedCompression.ToList() ?? new List<string>(),
                 requestSession.SupportedFormats?.ToList() ?? new List<string> { "xml" },
                 new EtpEndpointCapabilities(requestSession.EndpointCapabilities.ToDictionary(kvp => kvp.Key, kvp => (IDataValue)kvp.Value))
             );

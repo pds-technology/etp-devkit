@@ -77,15 +77,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         event ProtocolEventHandler<GetPartsByRangeResponse> OnGetPartsByRangeResponse;
 
         /// <summary>
-        /// Deletes all parts in a range of index values from a growing object from a store.
-        /// </summary>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="deleteInterval">The index interval to delete.</param>
-        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long DeletePartsByRange(string uri, IndexInterval deleteInterval, bool includeOverlappingIntervals = false);
-
-        /// <summary>
         /// Replaces all parts in a range of index values in a growing object with new parts in a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>

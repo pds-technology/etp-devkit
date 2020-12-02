@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -31,11 +32,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
     public interface IGrowingObjectNotificationCustomer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a SubscribePartNotification message to a store.
+        /// Sends a SubscribePartNotifications message to a store.
         /// </summary>
         /// <param name="request">The subscription request.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long SubscribePartNotification(SubscriptionInfo request);
+        long SubscribePartNotifications(IList<SubscriptionInfo> request);
 
         /// <summary>
         /// Handles the PartsChanged event from a store.
@@ -46,11 +47,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// Handles the PartDeleted event from a store.
         /// </summary>
         event ProtocolEventHandler<PartsDeleted> OnPartsDeleted;
-
-        /// <summary>
-        /// Handles the PartsDeletedByRange event from a store.
-        /// </summary>
-        event ProtocolEventHandler<PartsDeletedByRange> OnPartsDeletedByRange;
 
         /// <summary>
         /// Handles the PartsReplacedByRange event from a store.

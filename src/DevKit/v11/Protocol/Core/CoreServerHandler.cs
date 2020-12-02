@@ -56,7 +56,7 @@ namespace Energistics.Etp.v11.Protocol.Core
                 ApplicationName = Session.ServerApplicationName,
                 ApplicationVersion = Session.ServerApplicationVersion,
                 SupportedProtocols = Session.SessionSupportedProtocols.Select(sp => sp.AsSupportedProtocol<SupportedProtocol, Datatypes.Version, DataValue>()).ToList(),
-                SupportedObjects = Session.SessionSupportedObjects.Select(o => (string)o.ContentType).ToList(),
+                SupportedObjects = Session.SessionSupportedDataObjects.Select(o => (string)o.ContentType).ToList(),
                 SessionId = Session.SessionId
             };
 

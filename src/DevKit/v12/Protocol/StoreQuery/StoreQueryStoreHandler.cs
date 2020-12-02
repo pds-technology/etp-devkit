@@ -40,7 +40,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         {
             MaxResponseCount = EtpSettings.DefaultMaxResponseCount;
 
-            RegisterMessageHandler<FindObjects>(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjects, HandleFindObjects);
+            RegisterMessageHandler<FindDataObjects>(Protocols.StoreQuery, MessageTypes.StoreQuery.FindDataObjects, HandleFindDataObjects);
         }
 
         /// <summary>
@@ -60,21 +60,21 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         }
 
         /// <summary>
-        /// Handles the FindObjects event from a customer.
+        /// Handles the FindDataObjects event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<FindObjects, DataObjectResponse> OnFindObjects;
+        public event ProtocolEventHandler<FindDataObjects, DataObjectResponse> OnFindDataObjects;
 
         /// <summary>
-        /// Sends a FindObjectsResponse message to a customer.
+        /// Sends a FindDataObjectsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="objects">The list of <see cref="DataObject" /> objects.</param>
         /// <param name="sortOrder">The sort order.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long FindObjectsResponse(IMessageHeader request, IList<DataObject> objects, string sortOrder)
+        public virtual long FindDataObjectsResponse(IMessageHeader request, IList<DataObject> objects, string sortOrder)
         {
-            var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindObjectsResponse, request.MessageId);
-            var response = new FindObjectsResponse
+            var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindDataObjectsResponse, request.MessageId);
+            var response = new FindDataObjectsResponse
             {
                 ServerSortOrder = sortOrder ?? string.Empty
             };
@@ -104,29 +104,29 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         }
 
         /// <summary>
-        /// Handles the FindObjects message from a customer.
+        /// Handles the FindDataObjects message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
-        /// <param name="message">The FindObjects message.</param>
-        protected virtual void HandleFindObjects(IMessageHeader header, FindObjects message)
+        /// <param name="message">The FindDataObjects message.</param>
+        protected virtual void HandleFindDataObjects(IMessageHeader header, FindDataObjects message)
         {
-            var args = Notify(OnFindObjects, header, message, new DataObjectResponse());
+            var args = Notify(OnFindDataObjects, header, message, new DataObjectResponse());
             if (args.Cancel)
                 return;
 
-            if (!HandleFindObjects(header, message, args.Context))
+            if (!HandleFindDataObjects(header, message, args.Context))
                 return;
 
-            FindObjectsResponse(header, args.Context.DataObjects, args.Context.ServerSortOrder);
+            FindDataObjectsResponse(header, args.Context.DataObjects, args.Context.ServerSortOrder);
         }
 
         /// <summary>
-        /// Handles the FindObjects message from a customer.
+        /// Handles the FindDataObjects message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The message.</param>
         /// <param name="response">The response.</param>
-        protected virtual bool HandleFindObjects(IMessageHeader header, FindObjects message, DataObjectResponse response)
+        protected virtual bool HandleFindDataObjects(IMessageHeader header, FindDataObjects message, DataObjectResponse response)
         {
             return true;
         }

@@ -65,9 +65,9 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         event ProtocolEventWithErrorsHandler<PutDataArrays, ErrorInfo> OnPutDataArrays;
 
         /// <summary>
-        /// Handles the PutUninitializedDataArray event from a customer.
+        /// Handles the PutUninitializedDataArrays event from a customer.
         /// </summary>
-        event ProtocolEventWithErrorsHandler<PutUninitializedDataArray, ErrorInfo> OnPutUninitializedDataArray;
+        event ProtocolEventWithErrorsHandler<PutUninitializedDataArrays, ErrorInfo> OnPutUninitializedDataArrays;
 
         /// <summary>
         /// Handles the PutDataSubarrays event from a customer.

@@ -32,9 +32,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
     public interface IGrowingObjectNotificationStore : IProtocolHandler
     {
         /// <summary>
-        /// Handles the SubscribePartNotification event from a customer.
+        /// Handles the SubscribePartNotifications event from a customer.
         /// </summary>
-        event ProtocolEventHandler<SubscribePartNotification> OnSubscribePartNotification;
+        event ProtocolEventHandler<SubscribePartNotifications> OnSubscribePartNotifications;
 
         /// <summary>
         /// Sends a PartsChanged message to a customer.
@@ -57,17 +57,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="changeTime">The change time.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long PartsDeleted(Guid requestUuid, string uri, IList<string> uids, long changeTime);
-
-        /// <summary>
-        /// Sends a PartsDeletedByRange message to a customer.
-        /// </summary>
-        /// <param name="requestUuid">The request UUID.</param>
-        /// <param name="uri">The URI.</param>
-        /// <param name="deletedInterval">The index interval for the deleted range.</param>
-        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals were included; otherwise, <c>false</c>.</param>
-        /// <param name="changeTime">The change time.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long PartsDeletedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, long changeTime);
 
         /// <summary>
         /// Sends a PartsReplacedByRange message to a customer.
