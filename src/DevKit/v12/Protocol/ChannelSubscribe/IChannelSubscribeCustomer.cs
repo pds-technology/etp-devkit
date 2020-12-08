@@ -25,14 +25,14 @@ using Energistics.Etp.v12.Datatypes.ChannelData;
 namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
 {
     /// <summary>
-    /// Defines the interface that must be implemented by the consumer role of the ChannelSubscribe protocol.
+    /// Defines the interface that must be implemented by the customer role of the ChannelSubscribe protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.ChannelSubscribe, "consumer", "producer")]
-    public interface IChannelSubscribeConsumer : IProtocolHandler
+    [ProtocolRole((int)Protocols.ChannelSubscribe, "customer", "store")]
+    public interface IChannelSubscribeCustomer : IProtocolHandler
     {
         /// <summary>
-        /// Sets limits on maximum indexCount (number of indexes "back" from the current index that a producer will provide) for StreamingStartIndex.
+        /// Sets limits on maximum indexCount (number of indexes "back" from the current index that a store will provide) for StreamingStartIndex.
         /// </summary>
         long StoreMaxIndexCount { get; }
 
@@ -47,48 +47,48 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         long MaxDataItemCount { get; set; }
 
         /// <summary>
-        /// Sends a GetChannelMetadata message to a producer with the specified URIs.
+        /// Sends a GetChannelMetadata message to a store with the specified URIs.
         /// </summary>
         /// <param name="uris">The list of URIs.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long GetChannelMetadata(IList<string> uris);
 
         /// <summary>
-        /// Handles the GetChannelMetadataResponse event from a producer.
+        /// Handles the GetChannelMetadataResponse event from a store.
         /// </summary>
         event ProtocolEventHandler<GetChannelMetadataResponse> OnGetChannelMetadataResponse;
 
         /// <summary>
-        /// Sends a SubscribeChannels message to a producer.
+        /// Sends a SubscribeChannels message to a store.
         /// </summary>
         /// <param name="channels">The list of channels.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long SubscribeChannels(IList<ChannelSubscribeInfo> channels);
 
         /// <summary>
-        /// Handles the ChannelData event from a producer.
+        /// Handles the ChannelData event from a store.
         /// </summary>
         event ProtocolEventHandler<ChannelData> OnChannelData;
 
         /// <summary>
-        /// Handles the RangeReplaced event from a producer.
+        /// Handles the RangeReplaced event from a store.
         /// </summary>
         event ProtocolEventHandler<RangeReplaced> OnRangeReplaced;
 
         /// <summary>
-        /// Sends a UnsubscribeChannels message to a producer.
+        /// Sends a UnsubscribeChannels message to a store.
         /// </summary>
         /// <param name="channelIds">The list of channel identifiers.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long UnsubscribeChannels(IList<long> channelIds);
 
         /// <summary>
-        /// Handles the SubscriptionsStopped event from a producer.
+        /// Handles the SubscriptionsStopped event from a store.
         /// </summary>
         event ProtocolEventHandler<SubscriptionsStopped> OnSubscriptionsStopped;
 
         /// <summary>
-        /// Sends a GetRanges message to a producer.
+        /// Sends a GetRanges message to a store.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
         /// <param name="channelRanges">The list of channelRanges.</param>
@@ -96,12 +96,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         long GetRanges(Guid requestUuid, IList<ChannelRangeInfo> channelRanges);
 
         /// <summary>
-        /// Handles the GetRangesResponse event from a producer.
+        /// Handles the GetRangesResponse event from a store.
         /// </summary>
         event ProtocolEventHandler<GetRangesResponse> OnGetRangesResponse;
 
         /// <summary>
-        /// Sends a CancelGetRanges message to a producer.
+        /// Sends a CancelGetRanges message to a store.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>

@@ -25,46 +25,45 @@ using Energistics.Etp.v12.Datatypes.Object;
 namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
 {
     /// <summary>
-    /// Describes the interface that must be implemented by the producer role of the ChannelDataLoad protocol.
+    /// Describes the interface that must be implemented by the customer role of the ChannelDataLoad protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.ChannelDataLoad, "producer", "consumer")]
-    public interface IChannelDataLoadProducer : IProtocolHandler
+    [ProtocolRole((int)Protocols.ChannelDataLoad, "customer", "store")]
+    public interface IChannelDataLoadCustomer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a OpenChannels message to a consumer.
+        /// Sends a OpenChannels message to a store.
         /// </summary>
         /// <param name="uris">The channel URIs.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long OpenChannels(IList<string> uris);
 
         /// <summary>
-        /// Handles the OpenChannelsResponse event from a consumer.
+        /// Handles the OpenChannelsResponse event from a store.
         /// </summary>
         event ProtocolEventHandler<OpenChannelsResponse> OnOpenChannelsResponse;
 
         /// <summary>
-        /// Sends a CloseChannels message to a consumer.
+        /// Sends a CloseChannels message to a store.
         /// </summary>
         /// <param name="channelIds">The channel IDs.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long CloseChannels(IList<long> channelIds);
 
         /// <summary>
-        /// Sends a ChannelData message to a consumer.
+        /// Sends a ChannelData message to a store.
         /// </summary>
         /// <param name="dataItems">The data items.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ChannelData(IList<DataItem> dataItems);
 
         /// <summary>
-        /// Sends a ReplaceRange message to a consumer.
+        /// Sends a ReplaceRange message to a store.
         /// </summary>
         /// <param name="channelIds">The IDs of the channels that are changing.</param>
         /// <param name="changedInterval">The indexes that define the interval that is changing.</param>
         /// <param name="dataItems">The channel data of the changed interval.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long ReplaceRange(IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> dataItems);
-
     }
 }

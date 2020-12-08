@@ -26,16 +26,16 @@ using Energistics.Etp.v12.Datatypes.Object;
 namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
 {
     /// <summary>
-    /// Base implementation of the <see cref="IChannelSubscribeProducer"/> interface.
+    /// Base implementation of the <see cref="IChannelSubscribeStore"/> interface.
     /// </summary>
     /// <seealso cref="Energistics.Etp.v12.Protocol.Etp12ProtocolHandler" />
-    /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelSubscribe.IChannelSubscribeProducer" />
-    public class ChannelSubscribeProducerHandler : Etp12ProtocolHandler, IChannelSubscribeProducer
+    /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelSubscribe.IChannelSubscribeStore" />
+    public class ChannelSubscribeStoreHandler : Etp12ProtocolHandler, IChannelSubscribeStore
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ChannelSubscribeProducerHandler"/> class.
+        /// Initializes a new instance of the <see cref="ChannelSubscribeStoreHandler"/> class.
         /// </summary>
-        public ChannelSubscribeProducerHandler() : base((int)Protocols.ChannelSubscribe, "producer", "consumer")
+        public ChannelSubscribeStoreHandler() : base((int)Protocols.ChannelSubscribe, "store", "customer")
         {
             RegisterMessageHandler<GetChannelMetadata>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetChannelMetadata, HandleGetChannelMetadata);
             RegisterMessageHandler<SubscribeChannels>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.SubscribeChannels, HandleSubscribeChannels);
@@ -45,7 +45,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Sets limits on maximum indexCount (number of indexes "back" from the current index that a producer will provide) for StreamingStartIndex.
+        /// Sets limits on maximum indexCount (number of indexes "back" from the current index that a store will provide) for StreamingStartIndex.
         /// </summary>
         public long MaxIndexCount { get; set; }
 
@@ -83,12 +83,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the GetChannelMetadata event from a consumer.
+        /// Handles the GetChannelMetadata event from a customer.
         /// </summary>
         public event ProtocolEventWithErrorsHandler<GetChannelMetadata, ChannelMetadataRecord, ErrorInfo> OnGetChannelMetadata;
 
         /// <summary>
-        /// Sends a GetChannelMetadataResponse message to a consumer.
+        /// Sends a GetChannelMetadataResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="metadata">The channel metadata records.</param>
@@ -106,12 +106,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the SubscribeChannels event from a consumer.
+        /// Handles the SubscribeChannels event from a customer.
         /// </summary>
         public event ProtocolEventWithErrorsHandler<SubscribeChannels, ErrorInfo> OnSubscribeChannels;
 
         /// <summary>
-        /// Sends a ChannelData message to a consumer.
+        /// Sends a ChannelData message to a customer.
         /// </summary>
         /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
@@ -128,7 +128,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Sends a RangeReplaced message to a consumer.
+        /// Sends a RangeReplaced message to a customer.
         /// </summary>
         /// <param name="channelIds">The IDs of the channels that are changing.</param>
         /// <param name="changedInterval">The indexes that define the interval that is changing.</param>
@@ -149,12 +149,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the UnsubscribeChannels event from a consumer.
+        /// Handles the UnsubscribeChannels event from a customer.
         /// </summary>
         public event ProtocolEventWithErrorsHandler<UnsubscribeChannels, long, ErrorInfo> OnUnsubscribeChannels;
 
         /// <summary>
-        /// Sends a SubscriptionsStopped message to a consumer.
+        /// Sends a SubscriptionsStopped message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="channelIds">The channel identifiers.</param>
@@ -171,12 +171,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the GetRange event from a consumer.
+        /// Handles the GetRange event from a customer.
         /// </summary>
         public event ProtocolEventHandler<GetRanges> OnGetRanges;
 
         /// <summary>
-        /// Sends a GetRangesResponse message to a consumer.
+        /// Sends a GetRangesResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
@@ -194,12 +194,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the CancelGetRange event from a consumer.
+        /// Handles the CancelGetRange event from a customer.
         /// </summary>
         public event ProtocolEventHandler<CancelGetRanges> OnCancelGetRanges;
 
         /// <summary>
-        /// Handles the GetChannelMetadata message from a consumer.
+        /// Handles the GetChannelMetadata message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The GetChannelMetadata message.</param>
@@ -216,7 +216,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the GetChannelMetadata message from a consumer.
+        /// Handles the GetChannelMetadata message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The message.</param>
@@ -228,7 +228,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the SubscribeChannels message from a consumer.
+        /// Handles the SubscribeChannels message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The SubscribeChannels message.</param>
@@ -245,7 +245,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the SubscribeChannels message from a consumer.
+        /// Handles the SubscribeChannels message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The message.</param>
@@ -256,7 +256,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the UnsubscribeChannels message from a consumer.
+        /// Handles the UnsubscribeChannels message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The UnsubscribeChannels message.</param>
@@ -273,7 +273,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the UnsubscribeChannels message from a consumer.
+        /// Handles the UnsubscribeChannels message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The message.</param>
@@ -286,7 +286,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
 
 
         /// <summary>
-        /// Handles the GetRanges message from a consumer.
+        /// Handles the GetRanges message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The GetRanges message.</param>
@@ -296,7 +296,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the CancelGetRange message from a consumer.
+        /// Handles the CancelGetRange message from a customer.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The CancelGetRange message.</param>

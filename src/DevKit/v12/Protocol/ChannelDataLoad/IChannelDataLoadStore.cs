@@ -25,19 +25,19 @@ using Energistics.Etp.v12.Datatypes.ChannelData;
 namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
 {
     /// <summary>
-    /// Describes the interface that must be implemented by the consumer role of the ChannelDataLoad protocol.
+    /// Describes the interface that must be implemented by the store role of the ChannelDataLoad protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.ChannelDataLoad, "consumer", "producer")]
-    public interface IChannelDataLoadConsumer : IProtocolHandler
+    [ProtocolRole((int)Protocols.ChannelDataLoad, "store", "customer")]
+    public interface IChannelDataLoadStore : IProtocolHandler
     {
         /// <summary>
-        /// Handles the OpenChannels event from a producer.
+        /// Handles the OpenChannels event from a customer.
         /// </summary>
         event ProtocolEventWithErrorsHandler<OpenChannels, OpenChannelInfo, ErrorInfo> OnOpenChannels;
 
         /// <summary>
-        /// Sends a OpenChannelsResponse message to a producer.
+        /// Sends a OpenChannelsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="channels">The channels.</param>
@@ -46,22 +46,22 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         long OpenChannelsResponse(IMessageHeader request, IDictionary<string, OpenChannelInfo> channels, IDictionary<string, ErrorInfo> errors);
 
         /// <summary>
-        /// Handles the CloseChannels event from a producer.
+        /// Handles the CloseChannels event from a customer.
         /// </summary>
         event ProtocolEventHandler<CloseChannels> OnCloseChannels;
 
         /// <summary>
-        /// Handles the ChannelData event from a producer.
+        /// Handles the ChannelData event from a customer.
         /// </summary>
         event ProtocolEventHandler<ChannelData> OnChannelData;
 
         /// <summary>
-        /// Handles the ReplaceRange event from a producer.
+        /// Handles the ReplaceRange event from a customer.
         /// </summary>
         event ProtocolEventHandler<ReplaceRange> OnReplaceRange;
 
         /// <summary>
-        /// Sends a ChannelsClosed message to a producer.
+        /// Sends a ChannelsClosed message to a customer.
         /// </summary>
         /// <param name="channelIds">The IDs of the closed channels.</param>
         /// <returns></returns>

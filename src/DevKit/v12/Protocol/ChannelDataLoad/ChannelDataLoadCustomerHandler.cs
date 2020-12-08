@@ -26,22 +26,22 @@ using Energistics.Etp.v12.Datatypes.Object;
 namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
 {
     /// <summary>
-    /// Base implementation of the <see cref="IChannelDataLoadProducer"/> interface.
+    /// Base implementation of the <see cref="IChannelDataLoadCustomer"/> interface.
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
-    /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelDataLoad.IChannelDataLoadProducer" />
-    public class ChannelDataLoadProducerHandler : Etp12ProtocolHandler, IChannelDataLoadProducer
+    /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelDataLoad.IChannelDataLoadCustomer" />
+    public class ChannelDataLoadCustomerHandler : Etp12ProtocolHandler, IChannelDataLoadCustomer
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ChannelDataLoadProducerHandler"/> class.
+        /// Initializes a new instance of the <see cref="ChannelDataLoadCustomerHandler"/> class.
         /// </summary>
-        public ChannelDataLoadProducerHandler() : base((int)Protocols.ChannelDataLoad, "producer", "consumer")
+        public ChannelDataLoadCustomerHandler() : base((int)Protocols.ChannelDataLoad, "customer", "store")
         {
             RegisterMessageHandler<OpenChannelsResponse>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelsResponse, HandleOpenChannelsResponse);
         }
 
         /// <summary>
-        /// Sends a OpenChannels message to a store.
+        /// Sends a OpenChannels message to a customer.
         /// </summary>
         /// <param name="uris">The channel URIs.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
@@ -58,12 +58,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Handles the OpenChannelsResponse event from a store.
+        /// Handles the OpenChannelsResponse event from a customer.
         /// </summary>
         public event ProtocolEventHandler<OpenChannelsResponse> OnOpenChannelsResponse;
 
         /// <summary>
-        /// Sends a CloseChannels message to a consumer.
+        /// Sends a CloseChannels message to a store.
         /// </summary>
         /// <param name="channelIds">The channel IDs.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
@@ -80,7 +80,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Sends a ChannelData message to a store.
+        /// Sends a ChannelData message to a customer.
         /// </summary>
         /// <param name="dataItems">The data items.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
@@ -97,7 +97,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Sends a ReplaceRange message to a consumer.
+        /// Sends a ReplaceRange message to a store.
         /// </summary>
         /// <param name="channelIds">The IDs of the channels that are changing.</param>
         /// <param name="changedInterval">The indexes that define the interval that is changing.</param>
@@ -118,7 +118,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Handles the OpenChannelsResponse message from a customer.
+        /// Handles the OpenChannelsResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The OpenChannelsResponse message.</param>

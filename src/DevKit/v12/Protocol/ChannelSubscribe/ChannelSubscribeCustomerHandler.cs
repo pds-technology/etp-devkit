@@ -25,16 +25,16 @@ using Energistics.Etp.v12.Datatypes.ChannelData;
 namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
 {
     /// <summary>
-    /// Base implementation of the <see cref="IChannelSubscribeConsumer"/> interface.
+    /// Base implementation of the <see cref="IChannelSubscribeCustomer"/> interface.
     /// </summary>
     /// <seealso cref="Energistics.Etp.v12.Protocol.Etp12ProtocolHandler" />
-    /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelSubscribe.IChannelSubscribeConsumer" />
-    public class ChannelSubscribeConsumerHandler : Etp12ProtocolHandler, IChannelSubscribeConsumer
+    /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelSubscribe.IChannelSubscribeCustomer" />
+    public class ChannelSubscribeCustomerHandler : Etp12ProtocolHandler, IChannelSubscribeCustomer
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ChannelSubscribeConsumerHandler"/> class.
+        /// Initializes a new instance of the <see cref="ChannelSubscribeCustomerHandler"/> class.
         /// </summary>
-        public ChannelSubscribeConsumerHandler() : base((int)Protocols.ChannelSubscribe, "consumer", "producer")
+        public ChannelSubscribeCustomerHandler() : base((int)Protocols.ChannelSubscribe, "customer", "store")
         {
             MaxDataItemCount = EtpSettings.DefaultMaxDataItemCount;
 
@@ -48,7 +48,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Sets limits on maximum indexCount (number of indexes "back" from the current index that a producer will provide) for StreamingStartIndex.
+        /// Sets limits on maximum indexCount (number of indexes "back" from the current index that a store will provide) for StreamingStartIndex.
         /// </summary>
         public long StoreMaxIndexCount { get; private set; }
 
@@ -86,13 +86,13 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Gets the list of <see cref="ChannelMetadataRecords"/> objects returned by the producer.
+        /// Gets the list of <see cref="ChannelMetadataRecords"/> objects returned by the store.
         /// </summary>
         /// <value>The list of <see cref="ChannelMetadataRecords"/> objects.</value>
         protected IList<ChannelMetadataRecord> ChannelMetadataRecords { get; }
 
         /// <summary>
-        /// Sends a GetChannelMetadata message to a producer with the specified URIs.
+        /// Sends a GetChannelMetadata message to a store with the specified URIs.
         /// </summary>
         /// <param name="uris">The list of URIs.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
@@ -109,12 +109,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the GetChannelMetadataResponse event from a producer.
+        /// Handles the GetChannelMetadataResponse event from a store.
         /// </summary>
         public event ProtocolEventHandler<GetChannelMetadataResponse> OnGetChannelMetadataResponse;
 
         /// <summary>
-        /// Sends a SubscribeChannels message to a producer.
+        /// Sends a SubscribeChannels message to a store.
         /// </summary>
         /// <param name="channels">The list of channels.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
@@ -131,17 +131,17 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the ChannelData event from a producer.
+        /// Handles the ChannelData event from a store.
         /// </summary>
         public event ProtocolEventHandler<ChannelData> OnChannelData;
 
         /// <summary>
-        /// Handles the RangeReplaced event from a producer.
+        /// Handles the RangeReplaced event from a store.
         /// </summary>
         public event ProtocolEventHandler<RangeReplaced> OnRangeReplaced;
 
         /// <summary>
-        /// Sends a UnsubscribeChannels message to a producer.
+        /// Sends a UnsubscribeChannels message to a store.
         /// </summary>
         /// <param name="channelIds">The list of channel identifiers.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
@@ -158,12 +158,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the SubscriptionsStopped event from a producer.
+        /// Handles the SubscriptionsStopped event from a store.
         /// </summary>
         public event ProtocolEventHandler<SubscriptionsStopped> OnSubscriptionsStopped;
 
         /// <summary>
-        /// Sends a GetRanges message to a producer.
+        /// Sends a GetRanges message to a store.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
         /// <param name="channelRanges">The list of channelRanges.</param>
@@ -182,12 +182,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the GetRangesResponse event from a producer.
+        /// Handles the GetRangesResponse event from a store.
         /// </summary>
         public event ProtocolEventHandler<GetRangesResponse> OnGetRangesResponse;
 
         /// <summary>
-        /// Sends a CancelGetRanges message to a producer.
+        /// Sends a CancelGetRanges message to a store.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
@@ -204,7 +204,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the GetChannelMetadataResponse message from a producer.
+        /// Handles the GetChannelMetadataResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The GetChannelMetadataResponse message.</param>
@@ -217,7 +217,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the ChannelData message from a producer.
+        /// Handles the ChannelData message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The ChannelData message.</param>
@@ -227,7 +227,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the RangeReplaced message from a producer.
+        /// Handles the RangeReplaced message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The RangeReplaced message.</param>
@@ -237,7 +237,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the SubscriptionsStopped message from a producer.
+        /// Handles the SubscriptionsStopped message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The SubscriptionStopped message.</param>
@@ -247,7 +247,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Handles the GetRangesResponse message from a producer.
+        /// Handles the GetRangesResponse message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The GetRangesResponse message.</param>

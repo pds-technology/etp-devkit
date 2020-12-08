@@ -25,16 +25,16 @@ using Energistics.Etp.v12.Datatypes.ChannelData;
 namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
 {
     /// <summary>
-    /// Base implementation of the <see cref="IChannelDataLoadConsumer"/> interface.
+    /// Base implementation of the <see cref="IChannelDataLoadStore"/> interface.
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
-    /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelDataLoad.IChannelDataLoadConsumer" />
-    public class ChannelDataLoadConsumerHandler : Etp12ProtocolHandler, IChannelDataLoadConsumer
+    /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelDataLoad.IChannelDataLoadStore" />
+    public class ChannelDataLoadStoreHandler : Etp12ProtocolHandler, IChannelDataLoadStore
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ChannelDataLoadConsumerHandler"/> class.
+        /// Initializes a new instance of the <see cref="ChannelDataLoadStoreHandler"/> class.
         /// </summary>
-        public ChannelDataLoadConsumerHandler() : base((int)Protocols.ChannelDataLoad, "consumer", "producer")
+        public ChannelDataLoadStoreHandler() : base((int)Protocols.ChannelDataLoad, "store", "customer")
         {
             RegisterMessageHandler<OpenChannels>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannels, HandleOpenChannels);
             RegisterMessageHandler<CloseChannels>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.CloseChannels, HandleCloseChannels);
@@ -43,12 +43,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Handles the OpenChannels event from a store.
+        /// Handles the OpenChannels event from a customer.
         /// </summary>
         public event ProtocolEventWithErrorsHandler<OpenChannels, OpenChannelInfo, ErrorInfo> OnOpenChannels;
 
         /// <summary>
-        /// Sends a OpenChannelsResponse message to a store.
+        /// Sends a OpenChannelsResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <param name="channels">The channels.</param>
@@ -66,22 +66,22 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Handles the CloseChannels event from a store.
+        /// Handles the CloseChannels event from a customer.
         /// </summary>
         public event ProtocolEventHandler<CloseChannels> OnCloseChannels;
 
         /// <summary>
-        /// Handles the ChannelData event from a store.
+        /// Handles the ChannelData event from a customer.
         /// </summary>
         public event ProtocolEventHandler<ChannelData> OnChannelData;
 
         /// <summary>
-        /// Handles the ReplaceRange event from a store.
+        /// Handles the ReplaceRange event from a customer.
         /// </summary>
         public event ProtocolEventHandler<ReplaceRange> OnReplaceRange;
 
         /// <summary>
-        /// Sends a ChannelsClosed message to a producer.
+        /// Sends a ChannelsClosed message to a customer.
         /// </summary>
         /// <param name="channelIds">The IDs of the closed channels.</param>
         /// <returns></returns>
@@ -98,7 +98,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Handles the OpenChannels message from a customer.
+        /// Handles the OpenChannels message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The OpenChannels message.</param>
@@ -115,7 +115,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Handles the OpenChannel message from a customer.
+        /// Handles the OpenChannel message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The message.</param>
@@ -127,7 +127,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Handles the CloseChannel message from a customer.
+        /// Handles the CloseChannel message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The CloseChannel message.</param>
@@ -137,7 +137,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Handles the ChannelData message from a customer.
+        /// Handles the ChannelData message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The ChannelData message.</param>
@@ -147,7 +147,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         }
 
         /// <summary>
-        /// Handles the ChangedData message from a customer.
+        /// Handles the ChangedData message from a store.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="message">The ChangedData message.</param>
