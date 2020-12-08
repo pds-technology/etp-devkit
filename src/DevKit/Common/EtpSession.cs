@@ -844,7 +844,7 @@ namespace Energistics.Etp.Common
         /// <param name="body">The body.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public long SendMessage<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null)
+        public long SendMessage<T>(IMessageHeader header, T body, Action<IMessageHeader, T> onBeforeSend = null)
             where T : ISpecificRecord
         {
             return AsyncContext.Run(() => SendMessageAsync(header, body, onBeforeSend));
@@ -858,7 +858,7 @@ namespace Energistics.Etp.Common
         /// <param name="body">The body.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public async Task<long> SendMessageAsync<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null) where T : ISpecificRecord
+        public async Task<long> SendMessageAsync<T>(IMessageHeader header, T body, Action<IMessageHeader, T> onBeforeSend = null) where T : ISpecificRecord
         {
             // Lock to ensure only one thread at a time attempts to send data and to ensure that messages are sent with sequential IDs
             try
@@ -878,7 +878,7 @@ namespace Energistics.Etp.Common
 
                     // Call the pre-send action in case any deterministic handling is needed with the actual message ID.
                     // Must be invoked before sending to ensure the response is not asynchronously processed before this method returns.
-                    onBeforeSend?.Invoke(header);
+                    onBeforeSend?.Invoke(header, body);
 
                     // Log message just before it gets sent if needed.
                     Sending(header, body);

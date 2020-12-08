@@ -61,7 +61,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
             };
             
             return Session.SendMessage(header, message,
-                h => _requests[h.MessageId] = message // Cache requested URIs by message ID
+                (h, _) => _requests[h.MessageId] = message // Cache requested URIs by message ID
             );
         }
 

@@ -44,6 +44,19 @@ namespace Energistics.Etp.v12.Protocol.Core
         long CloseSession(string reason = null);
 
         /// <summary>
+        /// Sends a Ping message.
+        /// </summary>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        long Ping();
+
+        /// <summary>
+        /// Sends a Pong response message.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        long Pong(IMessageHeader request);
+
+        /// <summary>
         /// Renews the security token.
         /// </summary>
         /// <param name="token">The token.</param>
@@ -59,5 +72,20 @@ namespace Energistics.Etp.v12.Protocol.Core
         /// Handles the CloseSession event from a server.
         /// </summary>
         event ProtocolEventHandler<CloseSession> OnCloseSession;
+
+        /// <summary>
+        /// Handles the Ping event from a server.
+        /// </summary>
+        event ProtocolEventHandler<Ping> OnPing;
+
+        /// <summary>
+        /// Handles the Pong event from a server.
+        /// </summary>
+        event ProtocolEventHandler<Pong> OnPong;
+
+        /// <summary>
+        /// Handles the RenewSecurityTokenResponse event from a server.
+        /// </summary>
+        event ProtocolEventHandler<RenewSecurityTokenResponse> OnRenewSecurityTokenResponse;
     }
 }

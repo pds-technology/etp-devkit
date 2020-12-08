@@ -341,7 +341,7 @@ namespace Energistics.Etp.Common
         /// <param name="body">The body.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long SendMessage<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null) where T : ISpecificRecord;
+        long SendMessage<T>(IMessageHeader header, T body, Action<IMessageHeader, T> onBeforeSend = null) where T : ISpecificRecord;
 
         /// <summary>
         /// Asynchronously sends the message.
@@ -351,7 +351,7 @@ namespace Energistics.Etp.Common
         /// <param name="body">The body.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        Task<long> SendMessageAsync<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null) where T : ISpecificRecord;
+        Task<long> SendMessageAsync<T>(IMessageHeader header, T body, Action<IMessageHeader, T> onBeforeSend = null) where T : ISpecificRecord;
 
         /// <summary>
         /// Gets the registered handler for the specified protocol.

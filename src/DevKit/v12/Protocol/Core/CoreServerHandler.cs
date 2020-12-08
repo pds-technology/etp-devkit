@@ -39,6 +39,8 @@ namespace Energistics.Etp.v12.Protocol.Core
         {
             RegisterMessageHandler<RequestSession>(Protocols.Core, MessageTypes.Core.RequestSession, HandleRequestSession);
             RegisterMessageHandler<CloseSession>(Protocols.Core, MessageTypes.Core.CloseSession, HandleCloseSession);
+            RegisterMessageHandler<Ping>(Protocols.Core, MessageTypes.Core.Ping, HandlePing);
+            RegisterMessageHandler<Pong>(Protocols.Core, MessageTypes.Core.Pong, HandlePong);
             RegisterMessageHandler<RenewSecurityToken>(Protocols.Core, MessageTypes.Core.RenewSecurityToken, HandleRenewSecurityToken);
         }
 
@@ -99,6 +101,53 @@ namespace Energistics.Etp.v12.Protocol.Core
         }
 
         /// <summary>
+        /// Sends a Ping message.
+        /// </summary>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        public virtual long Ping()
+        {
+            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.Ping);
+
+            var message = new Ping
+            {
+            };
+
+            return Session.SendMessage(header, message, (_, m) => m.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
+        }
+
+        /// <summary>
+        /// Sends a Pong response message.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        public virtual long Pong(IMessageHeader request)
+        {
+            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.Pong, request.MessageId);
+
+            var message = new Pong
+            {
+            };
+
+            return Session.SendMessage(header, message, (_, m) => m.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
+        }
+
+        /// <summary>
+        /// Sends a RenewSecurityTokenResponse response message to a client.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        public virtual long RenewSecurityTokenResponse(IMessageHeader request)
+        {
+            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.RenewSecurityTokenResponse, request.MessageId);
+
+            var message = new RenewSecurityTokenResponse
+            {
+            };
+
+            return Session.SendMessage(header, message);
+        }
+
+        /// <summary>
         /// Handles the RequestSession event from a client.
         /// </summary>
         public event ProtocolEventHandler<RequestSession> OnRequestSession;
@@ -107,6 +156,16 @@ namespace Energistics.Etp.v12.Protocol.Core
         /// Handles the CloseSession event from a client.
         /// </summary>
         public event ProtocolEventHandler<CloseSession> OnCloseSession;
+
+        /// <summary>
+        /// Handles the Ping event from a client.
+        /// </summary>
+        public event ProtocolEventHandler<Ping> OnPing;
+
+        /// <summary>
+        /// Handles the Pong event from a client.
+        /// </summary>
+        public event ProtocolEventHandler<Pong> OnPong;
 
         /// <summary>
         /// Handles the RenewSecurityToken event from a client.
@@ -173,13 +232,41 @@ namespace Energistics.Etp.v12.Protocol.Core
         }
 
         /// <summary>
+        /// Handles the Ping message from the client.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The Ping message.</param>
+        protected virtual void HandlePing(IMessageHeader header, Ping message)
+        {
+            var args = Notify(OnPing, header, message);
+            if (args.Cancel)
+                return;
+
+            Pong(header);
+        }
+
+        /// <summary>
+        /// Handles the Pong message from the client.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The Pong message.</param>
+        protected virtual void HandlePong(IMessageHeader header, Pong message)
+        {
+            Notify(OnPong, header, message);
+        }
+
+        /// <summary>
         /// Handles the RenewSecurityToken message from a client.
         /// </summary>
         /// <param name="header">The message header.</param>
         /// <param name="renewSecurityToken">The RenewSecurityToken message.</param>
         protected virtual void HandleRenewSecurityToken(IMessageHeader header, RenewSecurityToken renewSecurityToken)
         {
-            Notify(OnRenewSecurityToken, header, renewSecurityToken);
+            var args = Notify(OnRenewSecurityToken, header, renewSecurityToken);
+            if (args.Cancel)
+                return;
+
+            RenewSecurityTokenResponse(header);
         }
     }
 }

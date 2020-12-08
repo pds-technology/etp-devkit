@@ -57,7 +57,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
             };
             
             return Session.SendMessage(header, getResources,
-                h => _requests[h.MessageId] = uri // Cache requested URIs by message ID
+                (h, _) => _requests[h.MessageId] = uri // Cache requested URIs by message ID
             );
         }
 

@@ -40,6 +40,8 @@ namespace Energistics.Etp.Common
     {
         private static readonly char[] WhiteSpace = Enumerable.Range(0, 20).Select(Convert.ToChar).ToArray();
         public const string GzipEncoding = "gzip";
+        private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000L;
+        private const long UnixEpochTicks = 621355968000000000L; // new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).Ticks
 
         /// <summary>
         /// Converts a protocol and message type to a unique message key combination
@@ -294,6 +296,50 @@ namespace Energistics.Etp.Common
         public static Guid ToGuid(this v12.Datatypes.Uuid uuid)
         {
             return new Guid(GuidUtility.SwapByteOrder(uuid.Value));
+        }
+
+        /// <summary>
+        /// Converts an ETP timestamp to a UTC <see cref="DateTime"/>.
+        /// </summary>
+        /// <param name="timestamp">The ETP timestamp</param>
+        /// <returns>The <see cref="DateTime"/>.</returns>
+        public static DateTime ToUtcDateTime(this long timestamp)
+        {
+            var ticks = timestamp * TicksPerMicrosecond;
+            return new DateTime(ticks + UnixEpochTicks, DateTimeKind.Utc);
+        }
+
+        /// <summary>
+        /// Converts a <see cref="DateTime"/> to a UTC ETP timestamp.
+        /// </summary>
+        /// <param name="timestamp">The <see cref="DateTime"/> timestamp</param>
+        /// <returns>The UTC ETP timestamp.</returns>
+        public static long ToEtpTimestamp(this DateTime timestamp)
+        {
+            var ticks = timestamp.ToUniversalTime().Ticks - UnixEpochTicks;
+            return ticks / TicksPerMicrosecond;
+        }
+
+        /// <summary>
+        /// Converts an ETP timestamp to a UTC <see cref="DateTimeOffset"/>.
+        /// </summary>
+        /// <param name="timestamp">The ETP timestamp</param>
+        /// <returns>The <see cref="DateTimeOffset"/>.</returns>
+        public static DateTimeOffset ToUtcDateTimeOffset(this long timestamp)
+        {
+            var ticks = timestamp * TicksPerMicrosecond;
+            return new DateTimeOffset(ticks + UnixEpochTicks, TimeSpan.Zero);
+        }
+
+        /// <summary>
+        /// Converts a <see cref="DateTimeOffset"/> to a UTC ETP timestamp.
+        /// </summary>
+        /// <param name="timestamp">The <see cref="DateTimeOffset"/> timestamp</param>
+        /// <returns>The UTC ETP timestamp.</returns>
+        public static long ToEtpTimestamp(this DateTimeOffset timestamp)
+        {
+            var ticks = timestamp.ToUniversalTime().Ticks - UnixEpochTicks;
+            return ticks / TicksPerMicrosecond;
         }
 
         /// <summary>
