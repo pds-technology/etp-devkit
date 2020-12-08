@@ -30,18 +30,16 @@ namespace Energistics.Etp.v12.Protocol.Core
     public interface ICoreServer : IProtocolHandler
     {
         /// <summary>
+        /// Handles the RequestSession event from a client.
+        /// </summary>
+        event ProtocolEventHandler<RequestSession> OnRequestSession;
+
+        /// <summary>
         /// Sends an OpenSession message to a client.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long OpenSession(IMessageHeader request);
-
-        /// <summary>
-        /// Sends a CloseSession message to a client.
-        /// </summary>
-        /// <param name="reason">The reason.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long CloseSession(string reason = null);
 
         /// <summary>
         /// Sends a Ping message.
@@ -50,33 +48,16 @@ namespace Energistics.Etp.v12.Protocol.Core
         long Ping();
 
         /// <summary>
+        /// Handles the Ping event from a client.
+        /// </summary>
+        event ProtocolEventHandler<Ping> OnPing;
+
+        /// <summary>
         /// Sends a Pong response message.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long Pong(IMessageHeader request);
-
-        /// <summary>
-        /// Sends a RenewSecurityTokenResponse response message to a client.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long RenewSecurityTokenResponse(IMessageHeader request);
-
-        /// <summary>
-        /// Handles the RequestSession event from a client.
-        /// </summary>
-        event ProtocolEventHandler<RequestSession> OnRequestSession;
-
-        /// <summary>
-        /// Handles the CloseSession event from a client.
-        /// </summary>
-        event ProtocolEventHandler<CloseSession> OnCloseSession;
-
-        /// <summary>
-        /// Handles the Ping event from a client.
-        /// </summary>
-        event ProtocolEventHandler<Ping> OnPing;
 
         /// <summary>
         /// Handles the Pong event from a client.
@@ -87,5 +68,24 @@ namespace Energistics.Etp.v12.Protocol.Core
         /// Handles the RenewSecurityToken event from a client.
         /// </summary>
         event ProtocolEventHandler<RenewSecurityToken> OnRenewSecurityToken;
+
+        /// <summary>
+        /// Sends a RenewSecurityTokenResponse response message to a client.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        long RenewSecurityTokenResponse(IMessageHeader request);
+
+        /// <summary>
+        /// Sends a CloseSession message to a client.
+        /// </summary>
+        /// <param name="reason">The reason.</param>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        long CloseSession(string reason = null);
+
+        /// <summary>
+        /// Handles the CloseSession event from a client.
+        /// </summary>
+        event ProtocolEventHandler<CloseSession> OnCloseSession;
     }
 }

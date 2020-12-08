@@ -72,6 +72,74 @@ namespace Energistics.Etp.v12.Protocol.Core
         }
 
         /// <summary>
+        /// Handles the OpenSession event from a server.
+        /// </summary>
+        public event ProtocolEventHandler<OpenSession> OnOpenSession;
+
+        /// <summary>
+        /// Sends a Ping message.
+        /// </summary>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        public virtual long Ping()
+        {
+            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.Ping);
+
+            var message = new Ping
+            {
+            };
+
+            return Session.SendMessage(header, message, (_, m) => m.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
+        }
+
+        /// <summary>
+        /// Handles the Ping event from a server.
+        /// </summary>
+        public event ProtocolEventHandler<Ping> OnPing;
+
+        /// <summary>
+        /// Sends a Pong response message.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        public virtual long Pong(IMessageHeader request)
+        {
+            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.Pong, request.MessageId);
+
+            var message = new Pong
+            {
+            };
+
+            return Session.SendMessage(header, message, (_, m) => m.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
+        }
+
+        /// <summary>
+        /// Handles the Pong event from a server.
+        /// </summary>
+        public event ProtocolEventHandler<Pong> OnPong;
+
+        /// <summary>
+        /// Renews the security token.
+        /// </summary>
+        /// <param name="token">The token.</param>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        public virtual long RenewSecurityToken(string token)
+        {
+            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.RenewSecurityToken);
+
+            var renewSecurityToken = new RenewSecurityToken
+            {
+                Token = token
+            };
+
+            return Session.SendMessage(header, renewSecurityToken);
+        }
+
+        /// <summary>
+        /// Handles the RenewSecurityTokenResponse event from a server.
+        /// </summary>
+        public event ProtocolEventHandler<RenewSecurityTokenResponse> OnRenewSecurityTokenResponse;
+
+        /// <summary>
         /// Sends a CloseSession message to a server.
         /// </summary>
         /// <param name="reason">The reason.</param>
@@ -93,77 +161,9 @@ namespace Energistics.Etp.v12.Protocol.Core
         }
 
         /// <summary>
-        /// Sends a Ping message.
-        /// </summary>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long Ping()
-        {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.Ping);
-
-            var message = new Ping
-            {
-            };
-
-            return Session.SendMessage(header, message, (_, m) => m.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
-        }
-
-        /// <summary>
-        /// Sends a Pong response message.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long Pong(IMessageHeader request)
-        {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.Pong, request.MessageId);
-
-            var message = new Pong
-            {
-            };
-
-            return Session.SendMessage(header, message, (_, m) => m.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
-        }
-
-        /// <summary>
-        /// Renews the security token.
-        /// </summary>
-        /// <param name="token">The token.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long RenewSecurityToken(string token)
-        {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.RenewSecurityToken);
-
-            var renewSecurityToken = new RenewSecurityToken
-            {
-                Token = token
-            };
-
-            return Session.SendMessage(header, renewSecurityToken);
-        }
-
-        /// <summary>
-        /// Handles the OpenSession event from a server.
-        /// </summary>
-        public event ProtocolEventHandler<OpenSession> OnOpenSession;
-
-        /// <summary>
         /// Handles the CloseSession event from a server.
         /// </summary>
         public event ProtocolEventHandler<CloseSession> OnCloseSession;
-
-        /// <summary>
-        /// Handles the Ping event from a server.
-        /// </summary>
-        public event ProtocolEventHandler<Ping> OnPing;
-
-        /// <summary>
-        /// Handles the Pong event from a server.
-        /// </summary>
-        public event ProtocolEventHandler<Pong> OnPong;
-
-        /// <summary>
-        /// Handles the RenewSecurityTokenResponse event from a server.
-        /// </summary>
-        public event ProtocolEventHandler<RenewSecurityTokenResponse> OnRenewSecurityTokenResponse;
 
         /// <summary>
         /// Handles the OpenSession message from the server.
@@ -186,18 +186,6 @@ namespace Energistics.Etp.v12.Protocol.Core
 
             Notify(OnOpenSession, header, message);
             Session.OnSessionOpened(success);
-        }
-
-        /// <summary>
-        /// Handles the CloseSession message from the server.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The CloseSession message.</param>
-        protected virtual void HandleCloseSession(IMessageHeader header, CloseSession message)
-        {
-            Notify(OnCloseSession, header, message);
-            Session.OnSessionClosed(true);
-            Session.CloseWebSocket(message.Reason);
         }
 
         /// <summary>
@@ -232,6 +220,18 @@ namespace Energistics.Etp.v12.Protocol.Core
         protected virtual void HandleRenewSecurityTokenResponse(IMessageHeader header, RenewSecurityTokenResponse message)
         {
             Notify(OnRenewSecurityTokenResponse, header, message);
+        }
+
+        /// <summary>
+        /// Handles the CloseSession message from the server.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <param name="message">The CloseSession message.</param>
+        protected virtual void HandleCloseSession(IMessageHeader header, CloseSession message)
+        {
+            Notify(OnCloseSession, header, message);
+            Session.OnSessionClosed(true);
+            Session.CloseWebSocket(message.Reason);
         }
     }
 }

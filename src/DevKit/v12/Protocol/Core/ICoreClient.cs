@@ -37,17 +37,20 @@ namespace Energistics.Etp.v12.Protocol.Core
         long RequestSession(IReadOnlyList<EtpSessionProtocol> requestedProtocols);
 
         /// <summary>
-        /// Sends a CloseSession message to a server.
+        /// Handles the OpenSession event from a server.
         /// </summary>
-        /// <param name="reason">The reason.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long CloseSession(string reason = null);
+        event ProtocolEventHandler<OpenSession> OnOpenSession;
 
         /// <summary>
         /// Sends a Ping message.
         /// </summary>
         /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
         long Ping();
+
+        /// <summary>
+        /// Handles the Ping event from a server.
+        /// </summary>
+        event ProtocolEventHandler<Ping> OnPing;
 
         /// <summary>
         /// Sends a Pong response message.
@@ -57,6 +60,11 @@ namespace Energistics.Etp.v12.Protocol.Core
         long Pong(IMessageHeader request);
 
         /// <summary>
+        /// Handles the Pong event from a server.
+        /// </summary>
+        event ProtocolEventHandler<Pong> OnPong;
+
+        /// <summary>
         /// Renews the security token.
         /// </summary>
         /// <param name="token">The token.</param>
@@ -64,28 +72,20 @@ namespace Energistics.Etp.v12.Protocol.Core
         long RenewSecurityToken(string token);
 
         /// <summary>
-        /// Handles the OpenSession event from a server.
+        /// Handles the RenewSecurityTokenResponse event from a server.
         /// </summary>
-        event ProtocolEventHandler<OpenSession> OnOpenSession;
+        event ProtocolEventHandler<RenewSecurityTokenResponse> OnRenewSecurityTokenResponse;
+
+        /// <summary>
+        /// Sends a CloseSession message to a server.
+        /// </summary>
+        /// <param name="reason">The reason.</param>
+        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
+        long CloseSession(string reason = null);
 
         /// <summary>
         /// Handles the CloseSession event from a server.
         /// </summary>
         event ProtocolEventHandler<CloseSession> OnCloseSession;
-
-        /// <summary>
-        /// Handles the Ping event from a server.
-        /// </summary>
-        event ProtocolEventHandler<Ping> OnPing;
-
-        /// <summary>
-        /// Handles the Pong event from a server.
-        /// </summary>
-        event ProtocolEventHandler<Pong> OnPong;
-
-        /// <summary>
-        /// Handles the RenewSecurityTokenResponse event from a server.
-        /// </summary>
-        event ProtocolEventHandler<RenewSecurityTokenResponse> OnRenewSecurityTokenResponse;
     }
 }
