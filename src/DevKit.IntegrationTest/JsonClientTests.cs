@@ -38,6 +38,7 @@ namespace Energistics.Etp
             Assert.IsTrue(capServer.SupportedProtocols.Any());
         }
 
+        [Ignore]
         [TestMethod]
         public void JsonClient_GetServerCapabilities_Using_Json_Web_Token()
         {

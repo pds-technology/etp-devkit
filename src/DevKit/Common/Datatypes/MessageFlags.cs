@@ -59,6 +59,11 @@ namespace Energistics.Etp.Common.Datatypes
         /// <summary>
         /// An Acknowledge message is requested by the sender.
         /// </summary>
-        Acknowledge = 0x10
+        Acknowledge = 0x10,
+
+        /// <summary>
+        /// The message has a header extension.
+        /// </summary>
+        HasHeaderExtension = 0x20,
     }
 }

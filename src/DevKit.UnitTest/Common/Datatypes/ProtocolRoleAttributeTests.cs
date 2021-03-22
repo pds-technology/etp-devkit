@@ -31,8 +31,8 @@ namespace Energistics.Etp.Common.Datatypes
 
             Assert.IsNotNull(attrib);
             Assert.AreEqual((int)v11.Protocols.Core, attrib.Protocol);
-            Assert.AreEqual("client", attrib.Role);
-            Assert.AreEqual("server", attrib.CounterpartRole);
+            Assert.AreEqual(Roles.Client, attrib.Role);
+            Assert.AreEqual(Roles.Server, attrib.CounterpartRole);
         }
     }
 }

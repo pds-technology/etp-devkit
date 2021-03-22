@@ -25,23 +25,49 @@ namespace Energistics.Etp.Security
     /// <summary>
     /// Provides methods that can be used to create a dictionary containing an Authorization header.
     /// </summary>
-    public static class Authorization
+    public class Authorization
     {
-        public const string Header = "Authorization";
+        /// <summary>
+        /// Whether or not this instance has an authorization value.
+        /// </summary>
+        public bool HasValue => !string.IsNullOrEmpty(Value);
+
+        /// <summary>
+        /// Whether or not this is basic authorization.
+        /// </summary>
+        public bool IsBasic { get; }
+
+        /// <summary>
+        /// The Authorization header value.
+        /// </summary>
+        public string Value { get; }
+
+        /// <summary>
+        /// Initializes a new <see cref="Authorization"/> instance with the specified value.
+        /// </summary>
+        /// <param name="value">The authorization value.</param>
+        /// <param name="isBasic">Whether or not the authorization is basic.</param>
+        private Authorization(string value, bool isBasic)
+        {
+            Value = value;
+            IsBasic = isBasic;
+        }
 
         /// <summary>
         /// Creates a dictionary containing an Authorization header for the specified username and password.
         /// </summary>
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
-        /// <returns>A dictionary containing an Authorization header.</returns>
-        public static IDictionary<string, string> Basic(string username, string password)
+        /// <returns>A <see cref="Authorization"/> initialized for basic authentication.</returns>
+        public static Authorization Basic(string username, string password)
         {
             var credentials = string.IsNullOrWhiteSpace(username)
                 ? string.Empty
                 : string.Concat(username, ":", password);
 
-            return GetAuthorizationHeader("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials)));
+            var encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials));
+
+            return new Authorization(GetAuthorizationValue("Basic", encodedCredentials), true);
         }
 
         /// <summary>
@@ -49,27 +75,25 @@ namespace Energistics.Etp.Security
         /// </summary>
         /// <param name="token">The JSON web token.</param>
         /// <returns>A dictionary containing an Authorization header.</returns>
-        public static IDictionary<string, string> Bearer(string token)
+        public static Authorization Bearer(string token)
         {
-            return GetAuthorizationHeader("Bearer", string.IsNullOrWhiteSpace(token) ? string.Empty : token);
+            return new Authorization(GetAuthorizationValue("Bearer", string.IsNullOrWhiteSpace(token) ? string.Empty : token), false);
         }
 
         /// <summary>
-        /// Creates a dictionary containing an Authorization header for the specified schema and encoded string.
+        /// Creates a an Authorization header value for the specified schema and encoded string.
         /// </summary>
         /// <param name="schema">The schema.</param>
         /// <param name="encodedString">The encoded string.</param>
-        /// <returns>A dictionary containing an Authorization header.</returns>
-        private static IDictionary<string, string> GetAuthorizationHeader(string schema, string encodedString)
+        /// <returns>An Authorization header value.</returns>
+        private static string GetAuthorizationValue(string schema, string encodedString)
         {
-            var headers = new Dictionary<string, string>();
-
             if (!string.IsNullOrWhiteSpace(encodedString))
             {
-                headers[Header] = string.Concat(schema, " ", encodedString);
+                return string.Concat(schema, " ", encodedString);
             }
 
-            return headers;
+            return null;
         }
     }
 }

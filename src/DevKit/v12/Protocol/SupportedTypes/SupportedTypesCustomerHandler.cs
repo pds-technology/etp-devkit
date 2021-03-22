@@ -16,9 +16,11 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Concurrent;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.SupportedTypes
@@ -28,14 +30,14 @@ namespace Energistics.Etp.v12.Protocol.SupportedTypes
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.SupportedTypes.ISupportedTypesCustomer" />
-    public class SupportedTypesCustomerHandler : Etp12ProtocolHandler, ISupportedTypesCustomer
+    public class SupportedTypesCustomerHandler : Etp12ProtocolHandler<CapabilitiesCustomer, ICapabilitiesCustomer, CapabilitiesStore, ICapabilitiesStore>, ISupportedTypesCustomer
     {
         private readonly ConcurrentDictionary<long, GetSupportedTypes> _requests = new ConcurrentDictionary<long, GetSupportedTypes>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SupportedTypesCustomerHandler"/> class.
         /// </summary>
-        public SupportedTypesCustomerHandler() : base((int)Protocols.SupportedTypes, "customer", "store")
+        public SupportedTypesCustomerHandler() : base((int)Protocols.SupportedTypes, Roles.Customer, Roles.Store)
         {
             RegisterMessageHandler<GetSupportedTypesResponse>(Protocols.SupportedTypes, MessageTypes.SupportedTypes.GetSupportedTypesResponse, HandleGetSupportedTypesResponse);
         }
@@ -47,12 +49,11 @@ namespace Energistics.Etp.v12.Protocol.SupportedTypes
         /// <param name="scope">The scope to return supported types for.</param>
         /// <param name="returnEmptyTypes">Whether the store should return data types that it supports but for which it currently has no data.</param>
         /// <param name="countObjects">if set to <c>true</c>, request object counts.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long GetSupportedTypes(string uri, ContextScopeKind scope, bool returnEmptyTypes = false, bool countObjects = false)
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetSupportedTypes> GetSupportedTypes(string uri, ContextScopeKind scope, bool returnEmptyTypes = false, bool countObjects = false, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.SupportedTypes, MessageTypes.SupportedTypes.GetSupportedTypes);
-
-            var message = new GetSupportedTypes
+            var body = new GetSupportedTypes
             {
                 Uri = uri,
                 Scope = scope,
@@ -60,61 +61,43 @@ namespace Energistics.Etp.v12.Protocol.SupportedTypes
                 CountObjects = countObjects,
             };
 
-            return Session.SendMessage(header, message,
-                (h, _) => _requests[h.MessageId] = message// Cache requested URIs by message ID
-            );
+            return SendRequest(body, extension: extension);
         }
 
         /// <summary>
         /// Handles the GetSupportedTypesResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<GetSupportedTypesResponse, GetSupportedTypes> OnGetSupportedTypesResponse;
+        public event EventHandler<ResponseEventArgs<GetSupportedTypes, GetSupportedTypesResponse>> OnGetSupportedTypesResponse;
 
         /// <summary>
-        /// Handles the GetResourcesResponse message from a store.
+        /// Handles the ProtocolException message.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The GetResourcesResponse message.</param>
-        protected virtual void HandleGetSupportedTypesResponse(IMessageHeader header, GetSupportedTypesResponse message)
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
         {
-            var request = GetRequest(header);
-            var args = Notify(OnGetSupportedTypesResponse, header, message, request);
-            if (args.Cancel)
-                return;
+            base.HandleProtocolException(message);
 
-            HandleGetSupportedTypesResponse(header, message, request);
+            var request = TryGetCorrelatedMessage(message);
+            if (request is EtpMessage<GetSupportedTypes>)
+                HandleResponseMessage(request as EtpMessage<GetSupportedTypes>, message, OnGetSupportedTypesResponse, HandleGetSupportedTypesResponse);
         }
 
         /// <summary>
-        /// Handles the GetResourcesResponse message from a store.
+        /// Handles the GetSupportedTypesResponse message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The GetResourcesResponse message.</param>
-        /// <param name="request">The GetResources request.</param>
-        protected virtual void HandleGetSupportedTypesResponse(IMessageHeader header, GetSupportedTypesResponse message, GetSupportedTypes request)
+        /// <param name="message">The GetSupportedTypesResponse message.</param>
+        protected virtual void HandleGetSupportedTypesResponse(EtpMessage<GetSupportedTypesResponse> message)
         {
+            var request = TryGetCorrelatedMessage<GetSupportedTypes>(message);
+            HandleResponseMessage(request, message, OnGetSupportedTypesResponse, HandleGetSupportedTypesResponse);
         }
 
         /// <summary>
-        /// Handle any final cleanup related to the final message in response to a request.
+        /// Handles the GetSupportedTypesResponse message from a store.
         /// </summary>
-        /// <param name="correlationId">The correlation ID of the request</param>
-        protected override void HandleFinalResponse(long correlationId)
+        /// <param name="args">The <see cref="ResponseEventArgs{GetSupportedTypes, GetSupportedTypesResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleGetSupportedTypesResponse(ResponseEventArgs<GetSupportedTypes, GetSupportedTypesResponse> args)
         {
-            GetSupportedTypes request;
-            _requests.TryRemove(correlationId, out request);
-        }
-
-        /// <summary>
-        /// Gets the request from the internal cache of message IDs.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <returns>The request.</returns>
-        private GetSupportedTypes GetRequest(IMessageHeader header)
-        {
-            GetSupportedTypes request;
-            _requests.TryGetValue(header.CorrelationId, out request);
-            return request;
         }
     }
 }

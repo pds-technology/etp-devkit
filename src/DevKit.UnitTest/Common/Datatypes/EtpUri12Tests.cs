@@ -130,7 +130,7 @@ namespace Energistics.Etp.Common.Datatypes
         {
             var uuid = Uuid();
             var uri = new EtpUri("eml:///witsml20.Log(" + uuid + ")/witsml20.Channel(ROPA)");
-            var ids = uri.GetObjectIds().FirstOrDefault();
+            var ids = uri.GetSegments().FirstOrDefault();
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("Channel", uri.ObjectType);
@@ -149,7 +149,7 @@ namespace Energistics.Etp.Common.Datatypes
             var uuid2 = Uuid();
             var contentType = "application/x-witsml+xml;version=2.0;type=part_TrajectoryStation";
             var uri = new EtpUri($"eml:///witsml20.Trajectory({uuid1})/witsml20.TrajectoryStation({uuid2})");
-            var ids = uri.GetObjectIds().FirstOrDefault();
+            var ids = uri.GetSegments().FirstOrDefault();
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("TrajectoryStation", uri.ObjectType);
@@ -298,7 +298,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("1.4.1.1", uri.Version);
             Assert.AreEqual("well", uri.ObjectType);
-            Assert.AreEqual("xml", uri.Format);
+            Assert.AreEqual(Formats.Xml, uri.Format);
             Assert.AreEqual("123", uri.ObjectVersion);
         }
 
@@ -311,7 +311,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("1.4.1.1", uri.Version);
             Assert.AreEqual("well", uri.ObjectType);
-            Assert.AreEqual("xml", uri.Format);
+            Assert.AreEqual(Formats.Xml, uri.Format);
             Assert.AreEqual("1'23", uri.ObjectVersion);
         }
 
@@ -323,7 +323,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("1.4.1.1", uri.Version);
             Assert.AreEqual("well", uri.ObjectType);
-            Assert.AreEqual("xml", uri.Format);
+            Assert.AreEqual(Formats.Xml, uri.Format);
         }
 
         [TestMethod]
@@ -334,7 +334,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("1.4.1.1", uri.Version);
             Assert.AreEqual("well", uri.ObjectType);
-            Assert.AreEqual("xml", uri.Format);
+            Assert.AreEqual(Formats.Xml, uri.Format);
         }
 
         [TestMethod]
@@ -524,7 +524,7 @@ namespace Energistics.Etp.Common.Datatypes
             var uuid2 = Uuid();
 
             var uri = new EtpUri($"eml:///dataspace(custom-database)/witsml14.well/witsml14.wellbore({uuid})/witsml14.log/witsml14.logCurveInfo({uuid2})");
-            var segments = uri.GetObjectIds().ToList();
+            var segments = uri.GetSegments().ToList();
 
             Assert.AreEqual(null, segments[0].ObjectId);
             Assert.AreEqual(uuid, segments[1].ObjectId);

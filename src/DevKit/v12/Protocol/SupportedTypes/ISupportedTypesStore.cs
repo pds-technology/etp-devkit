@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -27,20 +28,22 @@ namespace Energistics.Etp.v12.Protocol.SupportedTypes
     /// Describes the interface that must be implemented by the store role of the SupportedTypes protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.SupportedTypes, "store", "customer")]
-    public interface ISupportedTypesStore : IProtocolHandler
+    [ProtocolRole((int)Protocols.SupportedTypes, Roles.Store, Roles.Customer)]
+    public interface ISupportedTypesStore : IProtocolHandler<ICapabilitiesStore, ICapabilitiesCustomer>
     {
         /// <summary>
         /// Handles the GetSupportedTypes event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetSupportedTypes, IList<SupportedType>> OnGetSupportedTypes;
+        event EventHandler<ListRequestEventArgs<GetSupportedTypes, SupportedType>> OnGetSupportedTypes;
 
         /// <summary>
         /// Sends a GetSupportedTypesResponse message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="supportedTypes">The list of <see cref="SupportedType"/> objects.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long GetSupportedTypesResponse(IMessageHeader request, IList<SupportedType> supportedTypes);
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetSupportedTypesResponse> GetSupportedTypesResponse(IMessageHeader correlatedHeader, IList<SupportedType> supportedTypes, bool isFinalPart = true, IMessageHeaderExtension extension = null);
     }
 }

@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -29,87 +30,74 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.GrowingObjectQuery.IGrowingObjectQueryStore" />
-    public class GrowingObjectQueryStoreHandler : Etp12ProtocolHandler, IGrowingObjectQueryStore
+    public class GrowingObjectQueryStoreHandler : Etp12ProtocolHandler<CapabilitiesStore, ICapabilitiesStore, CapabilitiesCustomer, ICapabilitiesCustomer>, IGrowingObjectQueryStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="GrowingObjectQueryStoreHandler"/> class.
         /// </summary>
-        public GrowingObjectQueryStoreHandler() : base((int)Protocols.GrowingObjectQuery, "store", "customer")
+        public GrowingObjectQueryStoreHandler() : base((int)Protocols.GrowingObjectQuery, Roles.Store, Roles.Customer)
         {
-            MaxResponseCount = EtpSettings.DefaultMaxResponseCount;
-
             RegisterMessageHandler<FindParts>(Protocols.GrowingObjectQuery, MessageTypes.GrowingObjectQuery.FindParts, HandleFindParts);
-        }
-
-        /// <summary>
-        /// Gets the maximum response count.
-        /// </summary>
-        public long MaxResponseCount { get; set; }
-
-        /// <summary>
-        /// Gets the capabilities supported by the protocol handler.
-        /// </summary>
-        /// <param name="capabilities">The protocol's capabilities.</param>
-        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
-        {
-            base.GetCapabilities(capabilities);
-
-            capabilities.MaxResponseCount = MaxResponseCount;
         }
 
         /// <summary>
         /// Handles the FindParts event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<FindParts, PartsResponse> OnFindParts;
+        public event EventHandler<ListRequestWithContextEventArgs<FindParts, ObjectPart, ResponseContext>> OnFindParts;
 
         /// <summary>
         /// Sends a FindPartsResponse message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="uri">The URI from the request.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="parts">The list of <see cref="ObjectPart"/> objects.</param>
-        /// <param name="sortOrder">The sort order.</param>
-        /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long FindPartsResponse(IMessageHeader request, string uri, IList<ObjectPart> parts, string sortOrder, string format = "xml")
+        /// <param name="context">The response context.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<FindPartsResponse> FindPartsResponse(IMessageHeader correlatedHeader, IList<ObjectPart> parts, ResponseContext context, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.GrowingObjectQuery.FindPartsResponse, request.MessageId);
-            var response = new FindPartsResponse
+            var body = new FindPartsResponse
             {
-                Uri = uri,
-                ServerSortOrder = string.Empty,
-                Format = format ?? "xml",
+                Uri = context?.Uri,
+                Format = context?.Format,
+                ServerSortOrder = context?.ServerSortOrder,
+                Parts = parts ?? new List<ObjectPart>(),
             };
 
-            return SendMultipartResponse(header, response, parts, (m, i) => m.Parts = i);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+        /// <summary>
+        /// Sends a FindPartsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="uri">The URI from the request.</param>
+        /// <param name="parts">The list of <see cref="ObjectPart"/> objects.</param>
+        /// <param name="serverSortOrder">The sort order.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<FindPartsResponse> FindPartsResponse(IMessageHeader correlatedHeader, string uri, IList<ObjectPart> parts, string serverSortOrder, string format = Formats.Xml, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            return FindPartsResponse(correlatedHeader, parts, new ResponseContext { Uri = uri, ServerSortOrder = serverSortOrder, Format = format }, isFinalPart: isFinalPart, extension: extension);
         }
 
         /// <summary>
         /// Handles the FindParts message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The FindParts message.</param>
-        protected virtual void HandleFindParts(IMessageHeader header, FindParts message)
+        protected virtual void HandleFindParts(EtpMessage<FindParts> message)
         {
-            var args = Notify(OnFindParts, header, message, new PartsResponse());
-            if (args.Cancel)
-                return;
-
-            if (!HandleFindParts(header, message, args.Context))
-                return;
-
-            FindPartsResponse(header, message.Uri, args.Context.Parts, args.Context.ServerSortOrder, args.Context.Format);
+            HandleRequestMessage(message, OnFindParts, HandleFindParts,
+                responseMethod: (args) => FindPartsResponse(args.Request?.Header, args.Responses, args.Context, isFinalPart: !args.HasErrors, extension: args.ResponseExtension));
         }
 
         /// <summary>
         /// Handles the FindParts message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        protected virtual bool HandleFindParts(IMessageHeader header, FindParts message, PartsResponse response)
+        /// <param name="args">The <see cref="ListRequestWithContextEventArgs{FindParts, ObjectPart, ResponseContext}"/> instance containing the event data.</param>
+        protected virtual void HandleFindParts(ListRequestWithContextEventArgs<FindParts, ObjectPart, ResponseContext> args)
         {
-            return true;
         }
     }
 }

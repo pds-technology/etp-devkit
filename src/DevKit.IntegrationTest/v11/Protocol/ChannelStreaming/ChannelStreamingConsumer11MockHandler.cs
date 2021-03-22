@@ -16,10 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Collections.Generic;
-using Energistics.Etp.Common;
-using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.v11.Protocol.Core;
+using System;
 
 namespace Energistics.Etp.v11.Protocol.ChannelStreaming
 {
@@ -27,16 +24,6 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
     {
         public ChannelStreamingConsumer11MockHandler()
         {
-        }
-
-
-        public event ProtocolEventHandler<OpenSession> OnOpenSession;
-
-        public override void OnSessionOpened(EtpProtocolCapabilities counterpartCapabilities)
-        {
-            base.OnSessionOpened(counterpartCapabilities);
-
-            OnOpenSession?.Invoke(this, new ProtocolEventArgs<OpenSession>(null, null));
         }
     }
 }

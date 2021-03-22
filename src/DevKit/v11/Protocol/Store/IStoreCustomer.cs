@@ -19,6 +19,7 @@
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes.Object;
+using System;
 
 namespace Energistics.Etp.v11.Protocol.Store
 {
@@ -26,34 +27,43 @@ namespace Energistics.Etp.v11.Protocol.Store
     /// Defines the interface that must be implemented by the customer role of the Store protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Store, "customer", "store")]
+    [ProtocolRole((int)Protocols.Store, Roles.Customer, Roles.Store)]
     public interface IStoreCustomer : IProtocolHandler
     {
         /// <summary>
         /// Sends a GetObject message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long GetObject(string uri, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetObject> GetObject(string uri);
 
         /// <summary>
         /// Sends a PutObject message to a store.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long PutObject(DataObject dataObject);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PutObject> PutObject(DataObject dataObject);
 
         /// <summary>
         /// Sends a DeleteObject message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long DeleteObject(string uri);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<DeleteObject> DeleteObject(string uri);
 
         /// <summary>
         /// Handles the Object event from a store.
         /// </summary>
-        event ProtocolEventHandler<Object> OnObject;
+        event EventHandler<ResponseEventArgs<GetObject, Object>> OnObject;
+
+        /// <summary>
+        /// Event raised when there is an exception received in response to a PutObject message.
+        /// </summary>
+        event EventHandler<VoidResponseEventArgs<PutObject>> OnPutObjectException;
+
+        /// <summary>
+        /// Event raised when there is an exception received in response to a DeleteObject message.
+        /// </summary>
+        event EventHandler<VoidResponseEventArgs<DeleteObject>> OnDeleteObjectException;
     }
 }

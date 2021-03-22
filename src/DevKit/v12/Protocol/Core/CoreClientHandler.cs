@@ -17,11 +17,9 @@
 //-----------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.v12.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
 
 namespace Energistics.Etp.v12.Protocol.Core
 {
@@ -35,203 +33,141 @@ namespace Energistics.Etp.v12.Protocol.Core
         /// <summary>
         /// Initializes a new instance of the <see cref="CoreClientHandler"/> class.
         /// </summary>
-        public CoreClientHandler() : base((int)Protocols.Core, "client", "server")
+        public CoreClientHandler() : base((int)Protocols.Core, Roles.Client, Roles.Server)
         {
-            RegisterMessageHandler<OpenSession>(Protocols.Core, MessageTypes.Core.OpenSession, HandleOpenSession);
-            RegisterMessageHandler<CloseSession>(Protocols.Core, MessageTypes.Core.CloseSession, HandleCloseSession);
             RegisterMessageHandler<Ping>(Protocols.Core, MessageTypes.Core.Ping, HandlePing);
             RegisterMessageHandler<Pong>(Protocols.Core, MessageTypes.Core.Pong, HandlePong);
             RegisterMessageHandler<RenewSecurityTokenResponse>(Protocols.Core, MessageTypes.Core.RenewSecurityTokenResponse, HandleRenewSecurityTokenResponse);
         }
 
         /// <summary>
-        /// Sends a RequestSession message to a server.
-        /// </summary>
-        /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long RequestSession(IReadOnlyList<EtpSessionProtocol> requestedProtocols)
-        {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.RequestSession);
-
-            var capabilities = new EtpEndpointCapabilities();
-            Session.GetInstanceCapabilities(capabilities);
-
-            var message = new RequestSession
-            {
-                ApplicationName = Session.ClientApplicationName,
-                ApplicationVersion = Session.ClientApplicationVersion,
-                ClientInstanceId = Guid.Parse(Session.ClientInstanceId).ToUuid(),
-                RequestedProtocols = requestedProtocols.Select(rp => rp.AsSupportedProtocol<SupportedProtocol, Datatypes.Version, DataValue>()).ToList(),
-                SupportedDataObjects = Session.InstanceSupportedDataObjects.Select(o => new SupportedDataObject { QualifiedType = (string)o.DataObjectType }).ToList(),
-                SupportedCompression = Session.InstanceSupportedCompression,
-                SupportedFormats = Session.InstanceSupportedFormats,
-                EndpointCapabilities = capabilities.AsDataValueDictionary<DataValue>(),
-            };
-
-            return Session.SendMessage(header, message);
-        }
-
-        /// <summary>
-        /// Handles the OpenSession event from a server.
-        /// </summary>
-        public event ProtocolEventHandler<OpenSession> OnOpenSession;
-
-        /// <summary>
         /// Sends a Ping message.
         /// </summary>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long Ping()
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<Ping> Ping(IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.Ping);
-
-            var message = new Ping
+            var body = new Ping
             {
             };
 
-            return Session.SendMessage(header, message, (_, m) => m.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
+            return SendRequest(body, extension: extension, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
         }
 
         /// <summary>
         /// Handles the Ping event from a server.
         /// </summary>
-        public event ProtocolEventHandler<Ping> OnPing;
+        public event EventHandler<EmptyRequestEventArgs<Ping>> OnPing;
 
         /// <summary>
         /// Sends a Pong response message.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long Pong(IMessageHeader request)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<Pong> Pong(IMessageHeader correlatedHeader, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.Pong, request.MessageId);
-
-            var message = new Pong
+            var body = new Pong
             {
             };
 
-            return Session.SendMessage(header, message, (_, m) => m.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
+            return SendResponse(body, correlatedHeader, extension: extension, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
         }
 
         /// <summary>
         /// Handles the Pong event from a server.
         /// </summary>
-        public event ProtocolEventHandler<Pong> OnPong;
+        public event EventHandler<ResponseEventArgs<Ping, Pong>> OnPong;
 
         /// <summary>
         /// Renews the security token.
         /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="token">The token.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long RenewSecurityToken(string token)
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<RenewSecurityToken> RenewSecurityToken(IMessageHeader correlatedHeader, string token, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.RenewSecurityToken);
-
-            var renewSecurityToken = new RenewSecurityToken
+            var body = new RenewSecurityToken
             {
                 Token = token
             };
 
-            return Session.SendMessage(header, renewSecurityToken);
+            return SendResponse(body, correlatedHeader, extension: extension);
         }
 
         /// <summary>
         /// Handles the RenewSecurityTokenResponse event from a server.
         /// </summary>
-        public event ProtocolEventHandler<RenewSecurityTokenResponse> OnRenewSecurityTokenResponse;
+        public event EventHandler<ResponseEventArgs<RenewSecurityToken, RenewSecurityTokenResponse>> OnRenewSecurityTokenResponse;
 
         /// <summary>
-        /// Sends a CloseSession message to a server.
+        /// Handles the ProtocolException message.
         /// </summary>
-        /// <param name="reason">The reason.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long CloseSession(string reason = null)
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
         {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.CloseSession);
+            base.HandleProtocolException(message);
 
-            var message = new CloseSession
-            {
-                Reason = reason ?? "Session closed"
-            };
-
-            var messageId = Session.SendMessage(header, message);
-
-            Session.OnSessionClosed(messageId >= 0);
-
-            return messageId;
+            var request = TryGetCorrelatedMessage(message);
+            if (request is EtpMessage<Ping>)
+                HandleResponseMessage(request as EtpMessage<Ping>, message, OnPong, HandlePong);
+            else if (request is EtpMessage<RenewSecurityToken>)
+                HandleResponseMessage(request as EtpMessage<RenewSecurityToken>, message, OnRenewSecurityTokenResponse, HandleRenewSecurityTokenResponse);
         }
 
         /// <summary>
-        /// Handles the CloseSession event from a server.
+        /// Handles the Ping message from a server.
         /// </summary>
-        public event ProtocolEventHandler<CloseSession> OnCloseSession;
-
-        /// <summary>
-        /// Handles the OpenSession message from the server.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The OpenSession message.</param>
-        protected virtual void HandleOpenSession(IMessageHeader header, OpenSession message)
-        {
-            var success = Session.InitializeSession(
-                message.ServerInstanceId.ToGuid().ToString(), // TODO: Temporary until SessionId added back to message.
-                message.ApplicationName,
-                message.ApplicationVersion,
-                message.ServerInstanceId.ToGuid().ToString(),
-                message.SupportedProtocols.Cast<ISupportedProtocol>().ToList(),
-                message.SupportedDataObjects.Select(o => (IDataObjectType)new EtpDataObjectType(o.QualifiedType)).ToList(),
-                message.SupportedCompression?.Split(';') ?? new string[0],
-                message.SupportedFormats.ToList(),
-                new EtpEndpointCapabilities(message.EndpointCapabilities.ToDictionary(kvp => kvp.Key, kvp => (IDataValue)kvp.Value))
-            );
-
-            Notify(OnOpenSession, header, message);
-            Session.OnSessionOpened(success);
-        }
-
-        /// <summary>
-        /// Handles the Ping message from the server.
-        /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The Ping message.</param>
-        protected virtual void HandlePing(IMessageHeader header, Ping message)
+        protected virtual void HandlePing(EtpMessage<Ping> message)
         {
-            var args = Notify(OnPing, header, message);
-            if (args.Cancel)
-                return;
-
-            Pong(header);
+            HandleRequestMessage(message, OnPing, HandlePing,
+                responseMethod: (args) => Pong(args.Request?.Header, extension: args.ResponseExtension));
         }
 
         /// <summary>
-        /// Handles the Pong message from the server.
+        /// Handles the Ping message from a server.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The Pong message.</param>
-        protected virtual void HandlePong(IMessageHeader header, Pong message)
+        /// <param name="args">The <see cref="EmptyRequestEventArgs{Ping}"/> instance containing the event data.</param>
+        protected virtual void HandlePing(EmptyRequestEventArgs<Ping> args)
         {
-            Notify(OnPong, header, message);
+        }
+
+        /// <summary>
+        /// Handles the Pong message from a server.
+        /// </summary>
+        /// <param name="message">The Pong message.</param>
+        protected virtual void HandlePong(EtpMessage<Pong> message)
+        {
+            var request = TryGetCorrelatedMessage<Ping>(message);
+            HandleResponseMessage(request, message, OnPong, HandlePong);
+        }
+
+        /// <summary>
+        /// Handles the response to a Pong message from a server.
+        /// </summary>
+        /// <param name="args">The <see cref="ResponseEventArgs{Ping, Pong}"/> instance containing the event data.</param>
+        protected virtual void HandlePong(ResponseEventArgs<Ping, Pong> args)
+        {
         }
 
         /// <summary>
         /// Handles the RenewSecurityTokenResponse message from the server.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The RenewSecurityTokenResponse message.</param>
-        protected virtual void HandleRenewSecurityTokenResponse(IMessageHeader header, RenewSecurityTokenResponse message)
+        protected virtual void HandleRenewSecurityTokenResponse(EtpMessage<RenewSecurityTokenResponse> message)
         {
-            Notify(OnRenewSecurityTokenResponse, header, message);
+            var request = TryGetCorrelatedMessage<RenewSecurityToken>(message);
+            HandleResponseMessage(request, message, OnRenewSecurityTokenResponse, HandleRenewSecurityTokenResponse);
         }
 
         /// <summary>
-        /// Handles the CloseSession message from the server.
+        /// Handles the RenewSecurityTokenResponse message from a server.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The CloseSession message.</param>
-        protected virtual void HandleCloseSession(IMessageHeader header, CloseSession message)
+        /// <param name="args">The <see cref="ResponseEventArgs{RenewSecurityToken, RenewSecurityTokenResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleRenewSecurityTokenResponse(ResponseEventArgs<RenewSecurityToken, RenewSecurityTokenResponse> args)
         {
-            Notify(OnCloseSession, header, message);
-            Session.OnSessionClosed(true);
-            Session.CloseWebSocket(message.Reason);
         }
     }
 }

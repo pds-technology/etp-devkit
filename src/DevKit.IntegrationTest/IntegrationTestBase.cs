@@ -17,11 +17,9 @@
 //-----------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using Avro.Specific;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 
@@ -57,7 +55,8 @@ namespace Energistics.Etp
         {
             var version = GetType().Assembly.GetName().Version.ToString();
             var port = GetAvailablePort();
-            var server = EtpFactory.CreateSelfHostedWebServer(webSocketType, port, GetType().AssemblyQualifiedName, version);
+            var endpointInfo = EtpFactory.CreateServerEndpointInfo(GetType().AssemblyQualifiedName, version);
+            var server = EtpFactory.CreateSelfHostedWebServer(webSocketType, port, endpointInfo);
 
             return server;
         }
@@ -67,28 +66,32 @@ namespace Energistics.Etp
         /// current connection and authorization parameters.
         /// </summary>
         /// <param name="webSocketType">The WebSocket type.</param>
-        /// <param name="etpSubProtocol">The ETP websocket sub-protocol</param>
+        /// <param name="etpVersion">The ETP version.</param>
         /// <param name="url">The WebSocket URL.</param>
+        /// <param name="authorization">The client's authorization details.</param>
+        /// <param name="etpEncoding">The encoding to use.</param>
         /// <returns>A new <see cref="IEtpClient"/> instance.</returns>
-        protected IEtpClient CreateClient(WebSocketType webSocketType, string etpSubProtocol, string url, IDictionary<string, string> headers = null)
+        protected IEtpClient CreateClient(WebSocketType webSocketType, EtpVersion etpVersion, string url, Security.Authorization authorization = null, EtpEncoding etpEncoding = EtpEncoding.Binary)
         {
             var version = GetType().Assembly.GetName().Version.ToString();
-            if (headers == null)
-                headers = Security.Authorization.Basic(TestSettings.Username, TestSettings.Password);
+            if (authorization == null)
+                authorization = Security.Authorization.Basic(TestSettings.Username, TestSettings.Password);
 
-            var client = EtpFactory.CreateClient(webSocketType, url, GetType().AssemblyQualifiedName, version, "ETP DevKit Integration Test", etpSubProtocol, headers);
+            var endpointInfo = EtpFactory.CreateClientEndpointInfo(GetType().AssemblyQualifiedName, version, "ETP DevKit Integration Test");
 
-            if (client.SupportedVersion == EtpVersion.v11)
+            var client = EtpFactory.CreateClient(webSocketType, url, etpVersion, etpEncoding, endpointInfo, authorization: authorization);
+
+            if (etpVersion == EtpVersion.v11)
             {
-                client.Register<v11.Protocol.ChannelStreaming.IChannelStreamingConsumer, v11.Protocol.ChannelStreaming.ChannelStreamingConsumerHandler>();
-                client.Register<v11.Protocol.Discovery.IDiscoveryCustomer, v11.Protocol.Discovery.DiscoveryCustomerHandler>();
-                client.Register<v11.Protocol.Store.IStoreCustomer, v11.Protocol.Store.StoreCustomerHandler>();
+                client.Register(new v11.Protocol.ChannelStreaming.ChannelStreamingConsumerHandler());
+                client.Register(new v11.Protocol.Discovery.DiscoveryCustomerHandler());
+                client.Register(new v11.Protocol.Store.StoreCustomerHandler());
             }
             else
             {
-                client.Register<v12.Protocol.ChannelStreaming.IChannelStreamingConsumer, v12.Protocol.ChannelStreaming.ChannelStreamingConsumerHandler>();
-                client.Register<v12.Protocol.Discovery.IDiscoveryCustomer, v12.Protocol.Discovery.DiscoveryCustomerHandler>();
-                client.Register<v12.Protocol.Store.IStoreCustomer, v12.Protocol.Store.StoreCustomerHandler>();
+                client.Register(new v12.Protocol.ChannelStreaming.ChannelStreamingConsumerHandler());
+                client.Register(new v12.Protocol.Discovery.DiscoveryCustomerHandler());
+                client.Register(new v12.Protocol.Store.StoreCustomerHandler());
             }
 
             return client;
@@ -98,8 +101,8 @@ namespace Energistics.Etp
         /// Initializes common resources.
         /// </summary>
         /// <param name="webSocketType">The WebSocket type.</param>
-        /// <param name="etpSubProtocol">The ETP websocket sub-protocol</param>
-        protected void SetUpWithProxy(WebSocketType webSocketType, string etpSubProtocol)
+        /// <param name="etpVersion">The ETP version</param>
+        protected void SetUpWithProxy(WebSocketType webSocketType, EtpVersion etpVersion)
         {
             // Clean up any remaining resources
             _client?.Dispose();
@@ -111,15 +114,15 @@ namespace Energistics.Etp
             // Use hostname so .NET will connect through the proxy.
             var uri = new UriBuilder(proxiedServer.Uri.Scheme, "vcap.me", proxiedServer.Uri.Port, proxiedServer.Uri.AbsolutePath, proxiedServer.Uri.Query).Uri;
 
-            _client = CreateClient(webSocketType, etpSubProtocol, uri.ToWebSocketUri().ToString());
+            _client = CreateClient(webSocketType, etpVersion, uri.ToWebSocketUri().ToString());
         }
 
         /// <summary>
         /// Initializes common resources.
         /// </summary>
         /// <param name="webSocketType">The WebSocket type.</param>
-        /// <param name="etpSubProtocol">The ETP websocket sub-protocol</param>
-        protected void SetUp(WebSocketType webSocketType, string etpSubProtocol)
+        /// <param name="etpVersion">The ETP version</param>
+        protected void SetUp(WebSocketType webSocketType, EtpVersion etpVersion)
         {
             // Clean up any remaining resources
             _client?.Dispose();
@@ -127,7 +130,7 @@ namespace Energistics.Etp
 
             // Create server and client instances
             _server = CreateServer(webSocketType);
-            _client = CreateClient(webSocketType, etpSubProtocol, _server.Uri.ToWebSocketUri().ToString());
+            _client = CreateClient(webSocketType, etpVersion, _server.Uri.ToWebSocketUri().ToString());
         }
 
         /// <summary>
@@ -149,46 +152,10 @@ namespace Energistics.Etp
         /// <typeparam name="T">The type of ETP message.</typeparam>
         /// <param name="action">The action to execute.</param>
         /// <returns>An awaitable task.</returns>
-        protected async Task<ProtocolEventArgs<T>> HandleAsync<T>(Action<ProtocolEventHandler<T>> action)
-            where T : ISpecificRecord
+        protected async Task<TArgs> HandleAsync<TArgs>(Action<EventHandler<TArgs>> action)
+            where TArgs : EventArgs
         {
-            ProtocolEventArgs<T> args = null;
-            var task = new Task<ProtocolEventArgs<T>>(() => args);
-
-            action((s, e) =>
-            {
-                args = e;
-
-                if (task.Status == TaskStatus.Created)
-                    task.Start();
-            });
-
-            return await task.WaitAsync().ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Handles an event asynchronously and waits for it to complete.
-        /// </summary>
-        /// <typeparam name="T">The type of ETP message.</typeparam>
-        /// <typeparam name="TContext">The type of the context.</typeparam>
-        /// <param name="action">The action to execute.</param>
-        /// <returns>An awaitable task.</returns>
-        protected async Task<ProtocolEventArgs<T, TContext>> HandleAsync<T, TContext>(
-            Action<ProtocolEventHandler<T, TContext>> action)
-            where T : ISpecificRecord
-        {
-            ProtocolEventArgs<T, TContext> args = null;
-            var task = new Task<ProtocolEventArgs<T, TContext>>(() => args);
-
-            action((s, e) =>
-            {
-                args = e;
-
-                if (task.Status == TaskStatus.Created)
-                    task.Start();
-            });
-
-            return await task.WaitAsync().ConfigureAwait(false);
+            return await TestExtensions.HandleAsync(action);
         }
     }
 }

@@ -21,11 +21,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.WebSockets;
 using System.Runtime.ExceptionServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
-using Energistics.Etp.Common.Datatypes;
+using Nito.AsyncEx;
 
 namespace Energistics.Etp.Native
 {
@@ -36,21 +35,36 @@ namespace Energistics.Etp.Native
     {
         private const int BufferSize = 4096;
 
+        private Task _receiveLoopTask;
+        private readonly SemaphoreSlim _receiveLoopLock = new SemaphoreSlim(1, 1);
+        private CancellationTokenSource _receiveLoopTokenSource = new CancellationTokenSource();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpSessionNativeBase"/> class.
         /// </summary>
         /// <param name="webSocket">The web socket.</param>
         /// <param name="etpVersion">The ETP version.</param>
-        /// <param name="application">The server application name.</param>
-        /// <param name="version">The server application version.</param>
-        /// <param name="instanceKey">The instance key to use in generating the instance identifier.</param>
+        /// <param name="encoding">The ETP encoding for the session.</param>
+        /// <param name="info">The endpoint's information.</param>
+        /// <param name="parameters">The endpoint's parameters.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
         /// <param name="isClient">Whether or not this is the client-side of the session.</param>
-        public EtpSessionNativeBase(EtpVersion etpVersion, WebSocket webSocket, string application, string version, string instanceKey, IDictionary<string, string> headers, bool isClient)
-            : base(etpVersion, application, version, instanceKey, headers, isClient, !isClient)
+        /// <param name="sessionId">The session ID if this is a server.</param>
+        public EtpSessionNativeBase(EtpVersion etpVersion, EtpEncoding encoding, WebSocket webSocket, EtpEndpointInfo info, EtpEndpointParameters parameters, IDictionary<string, string> headers, bool isClient, string sessionId)
+            : base(etpVersion, encoding, info, parameters, headers, isClient, sessionId, !isClient)
         {
             Socket = webSocket;
         }
+
+        /// <summary>
+        /// The cancellation token for the message receive loop.
+        /// </summary>
+        protected CancellationToken ReceiveLoopToken => _receiveLoopTokenSource.Token;
+
+        /// <summary>
+        /// Whether or not the receive loop has been stopped.
+        /// </summary>
+        private bool IsReceiveLoopStopped { get; set; } = false;
 
         /// <summary>
         /// The websocket for the session.
@@ -58,12 +72,12 @@ namespace Energistics.Etp.Native
         protected WebSocket Socket { get; private set; }
 
         /// <summary>
-        /// Gets a value indicating whether the connection is open.
+        /// Gets a value indicating whether the underlying websocket connection is open.
         /// </summary>
         /// <value>
-        ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
+        ///   <c>true</c> if the underlying websocket is open; otherwise, <c>false</c>.
         /// </value>
-        public override bool IsOpen => (Socket?.State ?? WebSocketState.None) == WebSocketState.Open;
+        public override bool IsWebSocketOpen => (Socket?.State ?? WebSocketState.None) == WebSocketState.Open;
 
         /// <summary>
         /// Asynchronously closes the WebSocket connection for the specified reason.
@@ -71,63 +85,89 @@ namespace Energistics.Etp.Native
         /// <param name="reason">The reason.</param>
         protected override async Task CloseWebSocketAsyncCore(string reason)
         {
-            if (!IsOpen)
+            await CancelReceiveLoopAsync();
+
+            if (!IsWebSocketOpen)
                 return;
 
             try
             {
                 await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None).ConfigureAwait(CaptureAsyncContext);
-                Logger.Debug(Log("[{0}] Socket session closed.", SessionKey));
-                InvokeSocketClosed();
+                Logger.Debug(Log($"[{SessionKey}] Socket session closed."));
+                RaiseSocketClosed();
             }
             catch (Exception ex)
             {
                 if (ex.ExceptionMeansConnectionTerminated())
                 {
-                    InvokeSocketClosed();
+                    RaiseSocketClosed();
                 }
                 else
                 {
                     Log("Error: Exception caught when closing a websocket connection: {0}", ex.Message);
-                    Logger.DebugFormat("Exception caught when closing a websocket connection: {0}", ex);
-                    InvokeSocketError(ex);
+                    Logger.Debug($"[{SessionKey}] Exception caught when closing a websocket connection: {ex}");
+                    RaiseSocketError(ex);
                     throw;
                 }
             }
         }
 
         /// <summary>
-        /// Called to let derived classes register details of a new connection.
+        /// Starts background loop to receive messages
         /// </summary>
-        protected virtual void RegisterNewConnection()
+        protected void StartReceiveLoop()
         {
+            if (IsReceiveLoopStopped)
+            {
+                Logger.Verbose($"[{SessionKey}] Receiving loop previously stopped.  Not restarting.");
+                return;
+            }
+
+            try
+            {
+                Logger.Verbose($"[{SessionKey}] Acquiring receive loop lock in StartReceiveLoop.");
+
+                _receiveLoopLock.Wait();
+
+                if (IsReceiveLoopStopped)
+                {
+                    Logger.Verbose($"[{SessionKey}] Receiving loop already stopped.  Not restarting.");
+                    return;
+                }
+
+                Logger.Verbose($"[{SessionKey}] Starting receive loop.");
+
+                _receiveLoopTask = Task.Factory.StartNew(
+                    async () => await ReceiveLoop(ReceiveLoopToken).ConfigureAwait(CaptureAsyncContext), ReceiveLoopToken,
+                    TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach,
+                    TaskScheduler.Default).Unwrap();
+            }
+            finally
+            {
+                Logger.Verbose($"[{SessionKey}] Releasing receive loop lock in StartReceiveLoop.");
+                _receiveLoopLock.Release();
+            }
         }
 
         /// <summary>
-        /// Called to let derived classes cleanup after a connection has ended.
-        /// </summary>
-        protected virtual void CleanupAfterConnection()
-        {
-        }
-
-        /// <summary>
-        /// Handles the WebSocket connection represented by the specified context.
+        /// Handles receiving messages on the WebSocket connection.
         /// </summary>
         /// <param name="token">The cancellation token.</param>
         /// <returns>An awaitable <see cref="Task"/>.</returns>
-        /// <remarks>Runs an infinite loop to handle communication until the connection is closed.</remarks>
+        /// <remarks>Runs an infinite loop to receive messages until the connection is closed.</remarks>
         [HandleProcessCorruptedStateExceptions]
-        public async Task HandleConnection(CancellationToken token)
+        private async Task ReceiveLoop(CancellationToken token)
         {
+            Logger.Debug($"[{SessionKey}] Entering receive loop.");
+
             try
             {
-                RegisterNewConnection();
-
                 using (var stream = new MemoryStream())
                 {
-                    while (Socket.State == WebSocketState.Open)
+                    var receiveBuffer = new byte[BufferSize];
+                    while (Socket.State == WebSocketState.Open && !token.IsCancellationRequested)
                     {
-                        var buffer = new ArraySegment<byte>(new byte[BufferSize]);
+                        var buffer = new ArraySegment<byte>(receiveBuffer);
                         var result = await Socket.ReceiveAsync(buffer, token).ConfigureAwait(CaptureAsyncContext);
 
                         // transfer received data to MemoryStream
@@ -137,24 +177,14 @@ namespace Energistics.Etp.Native
                         if (!result.EndOfMessage || result.CloseStatus.HasValue)
                             continue;
 
-                        // filter null bytes from data buffer
-                        var bytes = stream.GetBuffer();
-
                         try
                         {
-                            if (result.MessageType == WebSocketMessageType.Binary)
-                            {
-                                OnDataReceived(bytes);
-                            }
-                            else // json encoding
-                            {
-                                var message = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
-                                OnMessageReceived(message);
-                            }
+                            var data = new ArraySegment<byte>(stream.GetBuffer(), 0, (int)stream.Length);
+                            Decode(data);
                         }
                         catch (Exception e)
                         {
-                            Logger.Error($"Error processing received data.", e);
+                            Logger.Error($"[{SessionKey}] Error processing received data.", e);
                         }
 
                         // clear and reuse MemoryStream
@@ -170,15 +200,52 @@ namespace Energistics.Etp.Native
                 if (!ex.ExceptionMeansConnectionTerminated())
                 {
                     Log("Error: {0}", ex.Message);
-                    Logger.Debug(ex);
-                    InvokeSocketError(ex);
+                    Logger.Debug($"[{SessionKey}] Error receiving messages: {ex}.");
+                    RaiseSocketError(ex);
                     throw;
                 }
             }
             finally
             {
-                InvokeSocketClosed();
-                CleanupAfterConnection();
+                RaiseSocketClosed();
+            }
+
+            Logger.Trace($"[{SessionKey}] Exiting receive loop.");
+        }
+
+        /// <summary>
+        /// Cancels the background message receive loop.
+        /// </summary>
+        private async Task CancelReceiveLoopAsync()
+        {
+            if (IsReceiveLoopStopped)
+            {
+                Logger.Verbose($"[{SessionKey}] Receiving loop previously stopped.  Not stopping again.");
+                return;
+            }
+
+            try
+            {
+                Logger.Verbose($"[{SessionKey}] Acquiring receive loop lock in StopReceiveLoopAsync.");
+
+                await _receiveLoopLock.WaitAsync();
+
+                if (IsReceiveLoopStopped)
+                {
+                    Logger.Verbose($"[{SessionKey}] Receiving loop already stopped.  Not stopping again.");
+                    return;
+                }
+
+                Logger.Debug($"[{SessionKey}] Cancelling receive loop.");
+
+                _receiveLoopTokenSource?.Cancel();
+
+                IsReceiveLoopStopped = true;
+            }
+            finally
+            {
+                Logger.Verbose($"[{SessionKey}] Releasing receive loop lock in StopReceiveLoopAsync.");
+                _receiveLoopLock.Release();
             }
         }
 
@@ -186,66 +253,69 @@ namespace Energistics.Etp.Native
         /// Sends the specified data.
         /// </summary>
         /// <param name="data">The data.</param>
-        /// <param name="offset">The offset.</param>
-        /// <param name="length">The length.</param>
-        protected override async Task<bool> SendAsync(byte[] data, int offset, int length)
+        protected override async Task<bool> SendAsync(ArraySegment<byte> data)
         {
             CheckDisposed();
 
-            var buffer = new ArraySegment<byte>(data, offset, length);
-
             try
             {
-                await Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None).ConfigureAwait(CaptureAsyncContext);
+                await Socket.SendAsync(data, WebSocketMessageType.Binary, true, CancellationToken.None).ConfigureAwait(CaptureAsyncContext);
                 return true;
             }
             catch (Exception ex)
             {
                 if (ex.ExceptionMeansConnectionTerminated())
                 {
-                    InvokeSocketClosed();
+                    RaiseSocketClosed();
                     return false;
                 }
                 else
                 {
                     Log("Error: {0}", ex.Message);
-                    Logger.Debug(ex);
-                    InvokeSocketError(ex);
+                    Logger.Debug($"[{SessionKey}] Error sending message: {ex}.");
+                    RaiseSocketError(ex);
                 }
                 throw;
             }
         }
 
         /// <summary>
-        /// Sends the specified messages.
+        /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
-        /// <param name="message">The message.</param>
-        protected override async Task<bool> SendAsync(string message)
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        protected override void Dispose(bool disposing)
         {
-            CheckDisposed();
-
-            var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
-
-            try
+            if (disposing)
             {
-                await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None).ConfigureAwait(CaptureAsyncContext);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                if (ex.ExceptionMeansConnectionTerminated())
+                Logger.Verbose($"[{SessionKey}] Disposing EtpSessionNativeBase for {GetType().Name}");
+
+                AsyncContext.Run(() => CancelReceiveLoopAsync());
+
+                try
                 {
-                    InvokeSocketClosed();
-                    return false;
+                    Logger.Verbose($"[{SessionKey}] Waiting for receive loop to stop.");
+
+                    if (_receiveLoopTask != null)
+                        AsyncContext.Run(() => _receiveLoopTask);
                 }
-                else
+                catch (OperationCanceledException)
                 {
-                    Log("Error: {0}", ex.Message);
-                    Logger.Debug(ex);
-                    InvokeSocketError(ex);
                 }
-                throw;
+                finally
+                {
+                    _receiveLoopTask = null;
+                    _receiveLoopTokenSource.Dispose();
+                    _receiveLoopTokenSource = null;
+                }
+
+                Logger.Verbose($"[{SessionKey}] Receive loop stopped.");
+
+                _receiveLoopLock.Dispose();
+
+                Logger.Verbose($"[{SessionKey}] Disposed EtpSessionNativeBase for {GetType().Name}");
             }
+
+            base.Dispose(disposing);
         }
     }
 }

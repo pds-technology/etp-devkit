@@ -16,9 +16,12 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.Discovery
@@ -28,33 +31,16 @@ namespace Energistics.Etp.v12.Protocol.Discovery
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.Discovery.IDiscoveryCustomer" />
-    public class DiscoveryCustomerHandler : Etp12ProtocolHandler, IDiscoveryCustomer
+    public class DiscoveryCustomerHandler : Etp12ProtocolHandler<CapabilitiesCustomer, ICapabilitiesCustomer, CapabilitiesStore, ICapabilitiesStore>, IDiscoveryCustomer
     {
-        private readonly ConcurrentDictionary<long, GetResources> _requests = new ConcurrentDictionary<long, GetResources>();
-
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscoveryCustomerHandler"/> class.
         /// </summary>
-        public DiscoveryCustomerHandler() : base((int)Protocols.Discovery, "customer", "store")
+        public DiscoveryCustomerHandler() : base((int)Protocols.Discovery, Roles.Customer, Roles.Store)
         {
             RegisterMessageHandler<GetResourcesResponse>(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse, HandleGetResourcesResponse);
-        }
-
-        /// <summary>
-        /// The maximum number of response messages the store will return.
-        /// </summary>
-        /// <remarks>Should be set once the session is established.</remarks>
-        public long StoreMaxResponseCount { get; private set; }
-
-        /// <summary>
-        /// Sets <see cref="StoreMaxResponseCount"/>.
-        /// </summary>
-        /// <param name="counterpartCapabilities">The counterpart's protocol capabilities.</param>
-        public override void OnSessionOpened(EtpProtocolCapabilities counterpartCapabilities)
-        {
-            base.OnSessionOpened(counterpartCapabilities);
-
-            StoreMaxResponseCount = counterpartCapabilities.MaxResponseCount ?? long.MaxValue;
+            RegisterMessageHandler<GetResourcesEdgesResponse>(Protocols.Discovery, MessageTypes.Discovery.GetResourcesEdgesResponse, HandleGetResourcesEdgesResponse);
+            RegisterMessageHandler<GetDeletedResourcesResponse>(Protocols.Discovery, MessageTypes.Discovery.GetDeletedResourcesResponse, HandleGetDeletedResourcesResponse);
         }
 
         /// <summary>
@@ -63,75 +49,115 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// <param name="context">The context information.</param>
         /// <param name="scope">The scope.</param>
         /// <param name="storeLastWriteFilter">An optional parameter to filter discovery on a date when an object last changed.</param>
+        /// <param name="activeStatusFilter">if not <c>null</c>, request only objects with a matching active status.</param>
+        /// <param name="includeEdges">if set to <c>true</c>, request edges.</param>
         /// <param name="countObjects">if set to <c>true</c>, request object counts.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long GetResources(ContextInfo context, ContextScopeKind scope, long? storeLastWriteFilter = null, bool countObjects = false)
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetResources> GetResources(ContextInfo context, ContextScopeKind scope, long? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, bool includeEdges = false, bool countObjects = false, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResources);
-
-            var message = new GetResources
+            var body = new GetResources
             {
                 Context = context,
                 Scope = scope,
                 StoreLastWriteFilter = storeLastWriteFilter,
+                ActiveStatusFilter = activeStatusFilter,
+                IncludeEdges = includeEdges,
                 CountObjects = countObjects,
             };
 
-            return Session.SendMessage(header, message,
-                (h, _) => _requests[h.MessageId] = message// Cache requested URIs by message ID
-            );
+            return SendRequest(body, extension: extension);
         }
 
         /// <summary>
-        /// Handles the GetResourcesResponse event from a store.
+        /// Handles the GetResourcesResponse and GetResourcesEdgesResponse events from a store.
         /// </summary>
-        public event ProtocolEventHandler<GetResourcesResponse, GetResources> OnGetResourcesResponse;
+        public event EventHandler<DualResponseEventArgs<GetResources, GetResourcesResponse, GetResourcesEdgesResponse>> OnGetResourcesResponse;
+
+        /// <summary>
+        /// Sends a GetDeletedResources message to a store.
+        /// </summary>
+        /// <param name="dataspaceUri">The dataspace URI.</param>
+        /// <param name="deleteTimeFilter">An optional parameter to filter discovery on a date when an object was deleted.</param>
+        /// <param name="dataObjectTypes">if not <c>null</c> or empty, requests only deleted resources for objects of types found in the list.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetDeletedResources> GetDeletedResources(string dataspaceUri, long? deleteTimeFilter = null, IList<string> dataObjectTypes = null, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetDeletedResources
+            {
+                DataspaceUri = dataspaceUri,
+                DeleteTimeFilter = deleteTimeFilter,
+                DataObjectTypes = dataObjectTypes ?? new List<string>(),
+            };
+
+            return SendRequest(body, extension: extension);
+        }
+
+        /// <summary>
+        /// Handles the GetDeletedResourcesResponse event from a store.
+        /// </summary>
+        public event EventHandler<ResponseEventArgs<GetDeletedResources, GetDeletedResourcesResponse>> OnGetDeletedResourcesResponse;
+
+        /// <summary>
+        /// Handles the ProtocolException message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
+        {
+            base.HandleProtocolException(message);
+
+            var request = TryGetCorrelatedMessage(message);
+            if (request is EtpMessage<GetResources>)
+                HandleResponseMessage(request as EtpMessage<GetResources>, message, OnGetResourcesResponse, HandleGetResourcesResponse);
+            else if (request is EtpMessage<GetDeletedResources>)
+                HandleResponseMessage(request as EtpMessage<GetDeletedResources>, message, OnGetDeletedResourcesResponse, HandleGetDeletedResourcesResponse);
+        }
 
         /// <summary>
         /// Handles the GetResourcesResponse message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The GetResourcesResponse message.</param>
-        protected virtual void HandleGetResourcesResponse(IMessageHeader header, GetResourcesResponse message)
+        protected virtual void HandleGetResourcesResponse(EtpMessage<GetResourcesResponse> message)
         {
-            var request = GetRequest(header);
-            var args = Notify(OnGetResourcesResponse, header, message, request);
-            if (args.Cancel)
-                return;
-
-            HandleGetResourcesResponse(header, message, request);
+            var request = TryGetCorrelatedMessage<GetResources>(message);
+            HandleResponseMessage(request, message, OnGetResourcesResponse, HandleGetResourcesResponse);
         }
 
         /// <summary>
-        /// Handles the GetResourcesResponse message from a store.
+        /// Handles the GetResourcesEdgesResponse message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The GetResourcesResponse message.</param>
-        /// <param name="request">The GetResources request.</param>
-        protected virtual void HandleGetResourcesResponse(IMessageHeader header, GetResourcesResponse message, GetResources request)
+        /// <param name="message">The GetResourcesEdgesResponse message.</param>
+        protected virtual void HandleGetResourcesEdgesResponse(EtpMessage<GetResourcesEdgesResponse> message)
+        {
+            var request = TryGetCorrelatedMessage<GetResources>(message);
+            HandleResponseMessage(request, message, OnGetResourcesResponse, HandleGetResourcesResponse);
+        }
+
+        /// <summary>
+        /// Handles the GetResourcesResponse and GetResourcesEdgesResponse messages from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="DualResponseEventArgs{GetResources, GetResourcesResponse, GetResourcesEdgesResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleGetResourcesResponse(DualResponseEventArgs<GetResources, GetResourcesResponse, GetResourcesEdgesResponse> args)
         {
         }
 
         /// <summary>
-        /// Handle any final cleanup related to the final message in response to a request.
+        /// Handles the GetDeletedResourcesResponse message from a store.
         /// </summary>
-        /// <param name="correlationId">The correlation ID of the request</param>
-        protected override void HandleFinalResponse(long correlationId)
+        /// <param name="message">The GetDeletedResourcesResponse message.</param>
+        protected virtual void HandleGetDeletedResourcesResponse(EtpMessage<GetDeletedResourcesResponse> message)
         {
-            GetResources request;
-            _requests.TryRemove(correlationId, out request);
+            var request = TryGetCorrelatedMessage<GetDeletedResources>(message);
+            HandleResponseMessage(request, message, OnGetDeletedResourcesResponse, HandleGetDeletedResourcesResponse);
         }
 
         /// <summary>
-        /// Gets the request from the internal cache of message IDs.
+        /// Handles the GetDeletedResourcesResponse message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <returns>The request.</returns>
-        private GetResources GetRequest(IMessageHeader header)
+        /// <param name="args">The <see cref="ResponseEventArgs{GetDeletedResources, GetDeletedResourcesResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleGetDeletedResourcesResponse(ResponseEventArgs<GetDeletedResources, GetDeletedResourcesResponse> args)
         {
-            GetResources request;
-            _requests.TryGetValue(header.CorrelationId, out request);
-            return request;
         }
     }
 }

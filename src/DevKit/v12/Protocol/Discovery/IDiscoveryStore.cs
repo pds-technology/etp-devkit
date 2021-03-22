@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -27,25 +28,60 @@ namespace Energistics.Etp.v12.Protocol.Discovery
     /// Describes the interface that must be implemented by the store role of the Discovery protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Discovery, "store", "customer")]
-    public interface IDiscoveryStore : IProtocolHandler
+    [ProtocolRole((int)Protocols.Discovery, Roles.Store, Roles.Customer)]
+    public interface IDiscoveryStore : IProtocolHandler<ICapabilitiesStore, ICapabilitiesCustomer>
     {
-        /// <summary>
-        /// Indicates to a customer the maximum number of response messages a store will return.
-        /// </summary>
-        long MaxResponseCount { get; set; }
-
         /// <summary>
         /// Handles the GetResources event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetResources, IList<Resource>> OnGetResources;
+        event EventHandler<DualListRequestEventArgs<GetResources, Resource, Edge>> OnGetResources;
 
         /// <summary>
         /// Sends a GetResourcesResponse message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long GetResourcesResponse(IMessageHeader request, IList<Resource> resources);
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetResourcesResponse> GetResourcesResponse(IMessageHeader correlatedHeader, IList<Resource> resources, bool isFinalPart = true, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Sends a GetResourcesEdgeResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="edges">The list of <see cref="Edge"/> objects.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetResourcesEdgesResponse> GetResourcesEdgesResponse(IMessageHeader correlatedHeader, IList<Edge> edges, bool isFinalPart = true, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetResourcesResponse and GetResourcesEdgesResponse messagess to a customer.
+        /// If there are no resources, an empty GetResourcesResponse message is sent.
+        /// If there are no edges, no GetResourcesEdgesResponse message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="resourcesExtension">The message header extension for the GetResourcesResponse message.</param>
+        /// <param name="edgesExtension">The message header extension for the GetResourcesEdgesResponse message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetResourcesResponse> GetResourcesResponse(IMessageHeader correlatedHeader, IList<Resource> resources, IList<Edge> edges, bool setFinalPart = true, IMessageHeaderExtension resourcesExtension = null, IMessageHeaderExtension edgesExtension = null);
+
+        /// <summary>
+        /// Handles the GetDeletedResources event from a customer.
+        /// </summary>
+        event EventHandler<ListRequestEventArgs<GetDeletedResources, DeletedResource>> OnGetDeletedResources;
+
+        /// <summary>
+        /// Sends a GetDeletedResourcesResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="deletedResources">The list of <see cref="DeletedResource"/> objects.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetDeletedResourcesResponse> GetDeletedResourcesResponse(IMessageHeader correlatedHeader, IList<DeletedResource> deletedResources, bool isFinalPart = true, IMessageHeaderExtension extension = null);
     }
 }

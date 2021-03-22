@@ -18,6 +18,9 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Energistics.Etp.v11.Protocol.GrowingObject
 {
@@ -31,7 +34,7 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         /// <summary>
         /// Initializes a new instance of the <see cref="GrowingObjectStoreHandler"/> class.
         /// </summary>
-        public GrowingObjectStoreHandler() : base((int)Protocols.GrowingObject, "store", "customer")
+        public GrowingObjectStoreHandler() : base((int)Protocols.GrowingObject, Roles.Store, Roles.Customer)
         {
             RegisterMessageHandler<GrowingObjectGet>(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectGet, HandleGrowingObjectGet);
             RegisterMessageHandler<GrowingObjectGetRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.GrowingObjectGetRange, HandleGrowingObjectGetRange);
@@ -41,102 +44,171 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         }
 
         /// <summary>
-        /// Sends a single list item as a response for Get and GetRange.
+        /// Sends a object fragments as a response for Get and GetRange.
         /// </summary>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="contentType">The content type string.</param>
-        /// <param name="data">The data.</param>
-        /// <param name="correlationId">The correlation identifier.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public long ObjectFragment(string uri, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
+        /// <param name="fragment">The fragment.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public EtpMessage<ObjectFragment> ObjectFragment(IMessageHeader correlatedHeader, ObjectFragment fragment, bool isFinalPart = true)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.ObjectFragment, correlationId, messageFlag);
+            var body = fragment;
 
-            var message = new ObjectFragment
+            return SendResponse(body, correlatedHeader, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of ObjectFragment messages to a customer for the list of <see cref="ObjectFragmentResponse"/> objects.
+        /// If there are no fragments in the list, an Acknowledge message is sent with the NoData flag sent.
+        /// If there are fragments in the list and acknowledge is requested, an Acknowledge message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="fragments">The fragments.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.  If there are no fragments in the list, a placeholder message with a header matching the sent Acknowledge is returned.</returns>
+        public virtual EtpMessage<ObjectFragment> ObjectFragments(IMessageHeader correlatedHeader, IList<ObjectFragment> fragments, bool setFinalPart = true)
+        {
+            if (fragments == null || fragments.Count == 0)
             {
-                Uri = uri,
-                ContentType = contentType,
-                ContentEncoding = "text/xml",
-                Data = data
-            };
+                var ack = Acknowledge(correlatedHeader, true);
+                if (ack == null)
+                    return null;
 
-            return Session.SendMessage(header, message);
+                var header = CreateMessageHeader<ObjectFragment>();
+                header.MessageFlags = ack.Header.MessageFlags;
+                header.MessageId = ack.Header.MessageId;
+                header.CorrelationId = ack.Header.CorrelationId;
+                header.Timestamp = ack.Header.Timestamp;
+                return new EtpMessage<ObjectFragment>(header, new ObjectFragment());
+            }
+            else if (correlatedHeader.IsAcknowledgeRequested())
+            {
+                Acknowledge(correlatedHeader);
+            }
+
+            EtpMessage<ObjectFragment> message = null;
+
+            for (int i = 0; i < fragments?.Count; i++)
+            {
+                var ret = ObjectFragment(correlatedHeader, fragments[i], isFinalPart: (i == fragments.Count - 1 && setFinalPart));
+                if (ret == null)
+                    return null;
+                message = message ?? ret;
+            }
+
+            return message;
         }
 
         /// <summary>
         /// Handles the GrowingObjectGet event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GrowingObjectGet> OnGrowingObjectGet;
+        public event EventHandler<RequestEventArgs<GrowingObjectGet, ObjectFragment>> OnGrowingObjectGet;
 
         /// <summary>
         /// Handles the GrowingObjectGetRange event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GrowingObjectGetRange> OnGrowingObjectGetRange;
+        public event EventHandler<ListRequestEventArgs<GrowingObjectGetRange, ObjectFragment>> OnGrowingObjectGetRange;
 
         /// <summary>
         /// Handles the GrowingObjectPut event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GrowingObjectPut> OnGrowingObjectPut;
+        public event EventHandler<VoidRequestEventArgs<GrowingObjectPut>> OnGrowingObjectPut;
 
         /// <summary>
         /// Handles the GrowingObjectDelete event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GrowingObjectDelete> OnGrowingObjectDelete;
+        public event EventHandler<VoidRequestEventArgs<GrowingObjectDelete>> OnGrowingObjectDelete;
 
         /// <summary>
         /// Handles the GrowingObjectDeleteRange event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GrowingObjectDeleteRange> OnGrowingObjectDeleteRange;
+        public event EventHandler<VoidRequestEventArgs<GrowingObjectDeleteRange>> OnGrowingObjectDeleteRange;
 
         /// <summary>
-        /// Handles the GrowingObjectGet message from a store.
+        /// Handles the GrowingObjectGet message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The GrowingObjectGet message.</param>
-        protected virtual void HandleGrowingObjectGet(IMessageHeader header, GrowingObjectGet message)
+        protected virtual void HandleGrowingObjectGet(EtpMessage<GrowingObjectGet> message)
         {
-            Notify(OnGrowingObjectGet, header, message);
+            HandleRequestMessage(message, OnGrowingObjectGet, HandleGrowingObjectGet,
+                responseMethod: (args) => ObjectFragment(args.Request?.Header, args.Response));
         }
 
         /// <summary>
-        /// Handles the GrowingObjectGetRange message from a store.
+        /// Handles the GrowingObjectGet message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
+        /// <param name="args">The <see cref="RequestEventArgs{GrowingObjectGet, ObjectFragment}"/> instance containing the event data.</param>
+        protected virtual void HandleGrowingObjectGet(RequestEventArgs<GrowingObjectGet, ObjectFragment> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GrowingObjectGetRange message from a customer.
+        /// </summary>
         /// <param name="message">The GrowingObjectGetRange message.</param>
-        protected virtual void HandleGrowingObjectGetRange(IMessageHeader header, GrowingObjectGetRange message)
+        protected virtual void HandleGrowingObjectGetRange(EtpMessage<GrowingObjectGetRange> message)
         {
-            Notify(OnGrowingObjectGetRange, header, message);
+            HandleRequestMessage(message, OnGrowingObjectGetRange, HandleGrowingObjectGetRange,
+                responseMethod: (args) => ObjectFragments(args.Request?.Header, args.Responses, setFinalPart: !args.HasErrors));
         }
 
         /// <summary>
-        /// Handles the GrowingObjectPut message from a store.
+        /// Handles the GrowingObjectGetRange message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
+        /// <param name="args">The <see cref="ListRequestEventArgs{GrowingObjectGetRange, ObjectFragment}"/> instance containing the event data.</param>
+        protected virtual void HandleGrowingObjectGetRange(ListRequestEventArgs<GrowingObjectGetRange, ObjectFragment> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GrowingObjectPut message from a customer.
+        /// </summary>
         /// <param name="message">The GrowingObjectPut message.</param>
-        protected virtual void HandleGrowingObjectPut(IMessageHeader header, GrowingObjectPut message)
+        protected virtual void HandleGrowingObjectPut(EtpMessage<GrowingObjectPut> message)
         {
-            Notify(OnGrowingObjectPut, header, message);
+            HandleRequestMessage(message, OnGrowingObjectPut, HandleGrowingObjectPut);
         }
 
         /// <summary>
-        /// Handles the GrowingObjectDelete message from a store.
+        /// Handles the GrowingObjectPut message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
+        /// <param name="args">The <see cref="VoidRequestEventArgs{GrowingObjectPut}"/> instance containing the event data.</param>
+        protected virtual void HandleGrowingObjectPut(VoidRequestEventArgs<GrowingObjectPut> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GrowingObjectDelete message from a customer.
+        /// </summary>
         /// <param name="message">The GrowingObjectDelete message.</param>
-        protected virtual void HandleGrowingObjectDelete(IMessageHeader header, GrowingObjectDelete message)
+        protected virtual void HandleGrowingObjectDelete(EtpMessage<GrowingObjectDelete> message)
         {
-            Notify(OnGrowingObjectDelete, header, message);
+            HandleRequestMessage(message, OnGrowingObjectDelete, HandleGrowingObjectDelete);
         }
 
         /// <summary>
-        /// Handles the GrowingObjectDeleteRange message from a store.
+        /// Handles the GrowingObjectDelete message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The GrowingObjectDeleteRange message.</param>
-        protected virtual void HandleGrowingObjectDeleteRange(IMessageHeader header, GrowingObjectDeleteRange message)
+        /// <param name="args">The <see cref="VoidRequestEventArgs{GrowingObjectDelete}"/> instance containing the event data.</param>
+        protected virtual void HandleGrowingObjectDelete(VoidRequestEventArgs<GrowingObjectDelete> args)
         {
-            Notify(OnGrowingObjectDeleteRange, header, message);
+        }
+
+        /// <summary>
+        /// Handles the GrowingObjectDeleteRange message from a customer.
+        /// </summary>
+        /// <param name="message">The GrowingObjectDeleteRange message.</param>
+        protected virtual void HandleGrowingObjectDeleteRange(EtpMessage<GrowingObjectDeleteRange> message)
+        {
+            HandleRequestMessage(message, OnGrowingObjectDeleteRange, HandleGrowingObjectDeleteRange);
+        }
+
+        /// <summary>
+        /// Handles the GrowingObjectDeleteRange message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="VoidRequestEventArgs{GrowingObjectDeleteRange}"/> instance containing the event data.</param>
+        protected virtual void HandleGrowingObjectDeleteRange(VoidRequestEventArgs<GrowingObjectDeleteRange> args)
+        {
         }
     }
 }

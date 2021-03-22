@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using log4net;
+using Nito.AsyncEx;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
 using Titanium.Web.Proxy.Models;
@@ -60,7 +61,7 @@ namespace Energistics.Etp
 
         public void Start()
         {
-            StartAsync().Wait();
+            AsyncContext.Run(() => StartAsync());
         }
 
         public async Task StartAsync()
@@ -82,7 +83,7 @@ namespace Energistics.Etp
 
         public void Stop()
         {
-            StopAsync().Wait();
+            AsyncContext.Run(() => StopAsync());
         }
 
         public async Task StopAsync()
@@ -93,11 +94,13 @@ namespace Energistics.Etp
 
         #region Redirects to Proxied Server
 
-        public Uri Uri { get { return _proxiedServer.Uri; } }
+        public Uri Uri => _proxiedServer.Uri;
 
-        public bool IsRunning { get { return _proxiedServer.IsRunning; } }
+        public bool IsRunning => _proxiedServer.IsRunning;
 
-        public IEtpServerManager ServerManager { get { return _proxiedServer.ServerManager; } }
+        public IEtpServerManager ServerManager => _proxiedServer.ServerManager;
+
+        public EtpWebServerDetails Details => _proxiedServer.Details;
 
         public void Dispose()
         {

@@ -18,6 +18,7 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using System;
 
 namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
 {
@@ -25,7 +26,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
     /// Defines the interface that must be implemented by the consumer role of the ChannelDataFrame protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.ChannelDataFrame, "consumer", "producer")]
+    [ProtocolRole((int)Protocols.ChannelDataFrame, Roles.Consumer, Roles.Producer)]
     public interface IChannelDataFrameConsumer : IProtocolHandler
     {
         /// <summary>
@@ -34,17 +35,12 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// <param name="uri">The URI.</param>
         /// <param name="fromIndex">From index.</param>
         /// <param name="toIndex">To index.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long RequestChannelData(string uri, long? fromIndex = null, long? toIndex = null);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<RequestChannelData> RequestChannelData(string uri, long? fromIndex = null, long? toIndex = null);
 
         /// <summary>
-        /// Handles the ChannelMetadata event from a producer.
+        /// Handles the ChannelMetadata or ChannelDataFrameSet event from a producer.
         /// </summary>
-        event ProtocolEventHandler<ChannelMetadata> OnChannelMetadata;
-
-        /// <summary>
-        /// Handles the ChannelDataFrameSet event from a producer.
-        /// </summary>
-        event ProtocolEventHandler<ChannelDataFrameSet> OnChannelDataFrameSet;
+        event EventHandler<DualResponseEventArgs<RequestChannelData, ChannelMetadata, ChannelDataFrameSet>> OnRequestChannelDataResponse;
     }
 }

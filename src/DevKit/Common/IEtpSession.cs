@@ -18,10 +18,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.Common.Datatypes.Object;
+using Energistics.Etp.Common.Protocol.Core;
 
 namespace Energistics.Etp.Common
 {
@@ -29,12 +30,17 @@ namespace Energistics.Etp.Common
     /// Defines the properties and methods needed to manage an ETP session.
     /// </summary>
     /// <seealso cref="System.IDisposable" />
-    public interface IEtpSession : IDisposable
+    public interface IEtpSession : IDisposable, IEtpSessionCapabilitiesRegistrar
     {
         /// <summary>
         /// Gets the ETP version supported by this session.
         /// </summary>
-        EtpVersion SupportedVersion { get; }
+        EtpVersion EtpVersion { get; }
+
+        /// <summary>
+        /// Gets the encoding used by this session (binary or json).
+        /// </summary>
+        EtpEncoding Encoding { get; }
 
         /// <summary>
         /// Gets the version specific ETP adapter.
@@ -50,51 +56,62 @@ namespace Energistics.Etp.Common
         /// Gets a value indicating whether the underlying websocket connection is open.
         /// </summary>
         /// <value>
-        ///   <c>true</c> if this instance is open; otherwise, <c>false</c>.
+        ///   <c>true</c> if the underlying websocket is open; otherwise, <c>false</c>.
         /// </value>
-        bool IsOpen { get; }
+        bool IsWebSocketOpen { get; }
 
         /// <summary>
-        /// Gets the name of the client application.
+        /// Gets a value indicating whether the session is open.
         /// </summary>
-        /// <value>The name of the client application.</value>
-        string ClientApplicationName { get; }
+        /// <value>
+        ///   <c>true</c> if the session is open; otherwise, <c>false</c>.
+        /// </value>
+        bool IsSessionOpen { get; }
 
         /// <summary>
-        /// Gets the client application version.
+        /// Gets a value indicating whether the synchronization context should be captured for async tasks.
         /// </summary>
-        /// <value>The client application version.</value>
-        string ClientApplicationVersion { get; }
+        bool CaptureAsyncContext { get; }
 
         /// <summary>
-        /// Gets or sets the client instance identifier.
+        /// Gets this instance's info.
         /// </summary>
-        /// <value>The client instance identifier.</value>
-        string ClientInstanceId { get; }
+        EtpEndpointInfo InstanceInfo { get; }
 
         /// <summary>
-        /// Gets the name of the server application.
+        /// Gets the counterpart's info.
         /// </summary>
-        /// <value>The name of the server application.</value>
-        string ServerApplicationName { get; }
+        EtpEndpointInfo CounterpartInfo { get; }
 
         /// <summary>
-        /// Gets the server application version.
+        /// Gets the client info.
         /// </summary>
-        /// <value>The server application version.</value>
-        string ServerApplicationVersion { get; }
+        EtpEndpointInfo ClientInfo { get; }
 
         /// <summary>
-        /// Gets or sets the server instance identifier.
+        /// Gets the server info.
         /// </summary>
-        /// <value>The server instance identifier.</value>
-        string ServerInstanceId { get; }
+        EtpEndpointInfo ServerInfo { get; }
 
         /// <summary>
-        /// Gets the instance key.
+        /// Gets this instance's details.
         /// </summary>
-        /// <value>The instance key, which is used to generate the client or server instance identifier.</value>
-        string InstanceKey { get; }
+        IEndpointDetails InstanceDetails { get; }
+
+        /// <summary>
+        /// Gets the counterpart's details.
+        /// </summary>
+        IEndpointDetails CounterpartDetails { get; }
+
+        /// <summary>
+        /// Gets the client details.
+        /// </summary>
+        IEndpointDetails ClientDetails { get; }
+
+        /// <summary>
+        /// Gets the server details.
+        /// </summary>
+        IEndpointDetails ServerDetails { get; }
 
         /// <summary>
         /// Gets the session key.
@@ -106,91 +123,7 @@ namespace Energistics.Etp.Common
         /// Gets the session identifier.
         /// </summary>
         /// <value>The session identifier.</value>
-        string SessionId { get; }
-
-        /// <summary>
-        /// This is the largest data object the store or customer can get or put. A store or customer can optionally specify these for protocols that handle data objects.
-        /// </summary>
-        long InstanceMaxDataObjectSize { get; }
-
-        /// <summary>
-        /// This is the largest part size the store or customer can get or put. A store can optionally specify this for protocols that handle object parts. Property of numberofbytes.
-        /// </summary>
-        long InstanceMaxPartSize { get; }
-
-        /// <summary>
-        /// Maximum time interval between subsequent messages in the SAME multipart request or response.
-        /// </summary>
-        long InstanceMaxMultipartMessageTimeInterval { get; }
-
-        /// <summary>
-        /// Maximum size allowed for a WebSocket frame (which is determined by the library you use to implement WebSocket). WebSocket is the transport protocol used by ETP.
-        /// </summary>
-        long InstanceMaxWebSocketFramePayloadSize { get; }
-
-        /// <summary>
-        /// Maximum size allowed for a WebSocket message (which is composed of multiple WebSocket frames, which is determined by the library you use to implement WebSocket). WebSocket is the transport protocol used by ETP.
-        /// </summary>
-        long InstanceMaxWebSocketMessagePayloadSize { get; }
-
-        /// <summary>
-        /// This is the largest part size the store or customer can get or put. A store can optionally specify this for protocols that handle object parts. Property of numberofbytes.
-        /// </summary>
-        bool InstanceSupportsAlternateRequestUris { get; }
-
-        /// <summary>
-        /// This is the largest data object the store or customer can get or put. A store or customer can optionally specify these for protocols that handle data objects.
-        /// </summary>
-        long CounterpartMaxDataObjectSize { get; }
-
-        /// <summary>
-        /// This is the largest part size the store or customer can get or put. A store can optionally specify this for protocols that handle object parts. Property of numberofbytes.
-        /// </summary>
-        long CounterpartMaxPartSize { get; }
-
-        /// <summary>
-        /// Maximum time interval between subsequent messages in the SAME multipart request or response.
-        /// </summary>
-        long CounterpartMaxMultipartMessageTimeInterval { get; }
-
-        /// <summary>
-        /// Maximum size allowed for a WebSocket frame (which is determined by the library you use to implement WebSocket). WebSocket is the transport protocol used by ETP.
-        /// </summary>
-        long CounterpartMaxWebSocketFramePayloadSize { get; }
-
-        /// <summary>
-        /// Maximum size allowed for a WebSocket message (which is composed of multiple WebSocket frames, which is determined by the library you use to implement WebSocket). WebSocket is the transport protocol used by ETP.
-        /// </summary>
-        long CounterpartMaxWebSocketMessagePayloadSize { get; }
-
-        /// <summary>
-        /// This is the largest part size the store or customer can get or put. A store can optionally specify this for protocols that handle object parts. Property of numberofbytes.
-        /// </summary>
-        bool CounterpartSupportsAlternateRequestUris { get; }
-
-        /// <summary>
-        /// Gets the protocols supported by this instance.
-        /// </summary>
-        /// <returns>A list of protocols supported by this instance.</returns>
-        IReadOnlyList<EtpSessionProtocol> InstanceSupportedProtocols { get; }
-
-        /// <summary>
-        /// Gets or sets the types of data objects supported by this instance.
-        /// </summary>
-        /// <returns>A list of data object types supported by this instance.</returns>
-        IList<IDataObjectType> InstanceSupportedDataObjects { get; set; }
-
-        /// <summary>
-        /// Gets the types of compression supported by this instance.
-        /// </summary>
-        /// <returns>A list of compression types supported by this instance.</returns>
-        IList<string> InstanceSupportedCompression { get; set; }
-
-        /// <summary>
-        /// Gets the formats supported by this instance.
-        /// </summary>
-        /// <returns>A list of formats supported by this instance.</returns>
-        IList<string> InstanceSupportedFormats { get; set; }
+        Guid SessionId { get; }
 
         /// <summary>
         /// Gets the collection of WebSocket or HTTP headers.
@@ -212,13 +145,13 @@ namespace Energistics.Etp.Common
         /// Gets or sets the negotiated list of supported protocols for this session.
         /// </summary>
         /// <value>The negotiated list of supported protocols for this session.</value>
-        IReadOnlyList<EtpSessionProtocol> SessionSupportedProtocols { get; }
+        IReadOnlyDictionary<int, ISessionProtocol> SessionSupportedProtocols { get; }
 
         /// <summary>
         /// Gets or sets the negotiated list of supported data objects for this session.
         /// </summary>
         /// <value>The negotiated list of supported data objects for this session.</value>
-        IReadOnlyList<IDataObjectType> SessionSupportedDataObjects { get; }
+        ISessionSupportedDataObjectCollection SessionSupportedDataObjects { get; }
 
         /// <summary>
         /// Gets or sets the negotiated compression type for this session.
@@ -264,94 +197,116 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Occurs when the WebSocket has an error.
         /// </summary>
-        event EventHandler<Exception> SocketError;
+        event EventHandler<ErrorEventArgs> SocketError;
 
         /// <summary>
-        /// Initializes the instance capabilities supported by the session.
+        /// Event raised when the session is opened.
         /// </summary>
-        /// <param name="capabilities">The instances's capabilities.</param>
-        void InitializeInstanceCapabilities(EtpEndpointCapabilities capabilities);
+        event EventHandler<SessionOpenedEventArgs> SessionOpened;
 
         /// <summary>
-        /// Gets the capabilities supported by the session.
+        /// Sends an Acknowledge message in response to the message associated with the correlation header.
         /// </summary>
-        /// <param name="capabilities">The instances's capabilities.</param>
-        void GetInstanceCapabilities(EtpEndpointCapabilities capabilities);
+        /// <param name="protocol">The protocol to send the acknowledge message on.</param>
+        /// <param name="correlatedHeader">The message header the acknowledge message is correlated with.</param>
+        /// <param name="isNoData">Whether or not the acknowledge message should have the NoData flag set.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<IAcknowledge> Acknowledge(int protocol, IMessageHeader correlatedHeader, bool isNoData = false, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Initialize the set of supported protocols from the registered handlers.
+        /// Constructs a new <see cref="IErrorInfo"/> instance compatible with the session.
         /// </summary>
-        void InitializeInstanceSupportedProtocols();
+        /// <returns>The constructed error info.</returns>
+        IErrorInfo ErrorInfo();
 
         /// <summary>
-        /// Initialize the session based on details from the counterpart.
-        /// After this, the protocols, objects, compression, formats and capabilities that will be used in the session will be initialized.
+        /// Sends a ProtocolException message with the specified exception details.
         /// </summary>
-        /// <param name="sessionId">The session ID</param>
-        /// <param name="counterpartApplicationName">The counterpart's application name.</param>
-        /// <param name="counterpartApplicationVersion">The counterpart's application version.</param>
-        /// <param name="counterpartInstanceId">The counterpart's instance ID.</param>
-        /// <param name="counterpartSupportedProtocols">The counterpart's supported protocols.</param>
-        /// <param name="counterpartSupportedDataObjects">The counterpart's supported objects.</param>
-        /// <param name="counterpartSupportedCompression">The counterpart's supported compression.</param>
-        /// <param name="counterpartSupportedFormats">The counterpart's supported formats.</param>
-        /// <param name="counterpartEndpointCapabilities">The counterpart's endpoint capabilities.</param>
-        /// <returns><c>true</c> if the session was successfully initialized; <c>false</c> otherwise.</returns>
-        bool InitializeSession(string sessionId, string counterpartApplicationName, string counterpartApplicationVersion, string counterpartInstanceId, IReadOnlyList<ISupportedProtocol> counterpartSupportedProtocols, IReadOnlyList<IDataObjectType> counterpartSupportedDataObjects, IReadOnlyList<string> counterpartSupportedCompression, IReadOnlyList<string> counterpartSupportedFormats, EtpEndpointCapabilities counterpartEndpointCapabilities);
+        /// <param name="exception">The ETP exception.</param>
+        /// <param name="isFinalPart">Whether or not the protocol exception is the final part in a multi-part message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<IProtocolException> ProtocolException(EtpException exception, bool isFinalPart = false, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Called when the ETP session is opened.
+        /// Sends a ProtocolException message with the specified exception details.
         /// </summary>
-        /// <param name="openedSuccessfully"><c>true</c> if the session opened without errors; <c>false</c> if there were errors when opening the session.</param>
-        void OnSessionOpened(bool openedSuccessfully);
+        /// <param name="protocol">The protocol to send the protocol exception on.</param>
+        /// <param name="error">The error in the protocol exception.</param>
+        /// <param name="correlatedHeader">The message header the protocol exception is correlated with, if any.</param>
+        /// <param name="isFinalPart">Whether or not the protocol exception is the final part in a multi-part message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<IProtocolException> ProtocolException(int protocol, IErrorInfo error, IMessageHeader correlatedHeader = null, bool isFinalPart = false, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Event raised when the session is opened with a paremeters indicating whether there were errors when opening the session and the list of supported protocols for the session.
+        /// Sends a ProtocolException message(s) with the specified exception details.
         /// </summary>
-        event Action<bool> SessionOpened;
+        /// <param name="protocol">The protocol to send the protocol exception on.</param>
+        /// <param name="errors">The errors in the protocol exception.</param>
+        /// <param name="correlatedHeader">The message header the protocol exception is correlated with, if any.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        EtpMessage<IProtocolException> ProtocolException(int protocol, IDictionary<string, IErrorInfo> errors, IMessageHeader correlatedHeader = null, bool setFinalPart = true, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Called when the ETP session is closed.
+        /// Sends a ProtocolException message with the specified exception details.
         /// </summary>
-        /// <param name="closedSuccessfully"><c>true</c> if the session closed without errors; <c>false</c> if there were errors when closing the session.</param>
-        void OnSessionClosed(bool closedSuccessfully);
+        /// <param name="protocol">The protocol to send the protocol exception on.</param>
+        /// <param name="exception">The protocol exception body to send.</param>
+        /// <param name="correlatedHeader">The message header the protocol exception is correlated with, if any.</param>
+        /// <param name="isFinalPart">Whether or not the protocol exception is the final part in a multi-part message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<IProtocolException> ProtocolException(int protocol, IProtocolException exception, IMessageHeader correlatedHeader = null, bool isFinalPart = false, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Event raised when the session is closed with a paremeter indicating whether there were errors when closing the session.
+        /// Occurs when a ProtocolException message is received for any protocol.
         /// </summary>
-        event Action<bool> SessionClosed;
+        event EventHandler<MessageEventArgs<IProtocolException>> OnProtocolException;
 
         /// <summary>
-        /// Called when WebSocket data is received.
+        /// Sends a CloseSession message to the session's counterpart.
         /// </summary>
-        /// <param name="data">The data.</param>
-        void OnDataReceived(byte[] data);
+        /// <param name="reason">The reason.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ICloseSession> CloseSession(string reason = null, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Called when a WebSocket message is received.
+        /// Event raised when the session is closed.
         /// </summary>
-        /// <param name="message">The message.</param>
-        void OnMessageReceived(string message);
+        event EventHandler<SessionClosedEventArgs> SessionClosed;
+
+        /// <summary>
+        /// Event raised when binary WebSocket data is received.
+        /// </summary>
+        event EventHandler<DataReceivedEventArgs> DataReceived;
+
+        /// <summary>
+        /// Event raised when text WebSocket data is received.
+        /// </summary>
+        event EventHandler<MessageReceivedEventArgs> MessageReceived;
 
         /// <summary>
         /// Synchronously sends the message.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="header">The header.</param>
-        /// <param name="body">The body.</param>
+        /// <typeparam name="T">The type of the message body</typeparam>
+        /// <param name="message">The message.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long SendMessage<T>(IMessageHeader header, T body, Action<IMessageHeader, T> onBeforeSend = null) where T : ISpecificRecord;
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<T> SendMessage<T>(EtpMessage<T> message, Action<EtpMessage<T>> onBeforeSend = null) where T : ISpecificRecord;
 
         /// <summary>
         /// Asynchronously sends the message.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="header">The header.</param>
-        /// <param name="body">The body.</param>
+        /// <typeparam name="T">The type of the message body</typeparam>
+        /// <param name="message">The message.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        Task<long> SendMessageAsync<T>(IMessageHeader header, T body, Action<IMessageHeader, T> onBeforeSend = null) where T : ISpecificRecord;
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        Task<EtpMessage<T>> SendMessageAsync<T>(EtpMessage<T> message, Action<EtpMessage<T>> onBeforeSend = null) where T : ISpecificRecord;
 
         /// <summary>
         /// Gets the registered handler for the specified protocol.
@@ -385,20 +340,6 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="reason">The reason.</param>
         Task CloseWebSocketAsync(string reason);
-
-        /// <summary>
-        /// Registers a protocol handler for the specified contract type.
-        /// </summary>
-        /// <typeparam name="TContract">The type of the contract.</typeparam>
-        /// <typeparam name="THandler">The type of the handler.</typeparam>
-        void Register<TContract, THandler>() where TContract : IProtocolHandler where THandler : TContract;
-
-        /// <summary>
-        /// Registers a protocol handler factory for the specified contract type.
-        /// </summary>
-        /// <typeparam name="TContract">The type of the contract.</typeparam>
-        /// <param name="factory">The factory.</param>
-        void Register<TContract>(Func<TContract> factory) where TContract : IProtocolHandler;
 
         /// <summary>
         /// Sets the context object of type <typeparamref name="T"/> for this session.

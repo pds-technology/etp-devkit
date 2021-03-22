@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -31,104 +30,112 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.StoreQuery.IStoreQueryStore" />
-    public class StoreQueryStoreHandler : Etp12ProtocolHandler, IStoreQueryStore
+    public class StoreQueryStoreHandler : Etp12ProtocolHandler<CapabilitiesStore, ICapabilitiesStore, CapabilitiesCustomer, ICapabilitiesCustomer>, IStoreQueryStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreQueryStoreHandler"/> class.
         /// </summary>
-        public StoreQueryStoreHandler() : base((int)Protocols.StoreQuery, "store", "customer")
+        public StoreQueryStoreHandler() : base((int)Protocols.StoreQuery, Roles.Store, Roles.Customer)
         {
-            MaxResponseCount = EtpSettings.DefaultMaxResponseCount;
-
             RegisterMessageHandler<FindDataObjects>(Protocols.StoreQuery, MessageTypes.StoreQuery.FindDataObjects, HandleFindDataObjects);
-        }
-
-        /// <summary>
-        /// Gets the maximum response count.
-        /// </summary>
-        public long MaxResponseCount { get; set; }
-
-        /// <summary>
-        /// Gets the capabilities supported by the protocol handler.
-        /// </summary>
-        /// <param name="capabilities">The protocol's capabilities.</param>
-        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
-        {
-            base.GetCapabilities(capabilities);
-
-            capabilities.MaxResponseCount = MaxResponseCount;
         }
 
         /// <summary>
         /// Handles the FindDataObjects event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<FindDataObjects, DataObjectResponse> OnFindDataObjects;
+        public event EventHandler<DualListRequestWithContextEventArgs<FindDataObjects, DataObject, Chunk, ResponseContext>> OnFindDataObjects;
 
         /// <summary>
         /// Sends a FindDataObjectsResponse message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="objects">The list of <see cref="DataObject" /> objects.</param>
-        /// <param name="sortOrder">The sort order.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long FindDataObjectsResponse(IMessageHeader request, IList<DataObject> objects, string sortOrder)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="dataObjects">The list of <see cref="DataObject"/> objects.</param>
+        /// <param name="serverSortOrder">The server sort order.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<FindDataObjectsResponse> FindDataObjectsResponse(IMessageHeader correlatedHeader, IList<DataObject> dataObjects, string serverSortOrder, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindDataObjectsResponse, request.MessageId);
-            var response = new FindDataObjectsResponse
+            var body = new FindDataObjectsResponse
             {
-                ServerSortOrder = sortOrder ?? string.Empty
+                DataObjects = dataObjects ?? new List<DataObject>(),
+                ServerSortOrder = serverSortOrder,
             };
 
-            return SendMultipartResponse(header, response, objects, (m, i) => m.DataObjects = i);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
         }
 
         /// <summary>
-        /// Sends a Chunk message to a customer.
+        /// Sends a Chunk message to a customer as part of a multi-part FindDataObjectsResponse message.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="blobId">The blob ID.</param>
         /// <param name="data">The chunk data.</param>
-        /// <param name="messageFlags">The message flags.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long Chunk(IMessageHeader request, Guid blobId, byte[] data, MessageFlags messageFlags = MessageFlags.MultiPartAndFinalPart)
+        /// <param name="final">Whether or not this is the final chunk for the blob ID.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<Chunk> FindDataObjectsResponseChunk(IMessageHeader correlatedHeader, Guid blobId, byte[] data, bool final, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.Store, MessageTypes.StoreQuery.Chunk, request.MessageId, messageFlags);
-
-            var message = new Chunk
+            var body = new Chunk
             {
-                BlobId = blobId.ToUuid(),
+                BlobId = blobId.ToUuid<Uuid>(),
                 Data = data,
+                Final = final,
             };
 
-            return Session.SendMessage(header, message);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of FindDataObjectsResponse and Chunk messages to a customer.
+        /// If there are no data objects, an empty FindDataObjectsResponse message is sent.
+        /// If there are no chunks, no Chunk message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="dataObjects">The data objects.</param>
+        /// <param name="serverSortOrder">The server sort order.</param>
+        /// <param name="chunks">The chunks.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetDataObjectsResponse message.</param>
+        /// <param name="chunkExtensions">The message header extensions for the Chunk messages.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<FindDataObjectsResponse> FindDataObjectsResponse(IMessageHeader correlatedHeader, IList<DataObject> dataObjects, string serverSortOrder, IList<Chunk> chunks = null, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IList<IMessageHeaderExtension> chunkExtensions = null)
+        {
+            var message = FindDataObjectsResponse(correlatedHeader, dataObjects, serverSortOrder, isFinalPart: ((chunks == null || chunks.Count == 0) && setFinalPart), extension: responseExtension);
+            if (message == null)
+                return null;
+
+            if (chunks?.Count > 0)
+            {
+                for (int i = 0; i < chunks.Count; i++)
+                {
+                    var ret = FindDataObjectsResponseChunk(correlatedHeader, chunks[i].BlobIdGuid.UuidGuid, chunks[i].Data, chunks[i].Final, isFinalPart: (i == chunks.Count - 1 && setFinalPart), extension: i < chunkExtensions?.Count ? chunkExtensions[i] : null);
+                    if (ret == null)
+                        return null;
+                }
+            }
+
+            return message;
         }
 
         /// <summary>
         /// Handles the FindDataObjects message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The FindDataObjects message.</param>
-        protected virtual void HandleFindDataObjects(IMessageHeader header, FindDataObjects message)
+        protected virtual void HandleFindDataObjects(EtpMessage<FindDataObjects> message)
         {
-            var args = Notify(OnFindDataObjects, header, message, new DataObjectResponse());
-            if (args.Cancel)
-                return;
-
-            if (!HandleFindDataObjects(header, message, args.Context))
-                return;
-
-            FindDataObjectsResponse(header, args.Context.DataObjects, args.Context.ServerSortOrder);
+            HandleRequestMessage(message, OnFindDataObjects, HandleFindDataObjects,
+                responseMethod: (args) => FindDataObjectsResponse(args.Request?.Header, args.Responses1, args.Context?.ServerSortOrder, args.Responses2, setFinalPart: !args.HasErrors, responseExtension: args.Response1Extension, chunkExtensions: args.Response2Extensions));
         }
 
         /// <summary>
         /// Handles the FindDataObjects message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        protected virtual bool HandleFindDataObjects(IMessageHeader header, FindDataObjects message, DataObjectResponse response)
+        /// <param name="args">The <see cref="DualListRequestWithContextEventArgs{FindDataObjects, DataObject, Chunk, ResponseContext}"/> instance containing the event data.</param>
+        protected virtual void HandleFindDataObjects(DualListRequestWithContextEventArgs<FindDataObjects, DataObject, Chunk, ResponseContext> args)
         {
-            return true;
         }
     }
 }

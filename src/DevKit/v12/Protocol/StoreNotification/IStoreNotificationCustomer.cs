@@ -28,51 +28,76 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
     /// Defines the interface that must be implemented by the customer role of the store notification protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.StoreNotification, "customer", "store")]
-    public interface IStoreNotificationCustomer : IProtocolHandler
+    [ProtocolRole((int)Protocols.StoreNotification, Roles.Customer, Roles.Store)]
+    public interface IStoreNotificationCustomer : IProtocolHandler<ICapabilitiesCustomer, ICapabilitiesStore>
     {
         /// <summary>
         /// Sends a SubscribeNotifications message to a store.
         /// </summary>
-        /// <param name="requests">The subscription requests.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long SubscribeNotifications(IList<SubscriptionInfo> requests);
+        /// <param name="request">The subscription requests.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<SubscribeNotifications> SubscribeNotifications(IDictionary<string, SubscriptionInfo> requests, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Sends a SubscribeNotifications message to a store.
+        /// </summary>
+        /// <param name="request">The subscription requests.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<SubscribeNotifications> SubscribeNotifications(IList<SubscriptionInfo> request, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Handles the SubscribeNotificationsResponse event from a store.
+        /// </summary>
+        event EventHandler<ResponseEventArgs<SubscribeNotifications, SubscribeNotificationsResponse>> OnSubscribeNotificationsResponse;
+
+        /// <summary>
+        /// Handles the UnsolicitedStoreNotifications event from a store.
+        /// </summary>
+        event EventHandler<FireAndForgetEventArgs<UnsolicitedStoreNotifications>> OnUnsolicitedStoreNotifications;
 
         /// <summary>
         /// Handles the ObjectChanged event from a store.
         /// </summary>
-        event ProtocolEventHandler<ObjectChanged> OnObjectChanged;
+        event EventHandler<NotificationEventArgs<SubscriptionInfo, ObjectChanged>> OnObjectChanged;
 
         /// <summary>
-        /// Handles the ObjectDeleted event from a store.
+        /// Handles the Chunk event from a store when sent as part of an ObjectChanged message.
         /// </summary>
-        event ProtocolEventHandler<ObjectDeleted> OnObjectDeleted;
+        event EventHandler<NotificationWithDataEventArgs<SubscriptionInfo, ObjectChanged, Chunk>> OnObjectChangedChunk;
 
         /// <summary>
-        /// Handles the Chunk event from a store.
+        /// Handles the ObjectActiveStatusChanged event from a store.
         /// </summary>
-        event ProtocolEventHandler<Chunk> OnChunk;
+        event EventHandler<NotificationEventArgs<SubscriptionInfo, ObjectActiveStatusChanged>> OnObjectActiveStatusChanged;
 
         /// <summary>
         /// Handles the ObjectAccessRevoked event from a store.
         /// </summary>
-        event ProtocolEventHandler<ObjectAccessRevoked> OnObjectAccessRevoked;
+        event EventHandler<NotificationEventArgs<SubscriptionInfo, ObjectAccessRevoked>> OnObjectAccessRevoked;
+
+        /// <summary>
+        /// Handles the ObjectDeleted event from a store.
+        /// </summary>
+        event EventHandler<NotificationEventArgs<SubscriptionInfo, ObjectDeleted>> OnObjectDeleted;
 
         /// <summary>
         /// Sends a UnsubscribeNotifications message to a store.
         /// </summary>
         /// <param name="requestUuid">The request identifier.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long UnsubscribeNotifications(Guid requestUuid);
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<UnsubscribeNotifications> UnsubscribeNotifications(Guid requestUuid, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Handles the SubscriptionEnded event from a store.
+        /// Handles the SubscriptionEnded event from a store when sent in response to a UnsubscribeNotifications.
         /// </summary>
-        event ProtocolEventHandler<SubscriptionEnded> OnSubscriptionEnded;
+        event EventHandler<ResponseEventArgs<UnsubscribeNotifications, SubscriptionEnded>> OnResponseSubscriptionEnded;
 
         /// <summary>
-        /// Handles the UnsolicitedStoreNotifications event from a store.
+        /// Handles the SubscriptionEnded event from a store when not sent in response to a request.
         /// </summary>
-        event ProtocolEventHandler<UnsolicitedStoreNotifications> OnUnsolicitedStoreNotifications;
+        event EventHandler<FireAndForgetEventArgs<SubscriptionEnded>> OnNotificationSubscriptionEnded;
     }
 }

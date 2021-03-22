@@ -122,7 +122,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
             Assert.AreEqual("1.4.1.1", contentType.Version);
-            Assert.AreEqual("xml", contentType.Format);
+            Assert.AreEqual(Formats.Xml, contentType.Format);
 
             var converted = "application/x-witsml+json;version=1.4.1.1;type=well";
             contentType = contentType.AsJson();
@@ -151,7 +151,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
             Assert.AreEqual("1.4.1.1", contentType.Version);
-            Assert.AreEqual("xml", contentType.Format);
+            Assert.AreEqual(Formats.Xml, contentType.Format);
             Assert.AreEqual(converted, contentType.ToString());
         }
 
@@ -163,7 +163,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
             Assert.AreEqual("1.4.1.1", contentType.Version);
-            Assert.AreEqual("xml", contentType.Format);
+            Assert.AreEqual(Formats.Xml, contentType.Format);
 
             var converted = "witsml14.well";
             var dataType = contentType.ToDataObjectType();

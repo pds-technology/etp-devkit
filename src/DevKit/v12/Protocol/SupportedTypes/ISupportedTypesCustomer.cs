@@ -19,6 +19,7 @@
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
+using System;
 
 namespace Energistics.Etp.v12.Protocol.SupportedTypes
 {
@@ -26,8 +27,8 @@ namespace Energistics.Etp.v12.Protocol.SupportedTypes
     /// Describes the interface that must be implemented by the customer role of the SupportedTypes protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.SupportedTypes, "customer", "store")]
-    public interface ISupportedTypesCustomer : IProtocolHandler
+    [ProtocolRole((int)Protocols.SupportedTypes, Roles.Customer, Roles.Store)]
+    public interface ISupportedTypesCustomer : IProtocolHandler<ICapabilitiesCustomer, ICapabilitiesStore>
     {
         /// <summary>
         /// Sends a GetSupportedTypes message to a store.
@@ -36,12 +37,13 @@ namespace Energistics.Etp.v12.Protocol.SupportedTypes
         /// <param name="scope">The scope to return supported types for.</param>
         /// <param name="returnEmptyTypes">Whether the store should return data types that it supports but for which it currently has no data.</param>
         /// <param name="countObjects">if set to <c>true</c>, request object counts.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long GetSupportedTypes(string uri, ContextScopeKind scope, bool returnEmptyTypes = false, bool countObjects = false);
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetSupportedTypes> GetSupportedTypes(string uri, ContextScopeKind scope, bool returnEmptyTypes = false, bool countObjects = false, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Handles the GetResourcesResponse event from a store.
+        /// Handles the GetSupportedTypesResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<GetSupportedTypesResponse, GetSupportedTypes> OnGetSupportedTypesResponse;
+        event EventHandler<ResponseEventArgs<GetSupportedTypes, GetSupportedTypesResponse>> OnGetSupportedTypesResponse;
     }
 }

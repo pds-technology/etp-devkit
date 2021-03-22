@@ -45,8 +45,6 @@ namespace Energistics.Etp
         /// <param name="proxy">The proxy.</param>
         public JsonClient(IWebProxy proxy = null)
         {
-            BasicHeader = new Dictionary<string, string>();
-            BearerHeader = new Dictionary<string, string>();
             Proxy = proxy;
         }
 
@@ -58,8 +56,7 @@ namespace Energistics.Etp
         /// <param name="proxy">The proxy.</param>
         public JsonClient(string username, string password, IWebProxy proxy = null)
         {
-            BasicHeader = Authorization.Basic(username, password);
-            BearerHeader = new Dictionary<string, string>();
+            Authorization = Authorization.Basic(username, password);
             Proxy = proxy;
         }
 
@@ -70,8 +67,7 @@ namespace Energistics.Etp
         /// <param name="proxy">The proxy.</param>
         public JsonClient(string token, IWebProxy proxy = null)
         {
-            BasicHeader = new Dictionary<string, string>();
-            BearerHeader = Authorization.Bearer(token);
+            Authorization = Authorization.Bearer(token);
             Proxy = proxy;
         }
 
@@ -82,16 +78,9 @@ namespace Energistics.Etp
         public IWebProxy Proxy { get; set; }
 
         /// <summary>
-        /// Gets the Basic authorization header.
+        /// The authorization to use to get a token.
         /// </summary>
-        /// <value>The Basic authorization header.</value>
-        public IDictionary<string, string> BasicHeader { get; private set; }
-
-        /// <summary>
-        /// Gets the Bearer authorization header.
-        /// </summary>
-        /// <value>The Bearer authorization header.</value>
-        public IDictionary<string, string> BearerHeader { get; private set; }
+        private Authorization Authorization { get; }
 
         /// <summary>
         /// Gets the JSON Web Token using the specified URL and grant type.
@@ -105,14 +94,12 @@ namespace Energistics.Etp
             {
                 client.Proxy = Proxy;
 
-                // Include Authorization header
-                foreach (var header in BasicHeader)
-                    client.Headers[header.Key] = header.Value;
+                client.Headers.SetAuthorization(Authorization);
 
                 client.Headers[HttpRequestHeader.ContentType] = UrlEncodedContentType;
                 client.Headers[HttpRequestHeader.CacheControl] = NoCache;
 
-                var payload = PreparePayload(BasicHeader, grantType);
+                var payload = PreparePayload(grantType);
                 var response = client.UploadString(url, payload);
                 string token;
 
@@ -127,7 +114,6 @@ namespace Energistics.Etp
                     token = response;
                 }
 
-                BearerHeader = Authorization.Bearer(token);
                 return token;
             }
         }
@@ -140,14 +126,15 @@ namespace Energistics.Etp
         public IList<string> GetEtpVersions(string url)
         {
             // Append GetVersions=true, if not already in the url
-            if (url.IndexOf(EtpSettings.GetVersionsHeader, StringComparison.InvariantCultureIgnoreCase) < 0)
+            if (url.IndexOf(EtpHeaders.GetVersions, StringComparison.OrdinalIgnoreCase) < 0)
             {
-                var delim = url.IndexOf("?", StringComparison.InvariantCultureIgnoreCase) < 0 ? "?" : "&";
-                url = $"{url}{delim}{EtpSettings.GetVersionsHeader}=true";
+                var delim = url.IndexOf("?", StringComparison.OrdinalIgnoreCase) < 0 ? "?" : "&";
+                url = $"{url}{delim}{EtpHeaders.GetVersions}=true";
             }
 
-            var headers = BearerHeader.Any() ? BearerHeader : BasicHeader;
-            var json = DownloadJson(url, headers);
+            var headers = new Dictionary<string, string>();
+            headers.SetAuthorization(Authorization);
+            var json = DownloadJson(url);
 
             return EtpExtensions.Deserialize<List<string>>(json);
 
@@ -160,19 +147,8 @@ namespace Energistics.Etp
         /// <returns>The server capabilities object.</returns>
         public object GetServerCapabilities(string url)
         {
-            var headers = BearerHeader.Any() ? BearerHeader : BasicHeader;
-            return GetServerCapabilities(url, headers);
-        }
 
-        /// <summary>
-        /// Gets the server capabilities object using the specified URL and authorization header.
-        /// </summary>
-        /// <param name="url">The URL.</param>
-        /// <param name="headers">The authorization header.</param>
-        /// <returns>The server capabilities object.</returns>
-        private object GetServerCapabilities(string url, IDictionary<string, string> headers)
-        {
-            var json = DownloadJson(url, headers);
+            var json = DownloadJson(url);
             var capServerType = GetServerCapabilitiesType(url);
 
             return EtpExtensions.Deserialize(capServerType, json);
@@ -182,16 +158,14 @@ namespace Energistics.Etp
         /// Gets a JSON response using the specified URL and authorization header.
         /// </summary>
         /// <param name="url">The URL.</param>
-        /// <param name="headers">The authorization header.</param>
         /// <returns>The JSON response.</returns>
-        private string DownloadJson(string url, IDictionary<string, string> headers)
+        private string DownloadJson(string url)
         {
             using (var client = new WebClient())
             {
                 client.Proxy = Proxy;
 
-                foreach (var header in headers)
-                    client.Headers[header.Key] = header.Value;
+                client.Headers.SetAuthorization(Authorization);
 
                 client.Headers[HttpRequestHeader.Accept] = JsonContentType;
 
@@ -202,21 +176,20 @@ namespace Energistics.Etp
         /// <summary>
         /// Prepares the payload for the JWT request.
         /// </summary>
-        /// <param name="headers">The headers.</param>
+        /// <param name="authorization">The authorization.</param>
         /// <param name="grantType">The grant type.</param>
         /// <returns>The URL encoded name/value pairs.</returns>
-        private static string PreparePayload(IDictionary<string, string> headers, string grantType)
+        private string PreparePayload(string grantType)
         {
             var payload = new StringBuilder()
                 .AppendFormat("grant_type={0}", grantType);
 
             try
             {
-                string header;
-                if (headers.TryGetValue(Authorization.Header, out header) && header.StartsWith("Basic "))
+                if (Authorization.HasValue && Authorization.IsBasic)
                 {
                     // Skip authorization type
-                    header = header.Substring(6);
+                    var header = Authorization.Value.Substring(6);
 
                     if (!string.IsNullOrWhiteSpace(header))
                     {
@@ -255,9 +228,9 @@ namespace Energistics.Etp
                 return etp11Type;
 
             var queryString = HttpUtility.ParseQueryString(uri.Query);
-            var etpVersion = queryString[EtpSettings.GetVersionHeader];
+            var etpVersion = queryString[EtpHeaders.GetVersion];
 
-            return etpVersion == EtpSettings.Etp12SubProtocol ? etp12Type : etp11Type;
+            return etpVersion == EtpSubProtocols.v12 ? etp12Type : etp11Type;
         }
     }
 }

@@ -18,6 +18,7 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 using System;
 using System.Collections.Generic;
@@ -28,13 +29,45 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
     /// Defines the interface that must be implemented by the store role of the growing object notification protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.GrowingObjectNotification, "store", "customer")]
-    public interface IGrowingObjectNotificationStore : IProtocolHandler
+    [ProtocolRole((int)Protocols.GrowingObjectNotification, Roles.Store, Roles.Customer)]
+    public interface IGrowingObjectNotificationStore : IProtocolHandlerWithCapabilities<ICapabilitiesStore>
     {
         /// <summary>
         /// Handles the SubscribePartNotifications event from a customer.
         /// </summary>
-        event ProtocolEventHandler<SubscribePartNotifications> OnSubscribePartNotifications;
+        event EventHandler<MapRequestEventArgs<SubscribePartNotifications, string>> OnSubscribePartNotifications;
+
+        /// <summary>
+        /// Sends a SubscribePartNotificationsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<SubscribePartNotificationsResponse> SubscribePartNotificationsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, bool isFinalPart = true, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Sends a complete multi-part set of SubscribePartNotificationsResponse and ProtocolException messages to a customer.
+        /// If there are no successes, an empty SubscribePartNotificationsRecord message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the SubscribePartNotificationsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        EtpMessage<SubscribePartNotificationsResponse> SubscribePartNotificationsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null);
+
+        /// <summary>
+        /// Sends an UnsolicitedPartNotifications message to a customer.
+        /// </summary>
+        /// <param name="subscriptions">The unsolicited subscriptions.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<UnsolicitedPartNotifications> UnsolicitedPartNotifications(IList<SubscriptionInfo> subscriptions, IMessageHeaderExtension exceptionExtension = null);
 
         /// <summary>
         /// Sends a PartsChanged message to a customer.
@@ -45,8 +78,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="changeKind">The change kind.</param>
         /// <param name="changeTime">The change time.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long PartsChanged(Guid requestUuid, string uri, IList<ObjectPart> parts, ObjectChangeKind changeKind, long changeTime, string format = "xml");
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PartsChanged> PartsChanged(Guid requestUuid, string uri, IList<ObjectPart> parts, ObjectChangeKind changeKind, long changeTime, string format = Formats.Xml, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Sends a PartsDeleted message to a customer.
@@ -55,8 +89,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="uri">The URI of the growing object.</param>
         /// <param name="uids">The UIDs of the deleted parts.</param>
         /// <param name="changeTime">The change time.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long PartsDeleted(Guid requestUuid, string uri, IList<string> uids, long changeTime);
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PartsDeleted> PartsDeleted(Guid requestUuid, string uri, IList<string> uids, long changeTime, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Sends a PartsReplacedByRange message to a customer.
@@ -68,26 +103,31 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="parts">The map of UIDs and data of the parts that were put.</param>
         /// <param name="changeTime">The change time.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long PartsReplacedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, long changeTime, string format = "xml");
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PartsReplacedByRange> PartsReplacedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, long changeTime, string format = Formats.Xml, bool isFinalPart = true, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the UnsubscribePartNotification event from a customer.
         /// </summary>
-        event ProtocolEventHandler<UnsubscribePartNotification> OnUnsubscribePartNotification;
+        event EventHandler<RequestEventArgs<UnsubscribePartNotification, Guid>> OnUnsubscribePartNotification;
 
         /// <summary>
-        /// Sends a PartSubscriptionEnded message to a customer.
+        /// Sends a PartSubscriptionEnded message to a customer in response to a UnsubscribePartNotification message.
         /// </summary>
-        /// <param name="requestUuid">The UUID of the subscription that has ended.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long PartSubscriptionEnded(Guid requestUuid);
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="requestUuid">The reqyest UUId.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PartSubscriptionEnded> ResponsePartSubscriptionEnded(IMessageHeader correlatedHeader, Guid requestUuid, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Sends an UnsolicitedPartNotifications message to a customer.
+        /// Sends a PartSubscriptionEnded message to a customer as a notification.
         /// </summary>
-        /// <param name="subscriptions">The unsolicited subscriptions.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long UnsolicitedPartNotifications(IList<SubscriptionInfo> subscriptions);
+        /// <param name="requestUuid">The reqyest UUId.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PartSubscriptionEnded> NotificationPartSubscriptionEnded(Guid requestUuid, IMessageHeaderExtension extension = null);
     }
 }

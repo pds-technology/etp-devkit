@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Energistics.Etp.Common;
@@ -30,270 +31,504 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.GrowingObject.IGrowingObjectStore" />
-    public class GrowingObjectStoreHandler : Etp12ProtocolHandler, IGrowingObjectStore
+    public class GrowingObjectStoreHandler : Etp12ProtocolHandler<CapabilitiesStore, ICapabilitiesStore, CapabilitiesCustomer, ICapabilitiesCustomer>, IGrowingObjectStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="GrowingObjectStoreHandler"/> class.
         /// </summary>
-        public GrowingObjectStoreHandler() : base((int)Protocols.GrowingObject, "store", "customer")
+        public GrowingObjectStoreHandler() : base((int)Protocols.GrowingObject, Roles.Store, Roles.Customer)
         {
+            RegisterMessageHandler<GetGrowingDataObjectsHeader>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetGrowingDataObjectsHeader, HandleGetGrowingDataObjectsHeader);
+            RegisterMessageHandler<PutGrowingDataObjectsHeader>(Protocols.GrowingObject, MessageTypes.GrowingObject.PutGrowingDataObjectsHeader, HandlePutGrowingDataObjectsHeader);
+            RegisterMessageHandler<GetPartsMetadata>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadata, HandleGetPartsMetadata);
             RegisterMessageHandler<GetParts>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetParts, HandleGetParts);
             RegisterMessageHandler<GetPartsByRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRange, HandleGetPartsByRange);
             RegisterMessageHandler<PutParts>(Protocols.GrowingObject, MessageTypes.GrowingObject.PutParts, HandlePutParts);
             RegisterMessageHandler<DeleteParts>(Protocols.GrowingObject, MessageTypes.GrowingObject.DeleteParts, HandleDeleteParts);
             RegisterMessageHandler<ReplacePartsByRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.ReplacePartsByRange, HandleReplacePartsByRange);
-            RegisterMessageHandler<GetPartsMetadata>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadata, HandleGetPartsMetadata);
+        }
+
+        /// <summary>
+        /// Handles the GetGrowingDataObjectsHeader event from a customer.
+        /// </summary>
+        public event EventHandler<MapRequestEventArgs<GetGrowingDataObjectsHeader, DataObject>> OnGetGrowingDataObjectsHeader;
+
+        /// <summary>
+        /// Sends a GetGrowingDataObjectsHeaderResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="dataObjects">The data objects.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetGrowingDataObjectsHeaderResponse> GetGrowingDataObjectsHeaderResponse(IMessageHeader correlatedHeader, IDictionary<string, DataObject> dataObjects, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetGrowingDataObjectsHeaderResponse
+            {
+                DataObjects = dataObjects ?? new Dictionary<string, DataObject>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetGrowingDataObjectsHeaderResponse and ProtocolException messages to a customer.
+        /// If there are no data objects, an empty GetGrowingDataObjectsHeaderResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="dataObjects">The data objects.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetGrowingDataObjectsHeaderResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetGrowingDataObjectsHeaderResponse> GetGrowingDataObjectsHeaderResponse(IMessageHeader correlatedHeader, IDictionary<string, DataObject> dataObjects, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(GetGrowingDataObjectsHeaderResponse, correlatedHeader, dataObjects, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
+
+        /// <summary>
+        /// Handles the PutGrowingDataObjectsHeader event from a customer.
+        /// </summary>
+        public event EventHandler<MapRequestEventArgs<PutGrowingDataObjectsHeader, string>> OnPutGrowingDataObjectsHeader;
+
+        /// <summary>
+        /// Sends a PutGrowingDataObjectsHeaderResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="uris">The URIs.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutGrowingDataObjectsHeaderResponse> PutGrowingDataObjectsHeaderResponse(IMessageHeader correlatedHeader, IDictionary<string, string> uris, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new PutGrowingDataObjectsHeaderResponse
+            {
+                Uris = uris ?? new Dictionary<string, string>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of PutGrowingDataObjectsHeaderResponse and ProtocolException messages to a customer.
+        /// If there are no URIs, an empty PutGrowingDataObjectsHeaderResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="uris">The URIs.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the PutGrowingDataObjectsHeaderResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutGrowingDataObjectsHeaderResponse> PutGrowingDataObjectsHeaderResponse(IMessageHeader correlatedHeader, IDictionary<string, string> uris, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(PutGrowingDataObjectsHeaderResponse, correlatedHeader, uris, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
+
+        /// <summary>
+        /// Handles the GetPartsMetadata event from a customer.
+        /// </summary>
+        public event EventHandler<MapRequestEventArgs<GetPartsMetadata, PartsMetadataInfo>> OnGetPartsMetadata;
+
+        /// <summary>
+        /// Sends a GetPartsMetadataResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="metadata">The parts metadata.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetPartsMetadataResponse> GetPartsMetadataResponse(IMessageHeader correlatedHeader, IDictionary<string, PartsMetadataInfo> metadata, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetPartsMetadataResponse
+            {
+                Metadata = metadata ?? new Dictionary<string, PartsMetadataInfo>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetPartsMetadataResponse and ProtocolException messages to a customer.
+        /// If there are no parts metadata, an empty GetPartsMetadataResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="metadata">The metadata.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetPartsMetadataResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetPartsMetadataResponse> GetPartsMetadataResponse(IMessageHeader correlatedHeader, IDictionary<string, PartsMetadataInfo> metadata, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(GetPartsMetadataResponse, correlatedHeader, metadata, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
         }
 
         /// <summary>
         /// Handles the GetParts event from a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<GetParts, ObjectPart, ErrorInfo> OnGetParts;
+        public event EventHandler<MapRequestWithContextEventArgs<GetParts, ObjectPart, ResponseContext>> OnGetParts;
 
         /// <summary>
-        /// Sends a a list of parts as a response for GetParts to a customer.
+        /// Sends a GetPartsResponse message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="parts">The UIDs and data of the parts being returned.</param>
-        /// <param name="errors">The errors, if any.</param>
-        /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long GetPartsResponse(IMessageHeader request, string uri, IDictionary<string, ObjectPart> parts, IDictionary<string, ErrorInfo> errors, string format = "xml")
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="parts">The parts.</param>
+        /// <param name="context">The response context.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetPartsResponse> GetPartsResponse(IMessageHeader correlatedHeader, IDictionary<string, ObjectPart> parts, ResponseContext context, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsResponse, request.MessageId);
-            var message = new GetPartsResponse
+            var body = new GetPartsResponse
             {
-                Uri = uri,
-                Format = format ?? "xml",
+                Uri = context?.Uri,
+                Format = context?.Format ?? Formats.Xml,
+                Parts = parts ?? new Dictionary<string, ObjectPart>(),
             };
 
-            return SendMultipartResponse(header, message, parts, errors, (m, i) => m.Parts = i);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a GetPartsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="parts">The parts.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetPartsResponse> GetPartsResponse(IMessageHeader correlatedHeader, string uri, IDictionary<string, ObjectPart> parts, string format = Formats.Xml, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            return GetPartsResponse(correlatedHeader, parts, new ResponseContext { Uri = uri, Format = format }, isFinalPart: isFinalPart, extension: extension);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetPartsResponse and ProtocolException messages to a customer.
+        /// If there are no parts, an empty GetPartsResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="parts">The parts.</param>
+        /// <param name="context">The response context.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetPartsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetPartsResponse> GetPartsResponse(IMessageHeader correlatedHeader, IDictionary<string, ObjectPart> parts, ResponseContext context, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(GetPartsResponse, correlatedHeader, parts, context, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetPartsResponse and ProtocolException messages to a customer.
+        /// If there are no parts, an empty GetPartsResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="parts">The parts.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetPartsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetPartsResponse> GetPartsResponse(IMessageHeader correlatedHeader, string uri, IDictionary<string, ObjectPart> parts, IDictionary<string, IErrorInfo> errors, string format = Formats.Xml, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return GetPartsResponse(correlatedHeader, parts, new ResponseContext { Uri = uri, Format = format }, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
+
+        /// <summary>
+        /// Handles the GetPartsByRange event from a customer.
+        /// </summary>
+        public event EventHandler<ListRequestWithContextEventArgs<GetPartsByRange, ObjectPart, ResponseContext>> OnGetPartsByRange;
+
+        /// <summary>
+        /// Sends a GetPartsByRangeResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="parts">The UIDs and data of the parts being returned.</param>
+        /// <param name="context">The response context.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetPartsByRangeResponse> GetPartsByRangeResponse(IMessageHeader correlatedHeader, IList<ObjectPart> parts, ResponseContext context, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetPartsByRangeResponse
+            {
+                Uri = context?.Uri,
+                Format = context?.Format ?? Formats.Xml,
+                Parts = parts ?? new List<ObjectPart>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a GetPartsByRangeResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="parts">The UIDs and data of the parts being returned.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetPartsByRangeResponse> GetPartsByRangeResponse(IMessageHeader correlatedHeader, string uri, IList<ObjectPart> parts, string format = Formats.Xml, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            return GetPartsByRangeResponse(correlatedHeader, parts, new ResponseContext { Uri = uri, Format = format }, isFinalPart: isFinalPart, extension: extension);
         }
 
         /// <summary>
         /// Handles the PutParts event from a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<PutParts, ErrorInfo> OnPutParts;
+        public event EventHandler<MapRequestEventArgs<PutParts, string>> OnPutParts;
+
+        /// <summary>
+        /// Sends a PutPartsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutPartsResponse> PutPartsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new PutPartsResponse
+            {
+                Success = success ?? new Dictionary<string, string>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of PutPartsResponse and ProtocolException messages to a customer.
+        /// If there are no successes, an empty PutPartsResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the PutPartsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutPartsResponse> PutPartsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(PutPartsResponse, correlatedHeader, success, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
 
         /// <summary>
         /// Handles the DeleteParts event from a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<DeleteParts, ErrorInfo> OnDeleteParts;
+        public event EventHandler<MapRequestEventArgs<DeleteParts, string>> OnDeleteParts;
 
         /// <summary>
-        /// Handles the GetPartsByRange event from a customer.
+        /// Sends a DeletePartsResponse message to a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetPartsByRange, IList<ObjectPart>> OnGetPartsByRange;
-
-        /// <summary>
-        /// Sends a a list of parts as a response for GetPartsByRange to a customer.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="parts">The UIDs and data of the parts being returned.</param>
-        /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long GetPartsByRangeResponse(IMessageHeader request, string uri, IList<ObjectPart> parts, string format = "xml")
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<DeletePartsResponse> DeletePartsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRangeResponse, request.MessageId);
-            var message = new GetPartsByRangeResponse
+            var body = new DeletePartsResponse
             {
-                Uri = uri,
-                Format = format ?? "xml",
+                Success = success ?? new Dictionary<string, string>(),
             };
 
-            return SendMultipartResponse(header, message, parts, (m, i) => m.Parts = i);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of DeletePartsResponse and ProtocolException messages to a customer.
+        /// If there are no successes, an empty DeletePartsResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the DeletePartsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<DeletePartsResponse> DeletePartsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(DeletePartsResponse, correlatedHeader, success, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
         }
 
         /// <summary>
         /// Handles the ReplacePartsByRange event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<ReplacePartsByRange> OnReplacePartsByRange;
+        public event EventHandler<EmptyRequestEventArgs<ReplacePartsByRange>> OnReplacePartsByRange;
 
         /// <summary>
-        /// Handles the GetPartsMetadata event from a customer.
+        /// Sends a ReplacePartsByRangeResponse message to a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<GetPartsMetadata, PartsMetadataInfo, ErrorInfo> OnGetPartsMetadata;
-
-        /// <summary>
-        /// Sends the metadata describing the parts in the requested growing objects to a customer.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="metadata">The parts metadata.</param>
-        /// <param name="errors">The errors, if any.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long GetPartsMetadataResponse(IMessageHeader request, IDictionary<string, PartsMetadataInfo> metadata, IDictionary<string, ErrorInfo> errors)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ReplacePartsByRangeResponse> ReplacePartsByRangeResponse(IMessageHeader correlatedHeader, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadataResponse, request.MessageId);
-            var message = new GetPartsMetadataResponse
+            var body = new ReplacePartsByRangeResponse
             {
             };
 
-            if (metadata == null)
-                metadata = new Dictionary<string, PartsMetadataInfo>();
+            return SendResponse(body, correlatedHeader, extension: extension);
+        }
 
-            foreach (var info in metadata.Values)
-            {
-                if (info.CustomData == null)
-                    info.CustomData = new Dictionary<string, DataValue>();
-            }
+        /// <summary>
+        /// Handles the GetGrowingDataObjectsHeader message from a customer.
+        /// </summary>
+        /// <param name="message">The GetGrowingDataObjectsHeader message.</param>
+        protected virtual void HandleGetGrowingDataObjectsHeader(EtpMessage<GetGrowingDataObjectsHeader> message)
+        {
+            HandleRequestMessage(message, OnGetGrowingDataObjectsHeader, HandleGetGrowingDataObjectsHeader,
+                responseMethod: (args) => GetGrowingDataObjectsHeaderResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
 
-            return SendMultipartResponse(header, message, metadata, errors, (m, i) => m.Metadata = i);
+        /// <summary>
+        /// Handles the GetGrowingDataObjectsHeader message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetGrowingDataObjectsHeader, DataObject, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleGetGrowingDataObjectsHeader(MapRequestEventArgs<GetGrowingDataObjectsHeader, DataObject> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the PutGrowingDataObjectsHeader message from a customer.
+        /// </summary>
+        /// <param name="message">The PutGrowingDataObjectsHeader message.</param>
+        protected virtual void HandlePutGrowingDataObjectsHeader(EtpMessage<PutGrowingDataObjectsHeader> message)
+        {
+            HandleRequestMessage(message, OnPutGrowingDataObjectsHeader, HandlePutGrowingDataObjectsHeader,
+                responseMethod: (args) => PutGrowingDataObjectsHeaderResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the PutGrowingDataObjectsHeader message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{PutGrowingDataObjectsHeader, string, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandlePutGrowingDataObjectsHeader(MapRequestEventArgs<PutGrowingDataObjectsHeader, string> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GetPartsMetadata message from a customer.
+        /// </summary>
+        /// <param name="message">The GetPartsMetadata message.</param>
+        protected virtual void HandleGetPartsMetadata(EtpMessage<GetPartsMetadata> message)
+        {
+            HandleRequestMessage(message, OnGetPartsMetadata, HandleGetPartsMetadata,
+                responseMethod: (args) => GetPartsMetadataResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the GetPartsMetadata message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetPartsMetadata, PartsMetadataInfo, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleGetPartsMetadata(MapRequestEventArgs<GetPartsMetadata, PartsMetadataInfo> args)
+        {
         }
 
         /// <summary>
         /// Handles the GetParts message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The GetParts message.</param>
-        protected virtual void HandleGetParts(IMessageHeader header, GetParts message)
+        protected virtual void HandleGetParts(EtpMessage<GetParts> message)
         {
-            var args = Notify(OnGetParts, header, message, new Dictionary<string, ObjectPart>(), new Dictionary<string, ErrorInfo>());
-
-            if (args.Cancel)
-                return;
-
-            if (!HandleGetParts(header, message, args.Context, args.Errors))
-                return;
-
-            GetPartsResponse(header, message.Uri, args.Context, args.Errors);
+            HandleRequestMessage(message, OnGetParts, HandleGetParts,
+                responseMethod: (args) => GetPartsResponse(args.Request?.Header, args.ResponseMap, args.Context, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
         }
 
         /// <summary>
         /// Handles the GetParts message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual bool HandleGetParts(IMessageHeader header, GetParts message, IDictionary<string, ObjectPart> response, IDictionary<string, ErrorInfo> errors)
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetParts, ObjectPart, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleGetParts(MapRequestEventArgs<GetParts, ObjectPart> args)
         {
-            return true;
         }
-
-        /// <summary>
-        /// Handles the PutParts message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The PutParts message.</param>
-        protected virtual void HandlePutParts(IMessageHeader header, PutParts message)
-        {
-            var args = Notify(OnPutParts, header, message, new Dictionary<string, ErrorInfo>());
-            if (args.Cancel)
-                return;
-
-            if (!HandlePutParts(header, message, args.Errors))
-                return;
-
-            SendMultipartResponse(header, message, args.Errors);
-        }
-
-        /// <summary>
-        /// Handles the PutParts message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual bool HandlePutParts(IMessageHeader header, PutParts message, IDictionary<string, ErrorInfo> errors)
-        {
-            return true;
-        }
-
-        /// <summary>
-        /// Handles the DeleteParts message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The DeleteParts message.</param>
-        protected virtual void HandleDeleteParts(IMessageHeader header, DeleteParts message)
-        {
-            var args = Notify(OnDeleteParts, header, message, new Dictionary<string, ErrorInfo>());
-            if (args.Cancel)
-                return;
-            if (!HandleDeleteParts(header, message, args.Errors))
-                return;
-
-            SendMultipartResponse(header, message, args.Errors);
-        }
-
-        /// <summary>
-        /// Handles the DeleteParts message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual bool HandleDeleteParts(IMessageHeader header, DeleteParts message, IDictionary<string, ErrorInfo> errors)
-        {
-            return true;
-        }
-
 
         /// <summary>
         /// Handles the GetPartsByRange message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The GetPartsByRange message.</param>
-        protected virtual void HandleGetPartsByRange(IMessageHeader header, GetPartsByRange message)
+        protected virtual void HandleGetPartsByRange(EtpMessage<GetPartsByRange> message)
         {
-            var args = Notify(OnGetPartsByRange, header, message, new List<ObjectPart>());
-            if (args.Cancel)
-                return;
-
-            if (!HandleGetPartsByRange(header, message, args.Context))
-                return;
-
-            GetPartsByRangeResponse(header, message.Uri, args.Context);
+            HandleRequestMessage(message, OnGetPartsByRange, HandleGetPartsByRange,
+                responseMethod: (args) => GetPartsByRangeResponse(args.Request?.Header, args.Responses, args.Context, isFinalPart: !args.HasErrors, extension: args.ResponseExtension));
         }
 
         /// <summary>
         /// Handles the GetPartsByRange message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        protected virtual bool HandleGetPartsByRange(IMessageHeader header, GetPartsByRange message, IList<ObjectPart> response)
+        /// <param name="args">The <see cref="ListRequestWithContextEventArgs{GetPartsByRange, ObjectPart, ResponseContext}"/> instance containing the event data.</param>
+        protected virtual void HandleGetPartsByRange(ListRequestWithContextEventArgs<GetPartsByRange, ObjectPart, ResponseContext> args)
         {
-            return true;
+        }
+
+        /// <summary>
+        /// Handles the PutParts message from a customer.
+        /// </summary>
+        /// <param name="message">The PutParts message.</param>
+        protected virtual void HandlePutParts(EtpMessage<PutParts> message)
+        {
+            HandleRequestMessage(message, OnPutParts, HandlePutParts,
+                responseMethod: (args) => PutPartsResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the PutParts message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{PutParts, string, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandlePutParts(MapRequestEventArgs<PutParts, string> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the DeleteParts message from a customer.
+        /// </summary>
+        /// <param name="message">The DeleteParts message.</param>
+        protected virtual void HandleDeleteParts(EtpMessage<DeleteParts> message)
+        {
+            HandleRequestMessage(message, OnDeleteParts, HandleDeleteParts,
+                responseMethod: (args) => DeletePartsResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the DeleteParts message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{DeleteParts, string, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleDeleteParts(MapRequestEventArgs<DeleteParts, string> args)
+        {
         }
 
         /// <summary>
         /// Handles the ReplacePartsByRange message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The ReplacePartsByRange message.</param>
-        protected virtual void HandleReplacePartsByRange(IMessageHeader header, ReplacePartsByRange message)
+        protected virtual void HandleReplacePartsByRange(EtpMessage<ReplacePartsByRange> message)
         {
-            Notify(OnReplacePartsByRange, header, message);
-        }
-
-
-        /// <summary>
-        /// Handles the GetPartsMetadata message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The GetPartsMetadata message.</param>
-        protected virtual void HandleGetPartsMetadata(IMessageHeader header, GetPartsMetadata message)
-        {
-            var args = Notify(OnGetPartsMetadata, header, message, new Dictionary<string, PartsMetadataInfo>(), new Dictionary<string, ErrorInfo>());
-            if (args.Cancel)
-                return;
-
-            if (!HandleGetPartsMetadata(header, message, args.Context, args.Errors))
-                return;
-
-            GetPartsMetadataResponse(header, args.Context, args.Errors);
+            HandleRequestMessage(message, OnReplacePartsByRange, HandleReplacePartsByRange,
+                responseMethod: (args) => ReplacePartsByRangeResponse(args.Request?.Header));
         }
 
         /// <summary>
-        /// Handles the GetPartsMetadata message from a customer.
+        /// Handles the ReplacePartsByRange message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual bool HandleGetPartsMetadata(IMessageHeader header, GetPartsMetadata message, IDictionary<string, PartsMetadataInfo> response, IDictionary<string, ErrorInfo> errors)
+        /// <param name="args">The <see cref="EmptyRequestEventArgs{ReplacePartsByRange}"/> instance containing the event data.</param>
+        protected virtual void HandleReplacePartsByRange(EmptyRequestEventArgs<ReplacePartsByRange> args)
         {
-            return true;
         }
     }
 }

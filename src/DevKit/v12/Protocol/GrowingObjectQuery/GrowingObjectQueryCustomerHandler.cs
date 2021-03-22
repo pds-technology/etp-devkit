@@ -16,10 +16,10 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+using System;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
 
 namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
 {
@@ -28,14 +28,12 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.GrowingObjectQuery.IGrowingObjectQueryCustomer" />
-    public class GrowingObjectQueryCustomerHandler : Etp12ProtocolHandler, IGrowingObjectQueryCustomer
+    public class GrowingObjectQueryCustomerHandler : Etp12ProtocolHandler<CapabilitiesCustomer, ICapabilitiesCustomer, CapabilitiesStore, ICapabilitiesStore>, IGrowingObjectQueryCustomer
     {
-        private readonly ConcurrentDictionary<long, FindParts> _requests = new ConcurrentDictionary<long, FindParts>();
-
         /// <summary>
         /// Initializes a new instance of the <see cref="GrowingObjectQueryCustomerHandler"/> class.
         /// </summary>
-        public GrowingObjectQueryCustomerHandler() : base((int)Protocols.GrowingObjectQuery, "customer", "store")
+        public GrowingObjectQueryCustomerHandler() : base((int)Protocols.GrowingObjectQuery, Roles.Customer, Roles.Store)
         {
             RegisterMessageHandler<FindPartsResponse>(Protocols.GrowingObjectQuery, MessageTypes.GrowingObjectQuery.FindPartsResponse, HandleFindPartsResponse);
         }
@@ -45,72 +43,53 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         /// </summary>
         /// <param name="uri">The URI.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long FindParts(string uri, string format = "xml")
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<FindParts> FindParts(string uri, string format = Formats.Xml, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectQuery, MessageTypes.GrowingObjectQuery.FindParts);
-
-            var message = new FindParts()
+            var body = new FindParts
             {
                 Uri = uri,
-                Format = format ?? "xml",
+                Format = format,
             };
-            
-            return Session.SendMessage(header, message,
-                (h, _) => _requests[h.MessageId] = message // Cache requested URIs by message ID
-            );
+
+            return SendRequest(body, extension: extension);
         }
 
         /// <summary>
         /// Handles the FindPartsResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<FindPartsResponse, FindParts> OnFindPartsResponse;
+        public event EventHandler<ResponseEventArgs<FindParts, FindPartsResponse>> OnFindPartsResponse;
 
         /// <summary>
-        /// Handles the FindPartsResponse message from a store.
+        /// Handles the ProtocolException message.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The FindPartsResponse message.</param>
-        protected virtual void HandleFindPartsResponse(IMessageHeader header, FindPartsResponse message)
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
         {
-            var request = GetRequest(header);
-            var args = Notify(OnFindPartsResponse, header, message, request);
-            if (args.Cancel)
-                return;
+            base.HandleProtocolException(message);
 
-            HandleFindPartsResponse(header, message, request);
+            var request = TryGetCorrelatedMessage(message);
+            if (request is EtpMessage<FindParts>)
+                HandleResponseMessage(request as EtpMessage<FindParts>, message, OnFindPartsResponse, HandleFindPartsResponse);
         }
 
         /// <summary>
         /// Handles the FindPartsResponse message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The FindPartsResponse message.</param>
-        /// <param name="request">The FindParts request.</param>
-        protected virtual void HandleFindPartsResponse(IMessageHeader header, FindPartsResponse message, FindParts request)
+        protected virtual void HandleFindPartsResponse(EtpMessage<FindPartsResponse> message)
         {
+            var request = TryGetCorrelatedMessage<FindParts>(message);
+            HandleResponseMessage(request, message, OnFindPartsResponse, HandleFindPartsResponse);
         }
 
         /// <summary>
-        /// Handle any final cleanup related to the final message in response to a request.
+        /// Handles the FindPartsResponse message from a store.
         /// </summary>
-        /// <param name="correlationId">The correlation ID of the request</param>
-        protected override void HandleFinalResponse(long correlationId)
+        /// <param name="args">The <see cref="ResponseEventArgs{FindParts, FindPartsResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleFindPartsResponse(ResponseEventArgs<FindParts, FindPartsResponse> args)
         {
-            FindParts request;
-            _requests.TryRemove(correlationId, out request);
-        }
-
-        /// <summary>
-        /// Gets the request from the internal cache of message IDs.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <returns>The request.</returns>
-        private FindParts GetRequest(IMessageHeader header)
-        {
-            FindParts request;
-            _requests.TryGetValue(header.CorrelationId, out request);
-            return request;
         }
     }
 }

@@ -30,13 +30,13 @@ namespace Energistics.Etp.v11.Protocol.Discovery
 
         }
 
-        protected override void HandleGetResources(ProtocolEventArgs<GetResources, IList<Resource>> args)
+        protected override void HandleGetResources(ListRequestEventArgs<GetResources, Resource> args)
         {
             var witsml20 = new EtpUri("eml://witsml20");
 
-            if (args.Message.Uri == EtpUri.RootUri11)
+            if (args.Request.Body.Uri == EtpUri.RootUri11)
             {
-                args.Context.Add(new Resource
+                args.Responses.Add(new Resource
                 {
                     Uuid = null,
                     Uri = witsml20,
@@ -50,10 +50,10 @@ namespace Energistics.Etp.v11.Protocol.Discovery
                     ObjectNotifiable = false,
                 });
             }
-            else if (args.Message.Uri == witsml20)
+            else if (args.Request.Body.Uri == witsml20)
             {
                 var witsml20well = new EtpUri("eml://witsml20/well");
-                args.Context.Add(new Resource
+                args.Responses.Add(new Resource
                 {
                     Uuid = null,
                     Uri = witsml20well,
@@ -69,7 +69,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
             }
             else
             {
-                args.Cancel = true;
+                args.FinalError = ErrorInfo().NotSupported();
             }
         }
     }

@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using Energistics.Etp.Common.Datatypes;
 using System;
 using System.Threading.Tasks;
 
@@ -31,6 +32,11 @@ namespace Energistics.Etp.Common
         /// Gets the server manager for this instance.
         /// </summary>
         IEtpServerManager ServerManager { get; }
+
+        /// <summary>
+        /// Gets the server's details.
+        /// </summary>
+        EtpWebServerDetails Details { get; }
 
         /// <summary>
         /// The root URI for the server.

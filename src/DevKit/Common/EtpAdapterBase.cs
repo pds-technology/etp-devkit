@@ -23,16 +23,18 @@ using System.Reflection;
 using Avro.IO;
 using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
 
 namespace Energistics.Etp.Common
 {
     /// <summary>
     /// A base class for <see cref="IEtpAdapter"/> implementations that handles registering message decoders and resolving messages.
     /// </summary>
-    public class EtpAdapterBase
+    public abstract class EtpAdapterBase : IEtpAdapter
     {
-        private readonly Dictionary<long, Func<Decoder, string, ISpecificRecord>> MessageDecoders = new Dictionary<long, Func<Decoder, string, ISpecificRecord>>();
-        private readonly Dictionary<Type, Func<Decoder, string, ISpecificRecord>> MessageDecodersByType = new Dictionary<Type, Func<Decoder, string, ISpecificRecord>>();
+        private readonly Dictionary<long, Func<Decoder, IMessageHeader, IMessageHeaderExtension, EtpMessage>> MessageDecoders = new Dictionary<long, Func<Decoder, IMessageHeader, IMessageHeaderExtension, EtpMessage>>();
+        private readonly Dictionary<long, Func<string, IMessageHeader, IMessageHeaderExtension, EtpMessage>> MessageDeserializers = new Dictionary<long, Func<string, IMessageHeader, IMessageHeaderExtension, EtpMessage>>();
+        private readonly Dictionary<Type, Func<Decoder, IMessageHeader, IMessageHeaderExtension, EtpMessage>> MessageDecodersByType = new Dictionary<Type, Func<Decoder, IMessageHeader, IMessageHeaderExtension, EtpMessage>>();
 
         /// <summary>
         /// Constructs a new <see cref="EtpAdapterBase"/> instance.
@@ -40,45 +42,117 @@ namespace Energistics.Etp.Common
         /// <param name="version">The supported ETP version.</param>
         protected EtpAdapterBase(EtpVersion version)
         {
-            SupportedVersion = version;
+            EtpVersion = version;
             RegisterStandardMessageDecoders();
         }
 
-        public EtpVersion SupportedVersion { get; }
+        /// <summary>
+        /// The ETP version supported by this adapter.
+        /// </summary>
+        public EtpVersion EtpVersion { get; }
 
         /// <summary>
-        /// Decodes the message type from the specified protocol.
+        /// Whether or not Protocol Exceptions are multi-part messages in the ETP version supported by this adapter.
         /// </summary>
-        /// <param name="protocol">The message's protocol.</param>
-        /// <param name="messageType">The type of the message.</param>
-        /// <param name="decoder">The decoder with binary message data.</param>
-        /// <param name="body">The string with json message data.</param>
-        /// <returns>The message.</returns>
-        public ISpecificRecord DecodeMessage(int protocol, int messageType, Decoder decoder, string body)
-        {
-            var messageKey = EtpExtensions.CreateMessageKey(protocol, messageType);
+        public abstract bool IsProtocolExceptionMultiPart { get; }
 
-            Func<Decoder, string, ISpecificRecord> messageDecoder;
+        /// <summary>
+        /// Whether or not supported data objects are negotiated (i.e. are the intersection) or not (i.e. are the union)
+        /// </summary>
+        public abstract bool AreSupportedDataObjectsNegotiated { get; }
+
+        /// <summary>
+        /// Decode the binary message header.
+        /// </summary>
+        /// <param name="decoder">The decoder with the binary data.</param>
+        /// <returns>The decoded message header.</returns>
+        public abstract IMessageHeader DecodeMessageHeader(Decoder decoder);
+
+        /// <summary>
+        /// Deserialize the json message header.
+        /// </summary>
+        /// <param name="json">The json data.</param>
+        /// <returns>The deserialized message header.</returns>
+        public abstract IMessageHeader DeserializeMessageHeader(string json);
+
+        /// <summary>
+        /// Decode the binary message header extension.
+        /// </summary>
+        /// <param name="decoder">The decoder with the binary data.</param>
+        /// <returns>The decoded message header extension.</returns>
+        public abstract IMessageHeaderExtension DecodeMessageHeaderExtension(Decoder decoder);
+
+        /// <summary>
+        /// Deserialize the json message header extension.
+        /// </summary>
+        /// <param name="json">The json data.</param>
+        /// <returns>The deserialized message header extension.</returns>
+        public abstract IMessageHeaderExtension DeserializeMessageHeaderExtension(string json);
+
+        /// <summary>
+        /// Decodes the message.
+        /// </summary>
+        /// <param name="header">The message header</param>
+        /// <param name="extension">The header extension</param>
+        /// <param name="decoder">The decoder with binary message data.</param>
+        /// <returns>The message if successful; <c>null</c> otherwise.</returns>
+        public EtpMessage DecodeMessage(IMessageHeader header, IMessageHeaderExtension extension, Decoder decoder)
+        {
+            var messageKey = EtpExtensions.CreateMessageKey(header.Protocol, header.MessageType);
+
+            Func<Decoder, IMessageHeader, IMessageHeaderExtension, EtpMessage> messageDecoder;
             if (!MessageDecoders.TryGetValue(messageKey, out messageDecoder))
                 return null;
 
-            return messageDecoder(decoder, body);
+            return messageDecoder(decoder, header, extension);
         }
 
         /// <summary>
-        /// Decodes the message type from the specified protocol.
+        /// Deserializes the message type from the specified protocol.
         /// </summary>
-        /// <param name="decoder">The decoder with binary message data.</param>
-        /// <param name="body">The string with json message data.</param>
+        /// <param name="header">The message header</param>
+        /// <param name="extension">The header extension</param>
+        /// <param name="content">The string with json message data.</param>
         /// <returns>The message.</returns>
-        public T DecodeMessage<T>(Decoder decoder, string body) where T : ISpecificRecord
+        public EtpMessage DeserializeMessage(IMessageHeader header, IMessageHeaderExtension extension, string content)
         {
-            Func<Decoder, string, ISpecificRecord> messageDecoder;
-            if (!MessageDecodersByType.TryGetValue(typeof(T), out messageDecoder))
-                return default(T);
+            var messageKey = EtpExtensions.CreateMessageKey(header.Protocol, header.MessageType);
 
-            return (T)messageDecoder(decoder, body);
+            Func<string, IMessageHeader, IMessageHeaderExtension, EtpMessage> messageDeserializer;
+            if (!MessageDeserializers.TryGetValue(messageKey, out messageDeserializer))
+                return null;
+
+            return messageDeserializer(content, header, extension);
         }
+
+        /// <summary>
+        /// Creates a default handler for the core protocol.
+        /// </summary>
+        /// <param name="clientHandler">Whether to create a client or server handler.</param>
+        /// <returns>The default handler.</returns>
+        public abstract IProtocolHandler CreateDefaultCoreHandler(bool clientHandler);
+
+        /// <summary>
+        /// Checks if the specified message type is valid.
+        /// </summary>
+        /// <param name="protocol">The message type's protocol.</param>
+        /// <param name="messageType">The message type.</param>
+        /// <returns><c>true</c> if the message type is valid; <c>false</c> otherwise.</returns>
+        public abstract bool IsValidMessageType(int protocol, int messageType);
+
+        /// <summary>
+        /// Tries to get the protocol number for the specified message body type.
+        /// </summary>
+        /// <param name="messageBodyType">The message body type.</param>
+        /// <returns>The protocol number on success; -1 otherwise.</returns>
+        public abstract int TryGetProtocolNumber(Type messageBodyType);
+
+        /// <summary>
+        /// Tries to get the message type number for the specified message body type.
+        /// </summary>
+        /// <param name="messageBodyType">The message body type.</param>
+        /// <returns>The message type number on success; -1 otherwise.</returns>
+        public abstract int TryGetMessageTypeNumber(Type messageBodyType);
 
         /// <summary>
         /// Registers a function that decodes a particular message type.
@@ -93,8 +167,37 @@ namespace Energistics.Etp.Common
             if (MessageDecoders.ContainsKey(messageKey))
                 throw new ArgumentException($"Duplicate decoder: Protocol: {protocol}; Message Type: {messageType}", "messageType");
 
-            MessageDecoders[messageKey] = (d, b) => EtpExtensions.Decode<T>(d, b);
-            MessageDecodersByType[typeof(T)] = MessageDecoders[messageKey];
+            RegisterMessageDecoderOverride<T, T>(protocol, messageType);
+        }
+
+        /// <summary>
+        /// Overrides an existing message decoder so that it can return a generic interface.
+        /// </summary>
+        /// <typeparam name="TInterface">The type of the message body interface.</typeparam>
+        /// <typeparam name="TBody">The type of the decoded message.</typeparam>
+        /// <param name="protocol"></param>
+        /// <param name="messageType"></param>
+        protected void RegisterMessageDecoderOverride<TInterface, TBody>(object protocol, object messageType) where TInterface : ISpecificRecord where TBody : TInterface
+        {
+            var messageKey = EtpExtensions.CreateMessageKey(Convert.ToInt32(protocol), Convert.ToInt32(messageType));
+
+            MessageDecoders[messageKey] = (d, h, x) => CreateMessage<TInterface, TBody>(h, d.Decode<TBody>(), extension: x);
+            MessageDeserializers[messageKey] = (b, h, x) => CreateMessage<TInterface, TBody>(h, EtpExtensions.Deserialize<TBody>(b), extension: x);
+            MessageDecodersByType[typeof(TInterface)] = MessageDecoders[messageKey];
+        }
+
+        /// <summary>
+        /// Creates an ETP message for use elsewhere in the DevKit.
+        /// </summary>
+        /// <typeparam name="TBody">The type of the message body.</typeparam>
+        /// <typeparam name="TInterface">The type of the message body interface.</typeparam>
+        /// <param name="header">The message header.</param>
+        /// <param name="extension">The message header extension, if any.</param>
+        /// <param name="body">The message body.</param>
+        /// <returns>The message.</returns>
+        private EtpMessage CreateMessage<TInterface, TBody>(IMessageHeader header, TBody body, IMessageHeaderExtension extension = null) where TInterface : ISpecificRecord where TBody : TInterface
+        {
+            return new EtpMessage<TInterface>(header, body, extension: extension);
         }
 
         /// <summary>
@@ -125,13 +228,13 @@ namespace Energistics.Etp.Common
         /// </summary>
         protected void RegisterStandardMessageDecoders()
         {
-            var mainMessageNamespacePrefix = $"Energistics.Etp.{SupportedVersion}.Protocol";
-            var privateMessageNamespacePrefix = $"Energistics.Etp.{SupportedVersion}.PrivateProtocols";
+            var mainMessageNamespacePrefix = $"Energistics.Etp.{EtpVersion}.Protocol";
+            var privateMessageNamespacePrefix = $"Energistics.Etp.{EtpVersion}.PrivateProtocols";
 
-            var protocolsEnumType = SupportedVersion == EtpVersion.v11 ? typeof(v11.Protocols) : typeof(v12.Protocols);
+            var protocolsEnumType = EtpVersion == EtpVersion.v11 ? typeof(v11.Protocols) : typeof(v12.Protocols);
             var protocolNames = Enum.GetNames(protocolsEnumType);
 
-            var messageTypesType = SupportedVersion == EtpVersion.v11 ? typeof(v11.MessageTypes) : typeof(v12.MessageTypes);
+            var messageTypesType = EtpVersion == EtpVersion.v11 ? typeof(v11.MessageTypes) : typeof(v12.MessageTypes);
             var messageTypeMap = messageTypesType.GetNestedTypes().ToDictionary(t => t.Name);
             var messageTypeEnumValuesMap = messageTypeMap.Values.ToDictionary(t => t.Name, t => Enum.GetNames(t));
 

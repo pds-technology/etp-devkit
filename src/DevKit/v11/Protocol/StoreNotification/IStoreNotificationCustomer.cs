@@ -19,6 +19,7 @@
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes.Object;
+using System;
 
 namespace Energistics.Etp.v11.Protocol.StoreNotification
 {
@@ -26,31 +27,41 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
     /// Defines the interface that must be implemented by the customer role of the store notification protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Store, "customer", "store")]
+    [ProtocolRole((int)Protocols.Store, Roles.Customer, Roles.Store)]
     public interface IStoreNotificationCustomer : IProtocolHandler
     {
         /// <summary>
         /// Sends a NotificationRequest message to a store.
         /// </summary>
         /// <param name="request">The request.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long NotificationRequest(NotificationRequestRecord request);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<NotificationRequest> NotificationRequest(NotificationRequestRecord request);
+
+        /// <summary>
+        /// Event raised when there is an exception received in response to a NotificationRequest message.
+        /// </summary>
+        event EventHandler<VoidResponseEventArgs<NotificationRequest>> OnNotificationRequestException;
+
+        /// <summary>
+        /// Handles the ChangeNotification event from a store.
+        /// </summary>
+        event EventHandler<NotificationEventArgs<NotificationRequestRecord, ChangeNotification>> OnChangeNotification;
+
+        /// <summary>
+        /// Handles the DeleteNotification event from a store.
+        /// </summary>
+        event EventHandler<NotificationEventArgs<NotificationRequestRecord, DeleteNotification>> OnDeleteNotification;
 
         /// <summary>
         /// Sends a CancelNotification message to a store.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long CancelNotification(string requestUuid);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<CancelNotification> CancelNotification(Guid requestUuid);
 
         /// <summary>
-        /// Handles the ChangeNotification event from a store.
+        /// Event raised when there is an exception received in response to a CancelNotification message.
         /// </summary>
-        event ProtocolEventHandler<ChangeNotification> OnChangeNotification;
-
-        /// <summary>
-        /// Handles the DeleteNotification event from a store.
-        /// </summary>
-        event ProtocolEventHandler<DeleteNotification> OnDeleteNotification;
+        event EventHandler<VoidResponseEventArgs<CancelNotification>> OnCancelNotificationException;
     }
 }

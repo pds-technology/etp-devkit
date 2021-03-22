@@ -67,7 +67,7 @@ namespace Energistics.Etp.Common.Datatypes
         public void ByteArrayConverter_WriteJson_Can_Serialize_Byte_Array_In_Avro_Format()
         {
             var dataObject = new v11.Datatypes.Object.DataObject();
-            dataObject.SetString(Xml, false);
+            dataObject.SetString(Xml);
 
             var json = EtpExtensions.Serialize(dataObject, true);
             var hexEscaped = Escape(Hex);
@@ -79,7 +79,7 @@ namespace Energistics.Etp.Common.Datatypes
         public void ByteArrayConverter_WriteJson_Can_Serialize_Compressed_Byte_Array_In_Avro_Format()
         {
             var dataObject = new v11.Datatypes.Object.DataObject();
-            dataObject.SetString(Xml);
+            dataObject.SetString(Xml, EtpCompression.Gzip);
 
             var json = EtpExtensions.Serialize(dataObject, true);
             var hexEscaped = Escape(HexGzip);
@@ -116,7 +116,7 @@ namespace Energistics.Etp.Common.Datatypes
             var instance = EtpExtensions.Deserialize<v11.Datatypes.Object.DataObject>(json);
 
             var dataObject = new v11.Datatypes.Object.DataObject();
-            dataObject.SetString(Xml);
+            dataObject.SetString(Xml, EtpCompression.Gzip);
 
             var expected = dataObject.Data;
 

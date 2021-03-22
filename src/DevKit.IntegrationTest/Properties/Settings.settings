@@ -17,9 +17,6 @@
     <Setting Name="Username" Type="System.String" Scope="Application">
       <Value Profile="(Default)">witsml.user</Value>
     </Setting>
-    <Setting Name="EtpVersion" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">1.1</Value>
-    </Setting>
     <Setting Name="EtpSubProtocol" Type="System.String" Scope="Application">
       <Value Profile="(Default)">energistics-tp</Value>
     </Setting>
@@ -28,6 +25,9 @@
     </Setting>
     <Setting Name="ProxyPassword" Type="System.String" Scope="Application">
       <Value Profile="(Default)">test123</Value>
+    </Setting>
+    <Setting Name="EtpVersion" Type="Energistics.Etp.Common.EtpVersion" Scope="Application">
+      <Value Profile="(Default)">v11</Value>
     </Setting>
   </Settings>
 </SettingsFile>

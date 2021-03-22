@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -23,15 +24,15 @@ using Energistics.Etp.v11.Datatypes;
 
 namespace Energistics.Etp.v11.Protocol.DataArray
 {
-    [ProtocolRole((int)Protocols.DataArray, "customer", "store")]
+    [ProtocolRole((int)Protocols.DataArray, Roles.Customer, Roles.Store)]
     public interface IDataArrayCustomer : IProtocolHandler
     {
         /// <summary>
         /// Gets the data array by URI.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long GetDataArray(string uri);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetDataArray> GetDataArray(string uri);
 
         /// <summary>
         /// Gets the data array slice by URI, start and count.
@@ -39,8 +40,8 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// <param name="uri">The URI.</param>
         /// <param name="start">The start.</param>
         /// <param name="count">The count.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long GetDataArraySlice(string uri, IList<long> start, IList<long> count);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetDataArraySlice> GetDataArraySlice(string uri, IList<long> start, IList<long> count);
 
         /// <summary>
         /// Puts a data array in the data store.
@@ -48,8 +49,8 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// <param name="uri">The URI.</param>
         /// <param name="data">The data array.</param>
         /// <param name="dimensions">The dimensions.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long PutDataArray(string uri, AnyArray data, IList<long> dimensions);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PutDataArray> PutDataArray(string uri, AnyArray data, IList<long> dimensions);
 
         /// <summary>
         /// Puts a data array slice in the data store.
@@ -59,12 +60,27 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="start">The start.</param>
         /// <param name="count">The count.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long PutDataArraySlice(string uri, AnyArray data, IList<long> dimensions, IList<long> start, IList<long> count);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PutDataArraySlice> PutDataArraySlice(string uri, AnyArray data, IList<long> dimensions, IList<long> start, IList<long> count);
 
         /// <summary>
-        /// Handles the DataArray event from a store.
+        /// Handles the DataArray event from a store when sent in response to a GetDataArray.
         /// </summary>
-        event ProtocolEventHandler<DataArray> OnDataArray; 
+        event EventHandler<ResponseEventArgs<GetDataArray, DataArray>> OnGetDataArrayDataArray;
+
+        /// <summary>
+        /// Handles the DataArray event from a store when sent in response to a GetDataArraySlice.
+        /// </summary>
+        event EventHandler<ResponseEventArgs<GetDataArraySlice, DataArray>> OnGetDataArraySliceDataArray;
+
+        /// <summary>
+        /// Event raised when there is an exception received in response to a PutDataArray message.
+        /// </summary>
+        event EventHandler<VoidResponseEventArgs<PutDataArray>> OnPutDataArrayException;
+
+        /// <summary>
+        /// Event raised when there is an exception received in response to a PutDataArraySlice message.
+        /// </summary>
+        event EventHandler<VoidResponseEventArgs<PutDataArraySlice>> OnPutDataArraySliceException;
     }
 }

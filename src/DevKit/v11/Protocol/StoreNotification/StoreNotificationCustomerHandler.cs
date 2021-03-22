@@ -18,7 +18,9 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.v11.Datatypes.Object;
+using System;
 
 namespace Energistics.Etp.v11.Protocol.StoreNotification
 {
@@ -32,7 +34,7 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreNotificationCustomerHandler"/> class.
         /// </summary>
-        public StoreNotificationCustomerHandler() : base((int)Protocols.StoreNotification, "customer", "store")
+        public StoreNotificationCustomerHandler() : base((int)Protocols.StoreNotification, Roles.Customer, Roles.Store)
         {
             RegisterMessageHandler<ChangeNotification>(Protocols.StoreNotification, MessageTypes.StoreNotification.ChangeNotification, HandleChangeNotification);
             RegisterMessageHandler<DeleteNotification>(Protocols.StoreNotification, MessageTypes.StoreNotification.DeleteNotification, HandleDeleteNotification);
@@ -42,64 +44,127 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         /// Sends a NotificationRequest message to a store.
         /// </summary>
         /// <param name="request">The request.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public long NotificationRequest(NotificationRequestRecord request)
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<NotificationRequest> NotificationRequest(NotificationRequestRecord request)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.NotificationRequest);
-
-            var notificationRequest = new NotificationRequest()
+            var body = new NotificationRequest()
             {
                 Request = request
             };
 
-            return Session.SendMessage(header, notificationRequest);
+            var message = SendRequest(body, onBeforeSend: (m) => TryRegisterSubscription(request, nameof(request.Uuid), m, request));
+
+            if (message == null)
+                TryUnregisterSubscription(request);
+
+            return message;
         }
+
+        /// <summary>
+        /// Event raised when there is an exception received in response to a NotificationRequest message.
+        /// </summary>
+        public event EventHandler<VoidResponseEventArgs<NotificationRequest>> OnNotificationRequestException;
+
+        /// <summary>
+        /// Handles the ChangeNotification event from a store.
+        /// </summary>
+        public event EventHandler<NotificationEventArgs<NotificationRequestRecord, ChangeNotification>> OnChangeNotification;
+
+        /// <summary>
+        /// Handles the DeleteNotification event from a store.
+        /// </summary>
+        public event EventHandler<NotificationEventArgs<NotificationRequestRecord, DeleteNotification>> OnDeleteNotification;
 
         /// <summary>
         /// Sends a CancelNotification message to a store.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public long CancelNotification(string requestUuid)
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<CancelNotification> CancelNotification(Guid requestUuid)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.CancelNotification);
-
-            var cancelNotification = new CancelNotification()
+            var body = new CancelNotification()
             {
-                RequestUuid = requestUuid
+                RequestUuid = requestUuid.ToString(),
             };
 
-            return Session.SendMessage(header, cancelNotification);
+            var message = SendRequest(body);
+
+            if (message != null)
+                TryUnregisterSubscription(message.Body, nameof(body.RequestUuid), message);
+
+            return message;
         }
 
         /// <summary>
-        /// Handles the ChangeNotification event from a store.
+        /// Event raised when there is an exception received in response to a CancelNotification message.
         /// </summary>
-        public event ProtocolEventHandler<ChangeNotification> OnChangeNotification;
+        public event EventHandler<VoidResponseEventArgs<CancelNotification>> OnCancelNotificationException;
 
         /// <summary>
-        /// Handles the DeleteNotification event from a store.
+        /// Handles the ProtocolException message.
         /// </summary>
-        public event ProtocolEventHandler<DeleteNotification> OnDeleteNotification;
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
+        {
+            base.HandleProtocolException(message);
+
+            var request = TryGetCorrelatedMessage(message);
+            if (request is EtpMessage<NotificationRequest>)
+                HandleResponseMessage(request as EtpMessage<NotificationRequest>, message, OnNotificationRequestException, HandleNotificationRequestException);
+            else if (request is EtpMessage<CancelNotification>)
+                HandleResponseMessage(request as EtpMessage<CancelNotification>, message, OnCancelNotificationException, HandleCancelNotificationException);
+        }
+
+        /// <summary>
+        /// Handles exceptions to the NotificationRequest message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="VoidResponseEventArgs{NotificationRequest}"/> instance containing the event data.</param>
+        protected virtual void HandleNotificationRequestException(VoidResponseEventArgs<NotificationRequest> args)
+        {
+        }
 
         /// <summary>
         /// Handles the ChangeNotification message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="notification">The ChangeNotification message.</param>
-        protected virtual void HandleChangeNotification(IMessageHeader header, ChangeNotification notification)
+        /// <param name="message">The ChangeNotification message.</param>
+        protected virtual void HandleChangeNotification(EtpMessage<ChangeNotification> message)
         {
-            Notify(OnChangeNotification, header, notification);
+            var subscription = TryGetSubscription<NotificationRequestRecord>(message.Header);
+            HandleNotificationMessage(subscription, message, OnChangeNotification, HandleChangeNotification);
+        }
+
+        /// <summary>
+        /// Handles the ChangeNotification message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="NotificationEventArgs{NotificationRequestRecord, ChangeNotification}"/> instance containing the event data.</param>
+        protected virtual void HandleChangeNotification(NotificationEventArgs<NotificationRequestRecord, ChangeNotification> args)
+        {
         }
 
         /// <summary>
         /// Handles the DeleteNotification message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="notification">The DeleteNotification message.</param>
-        protected virtual void HandleDeleteNotification(IMessageHeader header, DeleteNotification notification)
+        /// <param name="message">The DeleteNotification message.</param>
+        protected virtual void HandleDeleteNotification(EtpMessage<DeleteNotification> message)
         {
-            Notify(OnDeleteNotification, header, notification);
+            var subscription = TryGetSubscription<NotificationRequestRecord>(message.Header);
+            HandleNotificationMessage(subscription, message, OnDeleteNotification, HandleDeleteNotification);
+        }
+
+        /// <summary>
+        /// Handles the DeleteNotification message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="NotificationEventArgs{NotificationRequestRecord, DeleteNotification}"/> instance containing the event data.</param>
+        protected virtual void HandleDeleteNotification(NotificationEventArgs<NotificationRequestRecord, DeleteNotification> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles exceptions to the CancelNotification message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="VoidResponseEventArgs{CancelNotification}"/> instance containing the event data.</param>
+        protected virtual void HandleCancelNotificationException(VoidResponseEventArgs<CancelNotification> args)
+        {
         }
     }
 }

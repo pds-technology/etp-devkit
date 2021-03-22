@@ -29,7 +29,11 @@ namespace Energistics.Etp.v12.Protocol
     /// Provides common functionality for ETP 1.2 protocol handlers.
     /// </summary>
     /// <seealso cref="EtpProtocolHandler" />
-    public abstract class Etp12ProtocolHandler : EtpProtocolHandler, IEtp12ProtocolHandler
+    public abstract class Etp12ProtocolHandler<TCapabilities, TCapabilitiesInterface, TCounterpartCapabilities, TCounterpartCapabilitiesInterface> : EtpProtocolHandler<TCapabilities, TCapabilitiesInterface, TCounterpartCapabilities, TCounterpartCapabilitiesInterface>, IEtp12ProtocolHandler
+        where TCapabilities : Etp12ProtocolCapabilities, TCapabilitiesInterface, new()
+        where TCapabilitiesInterface : class, IProtocolCapabilities
+        where TCounterpartCapabilities : Etp12ProtocolCapabilities, TCounterpartCapabilitiesInterface, new()
+        where TCounterpartCapabilitiesInterface : class, IProtocolCapabilities
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Etp12ProtocolHandler"/> class.
@@ -43,162 +47,127 @@ namespace Energistics.Etp.v12.Protocol
         }
 
         /// <summary>
-        /// Creates a new <see cref="ErrorInfo"/> instance.
+        /// Sends a complete multi-part set of response and ProtocolException messages to a customer.
+        /// If there is no content for the positive response, an empty response message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
         /// </summary>
-        /// <returns>The <see cref="ErrorInfo"/> instance.</returns>
-        public ErrorInfo ErrorInfo()
+        /// <typeparam name="TBody">The response message body type.</typeparam>
+        /// <typeparam name="TResponse">The response content type.</typeparam>
+        /// <param name="responseMethod">The method to send the response message.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="response">The response content.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the OpenChannelsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<TBody> SendMapResponse<TBody, TResponse>(Func<IMessageHeader, IDictionary<string, TResponse>, bool, IMessageHeaderExtension, EtpMessage<TBody>> responseMethod, IMessageHeader correlatedHeader, IDictionary<string, TResponse> response, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+            where TBody : ISpecificRecord
         {
-            return new ErrorInfo();
+            var message = responseMethod(correlatedHeader, response, /* isFinalPart: */ ((errors == null || errors.Count == 0) && setFinalPart), /* extension: */ responseExtension);
+            if (message == null)
+                return null;
+
+            if (errors?.Count > 0)
+            {
+                var ret = ProtocolException(errors, correlatedHeader: correlatedHeader, setFinalPart: setFinalPart, extension: exceptionExtension);
+                if (ret == null)
+                    return null;
+            }
+
+            return message;
         }
 
         /// <summary>
-        /// Convers a <see cref="IErrorInfo"/> instance to an <see cref="ErrorInfo"/> instance.
+        /// Sends a complete multi-part set of response and ProtocolException messages to a customer.
+        /// If there is no content for the positive response, an empty response message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
         /// </summary>
-        /// <param name="errorInfo">The <see cref="IErrorInfo"/> to convert to a <see cref="ErrorInfo"/>.</param>
-        /// <returns>The <see cref="ErrorInfo"/> instance.</returns>
-        public ErrorInfo ErrorInfo(IErrorInfo errorInfo)
+        /// <typeparam name="TBody">The response message body type.</typeparam>
+        /// <typeparam name="TResponse">The response content type.</typeparam>
+        /// <typeparam name="TContext">The response context type.</typeparam>
+        /// <param name="responseMethod">The method to send the response message.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="response">The response content.</param>
+        /// <param name="context">The response context.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the OpenChannelsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<TBody> SendMapResponse<TBody, TResponse, TContext>(Func<IMessageHeader, IDictionary<string, TResponse>, TContext, bool, IMessageHeaderExtension, EtpMessage<TBody>> responseMethod, IMessageHeader correlatedHeader, IDictionary<string, TResponse> response, TContext context, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+            where TBody : ISpecificRecord
         {
-            return (errorInfo as ErrorInfo) ?? new ErrorInfo { Code = errorInfo?.Code ?? 0, Message = errorInfo?.Message };
+            var message = responseMethod(correlatedHeader, response, context, /* isFinalPart: */ ((errors == null || errors.Count == 0) && setFinalPart), /* extension: */ responseExtension);
+            if (message == null)
+                return null;
+
+            if (errors?.Count > 0)
+            {
+                var ret = ProtocolException(errors, correlatedHeader: correlatedHeader, setFinalPart: setFinalPart, extension: exceptionExtension);
+                if (ret == null)
+                    return null;
+            }
+
+            return message;
         }
+    }
 
+    /// <summary>
+    /// Provides default common functionality for ETP 1.2 protocol handlers.
+    /// </summary>
+    /// <seealso cref="EtpProtocolHandler" />
+    public abstract class Etp12ProtocolHandler : Etp12ProtocolHandler<Etp12ProtocolCapabilities, IProtocolCapabilities, Etp12ProtocolCapabilities, IProtocolCapabilities>
+    {
         /// <summary>
-        /// Sends an ETP 1.2 multipart response for item maps including possible errors.
+        /// Initializes a new instance of the <see cref="Etp12ProtocolHandler{TCapabilities, TCapabilitiesInterface, TCounterpartCapabilities, TCounterpartCapabilitiesInterface}"/> class.
         /// </summary>
-        /// <typeparam name="TMessage">The type of the message being sent.</typeparam>
-        /// <typeparam name="TItem">The type of map item.</typeparam>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="items">The items to send.</param>
-        /// <param name="errors">The errors to send, if any.</param>
-        /// <param name="setItems">The action to use to update the message with the specified items.</param>
-        protected long SendMultipartResponse<TMessage, TItem>(IMessageHeader header, TMessage message, IDictionary<string, TItem> items, IDictionary<string, ErrorInfo> errors, Action<TMessage, IDictionary<string, TItem>> setItems)
-            where TMessage : ISpecificRecord
+        /// <param name="protocol">The protocol.</param>
+        /// <param name="role">This handler's role in the protocol.</param>
+        /// <param name="counterpartRole">The role for this handler's counterpart in the protocol.</param>
+        protected Etp12ProtocolHandler(int protocol, string role, string counterpartRole)
+            : base(protocol, role, counterpartRole)
         {
-            header.MessageFlags = (int)MessageFlags.MultiPart;
-
-            var messageId = 0L;
-
-            if (items.Count == 0)
-            {
-                var isFinal = errors.Count == 0;
-                if (isFinal)
-                    header.MessageFlags = (int)MessageFlags.MultiPartAndFinalPart;
-
-                setItems(message, new Dictionary<string, TItem>());
-
-                messageId = Session.SendMessage(header, message);
-            }
-
-            var count = 0;
-            foreach (var kvp in items)
-            {
-                var isFinal = errors.Count == 0 && count == items.Count - 1;
-                if (isFinal)
-                    header.MessageFlags = (int)MessageFlags.MultiPartAndFinalPart;
-
-                count++;
-
-                setItems(message, new Dictionary<string, TItem> { [kvp.Key] = kvp.Value });
-
-                messageId = Session.SendMessage(header, message);
-            }
-
-            header.MessageType = Convert.ToInt32(MessageTypes.Core.ProtocolException);
-
-            var exception = new Core.ProtocolException();
-
-            count = 0;
-            foreach (var kvp in errors)
-            {
-                var isFinal = count == errors.Count - 1;
-                if (isFinal)
-                    header.MessageFlags = (int)MessageFlags.MultiPartAndFinalPart;
-
-                count++;
-
-                exception.Errors = new Dictionary<string, ErrorInfo> { [kvp.Key] = kvp.Value };
-
-                messageId = Session.SendMessage(header, exception);
-            }
-
-            return messageId;
         }
+    }
 
+    /// <summary>
+    /// Provides default common functionality for ETP 1.2 protocol handlers.
+    /// </summary>
+    /// <seealso cref="EtpProtocolHandler" />
+    public abstract class Etp12ProtocolHandlerWithCounterpartCapabilities<TCounterpartCapabilities, TCounterpartCapabilitiesInterface> : Etp12ProtocolHandler<Etp12ProtocolCapabilities, IProtocolCapabilities, TCounterpartCapabilities, TCounterpartCapabilitiesInterface>
+        where TCounterpartCapabilities : Etp12ProtocolCapabilities, TCounterpartCapabilitiesInterface, new()
+        where TCounterpartCapabilitiesInterface : class, IProtocolCapabilities
+    {
         /// <summary>
-        /// Sends an ETP 1.2 multipart response for a list of items.
+        /// Initializes a new instance of the <see cref="Etp12ProtocolHandlerWithCounterpartCapabilities{TCounterpartCapabilities, TCounterpartCapabilitiesInterface}"/> class.
         /// </summary>
-        /// <typeparam name="TMessage">The type of the message being sent.</typeparam>
-        /// <typeparam name="TItem">The type of item.</typeparam>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="items">The items to send.</param>
-        /// <param name="setItems">The action to use to update the message with the specified items.</param>
-        protected long SendMultipartResponse<TMessage, TItem>(IMessageHeader header, TMessage message, IList<TItem> items, Action<TMessage, IList<TItem>> setItems)
-            where TMessage : ISpecificRecord
+        /// <param name="protocol">The protocol.</param>
+        /// <param name="role">This handler's role in the protocol.</param>
+        /// <param name="counterpartRole">The role for this handler's counterpart in the protocol.</param>
+        protected Etp12ProtocolHandlerWithCounterpartCapabilities(int protocol, string role, string counterpartRole)
+            : base(protocol, role, counterpartRole)
         {
-            header.MessageFlags = (int)MessageFlags.MultiPart;
-
-            var messageId = 0L;
-
-            if (items.Count == 0)
-            {
-                header.MessageFlags = (int)MessageFlags.MultiPartAndFinalPart;
-
-                setItems(message, new List<TItem>());
-
-                messageId = Session.SendMessage(header, message);
-            }
-
-            var count = 0;
-            for (int i = 0; i < items.Count; i++)
-            {
-                var isFinal = i == items.Count - 1;
-                if (isFinal)
-                    header.MessageFlags = (int)MessageFlags.MultiPartAndFinalPart;
-
-                count++;
-
-                setItems(message, new List<TItem> { items[i] });
-
-                messageId = Session.SendMessage(header, message);
-            }
-
-            return messageId;
         }
+    }
 
+    /// <summary>
+    /// Provides default common functionality for ETP 1.2 protocol handlers.
+    /// </summary>
+    /// <seealso cref="EtpProtocolHandler" />
+    public abstract class Etp12ProtocolHandlerWithCapabilities<TCapabilities, TCapabilitiesInterface> : Etp12ProtocolHandler<TCapabilities, TCapabilitiesInterface, Etp12ProtocolCapabilities, IProtocolCapabilities>
+        where TCapabilities : Etp12ProtocolCapabilities, TCapabilitiesInterface, new()
+        where TCapabilitiesInterface : class, IProtocolCapabilities
+    {
         /// <summary>
-        /// Sends an ETP 1.2 multipart response for item maps including possible errors.
+        /// Initializes a new instance of the <see cref="Etp12ProtocolHandlerWithCapabilities{TCapabilities, TCapabilitiesInterface}"/> class.
         /// </summary>
-        /// <typeparam name="TMessage">The type of the message being sent.</typeparam>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="errors">The errors to send, if any.</param>
-        protected long SendMultipartResponse<TMessage>(IMessageHeader header, TMessage message, IDictionary<string, ErrorInfo> errors)
-            where TMessage : ISpecificRecord
+        /// <param name="protocol">The protocol.</param>
+        /// <param name="role">This handler's role in the protocol.</param>
+        /// <param name="Role">The role for this handler's  in the protocol.</param>
+        protected Etp12ProtocolHandlerWithCapabilities(int protocol, string role, string Role)
+            : base(protocol, role, Role)
         {
-            header.MessageFlags = (int)MessageFlags.MultiPart;
-
-            var messageId = 0L;
-
-            header.MessageType = Convert.ToInt32(MessageTypes.Core.ProtocolException);
-
-            var exception = new Core.ProtocolException();
-
-            var count = 0;
-            foreach (var kvp in errors)
-            {
-                var isFinal = count == errors.Count - 1;
-                if (isFinal)
-                    header.MessageFlags = (int)MessageFlags.MultiPartAndFinalPart;
-
-                count++;
-
-                exception.Errors = new Dictionary<string, ErrorInfo> { [kvp.Key] = kvp.Value };
-
-                messageId = Session.SendMessage(header, exception);
-            }
-
-            return messageId;
         }
     }
 }

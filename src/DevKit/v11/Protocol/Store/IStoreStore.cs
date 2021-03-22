@@ -19,38 +19,38 @@
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes.Object;
+using System;
 
 namespace Energistics.Etp.v11.Protocol.Store
 {
     /// <summary>
-    /// Defines the interface that must be implemented by the store role of the store protocol.
+    /// Defines the interface that must be implemented by the store role of the Store protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Store, "store", "customer")]
+    [ProtocolRole((int)Protocols.Store, Roles.Store, Roles.Customer)]
     public interface IStoreStore : IProtocolHandler
     {
         /// <summary>
         /// Sends an Object message to a customer.
         /// </summary>
+        /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
         /// <param name="dataObject">The data object.</param>
-        /// <param name="correlationId">The correlation identifier.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long Object(DataObject dataObject, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<Object> Object(IMessageHeader correlatedHeader, DataObject dataObject);
 
         /// <summary>
         /// Handles the GetObject event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetObject, DataObject> OnGetObject;
+        event EventHandler<RequestEventArgs<GetObject, DataObject>> OnGetObject;
 
         /// <summary>
         /// Handles the PutObject event from a customer.
         /// </summary>
-        event ProtocolEventHandler<PutObject> OnPutObject;
+        event EventHandler<VoidRequestEventArgs<PutObject>> OnPutObject;
 
         /// <summary>
         /// Handles the DeleteObject event from a customer.
         /// </summary>
-        event ProtocolEventHandler<DeleteObject> OnDeleteObject;
+        event EventHandler<VoidRequestEventArgs<DeleteObject>> OnDeleteObject;
     }
 }

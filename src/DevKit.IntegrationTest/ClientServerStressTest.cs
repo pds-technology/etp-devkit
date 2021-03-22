@@ -17,6 +17,9 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
+using System.IO;
+using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using log4net;
@@ -37,18 +40,18 @@ namespace Energistics.Etp
 
         protected void SetUp(WebSocketType webSocketType)
         {
-            SetUp(webSocketType, EtpSettings.Etp11SubProtocol);
+            SetUp(webSocketType, EtpVersion.v11);
         }
 
         protected void SetupStart(WebSocketType webSocketType)
         {
-            SetUp(webSocketType, EtpSettings.Etp11SubProtocol);
+            SetUp(webSocketType, EtpVersion.v11);
             _server.Start();
         }
 
         protected void SetupStartOpen(WebSocketType webSocketType)
         {
-            SetUp(webSocketType, EtpSettings.Etp11SubProtocol);
+            SetUp(webSocketType, EtpVersion.v11);
             _server.Start();
             _client.Open();
         }
@@ -189,7 +192,7 @@ namespace Energistics.Etp
         }
 
         [TestMethod]
-        public void ClientServerStressTest_SetupStartOpen_CoseStopCleanup_Native()
+        public void ClientServerStressTest_SetupStartOpen_CloseStopCleanup_Native()
         {
             RunStressTest(WebSocketType.Native,
                 SetupStartOpen, CloseStopCleanUp);

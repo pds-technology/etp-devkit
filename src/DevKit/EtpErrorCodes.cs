@@ -43,9 +43,10 @@ namespace Energistics.Etp
         /// <summary>EINVALID_ARGUMENT</summary>
         [Description("EINVALID_ARGUMENT")]
         InvalidArgument = 5,
-        /// <summary>EPERMISSION_DENIED</summary>
-        [Description("EPERMISSION_DENIED")]
-        PermissionDenied = 6,
+        /// <summary>EREQUEST_DENIED</summary>
+        /// <remarks>Was EPERMISSION_DENIED in ETP 1.1</remarks>
+        [Description("EREQUEST_DENIED")]
+        RequestDenied = 6,
         /// <summary>ENOTSUPPORTED</summary>
         [Description("ENOTSUPPORTED")]
         NotSupported = 7,
@@ -70,6 +71,39 @@ namespace Energistics.Etp
         /// <summary>EINVALID_OBJECT</summary>
         [Description("EINVALID_OBJECT")]
         InvalidObject = 14,
+        /// <summary>EMAX_TRANSACTIONS_EXCEEDED</summary>
+        [Description("EMAX_TRANSACTIONS_EXCEEDED")]
+        MaxTransactionsExceeded = 15,
+        /// <summary>ECONTENT_TYPE_NOTSUPPORTED</summary>
+        [Description("ECONTENT_TYPE_NOTSUPPORTED")]
+        ContentTypeNotSupported = 16,
+        /// <summary>EMAXSIZE_EXCEEDED</summary>
+        [Description("EMAXSIZE_EXCEEDED")]
+        MaxSizeExceeded = 17,
+        /// <summary>EMULTIPART_CANCELLED</summary>
+        [Description("EMULTIPART_CANCELLED")]
+        MultiPartCancelled = 18,
+        /// <summary>EINVALID_MESSAGE</summary>
+        [Description("EINVALID_MESSAGE")]
+        InvalidMessage = 19,
+        /// <summary>EINVALID_INDEXKIND</summary>
+        [Description("EINVALID_INDEXKIND")]
+        InvalidIndexKind = 20,
+        /// <summary>ENOSUPPORTEDFORMATS</summary>
+        [Description("ENOSUPPORTEDFORMATS")]
+        NoSupportedFormats = 21,
+        /// <summary>EREQUESTUUID_REJECTED</summary>
+        [Description("EREQUESTUUID_REJECTED")]
+        RequestUuidRejected = 22,
+        /// <summary>EUPDATEGROWINGOBJECT_DENIED</summary>
+        [Description("EUPDATEGROWINGOBJECT_DENIED")]
+        UpdateGrowingObjectDenied = 23,
+        /// <summary>EBACKPRESSURE_LIMIT_EXCEEDED</summary>
+        [Description("EBACKPRESSURE_LIMIT_EXCEEDED")]
+        BackpressureLimitExceeded = 24,
+        /// <summary>EBACKPRESSURE_WARNING</summary>
+        [Description("EBACKPRESSURE_WARNING")]
+        BackpressureWarning = 25,
 
         /// <summary>EINVALID_CHANNELID</summary>
         [Description("EINVALID_CHANNELID")]
@@ -78,17 +112,15 @@ namespace Energistics.Etp
         /// <summary>EUNSUPPORTED_OBJECT</summary>
         [Description("EUNSUPPORTED_OBJECT")]
         UnsupportedObject = 4001,
-        /// <summary>EINVALID_OBJECT_X</summary>
-        [Description("EINVALID_OBJECT_X")]
-        InvalidObjectX = 4002,
+
         /// <summary>ENOCASCADE_DELETE</summary>
         [Description("ENOCASCADE_DELETE")]
         NoCascadeDelete = 4003,
         /// <summary>EPLURAL_OBJECT</summary>
         [Description("EPLURAL_OBJECT")]
-        NoPluralObject = 4004,
+        PluralObject = 4004,
         /// <summary>EGROWING_PORTION_IGNORED</summary>
-        [Description("EPLURAL_OBJECT")]
+        [Description("EGROWING_PORTION_IGNORED")]
         GrowingPortionIgnored = 4005,
 
         /// <summary>ERETENTION_PERIOD_EXCEEDED</summary>

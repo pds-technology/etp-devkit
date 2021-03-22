@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -26,38 +27,19 @@ namespace Energistics.Etp.v11.Protocol.Core
     /// Represents the interface that must be implemented from the client side of Protocol 0.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Core, "client", "server")]
+    [ProtocolRole((int)Protocols.Core, Roles.Client, Roles.Server)]
     public interface ICoreClient : IProtocolHandler
     {
-        /// <summary>
-        /// Sends a RequestSession message to a server.
-        /// </summary>
-        /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long RequestSession(IReadOnlyList<EtpSessionProtocol> requestedProtocols);
-
-        /// <summary>
-        /// Sends a CloseSession message to a server.
-        /// </summary>
-        /// <param name="reason">The reason.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long CloseSession(string reason = null);
-
         /// <summary>
         /// Renews the security token.
         /// </summary>
         /// <param name="token">The token.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long RenewSecurityToken(string token);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<RenewSecurityToken> RenewSecurityToken(string token);
 
         /// <summary>
-        /// Handles the OpenSession event from a server.
+        /// Event raised when there is an exception received in response to a RenewSecurityToken message.
         /// </summary>
-        event ProtocolEventHandler<OpenSession> OnOpenSession;
-
-        /// <summary>
-        /// Handles the CloseSession event from a server.
-        /// </summary>
-        event ProtocolEventHandler<CloseSession> OnCloseSession;
+        event EventHandler<VoidResponseEventArgs<RenewSecurityToken>> OnRenewSecurityTokenException;
     }
 }

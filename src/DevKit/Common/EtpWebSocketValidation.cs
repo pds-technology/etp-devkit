@@ -45,50 +45,102 @@ namespace Energistics.Etp.Common
         /// Gets the preferred ETP websocket subprotocol for the session.
         /// </summary>
         /// <param name="requestHeaders">The request headers.</param>
-        /// <returns>The preferred ETP websocket subprotocol if a recognized subprotocol was requested; <c>null</c> otherweise.</returns>
+        /// <returns>The preferred ETP websocket subprotocol if a recognized subprotocol was requested; <c>null</c> otherwise.</returns>
         public static string GetPreferredSubProtocol(IDictionary<string, string> requestHeaders)
         {
             if (requestHeaders == null) return null;
 
-            var requestedProtocols = requestHeaders["Sec-WebSocket-Protocol"];
-            return EtpSettings.EtpSubProtocols
-                .FirstOrDefault(protocol => requestedProtocols.IndexOf(protocol, 0, StringComparison.InvariantCultureIgnoreCase) > -1);
+            var value = requestHeaders["Sec-WebSocket-Protocol"];
+            if (string.IsNullOrEmpty(value)) return null;
+
+            var requestedProtocols = value.Split(',');
+            foreach (var requestedProtocol in requestedProtocols)
+            {
+                var version = GetEtpVersion(requestedProtocol);
+                if (version == EtpVersion.v11)
+                    return requestedProtocol;
+                if (version == EtpVersion.v12)
+                    return requestedProtocol;
+            }
+
+            return null;
         }
 
         /// <summary>
-        /// Gets the preferred ETP websocket subprotocol for the session.
+        /// Gets the supported websocket subprotocols based on the supported ETP versions.
+        /// </summary>
+        /// <param name="supportedVersions">The supported ETP versions.</param>
+        /// <returns>The supported websocket subprotocols.</returns>
+        public static List<string> GetSupportedSubProtocols(IEnumerable<EtpVersion> supportedVersions)
+        {
+            var supportedSubProtocols = new List<string>();
+            foreach (var version in supportedVersions)
+            {
+                if (version == EtpVersion.v11)
+                    supportedSubProtocols.Add(EtpSubProtocols.v11);
+                else if (version == EtpVersion.v12)
+                    supportedSubProtocols.Add(EtpSubProtocols.v12);
+            }
+
+            return supportedSubProtocols;
+        }
+        /// <summary>
+        /// Gets the ETP version for the session.
         /// </summary>
         /// <param name="requestHeaders">The request headers.</param>
-        /// <returns>The preferred ETP websocket subprotocol if a recognized subprotocol was requested; <c>null</c> otherweise.</returns>
-        public static bool IsEtpEncodingValid(IDictionary<string, string> requestHeaders)
+        /// <returns>The ETP version if a recognized version was requested; <see cref="EtpVersion.Unknown"/> otherwise.</returns>
+        public static EtpVersion GetEtpVersion(IDictionary<string, string> requestHeaders)
         {
-            if (requestHeaders == null) return false;
+            return GetEtpVersion(GetPreferredSubProtocol(requestHeaders));
+        }
+
+        /// <summary>
+        /// Gets the ETP encoding for the session.
+        /// </summary>
+        /// <param name="requestHeaders">The request headers.</param>
+        /// <returns>The ETP encoding if a recognized; <c>null</c> otherweise.</returns>
+        public static EtpEncoding? GetEtpEncoding(IDictionary<string, string> requestHeaders)
+        {
+            if (requestHeaders == null) return null;
 
             string encoding;
 
             // Validate etp-encoding header is either binary, json or not specified
-            if (!requestHeaders.TryGetValue(EtpSettings.EtpEncodingHeader, out encoding)) return true;
+            if (!requestHeaders.TryGetValue(EtpHeaders.Encoding, out encoding))
+                return EtpEncoding.Binary;
 
-            if (string.IsNullOrWhiteSpace(encoding)) return false;
-            if (encoding.Equals("binary", StringComparison.InvariantCultureIgnoreCase)) return true;
-            if (encoding.Equals("JSON", StringComparison.InvariantCultureIgnoreCase)) return true;
-
-            return false;
+            return GetEtpEncoding(encoding);
         }
 
         /// <summary>
         /// Gets the <see cref="EtpVersion"/> for the specified sub protocol.
         /// </summary>
         /// <param name="subProtocol">The ETP websocket subprotocol.</param>
-        /// <returns><see cref="EtpVersion.v12"/> if the subprotocol is etp12.energistics.org; <see cref="EtpVersion.v11"/> otherwise.</returns>
+        /// <returns><see cref="EtpVersion.v12"/> if the subprotocol is etp12.energistics.org; <see cref="EtpVersion.v11"/> if the subprotocol is energitics-tp; <see cref="EtpVersion.Unknown"/> otherwise.</returns>
         public static EtpVersion GetEtpVersion(string subProtocol)
         {
-            if (EtpSettings.Etp12SubProtocol.Equals(subProtocol, StringComparison.InvariantCultureIgnoreCase))
+            if (EtpSubProtocols.v11.Equals(subProtocol, StringComparison.OrdinalIgnoreCase))
+                return EtpVersion.v11;
+            if (EtpSubProtocols.v12.Equals(subProtocol, StringComparison.OrdinalIgnoreCase))
                 return EtpVersion.v12;
 
-            return EtpVersion.v11;
+            return EtpVersion.Unknown;
         }
 
+        /// <summary>
+        /// Gets the <see cref="EtpEncoding"/> for the specified header value.
+        /// </summary>
+        /// <param name="encoding">The ETP encoding header value.</param>
+        /// <returns><see cref="EtpEncoding.Binary"/> if the subprotocol is binary; <see cref="EtpEncoding.Json"/> if the subprotocol is JSON; <c>null</c> otherwise.</returns>
+        public static EtpEncoding? GetEtpEncoding(string encoding)
+        {
+            if (string.Equals(encoding, EtpEncoding.Binary.ToHeaderValue(), StringComparison.OrdinalIgnoreCase))
+                return EtpEncoding.Binary;
+            if (string.Equals(encoding, EtpEncoding.Json.ToHeaderValue(), StringComparison.OrdinalIgnoreCase))
+                return EtpEncoding.Json;
+
+            return null;
+        }
 
         /// <summary>
         /// Checks if a <see cref="Exception"/> is due to various low-level errors indicating the connection has been terminated.

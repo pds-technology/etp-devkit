@@ -30,37 +30,24 @@ namespace Energistics.Etp.Common
     public class EtpException : Exception
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="EtpException" /> class.
+        /// Initializes a new instance of the <see cref="EtpException"/> class.
         /// </summary>
+        /// <param name="protocol">The protocol the exception occurred on.</param>
         /// <param name="errorInfo">The error info.</param>
-        /// <param name="correlationId">The correlation ID, if any.</param>
-        public EtpException(IErrorInfo errorInfo, long correlationId = 0) : base(errorInfo.ToErrorMessage())
+        /// <param name="correlatedHeader">The message header that the exception to send is correlated with, if any.</param>
+        /// <param name="innerException">The inner exception.</param>
+        public EtpException(int protocol, IErrorInfo errorInfo, IMessageHeader correlatedHeader = null, Exception innerException = null) : base(errorInfo.ToErrorMessage(), innerException)
         {
+            Protocol = protocol;
             ErrorInfo = errorInfo;
-            CorrelationId = correlationId;
+            CorrelatedHeader = correlatedHeader;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EtpException"/> class.
+        /// The protocol the exception occurred on.
         /// </summary>
-        /// <param name="errorInfo">The error info.</param>
-        /// <param name="innerException">The inner exception.</param>
-        public EtpException(IErrorInfo errorInfo, Exception innerException)
-            : this(errorInfo, 0, innerException)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EtpException"/> class.
-        /// </summary>
-        /// <param name="errorInfo">The error info.</param>
-        /// <param name="correlationId">The correlation ID, if any.</param>
-        /// <param name="innerException">The inner exception.</param>
-        public EtpException(IErrorInfo errorInfo, long correlationId, Exception innerException) : base(errorInfo.ToErrorMessage(), innerException)
-        {
-            ErrorInfo = errorInfo;
-            CorrelationId = correlationId;
-        }
+        /// <value>The protocol number.</value>
+        public int Protocol { get; }
 
         /// <summary>
         /// Gets the ETP error info.
@@ -69,9 +56,9 @@ namespace Energistics.Etp.Common
         public IErrorInfo ErrorInfo { get; }
 
         /// <summary>
-        /// The correlation ID, if any, for the error.
+        /// The header this exception is correlated with, if any.
         /// </summary>
-        public long CorrelationId { get; }
+        public IMessageHeader CorrelatedHeader { get; }
 
         /// <summary>
         /// When overridden in a derived class, sets the <see cref="T:System.Runtime.Serialization.SerializationInfo" /> with information about the exception.
@@ -88,6 +75,13 @@ namespace Energistics.Etp.Common
 
             info.AddValue("ErrorInfo", ErrorInfo, ErrorInfo.GetType());
         }
-    }
 
+        /// <summary>
+        /// Throws this exception.
+        /// </summary>
+        public void Throw()
+        {
+            throw this;
+        }
+    }
 }

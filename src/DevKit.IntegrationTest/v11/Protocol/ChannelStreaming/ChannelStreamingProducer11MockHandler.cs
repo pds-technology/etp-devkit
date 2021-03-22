@@ -17,7 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common;
 using Energistics.Etp.v11.Datatypes;
 using Energistics.Etp.v11.Datatypes.ChannelData;
 
@@ -27,12 +27,12 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
     {
         public ChannelStreamingProducer11MockHandler()
         {
-            IsSimpleStreamer = true;
+            Capabilities.SimpleStreamer = true;
         }
 
-        protected override void HandleStart(IMessageHeader header, Start start)
+        protected override void HandleStart(VoidRequestEventArgs<Start> args)
         {
-            base.HandleStart(header, start);
+            base.HandleStart(args);
 
             var channelMetaData = new List<ChannelMetadataRecord>()
             {
@@ -72,7 +72,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
                 },
             };
 
-            ChannelMetadata(header, channelMetaData);
+            ChannelMetadata(args.Request.Header, channelMetaData);
 
             var dataItems = new List<DataItem>
             {
@@ -84,7 +84,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
                     ValueAttributes = new DataAttribute[0],
                 }
             };
-            ChannelData(header, dataItems, MessageFlags.MultiPartAndFinalPart);
+            StreamingChannelData(dataItems);
         }
     }
 }

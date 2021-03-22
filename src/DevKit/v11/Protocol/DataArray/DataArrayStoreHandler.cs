@@ -16,10 +16,9 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Collections.Generic;
+using System;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.v11.Datatypes;
 
 namespace Energistics.Etp.v11.Protocol.DataArray
 {
@@ -33,7 +32,7 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// <summary>
         /// Initializes a new instance of the <see cref="DataArrayStoreHandler"/> class.
         /// </summary>
-        public DataArrayStoreHandler() : base((int)Protocols.DataArray, "store", "customer")
+        public DataArrayStoreHandler() : base((int)Protocols.DataArray, Roles.Store, Roles.Customer)
         {
             RegisterMessageHandler<GetDataArray>(Protocols.DataArray, MessageTypes.DataArray.GetDataArray, HandleGetDataArray);
             RegisterMessageHandler<GetDataArraySlice>(Protocols.DataArray, MessageTypes.DataArray.GetDataArraySlice, HandleGetDataArraySlice);
@@ -44,80 +43,104 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         /// <summary>
         /// Sends a data array as a response for GetDataArray and GetDataArraySlice.
         /// </summary>
-        /// <param name="dimensions">The dimensions.</param>
-        /// <param name="data">The data array.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public long DataArray(IList<long> dimensions, AnyArray data)
+        /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
+        /// <param name="array">The data array.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<DataArray> DataArray(IMessageHeader correlatedHeader, DataArray array)
         {
-            var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.DataArray);
+            var body = array;
 
-            var message = new DataArray
-            {
-                Dimensions = dimensions,
-                Data = data
-            };
-
-            return Session.SendMessage(header, message);
+            return SendResponse(body, correlatedHeader);
         }
 
         /// <summary>
-        /// Handles the GetDataArray event from a store.
+        /// Handles the GetDataArray event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetDataArray> OnGetDataArray;
+        public event EventHandler<RequestEventArgs<GetDataArray, DataArray>> OnGetDataArray;
 
         /// <summary>
-        /// Handles the GetDataArraySlice event from a store.
+        /// Handles the GetDataArraySlice event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetDataArraySlice> OnGetDataArraySlice;
+        public event EventHandler<RequestEventArgs<GetDataArraySlice, DataArray>> OnGetDataArraySlice;
 
         /// <summary>
-        /// Handles the PutDataArray event from a store.
+        /// Handles the PutDataArray event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<PutDataArray> OnPutDataArray;
+        public event EventHandler<VoidRequestEventArgs<PutDataArray>> OnPutDataArray;
 
         /// <summary>
-        /// Handles the PutDataArraySlice event from a store.
+        /// Handles the PutDataArraySlice event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<PutDataArraySlice> OnPutDataArraySlice;
+        public event EventHandler<VoidRequestEventArgs<PutDataArraySlice>> OnPutDataArraySlice;
 
         /// <summary>
-        /// Handles the GetDataArray message from a store.
+        /// Handles the GetDataArray message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The GetDataArray message.</param>
-        protected virtual void HandleGetDataArray(IMessageHeader header, GetDataArray message)
+        protected virtual void HandleGetDataArray(EtpMessage<GetDataArray> message)
         {
-            Notify(OnGetDataArray, header, message);
+            HandleRequestMessage(message, OnGetDataArray, HandleGetDataArray,
+                responseMethod: (args) => DataArray(args.Request?.Header, args.Response));
         }
 
         /// <summary>
-        /// Handles the GetDataArraySlice message from a store.
+        /// Handles the GetDataArray message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
+        /// <param name="args">The <see cref="RequestEventArgs{GetDataArray, DataArray}"/> instance containing the event data.</param>
+        protected virtual void HandleGetDataArray(RequestEventArgs<GetDataArray, DataArray> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GetDataArraySlice message from a customer.
+        /// </summary>
         /// <param name="message">The GetDataArraySlice message.</param>
-        protected virtual void HandleGetDataArraySlice(IMessageHeader header, GetDataArraySlice message)
+        protected virtual void HandleGetDataArraySlice(EtpMessage<GetDataArraySlice> message)
         {
-            Notify(OnGetDataArraySlice, header, message);
+            HandleRequestMessage(message, OnGetDataArraySlice,  HandleGetDataArraySlice,
+                responseMethod: (args) => DataArray(args.Request?.Header, args.Response));
         }
 
         /// <summary>
-        /// Handles the PutDataArray message from a store.
+        /// Handles the GetDataArraySlice message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
+        /// <param name="args">The <see cref="RequestEventArgs{GetDataArraySlice, DataArray}"/> instance containing the event data.</param>
+        protected virtual void HandleGetDataArraySlice(RequestEventArgs<GetDataArraySlice, DataArray> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the PutDataArray message from a customer.
+        /// </summary>
         /// <param name="message">The PutDataArray message.</param>
-        protected virtual void HandlePutDataArray(IMessageHeader header, PutDataArray message)
+        protected virtual void HandlePutDataArray(EtpMessage<PutDataArray> message)
         {
-            Notify(OnPutDataArray, header, message);
+            HandleRequestMessage(message, OnPutDataArray, HandlePutDataArray);
         }
 
         /// <summary>
-        /// Handles the PutDataArraySlice message from a store.
+        /// Handles the PutDataArray message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The PutDataArraySlice message.</param>
-        protected virtual void HandlePutDataArraySlice(IMessageHeader header, PutDataArraySlice message)
+        /// <param name="args">The <see cref="VoidRequestEventArgs{PutDataArray}"/> instance containing the event data.</param>
+        protected virtual void HandlePutDataArray(VoidRequestEventArgs<PutDataArray> args)
         {
-            Notify(OnPutDataArraySlice, header, message);
+        }
+
+        /// <summary>
+        /// Handles the PutDataArraySlice message from a customer.
+        /// </summary>
+        /// <param name="message">The PutDataArraySlice message.</param>
+        protected virtual void HandlePutDataArraySlice(EtpMessage<PutDataArraySlice> message)
+        {
+            HandleRequestMessage( message, OnPutDataArraySlice, HandlePutDataArraySlice);
+        }
+
+        /// <summary>
+        /// Handles the PutDataArraySlice message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="VoidRequestEventArgs{PutDataArraySlice}"/> instance containing the event data.</param>
+        protected virtual void HandlePutDataArraySlice(VoidRequestEventArgs<PutDataArraySlice> args)
+        {
         }
     }
 }

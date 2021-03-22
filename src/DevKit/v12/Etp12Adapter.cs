@@ -16,86 +16,90 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using Avro.IO;
-using Avro.Specific;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Protocol.Core;
+using System;
 
 namespace Energistics.Etp.v12
 {
-    public class Etp12Adapter : EtpAdapterBase, IEtpAdapter
+    public class Etp12Adapter : EtpAdapterBase
     {
         public Etp12Adapter() : base(EtpVersion.v12)
         {
+            // Register message decoder overrides for the core interfaces for messages handled by the session.
+            RegisterMessageDecoderOverride<IRequestSession, RequestSession>(Protocols.Core, MessageTypes.Core.RequestSession);
+            RegisterMessageDecoderOverride<IOpenSession, OpenSession>(Protocols.Core, MessageTypes.Core.OpenSession);
+            RegisterMessageDecoderOverride<ICloseSession, CloseSession>(Protocols.Core, MessageTypes.Core.CloseSession);
+            RegisterMessageDecoderOverride<IProtocolException, ProtocolException>(Protocols.Core, MessageTypes.Core.ProtocolException);
+            RegisterMessageDecoderOverride<IAcknowledge, Acknowledge>(Protocols.Core, MessageTypes.Core.Acknowledge);
         }
 
-        public void RegisterCore(IEtpSession session)
+        public override bool IsProtocolExceptionMultiPart => true;
+
+        public override bool AreSupportedDataObjectsNegotiated => true;
+
+        public override IMessageHeader DecodeMessageHeader(Decoder decoder)
         {
-            if (session.IsClient)
-                session.Register<ICoreClient, CoreClientHandler>();
-            else
-                session.Register<ICoreServer, CoreServerHandler>();
+            return decoder.Decode<MessageHeader>();
         }
 
-        public void RequestSession(IEtpSession session)
-        {
-            session.InitializeInstanceSupportedProtocols();
-            session.Handler<ICoreClient>().RequestSession(session.SessionSupportedProtocols);
-        }
-
-        public IMessageHeader CreateMessageHeader()
-        {
-            return new MessageHeader();
-        }
-
-        public IMessageHeader DecodeMessageHeader(Decoder decoder, string content)
-        {
-            return decoder.Decode<MessageHeader>(content);
-        }
-
-        public IMessageHeader DeserializeMessageHeader(string content)
+        public override IMessageHeader DeserializeMessageHeader(string content)
         {
             return EtpExtensions.Deserialize<MessageHeader>(content);
         }
 
-        public IAcknowledge CreateAcknowledge()
+        public override IMessageHeaderExtension DecodeMessageHeaderExtension(Decoder decoder)
         {
-            return new Acknowledge();
+            return decoder.Decode<MessageHeaderExtension>();
         }
 
-        public IAcknowledge DecodeAcknowledge(ISpecificRecord body)
+        public override IMessageHeaderExtension DeserializeMessageHeaderExtension(string content)
         {
-            return (Acknowledge)body;
+            return EtpExtensions.Deserialize<MessageHeaderExtension>(content);
         }
 
-        public IProtocolException CreateProtocolException()
+        /// <summary>
+        /// Creates a default handler for the core protocol.
+        /// </summary>
+        /// <param name="clientHandler">Whether to create a client or server handler.</param>
+        /// <returns>The default handler.</returns>
+        public override IProtocolHandler CreateDefaultCoreHandler(bool clientHandler)
         {
-            return new ProtocolException();
+            return clientHandler ? (IProtocolHandler)new CoreClientHandler() : new CoreServerHandler();
+        }
+        /// <summary>
+        /// Checks if the specified message type is valid.
+        /// </summary>
+        /// <param name="protocol">The message type's protocol.</param>
+        /// <param name="messageType">The message type.</param>
+        /// <returns><c>true</c> if the message type is valid; <c>false</c> otherwise.</returns>
+        public override bool IsValidMessageType(int protocol, int messageType)
+        {
+            return MessageNames.IsMessageNameRegistered(protocol, messageType);
         }
 
-        public IProtocolException DecodeProtocolException(ISpecificRecord body)
+        /// <summary>
+        /// Tries to get the protocol number for the specified message body type.
+        /// </summary>
+        /// <param name="messageBodyType">The message body type.</param>
+        /// <returns>The protocol number on success; -1 otherwise.</returns>
+        public override int TryGetProtocolNumber(Type messageBodyType)
         {
-            return (ProtocolException)body;
+            return MessageReflection.TryGetProtocolNumber(messageBodyType);
         }
 
-        public IErrorInfo CreateErrorInfo()
+        /// <summary>
+        /// Tries to get the message type number for the specified message body type.
+        /// </summary>
+        /// <param name="messageBodyType">The message body type.</param>
+        /// <returns>The message type number on success; -1 otherwise.</returns>
+        public override int TryGetMessageTypeNumber(Type messageBodyType)
         {
-            return new ErrorInfo();
-        }
-
-        public IProtocolException CreateProtocolException(IErrorInfo errorInfo)
-        {
-            return new ProtocolException
-            {
-                Error = errorInfo as ErrorInfo ?? new ErrorInfo { Code = errorInfo.Code, Message = errorInfo.Message },
-            };
+            return MessageReflection.TryGetMessageTypeNumber(messageBodyType);
         }
     }
 }

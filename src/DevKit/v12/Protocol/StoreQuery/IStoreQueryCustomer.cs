@@ -19,6 +19,7 @@
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
+using System;
 
 namespace Energistics.Etp.v12.Protocol.StoreQuery
 {
@@ -26,26 +27,24 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
     /// Describes the interface that must be implemented by the customer role of the StoreQuery protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.StoreQuery, "customer", "store")]
-    public interface IStoreQueryCustomer : IProtocolHandler
+    [ProtocolRole((int)Protocols.StoreQuery, Roles.Customer, Roles.Store)]
+    public interface IStoreQueryCustomer : IProtocolHandler<ICapabilitiesCustomer, ICapabilitiesStore>
     {
         /// <summary>
         /// Sends a FindDataObjects message to a store.
         /// </summary>
         /// <param name="context">The context information.</param>
         /// <param name="scope">The scope.</param>
+        /// <param name="storeLastWriteFilter">An optional parameter to filter discovery on a date when an object last changed.</param>
+        /// <param name="activeStatusFilter">if not <c>null</c>, request only objects with a matching active status.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long FindDataObjects(ContextInfo context, ContextScopeKind scope, string format = "xml");
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<FindDataObjects> FindDataObjects(ContextInfo context, ContextScopeKind scope, long? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, string format = Formats.Xml, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the FindDataObjectsResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<FindDataObjectsResponse, FindDataObjects> OnFindDataObjectsResponse;
-
-        /// <summary>
-        /// Handles the Chunk event from a store.
-        /// </summary>
-        event ProtocolEventHandler<Chunk> OnChunk;
+        event EventHandler<DualResponseEventArgs<FindDataObjects, FindDataObjectsResponse, Chunk>> OnFindDataObjectsResponse;
     }
 }

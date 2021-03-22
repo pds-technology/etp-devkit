@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.Discovery
@@ -31,17 +32,29 @@ namespace Energistics.Etp.v12.Protocol.Discovery
 
         }
 
-        protected override bool HandleGetResources(IMessageHeader header, GetResources message, IList<Resource> response)
+        protected override void HandleGetResources(DualListRequestEventArgs<GetResources, Resource, Edge> args)
         {
-            if (message.Context.Uri == EtpUri.RootUri12)
+            if (args.Request.Body.Context.Uri == EtpUri.RootUri12)
             {
-                throw new NotImplementedException();
+                var now = DateTime.UtcNow;
+                var uri = new EtpUri("eml:///witsml20.Well(5c365045-3a12-49b3-9276-356b90fff03b)");
+                args.Responses1.Add(new Resource
+                {
+                    Uri = uri,
+                    Name = "Test Well",
+                    DataObjectType = uri.DataObjectType,
+                    AlternateUris = new List<string>(),
+                    CustomData = new Dictionary<string, DataValue>(),
+                    LastChanged = now.ToEtpTimestamp(),
+                    StoreLastWrite = now.ToEtpTimestamp(),
+                    SourceCount = 0,
+                    TargetCount = 0,
+                });
             }
             else
             {
-                return false;
+                args.FinalError = ErrorInfo().NotSupported();
             }
-            //return true;
         }
     }
 }

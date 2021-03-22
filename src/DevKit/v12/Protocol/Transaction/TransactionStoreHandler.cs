@@ -19,6 +19,8 @@
 using System;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
+using Energistics.Etp.v12.Datatypes;
 
 namespace Energistics.Etp.v12.Protocol.Transaction
 {
@@ -27,12 +29,12 @@ namespace Energistics.Etp.v12.Protocol.Transaction
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.Transaction.ITransactionStore" />
-    public class TransactionStoreHandler : Etp12ProtocolHandler, ITransactionStore
+    public class TransactionStoreHandler : Etp12ProtocolHandlerWithCapabilities<CapabilitiesStore, ICapabilitiesStore>, ITransactionStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="TransactionStoreHandler"/> class.
         /// </summary>
-        public TransactionStoreHandler() : base((int)Protocols.Transaction, "store", "customer")
+        public TransactionStoreHandler() : base((int)Protocols.Transaction, Roles.Store, Roles.Customer)
         {
             RegisterMessageHandler<StartTransaction>(Protocols.Transaction, MessageTypes.Transaction.StartTransaction, HandleStartTransaction);
             RegisterMessageHandler<CommitTransaction>(Protocols.Transaction, MessageTypes.Transaction.CommitTransaction, HandleCommitTransaction);
@@ -42,122 +44,133 @@ namespace Energistics.Etp.v12.Protocol.Transaction
         /// <summary>
         /// Handles the StartTransaction event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<StartTransaction, TransactionResponse> OnStartTransaction;
+        public event EventHandler<RequestEventArgs<StartTransaction, TransactionResponse>> OnStartTransaction;
 
         /// <summary>
         /// Sends a StartTransactionResponse message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="transactionUuid">The transaction UUID.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long StartTransactionResponse(IMessageHeader request, Guid transactionUuid)
+        /// <param name="successful">A flag that indicates the success or failure of the transaction.</param>
+        /// <param name="failureReason">An optional description explaining why or how the transaction failed.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<StartTransactionResponse> StartTransactionResponse(IMessageHeader correlatedHeader, Guid transactionUuid, bool successful = true, string failureReason = "", IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.Transaction, MessageTypes.Transaction.StartTransactionResponse, request.MessageId);
-
-            var response = new StartTransactionResponse
+            var body = new StartTransactionResponse
             {
-                TransactionUuid = transactionUuid.ToUuid(),
+                TransactionUuid = transactionUuid.ToUuid<Uuid>(),
+                Successful = successful,
+                FailureReason = failureReason ?? string.Empty,
             };
 
-            return Session.SendMessage(header, response);
+            return SendResponse(body, correlatedHeader, extension: extension);
         }
 
         /// <summary>
         /// Handles the CommitTransaction event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<CommitTransaction, CommitResponse> OnCommitTransaction;
+        public event EventHandler<RequestEventArgs<CommitTransaction, TransactionResponse>> OnCommitTransaction;
 
         /// <summary>
         /// Sends a CommitTransactionResponse message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="transactionUuid">The transaction UUID.</param>
         /// <param name="successful">A flag that indicates the success or failure of the transaction.</param>
         /// <param name="failureReason">An optional description explaining why or how the transaction failed.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long CommitTransactionResponse(IMessageHeader request, Guid transactionUuid, bool successful, string failureReason)
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<CommitTransactionResponse> CommitTransactionResponse(IMessageHeader correlatedHeader, Guid transactionUuid, bool successful = true, string failureReason = "", IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.Transaction, MessageTypes.Transaction.CommitTransactionResponse, request.MessageId);
-
-            var response = new CommitTransactionResponse
+            var body = new CommitTransactionResponse
             {
-                TransactionUuid = transactionUuid.ToUuid(),
+                TransactionUuid = transactionUuid.ToUuid<Uuid>(),
                 Successful = successful,
-                FailureReason = failureReason,
+                FailureReason = failureReason ?? string.Empty,
             };
 
-            return Session.SendMessage(header, response);
+            return SendResponse(body, correlatedHeader, extension: extension);
         }
 
         /// <summary>
         /// Handles the RollbackTransaction event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<RollbackTransaction> OnRollbackTransaction;
+        public event EventHandler<RequestEventArgs<RollbackTransaction, TransactionResponse>> OnRollbackTransaction;
 
         /// <summary>
-        /// Handles the StartTransaction message from a customer.
+        /// Sends a RollbackTransactionResponse message to a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="transactionUuid">The transaction UUID.</param>
+        /// <param name="successful">A flag that indicates the success or failure of the transaction.</param>
+        /// <param name="failureReason">An optional description explaining why or how the transaction failed.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<RollbackTransactionResponse> RollbackTransactionResponse(IMessageHeader correlatedHeader, Guid transactionUuid, bool successful = true, string failureReason = "", IMessageHeaderExtension extension = null)
+        {
+            var body = new RollbackTransactionResponse
+            {
+                TransactionUuid = transactionUuid.ToUuid<Uuid>(),
+                Successful = successful,
+                FailureReason = failureReason ?? string.Empty,
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension);
+        }
+
+        /// <summary>
+        /// Handles the StartTransaction message from a client.
+        /// </summary>
         /// <param name="message">The StartTransaction message.</param>
-        protected virtual void HandleStartTransaction(IMessageHeader header, StartTransaction message)
+        protected virtual void HandleStartTransaction(EtpMessage<StartTransaction> message)
         {
-            var args = Notify(OnStartTransaction, header, message, new TransactionResponse { TransactionUuid = Guid.NewGuid() });
-            if (args.Cancel)
-                return;
-
-            if (!HandleStartTransaction(header, message, args.Context))
-                return;
-
-            StartTransactionResponse(header, args.Context.TransactionUuid);
+            HandleRequestMessage(message, OnStartTransaction, HandleStartTransaction,
+                responseMethod: (args) => StartTransactionResponse(args.Request?.Header, args.Response?.TransactionUuid ?? default(Guid), successful: args.Response?.Successful ?? false, failureReason: args.Response?.FailureReason, extension: args.ResponseExtension));
         }
 
         /// <summary>
-        /// Handles the StartTransaction message from a customer.
+        /// Handles the StartTransaction message from a client.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        protected virtual bool HandleStartTransaction(IMessageHeader header, StartTransaction message, TransactionResponse response)
+        /// <param name="args">The <see cref="RequestEventArgs{StartTransaction, TransactionResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleStartTransaction(RequestEventArgs<StartTransaction, TransactionResponse> args)
         {
-            return true;
         }
 
         /// <summary>
-        /// Handles the CommitTransaction message from a customer.
+        /// Handles the CommitTransaction message from a client.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The CommitTransaction message.</param>
-        protected virtual void HandleCommitTransaction(IMessageHeader header, CommitTransaction message)
+        protected virtual void HandleCommitTransaction(EtpMessage<CommitTransaction> message)
         {
-            var args = Notify(OnCommitTransaction, header, message, new CommitResponse { TransactionUuid = message.TransactionUuid.ToGuid() });
-            if (args.Cancel)
-                return;
-
-            if (!HandleCommitTransaction(header, message, args.Context))
-                return;
-
-            CommitTransactionResponse(header, args.Context.TransactionUuid, args.Context.Successful, args.Context.FailureReason);
+            HandleRequestMessage(message, OnCommitTransaction, HandleCommitTransaction,
+                responseMethod: (args) => CommitTransactionResponse(args.Request?.Header, args.Response?.TransactionUuid ?? default(Guid), successful: args.Response?.Successful ?? false, failureReason: args.Response?.FailureReason, extension: args.ResponseExtension));
         }
 
         /// <summary>
-        /// Handles the CommitTransaction message from a customer.
+        /// Handles the CommitTransaction message from a client.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        protected virtual bool HandleCommitTransaction(IMessageHeader header, CommitTransaction message, CommitResponse response)
+        /// <param name="args">The <see cref="RequestEventArgs{CommitTransaction, TransactionResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleCommitTransaction(RequestEventArgs<CommitTransaction, TransactionResponse> args)
         {
-            return true;
         }
 
         /// <summary>
-        /// Handles the RollbackTransaction message from a customer.
+        /// Handles the RollbackTransaction message from a client.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The RollbackTransaction message.</param>
-        protected virtual void HandleRollbackTransaction(IMessageHeader header, RollbackTransaction message)
+        protected virtual void HandleRollbackTransaction(EtpMessage<RollbackTransaction> message)
         {
-            Notify(OnRollbackTransaction, header, message);
+            HandleRequestMessage(message, OnRollbackTransaction, HandleRollbackTransaction,
+                responseMethod: (args) => RollbackTransactionResponse(args.Request?.Header, args.Response?.TransactionUuid ?? default(Guid), successful: args.Response?.Successful ?? false, failureReason: args.Response?.FailureReason, extension: args.ResponseExtension));
+        }
+
+        /// <summary>
+        /// Handles the RollbackTransaction message from a client.
+        /// </summary>
+        /// <param name="args">The <see cref="RequestEventArgs{RollbackTransaction, TransactionResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleRollbackTransaction(RequestEventArgs<RollbackTransaction, TransactionResponse> args)
+        {
         }
     }
 }

@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
@@ -30,10 +31,10 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         [TestInitialize]
         public void TestSetUp()
         {
-            SetUp(TestSettings.WebSocketType, EtpSettings.Etp12SubProtocol);
+            SetUp(TestSettings.WebSocketType, EtpVersion.v12);
 
             // Register protocol handler
-            _server.ServerManager.Register<IChannelStreamingProducer, ChannelStreamingProducer12MockHandler>();
+            _server.ServerManager.Register(new ChannelStreamingProducer12MockHandler());
 
             _server.Start();
         }
@@ -50,16 +51,16 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
             var handler = _client.Handler<IChannelStreamingConsumer>();
 
             // Register event handlers
-            var onChannelMetadata = HandleAsync<ChannelMetadata>(x => handler.OnChannelMetadata += x);
-            var onChannelData = HandleAsync<ChannelData>(x => handler.OnChannelData += x);
-            var onOpenSession = HandleAsync<OpenSession>(x => _client.Handler<ICoreClient>().OnOpenSession += x);
+            var onChannelMetadata = HandleAsync<FireAndForgetEventArgs<ChannelMetadata>>(x => handler.OnChannelMetadata += x);
+            var onChannelData = HandleAsync<FireAndForgetEventArgs<ChannelData>>(x => handler.OnChannelData += x);
+            var onStarted = HandleAsync<EventArgs>(x => _client.Handler<IChannelStreamingConsumer>().OnStarted += x);
 
             // Wait for Open connection
             var isOpen = await _client.OpenAsyncWithTimeout();
             Assert.IsTrue(isOpen);
 
             // Wait for OpenSession
-            await onOpenSession.WaitAsync();
+            await onStarted.WaitAsync();
 
             // Send Start message
             handler.StartStreaming();
@@ -68,15 +69,15 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
             var argsMetadata = await onChannelMetadata.WaitAsync();
 
             Assert.IsNotNull(argsMetadata);
-            Assert.IsNotNull(argsMetadata.Message.Channels);
-            Assert.IsTrue(argsMetadata.Message.Channels.Any());
+            Assert.IsNotNull(argsMetadata.Message.Body.Channels);
+            Assert.IsTrue(argsMetadata.Message.Body.Channels.Any());
 
             // Wait for ChannelData message
             var argsData = await onChannelData.WaitAsync();
 
             Assert.IsNotNull(argsData);
-            Assert.IsNotNull(argsData.Message.Data);
-            Assert.IsTrue(argsData.Message.Data.Any());
+            Assert.IsNotNull(argsData.Message.Body.Data);
+            Assert.IsTrue(argsData.Message.Body.Data.Any());
         }
     }
 }

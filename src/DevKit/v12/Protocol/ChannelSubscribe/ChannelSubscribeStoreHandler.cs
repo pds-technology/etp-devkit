@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -30,14 +31,15 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
     /// </summary>
     /// <seealso cref="Energistics.Etp.v12.Protocol.Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.ChannelSubscribe.IChannelSubscribeStore" />
-    public class ChannelSubscribeStoreHandler : Etp12ProtocolHandler, IChannelSubscribeStore
+    public class ChannelSubscribeStoreHandler : Etp12ProtocolHandler<CapabilitiesStore, ICapabilitiesStore, CapabilitiesCustomer, ICapabilitiesCustomer>, IChannelSubscribeStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelSubscribeStoreHandler"/> class.
         /// </summary>
-        public ChannelSubscribeStoreHandler() : base((int)Protocols.ChannelSubscribe, "store", "customer")
+        public ChannelSubscribeStoreHandler() : base((int)Protocols.ChannelSubscribe, Roles.Store, Roles.Customer)
         {
             RegisterMessageHandler<GetChannelMetadata>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetChannelMetadata, HandleGetChannelMetadata);
+            RegisterMessageHandler<GetChangeAnnotations>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetChangeAnnotations, HandleGetChangeAnnotations);
             RegisterMessageHandler<SubscribeChannels>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.SubscribeChannels, HandleSubscribeChannels);
             RegisterMessageHandler<UnsubscribeChannels>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.UnsubscribeChannels, HandleUnsubscribeChannels);
             RegisterMessageHandler<GetRanges>(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRanges, HandleGetRanges);
@@ -45,264 +47,394 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         }
 
         /// <summary>
-        /// Sets limits on maximum indexCount (number of indexes "back" from the current index that a store will provide) for StreamingStartIndex.
-        /// </summary>
-        public long MaxIndexCount { get; set; }
-
-        /// <summary>
-        /// Indicates the maximum time in integer number of seconds a store allows no streaming data to occur before setting the channelStatus to 'inactive'.
-        /// </summary>
-        public long StreamingTimeoutPeriod { get; set; }
-
-        /// <summary>
-        /// Maximum number of data points to return in each message.
-        /// </summary>
-        public long CustomerMaxDataItemCount { get; private set; }
-
-        /// <summary>
-        /// Gets the capabilities supported by the protocol handler.
-        /// </summary>
-        /// <param name="capabilities">The protocol's capabilities.</param>
-        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
-        {
-            base.GetCapabilities(capabilities);
-
-            capabilities.MaxIndexCount = MaxIndexCount;
-            capabilities.StreamingTimeoutPeriod = StreamingTimeoutPeriod;
-        }
-
-        /// <summary>
-        /// Sets properties based on counterpart capabilities.
-        /// </summary>
-        /// <param name="counterpartCapabilities">The counterpart's protocol capabilities.</param>
-        public override void OnSessionOpened(EtpProtocolCapabilities counterpartCapabilities)
-        {
-            base.OnSessionOpened(counterpartCapabilities);
-
-            CustomerMaxDataItemCount = counterpartCapabilities.MaxDataItemCount ?? long.MaxValue;
-        }
-
-        /// <summary>
         /// Handles the GetChannelMetadata event from a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<GetChannelMetadata, ChannelMetadataRecord, ErrorInfo> OnGetChannelMetadata;
+        public event EventHandler<MapRequestEventArgs<GetChannelMetadata, ChannelMetadataRecord>> OnGetChannelMetadata;
 
         /// <summary>
         /// Sends a GetChannelMetadataResponse message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="metadata">The channel metadata records.</param>
-        /// <param name="errors">The errors.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long GetChannelMetadataResponse(IMessageHeader request, IDictionary<string, ChannelMetadataRecord> metadata, IDictionary<string, ErrorInfo> errors)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="metadata">The metadata.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetChannelMetadataResponse> GetChannelMetadataResponse(IMessageHeader correlatedHeader, IDictionary<string, ChannelMetadataRecord> metadata, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetChannelMetadataResponse, request.MessageId);
-
-            var message = new GetChannelMetadataResponse
+            var body = new GetChannelMetadataResponse
             {
+                Metadata = metadata ?? new Dictionary<string, ChannelMetadataRecord>(),
             };
 
-            return SendMultipartResponse(header, message, metadata, errors, (m, i) => m.Metadata = i);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetChannelMetadataResponse and ProtocolException messages to a customer.
+        /// If there are no channel metadata, an empty ChannelMetadataRecord message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="metadata">The metadata.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetChannelMetadataResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetChannelMetadataResponse> GetChannelMetadataResponse(IMessageHeader correlatedHeader, IDictionary<string, ChannelMetadataRecord> metadata, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(GetChannelMetadataResponse, correlatedHeader, metadata, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
+
+        /// <summary>
+        /// Handles the GetChangeAnnotations event from a customer.
+        /// </summary>
+        public event EventHandler<MapRequestEventArgs<GetChangeAnnotations, ChannelChangeResponseInfo>> OnGetChangeAnnotations;
+
+        /// <summary>
+        /// Sends a GetChangeAnnotationsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="changes">The changes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetChangeAnnotationsResponse> GetChangeAnnotationsResponse(IMessageHeader correlatedHeader, IDictionary<string, ChannelChangeResponseInfo> changes, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetChangeAnnotationsResponse
+            {
+                Changes = changes ?? new Dictionary<string, ChannelChangeResponseInfo>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetChangeAnnotationsResponse and ProtocolException messages to a customer.
+        /// If there are no changes, an empty ChangeAnnotationsRecord message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="changes">The changes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetChangeAnnotationsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetChangeAnnotationsResponse> GetChangeAnnotationsResponse(IMessageHeader correlatedHeader, IDictionary<string, ChannelChangeResponseInfo> changes, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(GetChangeAnnotationsResponse, correlatedHeader, changes, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
         }
 
         /// <summary>
         /// Handles the SubscribeChannels event from a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<SubscribeChannels, ErrorInfo> OnSubscribeChannels;
+        public event EventHandler<MapRequestEventArgs<SubscribeChannels, string>> OnSubscribeChannels;
+
+        /// <summary>
+        /// Sends a SubscribeChannelsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscribeChannelsResponse> SubscribeChannelsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new SubscribeChannelsResponse
+            {
+                Success = success ?? new Dictionary<string, string>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of SubscribeChannelsResponse and ProtocolException messages to a customer.
+        /// If there are no successes, an empty SubscribeChannelsRecord message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the SubscribeChannelsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscribeChannelsResponse> SubscribeChannelsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(SubscribeChannelsResponse, correlatedHeader, success, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
 
         /// <summary>
         /// Sends a ChannelData message to a customer.
         /// </summary>
-        /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long ChannelData(IList<DataItem> dataItems)
+        /// <param name="data">The list of <see cref="DataItem" /> objects.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ChannelData> ChannelData(IList<DataItem> data, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.ChannelData);
-
-            var message = new ChannelData
+            var body = new ChannelData
             {
-                Data = dataItems
+                Data = data ?? new List<DataItem>(),
             };
 
-            return Session.SendMessage(header, message);
+            return SendData(body, extension: extension);
+        }
+
+        /// <summary>
+        /// Sends a ChannelsTruncated message to a customer.
+        /// </summary>
+        /// <param name="changeTime">The time of the change.</param>
+        /// <param name="channels">The list of <see cref="TruncateInfo" /> objects.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ChannelsTruncated> ChannelsTruncated(long changeTime, IList<TruncateInfo> channels, IMessageHeaderExtension extension = null)
+        {
+            var body = new ChannelsTruncated
+            {
+                ChangeTime = changeTime,
+                Channels = channels ?? new List<TruncateInfo>(),
+            };
+
+            return SendNotification(body, extension: extension);
         }
 
         /// <summary>
         /// Sends a RangeReplaced message to a customer.
         /// </summary>
+        /// <param name="changeTime">The time of the change.</param>
         /// <param name="channelIds">The IDs of the channels that are changing.</param>
         /// <param name="changedInterval">The indexes that define the interval that is changing.</param>
-        /// <param name="dataItems">The channel data of the changed interval.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long RangeReplaced(IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> dataItems)
+        /// <param name="data">The channel data of the changed interval.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<RangeReplaced> RangeReplaced(long changeTime, IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> data, bool isFinalPart = true, IMessageHeader correlatedHeader = null, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.RangeReplaced);
-
-            var message = new RangeReplaced
+            var body = new RangeReplaced
             {
-                ChannelIds = channelIds,
+                ChangeTime = changeTime,
                 ChangedInterval = changedInterval,
-                Data = dataItems,
+                ChannelIds = channelIds ?? new List<long>(),
+                Data = data ?? new List<DataItem>(),
             };
 
-            return Session.SendMessage(header, message);
+            return SendNotification(body, extension: extension, isMultiPart: true, correlatedHeader: correlatedHeader, isFinalPart: isFinalPart);
         }
 
         /// <summary>
         /// Handles the UnsubscribeChannels event from a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<UnsubscribeChannels, long, ErrorInfo> OnUnsubscribeChannels;
+        public event EventHandler<MapRequestEventArgs<UnsubscribeChannels, long>> OnUnsubscribeChannels;
 
         /// <summary>
-        /// Sends a SubscriptionsStopped message to a customer.
+        /// Sends a SubscriptionsStopped message to a customer in response to a UnsubscribeChannels message.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="channelIds">The channel identifiers.</param>
-        /// <param name="errors">The errors if any.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long SubscriptionsStopped(IMessageHeader request, IDictionary<string, long> channelIds, IDictionary<string, ErrorInfo> errors)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="channelIds">The channel IDs.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscriptionsStopped> ResponseSubscriptionsStopped(IMessageHeader correlatedHeader, IDictionary<string, long> channelIds, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.SubscriptionsStopped, request?.MessageId ?? 0);
-            var message = new SubscriptionsStopped
+            var body = new SubscriptionsStopped
             {
+                ChannelIds = channelIds ?? new Dictionary<string, long>(),
             };
 
-            return SendMultipartResponse(header, message, channelIds, errors, (m, i) => m.ChannelIds = i);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
         }
 
         /// <summary>
-        /// Handles the GetRange event from a customer.
+        /// Sends a complete multi-part set of SubscriptionsStopped and ProtocolException messages to a customer in response to a UnsubscribeChannels message.
+        /// If there are no closed channels, an empty SubscriptionsStopped message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
         /// </summary>
-        public event ProtocolEventHandler<GetRanges> OnGetRanges;
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="channelIds">The channel IDs.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the SubscriptionsStopped message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscriptionsStopped> ResponseSubscriptionsStopped(IMessageHeader correlatedHeader, IDictionary<string, long> channelIds, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(ResponseSubscriptionsStopped, correlatedHeader, channelIds, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
+
+        /// <summary>
+        /// Sends a SubscriptionsStopped message to a customer as a notification.
+        /// </summary>
+        /// <param name="channelIds">The IDs of the closed channels.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscriptionsStopped> NotificationSubscriptionsStopped(IDictionary<string, long> channelIds, IMessageHeaderExtension extension = null)
+        {
+            var body = new SubscriptionsStopped
+            {
+                ChannelIds = channelIds ?? new Dictionary<string, long>(),
+            };
+
+            return SendNotification(body, extension: extension, isMultiPart: true, isFinalPart: true);
+        }
+
+        /// <summary>
+        /// Sends a SubscriptionsStopped message to a customer as a notification.
+        /// </summary>
+        /// <param name="channelIds">The IDs of the closed channels.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscriptionsStopped> NotificationSubscriptionsStopped(IList<long> channelIds, IMessageHeaderExtension extension = null) => NotificationSubscriptionsStopped(channelIds.ToMap(), extension: extension);
+
+        /// <summary>
+        /// Handles the GetRanges event from a customer.
+        /// </summary>
+        public event EventHandler<ListRequestEventArgs<GetRanges, DataItem>> OnGetRanges;
 
         /// <summary>
         /// Sends a GetRangesResponse message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long GetRangesResponse(IMessageHeader request, IList<DataItem> dataItems)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="requestUuid">The request UUID associated with this response.</param>
+        /// <param name="data">The data items.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="unregisterRequest">Whether or not to unregister the request when sending the message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetRangesResponse> GetRangesResponse(IMessageHeader correlatedHeader, Guid requestUuid, IList<DataItem> data, bool isFinalPart = true, bool unregisterRequest = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.ChannelSubscribe, MessageTypes.ChannelSubscribe.GetRangesResponse);
-
-            var message = new GetRangesResponse
+            var body = new GetRangesResponse
             {
-                Data = dataItems
+                Data = data ?? new List<DataItem>(),
             };
 
-            return Session.SendMessage(header, message);
+            var message = SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+
+            if (unregisterRequest)
+                TryUnregisterRequest(requestUuid);
+
+            return message;
         }
 
         /// <summary>
-        /// Handles the CancelGetRange event from a customer.
+        /// Handles the CancelGetRanges event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<CancelGetRanges> OnCancelGetRanges;
+        public event EventHandler<CancellationRequestEventArgs<GetRanges, CancelGetRanges>> OnCancelGetRanges;
 
         /// <summary>
         /// Handles the GetChannelMetadata message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The GetChannelMetadata message.</param>
-        protected virtual void HandleGetChannelMetadata(IMessageHeader header, GetChannelMetadata message)
+        protected virtual void HandleGetChannelMetadata(EtpMessage<GetChannelMetadata> message)
         {
-            var args = Notify(OnGetChannelMetadata, header, message, new Dictionary<string, ChannelMetadataRecord>(), new Dictionary<string, ErrorInfo>());
-            if (args.Cancel)
-                return;
-
-            if (!HandleGetChannelMetadata(header, message, args.Context, args.Errors))
-                return;
-
-            GetChannelMetadataResponse(header, args.Context, args.Errors);
+            HandleRequestMessage(message, OnGetChannelMetadata, HandleGetChannelMetadata,
+                responseMethod: (args) => GetChannelMetadataResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
         }
 
         /// <summary>
-        /// Handles the GetChannelMetadata message from a customer.
+        /// Handles the response to an GetChannelMetadata message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual bool HandleGetChannelMetadata(IMessageHeader header, GetChannelMetadata message, IDictionary<string, ChannelMetadataRecord> response, IDictionary<string, ErrorInfo> errors)
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetChannelMetadata, ChannelMetadataRecord, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleGetChannelMetadata(MapRequestEventArgs<GetChannelMetadata, ChannelMetadataRecord> args)
         {
-            return true;
+        }
+
+        /// <summary>
+        /// Handles the GetChangeAnnotations message from a customer.
+        /// </summary>
+        /// <param name="message">The GetChangeAnnotations message.</param>
+        protected virtual void HandleGetChangeAnnotations(EtpMessage<GetChangeAnnotations> message)
+        {
+            HandleRequestMessage(message, OnGetChangeAnnotations, HandleGetChangeAnnotations,
+                responseMethod: (args) => GetChangeAnnotationsResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the response to an GetChangeAnnotations message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetChangeAnnotations, ChannelChangeResponseInfo, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleGetChangeAnnotations(MapRequestEventArgs<GetChangeAnnotations, ChannelChangeResponseInfo> args)
+        {
         }
 
         /// <summary>
         /// Handles the SubscribeChannels message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The SubscribeChannels message.</param>
-        protected virtual void HandleSubscribeChannels(IMessageHeader header, SubscribeChannels message)
+        protected virtual void HandleSubscribeChannels(EtpMessage<SubscribeChannels> message)
         {
-            var args = Notify(OnSubscribeChannels, header, message, new Dictionary<string, ErrorInfo>());
-            if (args.Cancel)
-                return;
-
-            if (!HandleSubscribeChannels(header, message, args.Errors))
-                return;
-
-            SendMultipartResponse(header, message, args.Errors);
+            HandleRequestMessage(message, OnSubscribeChannels, HandleSubscribeChannels,
+                responseMethod: (args) => SubscribeChannelsResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
         }
 
         /// <summary>
-        /// Handles the SubscribeChannels message from a customer.
+        /// Handles the response to an SubscribeChannels message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual bool HandleSubscribeChannels(IMessageHeader header, SubscribeChannels message, IDictionary<string, ErrorInfo> errors)
+        /// <param name="args">The <see cref="MapRequestEventArgs{SubscribeChannels, string, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleSubscribeChannels(MapRequestEventArgs<SubscribeChannels, string> args)
         {
-            return true;
         }
 
         /// <summary>
         /// Handles the UnsubscribeChannels message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The UnsubscribeChannels message.</param>
-        protected virtual void HandleUnsubscribeChannels(IMessageHeader header, UnsubscribeChannels message)
+        protected virtual void HandleUnsubscribeChannels(EtpMessage<UnsubscribeChannels> message)
         {
-            var args = Notify(OnUnsubscribeChannels, header, message, new Dictionary<string, long>(), new Dictionary<string, ErrorInfo>());
-            if (args.Cancel)
-                return;
-
-            if (!HandleUnsubscribeChannels(header, message, args.Context, args.Errors))
-                return;
-
-            SubscriptionsStopped(header, args.Context, args.Errors);
+            HandleRequestMessage(message, OnUnsubscribeChannels, HandleUnsubscribeChannels,
+                responseMethod: (args) => ResponseSubscriptionsStopped(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
         }
 
         /// <summary>
-        /// Handles the UnsubscribeChannels message from a customer.
+        /// Handles the response to a UnsubscribeChannels message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual bool HandleUnsubscribeChannels(IMessageHeader header, UnsubscribeChannels message, IDictionary<string, long> response, IDictionary<string, ErrorInfo> errors)
+        /// <param name="args">The <see cref="MapRequestEventArgs{UnsubscribeChannels, long, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleUnsubscribeChannels(MapRequestEventArgs<UnsubscribeChannels, long> args)
         {
-            return true;
         }
-
 
         /// <summary>
         /// Handles the GetRanges message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The GetRanges message.</param>
-        protected virtual void HandleGetRanges(IMessageHeader header, GetRanges message)
+        protected virtual void HandleGetRanges(EtpMessage<GetRanges> message)
         {
-            Notify(OnGetRanges, header, message);
+            var error = TryRegisterRequest(message.Body, nameof(message.Body.RequestUuid), message);
+
+            HandleRequestMessage(message, OnGetRanges, HandleGetRanges,
+                args: new ListRequestEventArgs<GetRanges, DataItem>(message) { FinalError = error },
+                responseMethod: (args) => GetRangesResponse(args.Request?.Header, message.Body.RequestUuid.ToGuid(), args.Responses, isFinalPart: !args.HasErrors, unregisterRequest: true, extension: args.ResponseExtension));
         }
 
         /// <summary>
-        /// Handles the CancelGetRange message from a customer.
+        /// Handles the GetRanges message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The CancelGetRange message.</param>
-        protected virtual void HandleCancelGetRanges(IMessageHeader header, CancelGetRanges message)
+        /// <param name="args">The <see cref="ListRequestEventArgs{GetRanges, DataItem}"/> instance containing the event data.</param>
+        protected virtual void HandleGetRanges(ListRequestEventArgs<GetRanges, DataItem> args)
         {
-            Notify(OnCancelGetRanges, header, message);
+        }
+
+        /// <summary>
+        /// Handles the CancelGetRanges message from a customer.
+        /// </summary>
+        /// <param name="message">The CancelGetRanges message.</param>
+        protected virtual void HandleCancelGetRanges(EtpMessage<CancelGetRanges> message)
+        {
+            EtpMessage<GetRanges> request;
+            var error = TryGetRequest(message.Body, nameof(message.Body.RequestUuid), message, out request);
+
+            HandleCancellationMessage(request, message, OnCancelGetRanges, HandleCancelGetRanges,
+                args: new CancellationRequestEventArgs<GetRanges, CancelGetRanges>(request, message) { FinalError = error });
+        }
+
+        /// <summary>
+        /// Handles the CancelGetRanges message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="CancellationRequestEventArgs{GetRanges, CancelGetRanges}"/> instance containing the event data.</param>
+        protected virtual void HandleCancelGetRanges(CancellationRequestEventArgs<GetRanges, CancelGetRanges> args)
+        {
         }
     }
 }

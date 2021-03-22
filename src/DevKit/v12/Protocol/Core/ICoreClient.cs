@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -26,66 +27,46 @@ namespace Energistics.Etp.v12.Protocol.Core
     /// Represents the interface that must be implemented from the client side of Protocol 0.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Core, "client", "server")]
+    [ProtocolRole((int)Protocols.Core, Roles.Client, Roles.Server)]
     public interface ICoreClient : IProtocolHandler
     {
         /// <summary>
-        /// Sends a RequestSession message to a server.
-        /// </summary>
-        /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long RequestSession(IReadOnlyList<EtpSessionProtocol> requestedProtocols);
-
-        /// <summary>
-        /// Handles the OpenSession event from a server.
-        /// </summary>
-        event ProtocolEventHandler<OpenSession> OnOpenSession;
-
-        /// <summary>
         /// Sends a Ping message.
         /// </summary>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long Ping();
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<Ping> Ping(IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the Ping event from a server.
         /// </summary>
-        event ProtocolEventHandler<Ping> OnPing;
+        event EventHandler<EmptyRequestEventArgs<Ping>> OnPing;
 
         /// <summary>
         /// Sends a Pong response message.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long Pong(IMessageHeader request);
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<Pong> Pong(IMessageHeader correlatedHeader, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the Pong event from a server.
         /// </summary>
-        event ProtocolEventHandler<Pong> OnPong;
+        event EventHandler<ResponseEventArgs<Ping, Pong>> OnPong;
 
         /// <summary>
         /// Renews the security token.
         /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="token">The token.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long RenewSecurityToken(string token);
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<RenewSecurityToken> RenewSecurityToken(IMessageHeader correlatedHeader, string token, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the RenewSecurityTokenResponse event from a server.
         /// </summary>
-        event ProtocolEventHandler<RenewSecurityTokenResponse> OnRenewSecurityTokenResponse;
-
-        /// <summary>
-        /// Sends a CloseSession message to a server.
-        /// </summary>
-        /// <param name="reason">The reason.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long CloseSession(string reason = null);
-
-        /// <summary>
-        /// Handles the CloseSession event from a server.
-        /// </summary>
-        event ProtocolEventHandler<CloseSession> OnCloseSession;
+        event EventHandler<ResponseEventArgs<RenewSecurityToken, RenewSecurityTokenResponse>> OnRenewSecurityTokenResponse;
     }
 }

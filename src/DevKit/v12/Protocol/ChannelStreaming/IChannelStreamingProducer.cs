@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -27,31 +28,41 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
     /// Defines the interface that must be implemented by the producer role of the ChannelStreaming protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.ChannelStreaming, "producer", "consumer")]
+    [ProtocolRole((int)Protocols.ChannelStreaming, Roles.Producer, Roles.Consumer)]
     public interface IChannelStreamingProducer : IProtocolHandler
     {
         /// <summary>
         /// Handles the StartStreaming event from a consumer.
         /// </summary>
-        event ProtocolEventHandler<StartStreaming> OnStartStreaming;
+        event EventHandler<VoidRequestEventArgs<StartStreaming>> OnStartStreaming;
 
-        /// <summary>
-        /// Handles the StopStreaming event from a consumer.
-        /// </summary>
-        event ProtocolEventHandler<StopStreaming> OnStopStreaming;
-        
         /// <summary>
         /// Sends a ChannelMetadata message to a consumer.
         /// </summary>
-        /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long ChannelMetadata(IList<ChannelMetadataRecord> channelMetadataRecords);
+        /// <param name="channels">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelMetadata> ChannelMetadata(IList<ChannelMetadataRecord> channels, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Sends a ChannelData message to a consumer.
         /// </summary>
-        /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long ChannelData(IList<DataItem> dataItems);
+        /// <param name="data">The list of <see cref="DataItem" /> objects.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelData> ChannelData(IList<DataItem> data, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Sends a TruncateChannels message to a consumer.
+        /// </summary>
+        /// <param name="channels">The list of <see cref="TruncateInfo" /> objects.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<TruncateChannels> TruncateChannels(IList<TruncateInfo> channels, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Handles the StopStreaming event from a consumer.
+        /// </summary>
+        event EventHandler<VoidRequestEventArgs<StopStreaming>> OnStopStreaming;
     }
 }

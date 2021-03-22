@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using Energistics.Etp.Common;
+using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Properties;
 using Nito.AsyncEx;
 using System;
@@ -37,45 +38,24 @@ namespace Energistics.Etp.Native
     /// <seealso cref="Energistics.Etp.Common.EtpSession" />
     public class EtpClient : EtpSessionNativeBase, IEtpClient
     {
-        private static readonly IDictionary<string, string> EmptyHeaders = new Dictionary<string, string>();
-        private static readonly IDictionary<string, string> BinaryHeaders = new Dictionary<string, string>()
-        {
-            { Settings.Default.EtpEncodingHeader, Settings.Default.EtpEncodingBinary }
-        };
-
-        private Task _connectionHandlingTask;
-
-        private CancellationTokenSource _source;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EtpClient" /> class.
-        /// </summary>
-        /// <param name="uri">The ETP server URI.</param>
-        /// <param name="application">The client application name.</param>
-        /// <param name="version">The client application version.</param>
-        /// <param name="instanceKey">The instance key to use in generating the client instance identifier.</param>
-        /// <param name="etpSubProtocol">The ETP sub protocol.</param>
-        public EtpClient(string uri, string application, string version, string instanceKey, string etpSubProtocol) : this(uri, application, version, etpSubProtocol, instanceKey, EmptyHeaders)
-        {
-        }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpClient"/> class.
         /// </summary>
         /// <param name="uri">The ETP server URI.</param>
-        /// <param name="application">The client application name.</param>
-        /// <param name="version">The client application version.</param>
-        /// <param name="instanceKey">The instance key to use in generating the client instance identifier.</param>
-        /// <param name="etpSubProtocol">The ETP sub protocol.</param>
+        /// <param name="etpVersion">The ETP version for the session.</param>
+        /// <param name="encoding">The ETP encoding for the session.</param>
+        /// <param name="info">The client's information.</param>
+        /// <param name="parameters">The client's parameters.</param>
+        /// <param name="authorization">The client's authorization details.</param>
         /// <param name="headers">The WebSocket headers.</param>
-        public EtpClient(string uri, string application, string version, string instanceKey, string etpSubProtocol, IDictionary<string, string> headers)
-            : base(EtpWebSocketValidation.GetEtpVersion(etpSubProtocol), new ClientWebSocket(), application, version, instanceKey, headers, true)
+        public EtpClient(string uri, EtpVersion etpVersion, EtpEncoding encoding, EtpEndpointInfo info, EtpEndpointParameters parameters = null, Security.Authorization authorization = null, IDictionary<string, string> headers = null)
+            : base(etpVersion, encoding, new ClientWebSocket(), info, parameters, headers, true, null)
         {
-            var headerItems = Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList();
+            Headers.SetAuthorization(authorization);
 
-            ClientSocket.Options.AddSubProtocol(etpSubProtocol);
+            ClientSocket.Options.AddSubProtocol(EtpFactory.GetSubProtocol(EtpVersion));
 
-            foreach (var item in headerItems)
+            foreach (var item in Headers)
                 ClientSocket.Options.SetRequestHeader(item.Key, item.Value);
 
             Uri = new Uri(uri);
@@ -97,23 +77,24 @@ namespace Energistics.Etp.Native
         /// <summary>
         /// Opens the WebSocket connection.
         /// </summary>
-        public void Open()
+        /// <returns><c>true</c> if the socket was successfully opened; <c>false</c> otherwise.</returns>
+        public bool Open()
         {
-            AsyncContext.Run(() => OpenAsync());
+            return AsyncContext.Run(() => OpenAsync());
         }
 
         /// <summary>
         /// Asynchronously opens the WebSocket connection.
         /// </summary>
+        /// <returns><c>true</c> if the socket was successfully opened; <c>false</c> otherwise.</returns>
         public async Task<bool> OpenAsync()
         {
-            if (IsOpen)
+            if (IsWebSocketOpen)
                 return true;
 
             Logger.Trace(Log("Opening web socket connection..."));
 
-            _source = new CancellationTokenSource();
-            var token = _source.Token;
+            var token = ReceiveLoopToken;
 
             try
             {
@@ -145,50 +126,20 @@ namespace Energistics.Etp.Native
                 return false;
             }
 
-            if (!IsOpen)
+            if (!IsWebSocketOpen)
                 return false;
 
             if (token.IsCancellationRequested)
                 return false;
 
-            _connectionHandlingTask = Task.Factory.StartNew(
-                async () => await HandleConnection(token).ConfigureAwait(CaptureAsyncContext), token,
-                TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach,
-                TaskScheduler.Default).Unwrap();
+            RaiseSocketOpened();
 
             Logger.Trace(Log("Requesting session..."));
-            Adapter.RequestSession(this);
+            await RequestSessionAsync().ConfigureAwait(CaptureAsyncContext);
 
-            InvokeSocketOpened();
+            StartReceiveLoop();
 
             return true;
-        }
-
-        /// <summary>
-        /// Asynchronously closes the WebSocket connection for the specified reason.
-        /// </summary>
-        /// <param name="reason">The reason.</param>
-        protected override async Task CloseWebSocketAsyncCore(string reason)
-        {
-            _source?.Cancel();
-
-            try
-            {
-                if (_connectionHandlingTask != null)
-                    await _connectionHandlingTask.ConfigureAwait(CaptureAsyncContext);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            finally
-            {
-                _connectionHandlingTask = null;
-                _source?.Dispose();
-                _source = null;
-            }
-
-            if (IsOpen)
-                await base.CloseWebSocketAsyncCore(reason).ConfigureAwait(CaptureAsyncContext);
         }
 
         /// <summary>
@@ -236,26 +187,6 @@ namespace Energistics.Etp.Native
         }
 
         /// <summary>
-        /// Called to let derived classes cleanup after a connection has ended.
-        /// </summary>
-        protected override void CleanupAfterConnection()
-        {
-            Logger.Trace(Log("[{0}] Socket closed.", SessionKey));
-            SessionId = null;
-        }
-
-        /// <summary>
-        /// Called when the ETP session is opened.
-        /// </summary>
-        /// <param name="openedSuccessfully"><c>true</c> if the session opened without errors; <c>false</c> if there were errors when opening the session.</param>
-        public override void OnSessionOpened(bool openedSuccessfully)
-        {
-            Logger.Trace(Log("[{0}] Socket opened", SessionKey));
-
-            base.OnSessionOpened(openedSuccessfully);
-        }
-
-        /// <summary>
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
@@ -263,9 +194,13 @@ namespace Energistics.Etp.Native
         {
             if (disposing)
             {
+                Logger.Verbose($"[{SessionKey}] Disposing EtpClient for {GetType().Name}");
+
                 CloseWebSocket("Shutting down");
 
                 Socket?.Dispose();
+
+                Logger.Verbose($"[{SessionKey}] Disposed EtpClient for {GetType().Name}");
             }
 
             base.Dispose(disposing);

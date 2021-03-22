@@ -17,7 +17,8 @@
 //-----------------------------------------------------------------------
 
 using Energistics.Etp.Common;
-using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
+using System;
 
 namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
 {
@@ -31,7 +32,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelDataFrameConsumerHandler"/> class.
         /// </summary>
-        public ChannelDataFrameConsumerHandler() : base((int)Protocols.ChannelDataFrame, "consumer", "producer")
+        public ChannelDataFrameConsumerHandler() : base((int)Protocols.ChannelDataFrame, Roles.Consumer, Roles.Producer)
         {
             RegisterMessageHandler<ChannelMetadata>(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.ChannelMetadata, HandleChannelMetadata);
             RegisterMessageHandler<ChannelDataFrameSet>(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.ChannelDataFrameSet, HandleChannelDataFrameSet);
@@ -43,49 +44,63 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// <param name="uri">The URI.</param>
         /// <param name="fromIndex">From index.</param>
         /// <param name="toIndex">To index.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long RequestChannelData(string uri, long? fromIndex = null, long? toIndex = null)
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<RequestChannelData> RequestChannelData(string uri, long? fromIndex = null, long? toIndex = null)
         {
-            var header = CreateMessageHeader(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.RequestChannelData);
-
-            var requestChannelData = new RequestChannelData
+            var body = new RequestChannelData
             {
                 Uri = uri,
                 FromIndex = fromIndex,
                 ToIndex = toIndex
             };
 
-            return Session.SendMessage(header, requestChannelData);
+            return SendRequest(body);
         }
 
         /// <summary>
-        /// Handles the ChannelMetadata event from a producer.
+        /// Handles the ChannelMetadata or ChannelDataFrameSet event from a producer.
         /// </summary>
-        public event ProtocolEventHandler<ChannelMetadata> OnChannelMetadata;
+        public event EventHandler<DualResponseEventArgs<RequestChannelData, ChannelMetadata, ChannelDataFrameSet>> OnRequestChannelDataResponse;
 
         /// <summary>
-        /// Handles the ChannelDataFrameSet event from a producer.
+        /// Handles the ProtocolException message.
         /// </summary>
-        public event ProtocolEventHandler<ChannelDataFrameSet> OnChannelDataFrameSet;
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
+        {
+            base.HandleProtocolException(message);
+
+            var request = TryGetCorrelatedMessage(message);
+            if (request is EtpMessage<RequestChannelData>)
+                HandleResponseMessage(request as EtpMessage<RequestChannelData>, message, OnRequestChannelDataResponse, HandleRequestChannelDataResponse);
+        }
 
         /// <summary>
         /// Handles the ChannelMetadata message from a producer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="channelMetadata">The ChannelMetadata message.</param>
-        protected virtual void HandleChannelMetadata(IMessageHeader header, ChannelMetadata channelMetadata)
+        /// <param name="message">The ChannelMetadata message.</param>
+        protected virtual void HandleChannelMetadata(EtpMessage<ChannelMetadata> message)
         {
-            Notify(OnChannelMetadata, header, channelMetadata);
+            var request = TryGetCorrelatedMessage<RequestChannelData>(message);
+            HandleResponseMessage(request, message, OnRequestChannelDataResponse, HandleRequestChannelDataResponse);
         }
 
         /// <summary>
         /// Handles the ChannelDataFrameSet message from a producer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="channelDataFrameSet">The ChannelDataFrameSet message.</param>
-        protected virtual void HandleChannelDataFrameSet(IMessageHeader header, ChannelDataFrameSet channelDataFrameSet)
+        /// <param name="message">The ChannelDataFrameSet message.</param>
+        protected virtual void HandleChannelDataFrameSet(EtpMessage<ChannelDataFrameSet> message)
         {
-            Notify(OnChannelDataFrameSet, header, channelDataFrameSet);
+            var request = TryGetCorrelatedMessage<RequestChannelData>(message);
+            HandleResponseMessage(request, message, OnRequestChannelDataResponse, HandleRequestChannelDataResponse);
+        }
+
+        /// <summary>
+        /// Handles the response to a RequestChannelData message from a producer.
+        /// </summary>
+        /// <param name="args">The <see cref="DualResponseEventArgs{RequestChannelData, ChannelMetadata, ChannelDataFrameSet}"/> instance containing the event data.</param>
+        protected virtual void HandleRequestChannelDataResponse(DualResponseEventArgs<RequestChannelData, ChannelMetadata, ChannelDataFrameSet> args)
+        {
         }
     }
 }

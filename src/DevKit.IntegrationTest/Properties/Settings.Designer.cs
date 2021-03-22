@@ -12,7 +12,7 @@ namespace Energistics.IntegrationTest {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.8.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.8.1.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -70,15 +70,6 @@ namespace Energistics.IntegrationTest {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1.1")]
-        public string EtpVersion {
-            get {
-                return ((string)(this["EtpVersion"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("energistics-tp")]
         public string EtpSubProtocol {
             get {
@@ -101,6 +92,15 @@ namespace Energistics.IntegrationTest {
         public string ProxyPassword {
             get {
                 return ((string)(this["ProxyPassword"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("v11")]
+        public global::Energistics.Etp.Common.EtpVersion EtpVersion {
+            get {
+                return ((global::Energistics.Etp.Common.EtpVersion)(this["EtpVersion"]));
             }
         }
     }

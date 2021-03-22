@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
@@ -27,6 +28,7 @@ using Avro.IO;
 using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Datatypes.Object;
+using Energistics.Etp.Common.Protocol.Core;
 using log4net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -39,7 +41,6 @@ namespace Energistics.Etp.Common
     public static class EtpExtensions
     {
         private static readonly char[] WhiteSpace = Enumerable.Range(0, 20).Select(Convert.ToChar).ToArray();
-        public const string GzipEncoding = "gzip";
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000L;
         private const long UnixEpochTicks = 621355968000000000L; // new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).Ticks
 
@@ -52,34 +53,10 @@ namespace Energistics.Etp.Common
         public static long CreateMessageKey(int protocol, int messageType)
         {
             // Special handling for Acknowledge and ProtocolException
-            if (messageType == (int)v11.MessageTypes.Core.Acknowledge || messageType == (int)v11.MessageTypes.Core.ProtocolException)
-                protocol = (int)v11.Protocols.Core;
+            if (messageType == (int)MessageTypes.Core.Acknowledge || messageType == (int)MessageTypes.Core.ProtocolException)
+                protocol = (int)Protocols.Core;
 
             return (((long)protocol) << 32) + messageType;
-        }
-
-        private static IReadOnlyDictionary<string, string> RoleCounterparts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["client"] = "server",
-            ["server"] = "client",
-            ["producer"] = "consumer",
-            ["consumer"] = "producer",
-            ["customer"] = "store",
-            ["store"] = "customer",
-        };
-
-        /// <summary>
-        /// Gets the name of the counterpart role for the specified role.
-        /// </summary>
-        /// <param name="role"></param>
-        /// <returns></returns>
-        public static string GetCounterpartRole(string role)
-        {
-            string counterpartRole;
-            if (RoleCounterparts.TryGetValue(role, out counterpartRole))
-                return counterpartRole;
-
-            return null;
         }
 
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings()
@@ -104,6 +81,66 @@ namespace Energistics.Etp.Common
         };
 
         /// <summary>
+        /// Converts an encoding to the string value used in headers.
+        /// </summary>
+        /// <param name="encoding">The encoding to get the string value for.</param>
+        /// <returns>The string value.</returns>
+        public static string ToHeaderValue(this EtpEncoding encoding)
+        {
+            FieldInfo fi = encoding.GetType().GetField(encoding.ToString());
+            return fi.GetCustomAttributes(typeof(DescriptionAttribute), false)?.Cast<DescriptionAttribute>().FirstOrDefault()?.Description;
+        }
+
+        /// <summary>
+        /// Sets the encoding header.
+        /// </summary>
+        /// <param name="headers">The header dictionary to set the encoding in.</param>
+        /// <param name="encoding">The encoding to set.</param>
+        public static void SetEncoding(this IDictionary<string, string> headers, EtpEncoding encoding)
+        {
+            if (headers == null)
+                return;
+
+            var value = encoding.ToHeaderValue();
+            if (value == null)
+                headers.Remove(EtpHeaders.Encoding);
+            else
+                headers[EtpHeaders.Encoding] = value;
+        }
+
+        /// <summary>
+        /// Sets the encoding header.
+        /// </summary>
+        /// <param name="headers">The header dictionary to set the encoding in.</param>
+        /// <param name="authorization">The authorization details.</param>
+        public static void SetAuthorization(this IDictionary<string, string> headers, Security.Authorization authorization)
+        {
+            if (headers == null)
+                return;
+
+            if (authorization?.HasValue ?? false)
+                headers[EtpHeaders.Authorization] = authorization.Value;
+            else
+                headers.Remove(EtpHeaders.Authorization);
+        }
+
+        /// <summary>
+        /// Sets the encoding header.
+        /// </summary>
+        /// <param name="headers">The header dictionary to set the encoding in.</param>
+        /// <param name="authorization">The authorization details.</param>
+        public static void SetAuthorization(this NameValueCollection headers, Security.Authorization authorization)
+        {
+            if (headers == null)
+                return;
+
+            if (authorization?.HasValue ?? false)
+                headers[EtpHeaders.Authorization] = authorization.Value;
+            else
+                headers.Remove(EtpHeaders.Authorization);
+        }
+
+        /// <summary>
         /// Converts an HTTP / HTTPS URI to a WebSocket URI.
         /// </summary>
         /// <param name="uri">The URI to convert.</param>
@@ -120,49 +157,88 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
-        /// Encodes the specified message header and body.
+        /// Serializes the specified message.
         /// </summary>
-        /// <typeparam name="T">The type of the message.</typeparam>
-        /// <param name="body">The message body.</param>
-        /// <param name="header">The message header.</param>
+        /// <typeparam name="T">The type of the message body.</typeparam>
+        /// <param name="message">The message.</param>
+        /// <param name="includeExtension">Whether or not to include a message header extension.</param>
+        /// <returns>The encoded byte array containing the message data.</returns>
+        public static byte[] Serialize<T>(this EtpMessage<T> message, bool includeExtension = false) where T : ISpecificRecord
+        {
+            var @objects = message.Extension != null && includeExtension
+                ? new object[] { message.Header, message.Extension, message.Body }
+                : new object[] { message.Header, message.Body };
+
+            var content = Serialize(@objects);
+            return System.Text.Encoding.UTF8.GetBytes(content);
+        }
+
+        /// <summary>
+        /// Encodes the specified message.
+        /// </summary>
+        /// <typeparam name="T">The type of the message body.</typeparam>
+        /// <param name="message">The message.</param>
+        /// <param name="includeExtension">Whether or not to include a message header extension.</param>
         /// <param name="compression">The compression type.</param>
         /// <returns>The encoded byte array containing the message data.</returns>
-        public static byte[] Encode<T>(this T body, IMessageHeader header, string compression) where T : ISpecificRecord
+        public static byte[] Encode<T>(this EtpMessage<T> message, bool includeExtension = false, string compression = EtpCompression.None) where T : ISpecificRecord
         {
             using (var stream = new MemoryStream())
+            using (var compressionStream = message.Header.CanBeCompressed() ? EtpCompression.TryGetCompresionStream(compression, stream) : null)
             {
                 // create avro binary encoder to write to memory stream
                 var headerEncoder = new BinaryEncoder(stream);
                 var bodyEncoder = headerEncoder;
-                Stream gzip = null;
 
-                try
+                if (compressionStream != null)
                 {
-                    // compress message body if compression has been negotiated
-                    if (header.CanCompressMessageBody())
-                    {
-                        if (GzipEncoding.Equals(compression, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            // add Compressed flag to message flags before writing header
-                            header.SetBodyCompressed();
-
-                            gzip = new GZipStream(stream, CompressionMode.Compress, true);
-                            bodyEncoder = new BinaryEncoder(gzip);
-                        }
-                    }
-
-                    // serialize header
-                    var headerWriter = new SpecificWriter<IMessageHeader>(header.Schema);
-                    headerWriter.Write(header, headerEncoder);
-
-                    // serialize body
-                    var bodyWriter = new SpecificWriter<T>(body.Schema);
-                    bodyWriter.Write(body, bodyEncoder);
+                    // add Compressed flag to message flags before writing header
+                    message.Header.SetCompressed();
+                    bodyEncoder = new BinaryEncoder(compressionStream);
                 }
-                finally
-                {
-                    gzip?.Dispose();
-                }
+
+                // serialize header
+                headerEncoder.Encode(message.Header);
+
+                // serialize header extension
+                if (message.Extension != null && includeExtension)
+                    bodyEncoder.Encode(message.Extension); // Use body encoder to handle compression
+
+                bodyEncoder.Encode(message.Body);
+
+                if (compressionStream != null)
+                    compressionStream.Close();
+
+                return stream.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Encodes the record.
+        /// </summary>
+        /// <typeparam name="T">The record type.</typeparam>
+        /// <param name="encoder">The encoder to use.</param>
+        /// <param name="record">The record to encode.</param>
+        public static void Encode<T>(this Encoder encoder, T record) where T : ISpecificRecord
+        {
+            var writer = new SpecificWriter<T>(record.Schema);
+            writer.Write(record, encoder);
+        }
+
+        /// <summary>
+        /// Encodes the record to a byte array.
+        /// </summary>
+        /// <typeparam name="T">The record type.</typeparam>
+        /// <param name="record">The record to encode.</param>
+        /// <returns>The encoded byte array.</returns>
+        public static byte[] EncodeToBytes<T>(this T record) where T : ISpecificRecord
+        {
+            using (var stream = new MemoryStream())
+            {
+                var encoder = new BinaryEncoder(stream);
+
+                if (record != null)
+                    encoder.Encode(record);
 
                 return stream.ToArray();
             }
@@ -173,19 +249,33 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <typeparam name="T">The type of the message.</typeparam>
         /// <param name="decoder">The decoder.</param>
-        /// <param name="body">The message body.</param>
         /// <returns>The decoded message body.</returns>
-        public static T Decode<T>(this Decoder decoder, string body) where T : ISpecificRecord
+        public static T Decode<T>(this Decoder decoder) where T : ISpecificRecord
         {
-            if (!string.IsNullOrWhiteSpace(body))
-                return Deserialize<T>(body);
-
             var record = Activator.CreateInstance<T>();
             var reader = new SpecificReader<T>(new EtpSpecificReader(record.Schema, record.Schema));
 
             reader.Read(record, decoder);
 
             return record;
+        }
+
+        /// <summary>
+        /// Decodes a record from a byte array.
+        /// </summary>
+        /// <typeparam name="T">The record type.</typeparam>
+        /// <param name="bytes">The byte array to decode the record from.</param>
+        /// <returns>The decoded record.</returns>
+        public static T DecodeFromBytes<T>(byte[] bytes) where T : ISpecificRecord
+        {
+            if (bytes == null)
+                return default(T);
+
+            using (var stream = new MemoryStream(bytes))
+            {
+                var decoder = new BinaryDecoder(stream);
+                return decoder.Decode<T>();
+            }
         }
 
         /// <summary>
@@ -232,70 +322,6 @@ namespace Energistics.Etp.Common
             Array.Clear(buffer, 0, buffer.Length);
             stream.Position = 0;
             stream.SetLength(0);
-        }
-
-        /// <summary>
-        /// Determines whether the list of supported protocols contains the specified protocol and role combination.
-        /// </summary>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        /// <param name="protocol">The requested protocol.</param>
-        /// <param name="role">The requested role.</param>
-        /// <returns>A value indicating whether the specified protocol and role combination is supported.</returns>
-        public static bool Contains(this IReadOnlyList<ISupportedProtocol> supportedProtocols, int protocol, string role)
-        {
-            return supportedProtocols.Any(x => x.Protocol == protocol &&
-                string.Equals(x.Role, role, StringComparison.InvariantCultureIgnoreCase));
-        }
-
-        /// <summary>
-        /// Gets the protocol capabilities for the requested protocol from the list of supported protocols.
-        /// </summary>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        /// <param name="protocol">The protocol to get the capabilities for.</param>
-        /// <returns>An <see cref="EtpProtocolCapabilities"/> instance containing the protocol's capabilities.</returns>
-        public static EtpProtocolCapabilities ProtocolCapabilities(this IList<ISupportedProtocol> supportedProtocols, int protocol)
-        {
-            var capabilities = new Dictionary<string, IDataValue>();
-            var protocolCapabilities = supportedProtocols?.FirstOrDefault(x => x.Protocol == protocol)?.ProtocolCapabilities;
-            if (protocolCapabilities != null)
-            {
-                foreach (var key in protocolCapabilities.Keys)
-                {
-                    if (!(key is string))
-                        continue;
-
-                    var value = protocolCapabilities[key];
-                    if (value == null || !(value is IDataValue))
-                        continue;
-
-                    capabilities[(string)key] = (IDataValue)value;
-                }
-            }
-
-            return new EtpProtocolCapabilities(capabilities);
-        }
-
-        /// <summary>
-        /// Converts the <see cref="Guid"/> to a UUID instance.
-        /// </summary>
-        /// <param name="guid">The unique identifier.</param>
-        /// <returns>A new UUID instance.</returns>
-        public static v12.Datatypes.Uuid ToUuid(this Guid guid)
-        {
-            return new v12.Datatypes.Uuid
-            {
-                Value = GuidUtility.SwapByteOrder(guid.ToByteArray()),
-            };
-        }
-
-        /// <summary>
-        /// Converts the UUID to a <see cref="Guid"/> instance.
-        /// </summary>
-        /// <param name="uuid">The UUID.</param>
-        /// <returns>A new <see cref="Guid"/> instance.</returns>
-        public static Guid ToGuid(this v12.Datatypes.Uuid uuid)
-        {
-            return new Guid(GuidUtility.SwapByteOrder(uuid.Value));
         }
 
         /// <summary>
@@ -377,13 +403,14 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="dataObject">The data object.</param>
         /// <param name="data">The data string.</param>
-        /// <param name="compress">if set to <c>true</c> the data will be compressed.</param>
-        public static void SetString(this IDataObject dataObject, string data, bool compress = true)
+        /// <param name="compressionMethod">The compression method to use to compress the data, if any.</param>
+        /// <returns>The data object with the data set.</returns>
+        public static IDataObject SetString(this IDataObject dataObject, string data, string compressionMethod = EtpCompression.None)
         {
             if (string.IsNullOrWhiteSpace(data))
             {
-                dataObject.SetData(new byte[0], compress);
-                return;
+                dataObject.SetData(new byte[0], compressionMethod);
+                return dataObject;
             }
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(data);
@@ -393,7 +420,9 @@ namespace Energistics.Etp.Common
             //    System.Text.Encoding.Unicode,
             //    System.Text.Encoding.UTF8.GetBytes(data));
 
-            dataObject.SetData(bytes, compress);
+            dataObject.SetData(bytes, compressionMethod);
+
+            return dataObject;
         }
 
         /// <summary>
@@ -403,18 +432,18 @@ namespace Energistics.Etp.Common
         /// <returns>The decompressed data as a byte array.</returns>
         public static byte[] GetData(this IDataObject dataObject)
         {
-            if (string.IsNullOrWhiteSpace(dataObject.ContentEncoding))
+            if (!EtpCompression.RequiresDecompression(dataObject.ContentEncoding) || dataObject.Data?.Length == 0)
                 return dataObject.Data;
 
-            if (!GzipEncoding.Equals(dataObject.ContentEncoding, StringComparison.InvariantCultureIgnoreCase))
-                throw new NotSupportedException("Content encoding not supported: " + dataObject.ContentEncoding);
+            if (!EtpCompression.CanDecompress(dataObject.ContentEncoding))
+                throw new NotSupportedException($"Content encoding not supported: {dataObject.ContentEncoding}");
 
             using (var uncompressed = new MemoryStream())
             {
                 using (var compressed = new MemoryStream(dataObject.Data))
-                using (var gzip = new GZipStream(compressed, CompressionMode.Decompress))
+                using (var decompressionStream = EtpCompression.TryGetDecompresionStream(dataObject.ContentEncoding, compressed))
                 {
-                    gzip.CopyTo(uncompressed);
+                    decompressionStream.CopyTo(uncompressed);
                 }
 
                 return uncompressed.ToArray();
@@ -426,53 +455,34 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="dataObject">The data object.</param>
         /// <param name="data">The data.</param>
-        /// <param name="compress">if set to <c>true</c> the data will be compressed.</param>
-        public static void SetData(this IDataObject dataObject, byte[] data, bool compress = true)
+        /// <param name="compressionMethod">The compression method to use if any.</param>
+        /// <returns>The data object with the data set.</returns>
+        public static IDataObject SetData(this IDataObject dataObject, byte[] data, string compressionMethod = EtpCompression.None)
         {
             var encoding = string.Empty;
 
-            if (compress)
+            if (EtpCompression.RequiresCompression(compressionMethod) && data?.Length > 0)
             {
+                if (!EtpCompression.CanCompress(compressionMethod))
+                    throw new NotSupportedException($"Compression method not supported: {compressionMethod}");
+
                 using (var compressed = new MemoryStream())
                 {
                     using (var uncompressed = new MemoryStream(data))
-                    using (var gzip = new GZipStream(compressed, CompressionMode.Compress))
+                    using (var compressionStream = EtpCompression.TryGetCompresionStream(compressionMethod, compressed))
                     {
-                        uncompressed.CopyTo(gzip);
+                        uncompressed.CopyTo(compressionStream);
                     }
 
                     data = compressed.ToArray();
-                    encoding = GzipEncoding;
+                    encoding = compressionMethod;
                 }
             }
 
             dataObject.ContentEncoding = encoding;
-            dataObject.Data = data;
-        }
+            dataObject.Data = data ?? new byte[0];
 
-        /// <summary>
-        /// Gets a list of protocols supported by the specified <see cref="IProtocolHandler"/>s.
-        /// </summary>
-        /// <param name="handlers">The <see cref="IProtocolHandler"/>s.</param>
-        /// <param name="supportedVersion">The supported ETP version.</param>
-        /// <returns>The list of supported protocols.</returns>
-        public static IReadOnlyList<EtpSessionProtocol> GetSupportedProtocols(IEnumerable<IProtocolHandler> handlers, EtpVersion supportedVersion)
-        {
-            var supportedProtocols = new List<EtpSessionProtocol>();
-
-            // Skip Core protocol (0)
-            foreach (var handler in handlers.Where(x => x.Protocol > 0 && x.SupportedVersion == supportedVersion))
-            {
-                if (supportedProtocols.Contains(handler.Protocol, handler.Role))
-                    continue;
-
-                var capabilities = new EtpProtocolCapabilities();
-                handler.GetCapabilities(capabilities);
-
-                supportedProtocols.Add(new EtpSessionProtocol(handler.Protocol, handler.SupportedVersion.AsVersion(), handler.Role, handler.CounterpartRole, capabilities, null));
-            }
-
-            return supportedProtocols;
+            return dataObject;
         }
 
         /// <summary>
@@ -510,18 +520,133 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
-        /// Converts an <see cref="EtpVersion"/> to an <see cref="IVersion"/>.
+        /// Converts the specified <see cref="EtpEndpointParameters"/> instance to a <see cref="EtpEndpointDetails"/> instance.
+        /// </summary>
+        /// <param name="parameters">The parameters to convert.</param>
+        /// <param name="version">The ETP version supported.</param>
+        /// <returns>The converted parameters.</returns>
+        public static EtpEndpointDetails ToEndpointDetails(this EtpEndpointParameters parameters, EtpVersion version)
+        {
+            var capabilities = new EtpEndpointCapabilities(version);
+            capabilities.LoadFrom(parameters.Capabilities);
+
+            var details = new EtpEndpointDetails(
+                capabilities,
+                new List<IEndpointProtocol>(parameters.SupportedProtocols),
+                new List<IEndpointSupportedDataObject>(parameters.SupportedDataObjects),
+                new List<string>(parameters.SupportedCompression),
+                new List<string>(parameters.SupportedFormats)
+            );
+
+            return details;
+        }
+
+        /// <summary>
+        /// Converts the RequestSession message into an <see cref="EtpEndpointInfo"/> instance.
+        /// </summary>
+        /// <param name="message">The message to convert.</param>
+        /// <returns>The created instance.</returns>
+        public static EtpEndpointInfo ToEndpointInfo(this EtpMessage<IRequestSession> message)
+        {
+            return EtpEndpointInfo.FromId(message.Body.ApplicationName, message.Body.ApplicationVersion, message.Body.ClientInstanceId);
+        }
+
+        /// <summary>
+        /// Converts the RequestSession message into an <see cref="EtpEndpointDetails"/> instance.
+        /// </summary>
+        /// <param name="body">The message to convert.</param>
+        /// <returns>The created instance.</returns>
+        public static EtpEndpointDetails ToEndpointDetails(this EtpMessage<IRequestSession> message)
+        {
+            var capabilities = new EtpEndpointCapabilities(message.EtpVersion);
+            capabilities.LoadFrom(message.Body.EndpointCapabilities);
+            return new EtpEndpointDetails(
+                capabilities,
+                message.Body.RequestedProtocols.Select(p => new EtpEndpointProtocol(p, false)).ToList(),
+                message.Body.SupportedDataObjects.Select(o => new EtpSupportedDataObject(o)).ToList(),
+                message.Body.SupportedCompression.ToList() ?? new List<string>(),
+                message.Body.SupportedFormats?.ToList() ?? new List<string> { Formats.Xml }
+            );
+        }
+
+        /// <summary>
+        /// Converts the OpenSession message into an <see cref="EtpEndpointInfo"/> instance.
+        /// </summary>
+        /// <param name="message">The message to convert.</param>
+        /// <returns>The created instance.</returns>
+        public static EtpEndpointInfo ToEndpointInfo(this EtpMessage<IOpenSession> message)
+        {
+            return EtpEndpointInfo.FromId(message.Body.ApplicationName, message.Body.ApplicationVersion, message.Body.ServerInstanceId);
+        }
+
+        /// <summary>
+        /// Converts the OpenSession message into an <see cref="EtpEndpointDetails"/> instance.
+        /// </summary>
+        /// <param name="body">The message to convert.</param>
+        /// <returns>The created instance.</returns>
+        public static EtpEndpointDetails ToEndpointDetails(this EtpMessage<IOpenSession> message)
+        {
+            var capabilities = new EtpEndpointCapabilities(message.EtpVersion);
+            capabilities.LoadFrom(message.Body.EndpointCapabilities);
+            return new EtpEndpointDetails(
+                capabilities,
+                message.Body.SupportedProtocols.Select(p => new EtpEndpointProtocol(p, true)).ToList(),
+                message.Body.SupportedDataObjects.Select(o => new EtpSupportedDataObject(o)).ToList(),
+                message.Body.SupportedCompression == null ? new List<string>() : new List<string> { message.Body.SupportedCompression },
+                message.Body.SupportedFormats?.ToList() ?? new List<string> { Formats.Xml }
+            );
+        }
+        /// <summary>
+        /// Gets a version string from the specified ETP version.
         /// </summary>
         /// <param name="version">The version to convert.</param>
-        /// <returns>The converted version.</returns>
-        public static IVersion AsVersion(this EtpVersion version)
+        /// <returns>The version string.</returns>
+        public static string ToVersionString(this EtpVersion version)
+        {
+            var v = version.ToSystemVersion();
+            return $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision}";
+        }
+
+        /// <summary>
+        /// Gets a consistent, version-specific key for this data object type.
+        /// </summary>
+        /// <param name="dataObjectType">The data object type to get the key for.</param>
+        /// <param name="version">The ETP version to get the key for.</param>
+        /// <returns>The version-specific key.</returns>
+        public static string ToVersionKey(this IDataObjectType dataObjectType, EtpVersion version)
         {
             switch (version)
             {
-                case EtpVersion.v11: return new v11.Datatypes.Version { Major = 1, Minor = 1 };
-                case EtpVersion.v12: return new v12.Datatypes.Version { Major = 1, Minor = 2 };
+                case EtpVersion.v11: return dataObjectType.ContentType.ToString();
+                case EtpVersion.v12: return dataObjectType.DataObjectType.ToString();
                 default: return null;
             }
+        }
+
+        /// <summary>
+        /// Sends a ProtocolException message with the specified exception details.
+        /// </summary>
+        /// <param name="exception">The ETP exception.</param>
+        /// <param name="handler">The handler to send the exception on.</param>
+        /// <param name="isFinalPart">Whether or not the protocol exception is the final part in a multi-part message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public static EtpMessage<IProtocolException> Send(this EtpException exception, IProtocolHandler handler, bool isMultiPart = false, bool isFinalPart = false, IMessageHeaderExtension extension = null)
+        {
+            return handler.ProtocolException(exception, isFinalPart: isFinalPart, extension: extension);
+        }
+
+        /// <summary>
+        /// Sends a ProtocolException message with the specified exception details.
+        /// </summary>
+        /// <param name="exception">The ETP exception.</param>
+        /// <param name="session">The session to send the exception on.</param>
+        /// <param name="isFinalPart">Whether or not the protocol exception is the final part in a multi-part message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public static EtpMessage<IProtocolException> Send(this EtpException exception, IEtpSession session, bool isMultiPart = false, bool isFinalPart = false, IMessageHeaderExtension extension = null)
+        {
+            return session.ProtocolException(exception, isFinalPart: isFinalPart, extension: extension);
         }
     }
 }

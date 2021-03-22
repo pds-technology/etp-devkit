@@ -18,6 +18,8 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using System;
+using System.Collections.Generic;
 
 namespace Energistics.Etp.v11.Protocol.GrowingObject
 {
@@ -25,43 +27,52 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
     /// Defines the interface that must be implemented by the store role of the growing object protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.GrowingObject, "store", "customer")]
+    [ProtocolRole((int)Protocols.GrowingObject, Roles.Store, Roles.Customer)]
     public interface IGrowingObjectStore : IProtocolHandler
     {
         /// <summary>
-        /// Sends a single list item as a response for Get and GetRange.
+        /// Sends a object fragments as a response for Get and GetRange.
         /// </summary>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="contentType">The content type string.</param>
-        /// <param name="data">The data.</param>
-        /// <param name="correlationId">The correlation identifier.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long ObjectFragment(string uri, string contentType, byte[] data, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
+        /// <param name="fragment">The fragment.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ObjectFragment> ObjectFragment(IMessageHeader correlatedHeader, ObjectFragment fragment, bool isFinalPart = true);
+
+        /// <summary>
+        /// Sends a complete multi-part set of ObjectFragment messages to a customer for the list of <see cref="ObjectFragmentResponse"/> objects.
+        /// If there are no fragments in the list, an Acknowledge message is sent with the NoData flag sent.
+        /// If there are fragments in the list and acknowledge is requested, an Acknowledge message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="fragments">The fragments.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.  If there are no fragments in the list, a placeholder message with a header matching the sent Acknowledge is returned.</returns>
+        EtpMessage<ObjectFragment> ObjectFragments(IMessageHeader correlatedHeader, IList<ObjectFragment> fragments, bool setFinalPart = true);
 
         /// <summary>
         /// Handles the GrowingObjectGet event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GrowingObjectGet> OnGrowingObjectGet;
+        event EventHandler<RequestEventArgs<GrowingObjectGet, ObjectFragment>> OnGrowingObjectGet;
 
         /// <summary>
         /// Handles the GrowingObjectGetRange event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GrowingObjectGetRange> OnGrowingObjectGetRange;
+        event EventHandler<ListRequestEventArgs<GrowingObjectGetRange, ObjectFragment>> OnGrowingObjectGetRange;
 
         /// <summary>
         /// Handles the GrowingObjectPut event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GrowingObjectPut> OnGrowingObjectPut;
+        event EventHandler<VoidRequestEventArgs<GrowingObjectPut>> OnGrowingObjectPut;
 
         /// <summary>
         /// Handles the GrowingObjectDelete event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GrowingObjectDelete> OnGrowingObjectDelete;
+        event EventHandler<VoidRequestEventArgs<GrowingObjectDelete>> OnGrowingObjectDelete;
 
         /// <summary>
         /// Handles the GrowingObjectDeleteRange event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GrowingObjectDeleteRange> OnGrowingObjectDeleteRange;
+        event EventHandler<VoidRequestEventArgs<GrowingObjectDeleteRange>> OnGrowingObjectDeleteRange;
     }
 }

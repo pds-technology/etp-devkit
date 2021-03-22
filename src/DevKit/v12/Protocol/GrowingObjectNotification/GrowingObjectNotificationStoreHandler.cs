@@ -31,21 +31,80 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.GrowingObjectNotification.IGrowingObjectNotificationStore" />
-    public class GrowingObjectNotificationStoreHandler : Etp12ProtocolHandler, IGrowingObjectNotificationStore
+    public class GrowingObjectNotificationStoreHandler : Etp12ProtocolHandlerWithCapabilities<CapabilitiesStore, ICapabilitiesStore>, IGrowingObjectNotificationStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="GrowingObjectNotificationStoreHandler"/> class.
         /// </summary>
-        public GrowingObjectNotificationStoreHandler() : base((int)Protocols.GrowingObjectNotification, "store", "customer")
+        public GrowingObjectNotificationStoreHandler() : base((int)Protocols.GrowingObjectNotification, Roles.Store, Roles.Customer)
         {
             RegisterMessageHandler<SubscribePartNotifications>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.SubscribePartNotifications, HandleSubscribePartNotifications);
             RegisterMessageHandler<UnsubscribePartNotification>(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsubscribePartNotification, HandleUnsubscribePartNotification);
         }
 
         /// <summary>
-        /// Handles the SubscribePartNotification event from a customer.
+        /// Handles the SubscribePartNotifications event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<SubscribePartNotifications> OnSubscribePartNotifications;
+        public event EventHandler<MapRequestEventArgs<SubscribePartNotifications, string>> OnSubscribePartNotifications;
+
+        /// <summary>
+        /// Sends a SubscribePartNotificationsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscribePartNotificationsResponse> SubscribePartNotificationsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new SubscribePartNotificationsResponse
+            {
+                Success = success ?? new Dictionary<string, string>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of SubscribePartNotificationsResponse and ProtocolException messages to a customer.
+        /// If there are no successes, an empty SubscribePartNotificationsRecord message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the SubscribePartNotificationsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscribePartNotificationsResponse> SubscribePartNotificationsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(SubscribePartNotificationsResponse, correlatedHeader, success, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
+
+        /// <summary>
+        /// Sends an UnsolicitedPartNotifications message to a customer.
+        /// </summary>
+        /// <param name="subscriptions">The unsolicited subscriptions.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<UnsolicitedPartNotifications> UnsolicitedPartNotifications(IList<SubscriptionInfo> subscriptions, IMessageHeaderExtension extension = null)
+        {
+            var body = new UnsolicitedPartNotifications
+            {
+                Subscriptions = subscriptions ?? new List<SubscriptionInfo>(),
+            };
+
+            var message = SendNotification(body, extension: extension, onBeforeSend: (m) => TryRegisterSubscriptions(m, subscriptions.ToMap(), nameof(SubscriptionInfo.RequestUuid)));
+
+            if (message == null)
+            {
+                foreach (var subscription in body.Subscriptions)
+                    TryUnregisterSubscription(subscription);
+            }
+
+            return message;
+        }
 
         /// <summary>
         /// Sends a PartsChanged message to a customer.
@@ -56,20 +115,21 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="changeKind">The change kind.</param>
         /// <param name="changeTime">The change time.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long PartsChanged(Guid requestUuid, string uri, IList<ObjectPart> parts, ObjectChangeKind changeKind, long changeTime, string format = "xml")
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PartsChanged> PartsChanged(Guid requestUuid, string uri, IList<ObjectPart> parts, ObjectChangeKind changeKind, long changeTime, string format = Formats.Xml, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsChanged);
-            var message = new PartsChanged
+            var body = new PartsChanged
             {
-                RequestUuid = requestUuid.ToUuid(),
+                RequestUuid = requestUuid.ToUuid<Uuid>(),
                 Uri = uri,
+                Parts = parts ?? new List<ObjectPart>(),
                 ChangeKind = changeKind,
+                Format = format ?? Formats.Xml,
                 ChangeTime = changeTime,
-                Format = format ?? "xml",
             };
 
-            return SendMultipartResponse(header, message, parts, (m, i) => m.Parts = i);
+            return SendNotification(body, extension: extension);
         }
 
         /// <summary>
@@ -79,18 +139,19 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="uri">The URI of the growing object.</param>
         /// <param name="uids">The UIDs of the deleted parts.</param>
         /// <param name="changeTime">The change time.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long PartsDeleted(Guid requestUuid, string uri, IList<string> uids, long changeTime)
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PartsDeleted> PartsDeleted(Guid requestUuid, string uri, IList<string> uids, long changeTime, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsDeleted);
-            var message = new PartsDeleted
+            var body = new PartsDeleted
             {
-                RequestUuid = requestUuid.ToUuid(),
+                RequestUuid = requestUuid.ToUuid<Uuid>(),
                 Uri = uri,
-                ChangeTime = changeTime
+                Uids = uids ?? new List<string>(),
+                ChangeTime = changeTime,
             };
 
-            return SendMultipartResponse(header, message, uids, (m, i) => m.Uids = i);
+            return SendNotification(body, extension: extension);
         }
 
         /// <summary>
@@ -103,80 +164,103 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <param name="parts">The map of UIDs and data of the parts that were put.</param>
         /// <param name="changeTime">The change time.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long PartsReplacedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, long changeTime, string format = "xml")
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PartsReplacedByRange> PartsReplacedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, long changeTime, string format = Formats.Xml, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartsReplacedByRange);
-            var message = new PartsReplacedByRange
+            var body = new PartsReplacedByRange
             {
-                RequestUuid = requestUuid.ToUuid(),
+                RequestUuid = requestUuid.ToUuid<Uuid>(),
                 Uri = uri,
                 DeletedInterval = deletedInterval,
                 IncludeOverlappingIntervals = includeOverlappingIntervals,
+                Parts = parts ?? new List<ObjectPart>(),
+                Format = format ?? Formats.Xml,
                 ChangeTime = changeTime,
-                Format = format ?? "xml",
             };
 
-            return SendMultipartResponse(header, message, parts, (m, i) => m.Parts = i);
+            return SendNotification(body, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
         }
 
         /// <summary>
         /// Handles the UnsubscribePartNotification event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<UnsubscribePartNotification> OnUnsubscribePartNotification;
+        public event EventHandler<RequestEventArgs<UnsubscribePartNotification, Guid>> OnUnsubscribePartNotification;
 
         /// <summary>
-        /// Sends a PartSubscriptionEnded message to a customer.
+        /// Sends a PartSubscriptionEnded message to a customer in response to a UnsubscribePartNotification message.
         /// </summary>
-        /// <param name="requestUuid">The UUID of the subscription that has ended.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long PartSubscriptionEnded(Guid requestUuid)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="requestUuid">The reqyest UUId.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PartSubscriptionEnded> ResponsePartSubscriptionEnded(IMessageHeader correlatedHeader, Guid requestUuid, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.PartSubscriptionEnded);
-
-            var message = new PartSubscriptionEnded
+            var body = new PartSubscriptionEnded
             {
-                RequestUuid = requestUuid.ToUuid(),
+                RequestUuid = requestUuid.ToUuid<Uuid>(),
             };
 
-            return Session.SendMessage(header, message);
+            return SendResponse(body, correlatedHeader, extension: extension);
         }
 
         /// <summary>
-        /// Sends an UnsolicitedPartNotifications message to a customer.
+        /// Sends a PartSubscriptionEnded message to a customer as a notification.
         /// </summary>
-        /// <param name="subscriptions">The unsolicited subscriptions.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long UnsolicitedPartNotifications(IList<SubscriptionInfo> subscriptions)
+        /// <param name="requestUuid">The reqyest UUId.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PartSubscriptionEnded> NotificationPartSubscriptionEnded(Guid requestUuid, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObjectNotification, MessageTypes.GrowingObjectNotification.UnsolicitedPartNotifications);
-
-            var message = new UnsolicitedPartNotifications
+            var body = new PartSubscriptionEnded
             {
-                Subscriptions = subscriptions,
+                RequestUuid = requestUuid.ToUuid<Uuid>(),
             };
 
-            return Session.SendMessage(header, message);
+            return SendNotification(body, extension: extension);
         }
 
         /// <summary>
         /// Handles the SubscribePartNotifications message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="request">The SubscribePartNotifications message.</param>
-        protected virtual void HandleSubscribePartNotifications(IMessageHeader header, SubscribePartNotifications request)
+        /// <param name="message">The SubscribePartNotifications message.</param>
+        protected virtual void HandleSubscribePartNotifications(EtpMessage<SubscribePartNotifications> message)
         {
-            Notify(OnSubscribePartNotifications, header, request);
+            var errors = TryRegisterSubscriptions(message, message.Body.Request, nameof(message.Body.Request));
+
+            HandleRequestMessage(message, OnSubscribePartNotifications, HandleSubscribePartNotifications,
+                args: new MapRequestEventArgs<SubscribePartNotifications, string>(message) { ErrorMap = errors },
+                responseMethod: (args) => SubscribePartNotificationsResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the response to an SubscribePartNotifications message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{SubscribePartNotifications, string, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleSubscribePartNotifications(MapRequestEventArgs<SubscribePartNotifications, string> args)
+        {
         }
 
         /// <summary>
         /// Handles the UnsubscribePartNotification message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="request">The UnsubscribePartNotification message.</param>
-        protected virtual void HandleUnsubscribePartNotification(IMessageHeader header, UnsubscribePartNotification request)
+        /// <param name="message">The UnsubscribePartNotification message.</param>
+        protected virtual void HandleUnsubscribePartNotification(EtpMessage<UnsubscribePartNotification> message)
         {
-            Notify(OnUnsubscribePartNotification, header, request);
+            var error = TryUnregisterSubscription(message.Body, nameof(message.Body.RequestUuid), message);
+
+            HandleRequestMessage(message, OnUnsubscribePartNotification, HandleUnsubscribePartNotification,
+                args: new RequestEventArgs<UnsubscribePartNotification, Guid>(message) { FinalError = error },
+                responseMethod: (args) => { if (!args.HasErrors) { ResponsePartSubscriptionEnded(args.Request?.Header, args.Response, extension: args.ResponseExtension); } });
+        }
+
+        /// <summary>
+        /// Handles the response to a UnsubscribePartNotification message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="RequestEventArgs{UnsubscribePartNotification, Guid}"/> instance containing the event data.</param>
+        protected virtual void HandleUnsubscribePartNotification(RequestEventArgs<UnsubscribePartNotification, Guid> args)
+        {
         }
     }
 }

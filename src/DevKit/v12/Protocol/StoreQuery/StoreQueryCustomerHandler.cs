@@ -16,10 +16,12 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.StoreQuery
@@ -29,14 +31,12 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.StoreQuery.IStoreQueryCustomer" />
-    public class StoreQueryCustomerHandler : Etp12ProtocolHandler, IStoreQueryCustomer
+    public class StoreQueryCustomerHandler : Etp12ProtocolHandler<CapabilitiesCustomer, ICapabilitiesCustomer, CapabilitiesStore, ICapabilitiesStore>, IStoreQueryCustomer
     {
-        private readonly ConcurrentDictionary<long, FindDataObjects> _requests = new ConcurrentDictionary<long, FindDataObjects>();
-
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreQueryCustomerHandler"/> class.
         /// </summary>
-        public StoreQueryCustomerHandler() : base((int)Protocols.StoreQuery, "customer", "store")
+        public StoreQueryCustomerHandler() : base((int)Protocols.StoreQuery, Roles.Customer, Roles.Store)
         {
             RegisterMessageHandler<FindDataObjectsResponse>(Protocols.StoreQuery, MessageTypes.StoreQuery.FindDataObjectsResponse, HandleFindDataObjectsResponse);
             RegisterMessageHandler<Chunk>(Protocols.StoreQuery, MessageTypes.StoreQuery.Chunk, HandleChunk);
@@ -47,89 +47,69 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// </summary>
         /// <param name="context">The context information.</param>
         /// <param name="scope">The scope.</param>
+        /// <param name="storeLastWriteFilter">An optional parameter to filter results on a date when an object last changed.</param>
+        /// <param name="activeStatusFilter">if not <c>null</c>, request only objects with a matching active status.</param>
         /// <param name="format">The format of the data (XML or JSON).</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long FindDataObjects(ContextInfo context, ContextScopeKind scope, string format = "xml")
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<FindDataObjects> FindDataObjects(ContextInfo context, ContextScopeKind scope, long? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, string format = Formats.Xml, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.StoreQuery, MessageTypes.StoreQuery.FindDataObjects);
-
-            var message = new FindDataObjects()
+            var body = new FindDataObjects
             {
                 Context = context,
                 Scope = scope,
-                Format = format ?? "xml",
+                StoreLastWriteFilter = storeLastWriteFilter,
+                ActiveStatusFilter = activeStatusFilter,
+                Format = format ?? Formats.Xml,
             };
-            
-            return Session.SendMessage(header, message,
-                (h, _) => _requests[h.MessageId] = message // Cache requested URIs by message ID
-            );
+
+            return SendRequest(body, extension: extension);
         }
 
         /// <summary>
         /// Handles the FindDataObjectsResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<FindDataObjectsResponse, FindDataObjects> OnFindDataObjectsResponse;
+        public event EventHandler<DualResponseEventArgs<FindDataObjects, FindDataObjectsResponse, Chunk>> OnFindDataObjectsResponse;
 
         /// <summary>
-        /// Handles the Chunk event from a store.
+        /// Handles the ProtocolException message.
         /// </summary>
-        public event ProtocolEventHandler<Chunk> OnChunk;
-
-        /// <summary>
-        /// Handle any final cleanup related to the final message in response to a request.
-        /// </summary>
-        /// <param name="correlationId">The correlation ID of the request</param>
-        protected override void HandleFinalResponse(long correlationId)
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
         {
-            FindDataObjects request;
-            _requests.TryRemove(correlationId, out request);
+            base.HandleProtocolException(message);
+
+            var request = TryGetCorrelatedMessage(message);
+            if (request is EtpMessage<FindDataObjects>)
+                HandleResponseMessage(request as EtpMessage<FindDataObjects>, message, OnFindDataObjectsResponse, HandleFindDataObjectsResponse);
         }
 
         /// <summary>
         /// Handles the FindDataObjectsResponse message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The FindDataObjectsResponse message.</param>
-        protected virtual void HandleFindDataObjectsResponse(IMessageHeader header, FindDataObjectsResponse message)
+        protected virtual void HandleFindDataObjectsResponse(EtpMessage<FindDataObjectsResponse> message)
         {
-            var request = GetRequest(header);
-            var args = Notify(OnFindDataObjectsResponse, header, message, request);
-            if (args.Cancel)
-                return;
-
-            HandleFindDataObjectsResponse(header, message, request);
-        }
-
-        /// <summary>
-        /// Handles the FindDataObjectsResponse message from a store.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The FindDataObjectsResponse message.</param>
-        /// <param name="request">The FindDataObjects request.</param>
-        protected virtual void HandleFindDataObjectsResponse(IMessageHeader header, FindDataObjectsResponse message, FindDataObjects request)
-        {
+            var request = TryGetCorrelatedMessage<FindDataObjects>(message);
+            HandleResponseMessage(request, message, OnFindDataObjectsResponse, HandleFindDataObjectsResponse);
         }
 
         /// <summary>
         /// Handles the Chunk message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="notification">The Chunk message.</param>
-        protected virtual void HandleChunk(IMessageHeader header, Chunk notification)
+        /// <param name="message">The Chunk message.</param>
+        protected virtual void HandleChunk(EtpMessage<Chunk> message)
         {
-            Notify(OnChunk, header, notification);
+            var request = TryGetCorrelatedMessage<FindDataObjects>(message);
+            HandleResponseMessage(request, message, OnFindDataObjectsResponse, HandleFindDataObjectsResponse);
         }
 
         /// <summary>
-        /// Gets the request from the internal cache of message IDs.
+        /// Handles the FindDataObjectsResponse message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <returns>The requested URI.</returns>
-        private FindDataObjects GetRequest(IMessageHeader header)
+        /// <param name="args">The <see cref="DualResponseEventArgs{FindDataObjects, FindDataObjectsResponse, Chunk}"/> instance containing the event data.</param>
+        protected virtual void HandleFindDataObjectsResponse(DualResponseEventArgs<FindDataObjects, FindDataObjectsResponse, Chunk> args)
         {
-            FindDataObjects request;
-            _requests.TryGetValue(header.CorrelationId, out request);
-            return request;
         }
     }
 }

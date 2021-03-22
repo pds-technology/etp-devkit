@@ -19,24 +19,25 @@
 using Avro.IO;
 using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.Common.Protocol.Core;
-using System.Collections.Generic;
+using System;
 
 namespace Energistics.Etp.Common
 {
     public interface IEtpAdapter
     {
-        EtpVersion SupportedVersion { get; }
+        EtpVersion EtpVersion { get; }
 
-        void RegisterCore(IEtpSession session);
+        bool IsProtocolExceptionMultiPart { get; }
 
-        void RequestSession(IEtpSession session);
+        bool AreSupportedDataObjectsNegotiated { get; }
 
-        IMessageHeader CreateMessageHeader();
+        IMessageHeader DecodeMessageHeader(Decoder decoder);
 
-        IMessageHeader DecodeMessageHeader(Decoder decoder, string body);
+        IMessageHeader DeserializeMessageHeader(string json);
 
-        IMessageHeader DeserializeMessageHeader(string body);
+        IMessageHeaderExtension DecodeMessageHeaderExtension(Decoder decoder);
+
+        IMessageHeaderExtension DeserializeMessageHeaderExtension(string json);
 
         void RegisterMessageDecoder<T>(object protocol, object messageType) where T : ISpecificRecord;
 
@@ -44,18 +45,16 @@ namespace Energistics.Etp.Common
 
         bool IsMessageDecoderRegistered<T>() where T : ISpecificRecord;
 
-        ISpecificRecord DecodeMessage(int protocol, int messageType, Decoder decoder, string body);
+        EtpMessage DecodeMessage(IMessageHeader header, IMessageHeaderExtension extension, Decoder decoder);
 
-        T DecodeMessage<T>(Decoder decoder, string body) where T : ISpecificRecord;
+        EtpMessage DeserializeMessage(IMessageHeader header, IMessageHeaderExtension extension, string body);
 
-        IAcknowledge CreateAcknowledge();
+        IProtocolHandler CreateDefaultCoreHandler(bool clientHandler);
 
-        IAcknowledge DecodeAcknowledge(ISpecificRecord body);
+        bool IsValidMessageType(int protocol, int messageType);
 
-        IProtocolException DecodeProtocolException(ISpecificRecord body);
+        int TryGetProtocolNumber(Type messageBodyType);
 
-        IErrorInfo CreateErrorInfo();
-
-        IProtocolException CreateProtocolException(IErrorInfo errorInfo);
+        int TryGetMessageTypeNumber(Type messageBodyType);
     }
 }

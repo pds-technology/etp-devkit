@@ -35,140 +35,31 @@ namespace Energistics.Etp.v11.Protocol.Core
         /// <summary>
         /// Initializes a new instance of the <see cref="CoreServerHandler"/> class.
         /// </summary>
-        public CoreServerHandler() : base((int)Protocols.Core, "server", "client")
+        public CoreServerHandler() : base((int)Protocols.Core, Roles.Server, Roles.Client)
         {
-            RegisterMessageHandler<RequestSession>(Protocols.Core, MessageTypes.Core.RequestSession, HandleRequestSession);
-            RegisterMessageHandler<CloseSession>(Protocols.Core, MessageTypes.Core.CloseSession, HandleCloseSession);
             RegisterMessageHandler<RenewSecurityToken>(Protocols.Core, MessageTypes.Core.RenewSecurityToken, HandleRenewSecurityToken);
         }
 
         /// <summary>
-        /// Sends an OpenSession message to a client.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long OpenSession(IMessageHeader request)
-        {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.OpenSession, request.MessageId);
-
-            var openSession = new OpenSession()
-            {
-                ApplicationName = Session.ServerApplicationName,
-                ApplicationVersion = Session.ServerApplicationVersion,
-                SupportedProtocols = Session.SessionSupportedProtocols.Select(sp => sp.AsSupportedProtocol<SupportedProtocol, Datatypes.Version, DataValue>()).ToList(),
-                SupportedObjects = Session.SessionSupportedDataObjects.Select(o => (string)o.ContentType).ToList(),
-                SessionId = Session.SessionId
-            };
-
-            Logger.Verbose($"[{Session.SessionKey}] Sending open session");
-
-            var messageId = Session.SendMessage(header, openSession);
-
-            Logger.Verbose($"[{Session.SessionKey}] Received {header.MessageId} and Sent {messageId}");
-
-            Session.OnSessionOpened(messageId >= 0);
-
-            return messageId;
-        }
-
-        /// <summary>
-        /// Sends a CloseSession message to a client.
-        /// </summary>
-        /// <param name="reason">The reason.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long CloseSession(string reason = null)
-        {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.CloseSession);
-
-            var closeSession = new CloseSession()
-            {
-                Reason = reason ?? "Session closed"
-            };
-
-            var messageId = Session.SendMessage(header, closeSession);
-
-            Session.OnSessionClosed(messageId >= 0);
-
-            return messageId;
-        }
-
-        /// <summary>
-        /// Handles the RequestSession event from a client.
-        /// </summary>
-        public event ProtocolEventHandler<RequestSession> OnRequestSession;
-
-        /// <summary>
-        /// Handles the CloseSession event from a client.
-        /// </summary>
-        public event ProtocolEventHandler<CloseSession> OnCloseSession;
-
-        /// <summary>
         /// Handles the RenewSecurityToken event from a client.
         /// </summary>
-        public event ProtocolEventHandler<RenewSecurityToken> OnRenewSecurityToken;
-
-        /// <summary>
-        /// Handles the RequestSession message from a client.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="requestSession">The RequestSession message.</param>
-        protected virtual void HandleRequestSession(IMessageHeader header, RequestSession requestSession)
-        {
-            var success = Session.InitializeSession(
-                Session.SessionId,
-                requestSession.ApplicationName,
-                requestSession.ApplicationVersion,
-                null,
-                requestSession.RequestedProtocols.Cast<ISupportedProtocol>().ToList(),
-                requestSession.SupportedObjects.Select(o => (IDataObjectType)new EtpContentType(o)).ToList(),
-                new List<string>(),
-                new List<string> { "xml" },
-                new EtpEndpointCapabilities()
-            );
-
-            var args = Notify(OnRequestSession, header, requestSession);
-            if (args.Cancel)
-                return;
-
-            if (success)
-            {
-                if (Session.SessionSupportedProtocols.Count == 0)
-                {
-                    this.NoSupportedProtocols(header);
-                    Session.OnSessionOpened(false);
-                }
-                else
-                {
-                    OpenSession(header);
-                }
-            }
-            else
-            {
-                this.InvalidState("Error initializing session", header.MessageId);
-                Session.OnSessionOpened(false);
-            }
-        }
-
-        /// <summary>
-        /// Handles the CloseSession message from a client.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="closeSession">The CloseSession message.</param>
-        protected virtual void HandleCloseSession(IMessageHeader header, CloseSession closeSession)
-        {
-            Notify(OnCloseSession, header, closeSession);
-            Session.OnSessionClosed(true);
-            Session.CloseWebSocket(closeSession.Reason);
-        }
+        public event EventHandler<VoidRequestEventArgs<RenewSecurityToken>> OnRenewSecurityToken;
 
         /// <summary>
         /// Handles the RenewSecurityToken message from a client.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="renewSecurityToken">The RenewSecurityToken message.</param>
-        protected virtual void HandleRenewSecurityToken(IMessageHeader header, RenewSecurityToken renewSecurityToken)
+        /// <param name="message">The RenewSecurityToken message.</param>
+        protected virtual void HandleRenewSecurityToken(EtpMessage<RenewSecurityToken> message)
         {
-            Notify(OnRenewSecurityToken, header, renewSecurityToken);
+            HandleRequestMessage(message, OnRenewSecurityToken, HandleRenewSecurityToken);
+        }
+
+        /// <summary>
+        /// Handles the RenewSecurityToken message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="VoidRequestEventArgs{RenewSecurityToken}"/> instance containing the event data.</param>
+        protected virtual void HandleRenewSecurityToken(VoidRequestEventArgs<RenewSecurityToken> args)
+        {
         }
     }
 }

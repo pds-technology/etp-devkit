@@ -24,11 +24,7 @@ namespace Energistics.Etp.v12.Protocol
     /// <summary>
     /// Interface for ETP 1.2 protocol handlers.
     /// </summary>
-    public interface IEtp12ProtocolHandler : IProtocolHandler
+    public interface IEtp12ProtocolHandler
     {
-        /// Creates a new <see cref="ErrorInfo"/> instance.
-        /// </summary>
-        /// <returns>The <see cref="ErrorInfo"/> instance.</returns>
-        ErrorInfo ErrorInfo();
     }
 }

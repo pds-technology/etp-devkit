@@ -104,7 +104,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
             Assert.AreEqual("1.4.1.1", contentType.Version);
-            Assert.AreEqual("xml", contentType.Format);
+            Assert.AreEqual(Formats.Xml, contentType.Format);
             Assert.AreEqual(converted, contentType.ToString());
         }
     }

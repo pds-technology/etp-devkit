@@ -18,6 +18,7 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using System;
 
 namespace Energistics.Etp.v12.Protocol.ChannelStreaming
 {
@@ -25,29 +26,46 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
     /// Defines the interface that must be implemented by the consumer role of the ChannelStreaming protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.ChannelStreaming, "consumer", "producer")]
+    [ProtocolRole((int)Protocols.ChannelStreaming, Roles.Consumer, Roles.Producer)]
     public interface IChannelStreamingConsumer : IProtocolHandler
     {
         /// <summary>
         /// Sends a StartStreaming message to a producer.
         /// </summary>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long StartStreaming();
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<StartStreaming> StartStreaming(IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Sends a StopStreaming message to a producer.
+        /// Event raised when there is an exception received in response to a StartStreaming message.
         /// </summary>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long StopStreaming();
+        event EventHandler<VoidResponseEventArgs<StartStreaming>> OnStartStreamingException;
 
         /// <summary>
         /// Handles the ChannelMetadata event from a producer.
         /// </summary>
-        event ProtocolEventHandler<ChannelMetadata> OnChannelMetadata;
+        event EventHandler<FireAndForgetEventArgs<ChannelMetadata>> OnChannelMetadata;
 
         /// <summary>
         /// Handles the ChannelData event from a producer.
         /// </summary>
-        event ProtocolEventHandler<ChannelData> OnChannelData;
+        event EventHandler<FireAndForgetEventArgs<ChannelData>> OnChannelData;
+
+        /// <summary>
+        /// Handles the TruncateChannels event from a producer.
+        /// </summary>
+        event EventHandler<FireAndForgetEventArgs<TruncateChannels>> OnTruncateChannels;
+
+        /// <summary>
+        /// Sends a StopStreaming message to a producer.
+        /// </summary>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<StopStreaming> StopStreaming(IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Event raised when there is an exception received in response to a StopStreaming message.
+        /// </summary>
+        event EventHandler<VoidResponseEventArgs<StopStreaming>> OnStopStreamingException;
     }
 }

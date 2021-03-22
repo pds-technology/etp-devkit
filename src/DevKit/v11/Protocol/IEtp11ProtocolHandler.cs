@@ -16,14 +16,12 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Energistics.Etp.Common;
-
 namespace Energistics.Etp.v11.Protocol
 {
     /// <summary>
     /// Interface for ETP 1.1 protocol handlers.
     /// </summary>
-    public interface IEtp11ProtocolHandler : IProtocolHandler
+    public interface IEtp11ProtocolHandler
     {
     }
 }

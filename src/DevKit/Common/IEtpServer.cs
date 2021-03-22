@@ -21,8 +21,18 @@ namespace Energistics.Etp.Common
     /// <summary>
     /// Defines the properties and methods needed to manage an ETP server.
     /// </summary>
-    /// <seealso cref="IEtpSession" />
+    /// <seealso cref="IEtpServer" />
     public interface IEtpServer : IEtpSession
     {
+        /// <summary>
+        /// Whether or not the server is started.
+        /// </summary>
+        bool IsStarted { get; }
+
+        /// <summary>
+        /// Starts processing incoming messages.
+        /// </summary>
+        /// <returns><c>true</c> if the server is successfully started; <c>false</c> otherwise.</returns>
+        bool Start();
     }
 }

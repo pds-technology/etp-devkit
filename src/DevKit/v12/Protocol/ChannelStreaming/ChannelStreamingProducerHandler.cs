@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -34,92 +35,100 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelStreamingProducerHandler"/> class.
         /// </summary>
-        public ChannelStreamingProducerHandler() : base((int)Protocols.ChannelStreaming, "producer", "consumer")
+        public ChannelStreamingProducerHandler() : base((int)Protocols.ChannelStreaming, Roles.Producer, Roles.Consumer)
         {
-            MaxDataItemCount = EtpSettings.DefaultMaxDataItemCount;
-
             RegisterMessageHandler<StartStreaming>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.StartStreaming, HandleStartStreaming);
             RegisterMessageHandler<StopStreaming>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.StopStreaming, HandleStopStreaming);
         }
 
         /// <summary>
-        /// Gets the maximum data items.
-        /// </summary>
-        public long MaxDataItemCount { get; set; }
-
-        /// <summary>
-        /// Gets the capabilities supported by the protocol handler.
-        /// </summary>
-        /// <param name="capabilities">The protocol's capabilities.</param>
-        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
-        {
-            base.GetCapabilities(capabilities);
-
-            capabilities.MaxDataItemCount = MaxDataItemCount;
-        }
-
-        /// <summary>
         /// Handles the StartStreaming event from a consumer.
         /// </summary>
-        public event ProtocolEventHandler<StartStreaming> OnStartStreaming;
-
-        /// <summary>
-        /// Handles the StopStreaming event from a consumer.
-        /// </summary>
-        public event ProtocolEventHandler<StopStreaming> OnStopStreaming;
+        public event EventHandler<VoidRequestEventArgs<StartStreaming>> OnStartStreaming;
 
         /// <summary>
         /// Sends a ChannelMetadata message to a consumer.
         /// </summary>
-        /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long ChannelMetadata(IList<ChannelMetadataRecord> channelMetadataRecords)
+        /// <param name="channels">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ChannelMetadata> ChannelMetadata(IList<ChannelMetadataRecord> channels, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelMetadata);
-
-            var channelMetadata = new ChannelMetadata
+            var body = new ChannelMetadata()
             {
-                Channels = channelMetadataRecords
+                Channels = channels ?? new List<ChannelMetadataRecord>(),
             };
 
-            return Session.SendMessage(header, channelMetadata);
+            return SendNotification(body, extension: extension);
         }
 
         /// <summary>
         /// Sends a ChannelData message to a consumer.
         /// </summary>
-        /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long ChannelData(IList<DataItem> dataItems)
+        /// <param name="data">The list of <see cref="DataItem" /> objects.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ChannelData> ChannelData(IList<DataItem> data, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelData);
-
-            var channelData = new ChannelData
+            var body = new ChannelData()
             {
-                Data = dataItems
+                Data = data ?? new List<DataItem>(),
             };
 
-            return Session.SendMessage(header, channelData);
+            return SendData(body, extension: extension);
         }
+
+        /// <summary>
+        /// Sends a TruncateChannels message to a consumer.
+        /// </summary>
+        /// <param name="channels">The list of <see cref="TruncateInfo" /> objects.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<TruncateChannels> TruncateChannels(IList<TruncateInfo> channels, IMessageHeaderExtension extension = null)
+        {
+            var body = new TruncateChannels()
+            {
+                Channels = channels ?? new List<TruncateInfo>(),
+            };
+
+            return SendNotification(body, extension: extension);
+        }
+
+        /// <summary>
+        /// Handles the StopStreaming event from a consumer.
+        /// </summary>
+        public event EventHandler<VoidRequestEventArgs<StopStreaming>> OnStopStreaming;
 
         /// <summary>
         /// Handles the StartStreaming message from a consumer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="startStreaming">The StartStreaming message.</param>
-        protected virtual void HandleStartStreaming(IMessageHeader header, StartStreaming startStreaming)
+        /// <param name="message">The StartStreaming message.</param>
+        protected virtual void HandleStartStreaming(EtpMessage<StartStreaming> message)
         {
-            Notify(OnStartStreaming, header, startStreaming);
+            HandleRequestMessage(message, OnStartStreaming, HandleStartStreaming);
+        }
+
+        /// <summary>
+        /// Handles the StartStreaming message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="VoidRequestEventArgs{StartStreaming}"/> instance containing the event data.</param>
+        protected virtual void HandleStartStreaming(VoidRequestEventArgs<StartStreaming> args)
+        {
         }
 
         /// <summary>
         /// Handles the StopStreaming message from a consumer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="stopStreaming">The StopStreaming message.</param>
-        protected virtual void HandleStopStreaming(IMessageHeader header, StopStreaming stopStreaming)
+        /// <param name="message">The StopStreaming message.</param>
+        protected virtual void HandleStopStreaming(EtpMessage<StopStreaming> message)
         {
-            Notify(OnStopStreaming, header, stopStreaming);
+            HandleRequestMessage(message, OnStopStreaming, HandleStopStreaming);
+        }
+
+        /// <summary>
+        /// Handles the StopStreaming message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="VoidRequestEventArgs{StopStreaming}"/> instance containing the event data.</param>
+        protected virtual void HandleStopStreaming(VoidRequestEventArgs<StopStreaming> args)
+        {
         }
     }
 }

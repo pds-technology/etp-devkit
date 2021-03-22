@@ -2,29 +2,8 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Energistics.Etp.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="EtpSubProtocolName" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">energistics-tp</Value>
-    </Setting>
-    <Setting Name="EtpEncodingHeader" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">etp-encoding</Value>
-    </Setting>
-    <Setting Name="EtpEncodingBinary" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">binary</Value>
-    </Setting>
-    <Setting Name="EtpEncodingJson" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">JSON</Value>
-    </Setting>
-    <Setting Name="GetVersionHeader" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">GetVersion</Value>
-    </Setting>
-    <Setting Name="GetVersionsHeader" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">GetVersions</Value>
-    </Setting>
-    <Setting Name="DefaultMaxDataItemCount" Type="System.Int64" Scope="Application">
-      <Value Profile="(Default)">50000</Value>
-    </Setting>
     <Setting Name="DefaultMaxResponseCount" Type="System.Int64" Scope="Application">
-      <Value Profile="(Default)">10000</Value>
+      <Value Profile="(Default)">100000</Value>
     </Setting>
     <Setting Name="DefaultWebSocketType" Type="Energistics.Etp.Common.Datatypes.WebSocketType" Scope="Application">
       <Value Profile="(Default)">Native</Value>
@@ -35,44 +14,95 @@
     <Setting Name="DefaultMaxPartSize" Type="System.Int64" Scope="Application">
       <Value Profile="(Default)">1048576</Value>
     </Setting>
-    <Setting Name="SupportsAlternateRequestUris" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">True</Value>
-    </Setting>
-    <Setting Name="DefaultMaxMultipartMessageTimeInterval" Type="System.Int64" Scope="Application">
-      <Value Profile="(Default)">10</Value>
+    <Setting Name="DefaultSupportsAlternateRequestUris" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="DefaultMaxWebSocketFramePayloadSize" Type="System.Int64" Scope="Application">
       <Value Profile="(Default)">4194304</Value>
     </Setting>
     <Setting Name="DefaultMaxWebSocketMessagePayloadSize" Type="System.Int64" Scope="Application">
-      <Value Profile="(Default)">16777216</Value>
+      <Value Profile="(Default)">105906176</Value>
     </Setting>
     <Setting Name="DefaultMaxIndexCount" Type="System.Int64" Scope="Application">
       <Value Profile="(Default)">100</Value>
     </Setting>
-    <Setting Name="DefaultChangeDetectionPeriod" Type="System.Int64" Scope="Application">
-      <Value Profile="(Default)">600</Value>
-    </Setting>
-    <Setting Name="DefaultChangeNotificationRetentionPeriod" Type="System.Int64" Scope="Application">
-      <Value Profile="(Default)">3600</Value>
-    </Setting>
-    <Setting Name="DefaultDeleteNotificationRetentionPeriod" Type="System.Int64" Scope="Application">
-      <Value Profile="(Default)">86400</Value>
-    </Setting>
-    <Setting Name="DefaultTransactionTimeout" Type="System.Int64" Scope="Application">
-      <Value Profile="(Default)">600</Value>
-    </Setting>
-    <Setting Name="DefaultStreamingTimeoutPeriod" Type="System.Int64" Scope="Application">
-      <Value Profile="(Default)">3600</Value>
-    </Setting>
-    <Setting Name="DefaultGrowingTimeoutPeriod" Type="System.Int64" Scope="Application">
-      <Value Profile="(Default)">3600</Value>
+    <Setting Name="DefaultChangePropagationPeriod" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">5</Value>
     </Setting>
     <Setting Name="DefaultMaxDataArraySize" Type="System.Int64" Scope="Application">
-      <Value Profile="(Default)">1048576</Value>
+      <Value Profile="(Default)">10485760</Value>
     </Setting>
     <Setting Name="DefaultFrameChangeDetectionPeriod" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">60</Value>
+    </Setting>
+    <Setting Name="DefaultEncoding" Type="Energistics.Etp.Common.EtpEncoding" Scope="Application">
+      <Value Profile="(Default)">Binary</Value>
+    </Setting>
+    <Setting Name="DefaultResponseTimeoutPeriod" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">300</Value>
+    </Setting>
+    <Setting Name="DefaultSupportsMessageHeaderExtension" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="DefaultActiveTimeoutPeriod" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">3600</Value>
+    </Setting>
+    <Setting Name="DefaultChangeRetentionPeriod" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">86400</Value>
+    </Setting>
+    <Setting Name="DefaultMaxConcurrentMultipart" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">1000</Value>
+    </Setting>
+    <Setting Name="DefaultMaxContainedDataObjectCount" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">10000</Value>
+    </Setting>
+    <Setting Name="DefaultMaxFrameResponseRowCount" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">1000000</Value>
+    </Setting>
+    <Setting Name="DefaultMaxRangeChannelCount" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">10000</Value>
+    </Setting>
+    <Setting Name="DefaultMaxRangeDataItemCount" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">1000000000</Value>
+    </Setting>
+    <Setting Name="DefaultMaxSessionGlobalCount" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">10000</Value>
+    </Setting>
+    <Setting Name="DefaultMaxSessionClientCount" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">10000</Value>
+    </Setting>
+    <Setting Name="DefaultMaxStreamingChannelsSessionCount" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">1000000</Value>
+    </Setting>
+    <Setting Name="DefaultMaxSubscriptionSessionCount" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">10000</Value>
+    </Setting>
+    <Setting Name="DefaultMaxTransactionCount" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="DefaultMultipartMessageTimeoutPeriod" Type="System.Int64" Scope="Application">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="DefaultOrphanedChildrenPrunedOnDelete" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="DefaultSupportsGet" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="DefaultSupportsPut" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="DefaultSupportsDelete" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="DefaultTransactionTimeoutPeriod" Type="System.Int64" Scope="Application">
       <Value Profile="(Default)">600</Value>
+    </Setting>
+    <Setting Name="DefaultAuthorizationDetails" Type="System.Collections.Specialized.StringCollection" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="DefaultSimpleStreamer" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
 </SettingsFile>

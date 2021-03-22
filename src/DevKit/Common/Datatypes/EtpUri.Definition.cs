@@ -20,7 +20,7 @@ using System.Text.RegularExpressions;
 
 namespace Energistics.Etp.Common.Datatypes
 {
-    public partial struct EtpUri
+    public sealed partial class EtpUri
     {
         public static class Definition
         {

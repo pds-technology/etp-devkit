@@ -16,10 +16,11 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes.Object;
+using System;
+using System.Collections.Generic;
 
 namespace Energistics.Etp.v11.Protocol.Discovery
 {
@@ -27,20 +28,32 @@ namespace Energistics.Etp.v11.Protocol.Discovery
     /// Describes the interface that must be implemented by the store role of the Discovery protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Discovery, "store", "customer")]
-    public interface IDiscoveryStore : IProtocolHandler
+    [ProtocolRole((int)Protocols.Discovery, Roles.Store, Roles.Customer)]
+    public interface IDiscoveryStore : IProtocolHandlerWithCapabilities<ICapabilitiesStore>
     {
+        /// <summary>
+        /// Handles the GetResources event from a customer.
+        /// </summary>
+        event EventHandler<ListRequestEventArgs<GetResources, Resource>> OnGetResources;
+
         /// <summary>
         /// Sends a GetResourcesResponse message to a customer.
         /// </summary>
         /// <param name="request">The request.</param>
-        /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long GetResourcesResponse(IMessageHeader request, IList<Resource> resources);
+        /// <param name="resource">The <see cref="Resource"/> object.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetResourcesResponse> GetResourcesResponse(IMessageHeader request, Resource resource, bool isFinalPart = true);
 
         /// <summary>
-        /// Handles the GetResources event from a customer.
+        /// Sends a complete multi-part set of GetResourcesResponse messages to a customer for the list of <see cref="Resource"/> objects.
+        /// If there are no resources in the list, an Acknowledge message is sent with the NoData flag sent.
+        /// If there are resources in the list and acknowledge is requested, an Acknowledge message is sent.
         /// </summary>
-        event ProtocolEventHandler<GetResources, IList<Resource>> OnGetResources;
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="resources">The list of <see cref="Resource" /> objects.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last GetResourcesResponse message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.  If there are no resources in the list, a placeholder message with a header matching the sent Acknowledge is returned.</returns>
+        EtpMessage<GetResourcesResponse> GetResourcesResponses(IMessageHeader correlatedHeader, IList<Resource> resources, bool setFinalPart = true);
     }
 }

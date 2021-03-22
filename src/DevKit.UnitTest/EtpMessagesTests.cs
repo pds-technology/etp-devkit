@@ -48,10 +48,63 @@ namespace Energistics.Etp
                 var messageTypeNumber = Convert.ToInt32(Enum.Parse(messageTypeMap[protocolName], messageType.Name));
 
                 var schema = (Schema)messageType.GetField("_SCHEMA").GetValue(null);
-                Assert.AreEqual(int.Parse(schema.GetProperty("protocol")), protocolNumber);
-                Assert.AreEqual(int.Parse(schema.GetProperty("messageType")), messageTypeNumber);
-            }
+                Assert.AreEqual(schema.GetProperty("protocol"), $"\"{protocolNumber}\"");
+                Assert.AreEqual(schema.GetProperty("messageType"), $"\"{messageTypeNumber}\"");
 
+                var names = schema.GetProperty("fullName").Replace("\"", string.Empty).Split('.');
+
+                // Check type protocol and message name.
+                Assert.AreEqual(names[names.Length - 2], protocolName);
+                Assert.AreEqual(names[names.Length - 1], messageType.Name);
+
+                // Check dictionary lookup of names and values.
+                Assert.AreEqual(names[names.Length - 2], v11.ProtocolNames.GetProtocolName(protocolNumber));
+                Assert.AreEqual(names[names.Length - 1], v11.MessageNames.GetMessageName(protocolNumber, messageTypeNumber));
+
+                // Check dictionary lookup of names and values.
+                Assert.AreEqual(protocolNumber, v11.MessageReflection.TryGetProtocolNumber(messageType));
+                Assert.AreEqual(messageTypeNumber, v11.MessageReflection.TryGetMessageTypeNumber(messageType));
+            }
+        }
+
+        [TestMethod]
+        public void EtpMessages_v12_MessageTypes_And_Protocols_Match_Avro_Schemas()
+        {
+            var assembly = typeof(v12.Protocols).Assembly;
+
+            // Get the message types defined in the appropriate namespace.
+            var messageTypes = assembly.GetExportedTypes().Where(type =>
+                typeof(ISpecificRecord).IsAssignableFrom(type) && type.Namespace.StartsWith(typeof(v12.Protocol.IEtp12ProtocolHandler).Namespace)).ToList();
+
+            var protocols = typeof(v12.Protocols);
+            var messageTypesType = typeof(v12.MessageTypes);
+            var messageTypeMap = messageTypesType.GetNestedTypes().ToDictionary(t => t.Name);
+
+            foreach (var messageType in messageTypes)
+            {
+                var protocolName = messageType.Namespace.Split('.').Last();
+
+                var protocolNumber = Convert.ToInt32(Enum.Parse(protocols, protocolName));
+                var messageTypeNumber = Convert.ToInt32(Enum.Parse(messageTypeMap[protocolName], messageType.Name));
+
+                var schema = (Schema)messageType.GetField("_SCHEMA").GetValue(null);
+                Assert.AreEqual(schema.GetProperty("protocol"), $"\"{protocolNumber}\"");
+                Assert.AreEqual(schema.GetProperty("messageType"), $"\"{messageTypeNumber}\"");
+
+                var names = schema.GetProperty("fullName").Replace("\"", string.Empty).Split('.');
+
+                // Check type protocol and message name.
+                Assert.AreEqual(names[names.Length - 2], protocolName);
+                Assert.AreEqual(names[names.Length - 1], messageType.Name);
+
+                // Check dictionary lookup of names and values.
+                Assert.AreEqual(names[names.Length - 2], v12.ProtocolNames.GetProtocolName(protocolNumber));
+                Assert.AreEqual(names[names.Length - 1], v12.MessageNames.GetMessageName(protocolNumber, messageTypeNumber));
+
+                // Check dictionary lookup of names and values.
+                Assert.AreEqual(protocolNumber, v12.MessageReflection.TryGetProtocolNumber(messageType));
+                Assert.AreEqual(messageTypeNumber, v12.MessageReflection.TryGetMessageTypeNumber(messageType));
+            }
         }
     }
 }

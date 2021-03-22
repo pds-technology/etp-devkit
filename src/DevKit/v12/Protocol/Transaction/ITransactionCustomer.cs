@@ -19,6 +19,7 @@
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using System;
+using System.Collections.Generic;
 
 namespace Energistics.Etp.v12.Protocol.Transaction
 {
@@ -26,39 +27,48 @@ namespace Energistics.Etp.v12.Protocol.Transaction
     /// Describes the interface that must be implemented by the customer role of the Transaction protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Transaction, "customer", "store")]
-    public interface ITransactionCustomer : IProtocolHandler
+    [ProtocolRole((int)Protocols.Transaction, Roles.Customer, Roles.Store)]
+    public interface ITransactionCustomer : IProtocolHandlerWithCounterpartCapabilities<ICapabilitiesStore>
     {
         /// <summary>
         /// Sends a StartTransaction message to a store.
         /// </summary>
         /// <param name="readOnly">Whether or not this transaction is read-only.</param>
         /// <param name="message">The message accompanying the transaction.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long StartTransaction(bool readOnly, string message);
+        /// <param name="dataspaceUris">The URIs of the dataspaces to include in the transaction.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<StartTransaction> StartTransaction(bool readOnly, string message = "", IList<string> dataspaceUris = null, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the StartTransactionResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<StartTransactionResponse> OnStartTransactionResponse;
+        event EventHandler<ResponseEventArgs<StartTransaction, StartTransactionResponse>> OnStartTransactionResponse;
 
         /// <summary>
         /// Sends a CommitTransaction message to a store.
         /// </summary>
         /// <param name="transactionUuid">The transaction UUID.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long CommitTransaction(Guid transactionUuid);
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<CommitTransaction> CommitTransaction(Guid transactionUuid, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the CommitTransactionResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<CommitTransactionResponse> OnCommitTransactionResponse;
+        event EventHandler<ResponseEventArgs<CommitTransaction, CommitTransactionResponse>> OnCommitTransactionResponse;
 
         /// <summary>
         /// Sends a RollbackTransaction message to a store.
         /// </summary>
         /// <param name="transactionUuid">The transaction UUID.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long RollbackTransaction(Guid transactionUuid);
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<RollbackTransaction> RollbackTransaction(Guid transactionUuid, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Handles the RollbackTransactionResponse event from a store.
+        /// </summary>
+        event EventHandler<ResponseEventArgs<RollbackTransaction, RollbackTransactionResponse>> OnRollbackTransactionResponse;
     }
 }

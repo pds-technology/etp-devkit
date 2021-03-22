@@ -29,7 +29,7 @@ namespace Energistics.Etp.Common.Datatypes
     /// <summary>
     /// Represents a URI supported by the Energistics Transfer Protocol (ETP).
     /// </summary>
-    public partial struct EtpUri
+    public partial class EtpUri : IEquatable<EtpUri>
     {
         private static readonly HashSet<string> EmlCommonObjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -46,7 +46,7 @@ namespace Energistics.Etp.Common.Datatypes
             "VerticalCrs"
         };
 
-        private readonly EtpUri?[] _parent;
+        private EtpUri _parent;
         private readonly string[] _objectSegments;
 
         /// <summary>
@@ -64,10 +64,9 @@ namespace Energistics.Etp.Common.Datatypes
         /// </summary>
         /// <param name="uri">The URI string.</param>
         public EtpUri(string uri)
-            : this()
         {
             var uriMatch = Definition.EtpUriRegex.Match(uri);
-            _parent = new EtpUri?[] { null };
+            _parent = null;
 
             Uri = uri;
             
@@ -112,13 +111,14 @@ namespace Energistics.Etp.Common.Datatypes
 
             DataObjectType = new EtpDataObjectType(Family, Version, ObjectType);
 
-            Format = GetQueryStringFormat(Query, EtpContentType.Xml);
+            Format = GetQueryStringFormat(Query, Formats.Xml);
 
             ContentType = new EtpContentType(Family, Version, ObjectType, Format);
 
             IsRootUri = WasGroupMatched(uriMatch, Definition.RootUriGroup);
-            IsDataspaceUri = IsRootUri /* Default Dataspace */ || WasGroupMatched(uriMatch, Definition.DataspaceUriGroup);
             IsFamilyVersionUri = WasGroupMatched(uriMatch, Definition.FamilyVersionUriGroup);
+            IsDataspaceUri = IsRootUri /* Default Dataspace */ || WasGroupMatched(uriMatch, Definition.DataspaceUriGroup);
+            IsDataRootUri = (IsEtp11 && IsFamilyVersionUri) || (IsEtp12 && IsDataspaceUri);
 
             IsBaseUri = IsRootUri || IsDataspaceUri || IsFamilyVersionUri;
 
@@ -149,6 +149,56 @@ namespace Energistics.Etp.Common.Datatypes
                 UriBase = UriWithoutSuffix;
             else
                 UriBase = GetFirstMatch(uriMatch, Definition.BaseGroup) + "/";
+        }
+
+        /// <summary>
+        /// Creates a URI for the specified data object type, object ID and object version.
+        /// </summary>
+        /// <param name="version">The ETP version.</param>
+        /// <param name="dataObjectType">The data object type.</param>
+        /// <param name="dataspace">The dataspace.</param>
+        /// <param name="objectId">The object ID.</param>
+        /// <param name="objectVersion">The object version.</param>
+        public EtpUri(EtpVersion version, IDataObjectType dataObjectType, string dataspace = null, string objectId = null, string objectVersion = null)
+            : this(new EtpUri(CreateBaseUri(version, dataObjectType?.Family, dataObjectType?.Version, dataspace)).Append(dataObjectType?.Family, dataObjectType?.Version, dataObjectType?.ObjectType, objectId: objectId, objectVersion: objectVersion))
+        {
+        }
+
+        /// <summary>
+        /// Creates a URI for the specified data object type, object ID and object version.
+        /// </summary>
+        /// <param name="version">The ETP version.</param>
+        /// <param name="dataspace">The dataspace.</param>
+        /// <param name="dataObjectType">The data object type.</param>
+        /// <param name="objectId">The object ID.</param>
+        /// <param name="objectVersion">The object version.</param>
+        public EtpUri(EtpVersion version, string dataspace, IDataObjectType dataObjectType, string objectId = null, string objectVersion = null)
+            : this(new EtpUri(CreateBaseUri(version, dataObjectType?.Family, dataObjectType?.Version, dataspace)).Append(dataObjectType?.Family, dataObjectType?.Version, dataObjectType?.ObjectType, objectId: objectId, objectVersion: objectVersion))
+        {
+        }
+
+        /// <summary>
+        /// Creates a Base URI for the specified ETP version with the specified dataspace.
+        /// </summary>
+        /// <param name="etpVersion">The ETP version.</param>
+        /// <param name="dataspace">The dataspace.</param>
+        /// <returns>The ETP URI Base.</returns>
+        public EtpUri(EtpVersion etpVersion, string dataspace)
+            : this(CreateBaseUri(etpVersion, family: null, version: null, dataspace))
+        {
+        }
+
+        /// <summary>
+        /// Creates a Base URI for the specified ETP version with the specified family, version and dataspace.
+        /// </summary>
+        /// <param name="etpVersion">The ETP version.</param>
+        /// <param name="family">The family.</param>
+        /// <param name="version">The version.</param>
+        /// <param name="dataspace">The dataspace.</param>
+        /// <returns>The ETP URI Base.</returns>
+        public EtpUri(EtpVersion etpVersion, string family, string version, string dataspace = null)
+            : this (CreateBaseUri(etpVersion, family, version, dataspace))
+        {
         }
 
         /// <summary>
@@ -297,7 +347,7 @@ namespace Energistics.Etp.Common.Datatypes
         /// For ETP 1.1: the root URI or eml://some/data/space
         /// For ETP 1.2: the root URI or eml:///dataspace('uid')
         /// </summary>
-        /// <value><c>true</c> if this instance is the root URI; otherwise, <c>false</c>.</value>
+        /// <value><c>true</c> if this instance is a datapsace URI; otherwise, <c>false</c>.</value>
         public bool IsDataspaceUri { get; }
 
         /// <summary>
@@ -306,6 +356,14 @@ namespace Energistics.Etp.Common.Datatypes
         /// </summary>
         /// <value><c>true</c> if this instance is a family version URI; otherwise, <c>false</c>.</value>
         public bool IsFamilyVersionUri { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is a URI at the root of where data objects may be discovered.
+        /// For ETP 1.1: a family version URI
+        /// For ETP 1.2: the root URI or a dataspace URI
+        /// </summary>
+        /// <value><c>true</c> if this instance is a datapsace URI; otherwise, <c>false</c>.</value>
+        public bool IsDataRootUri { get; }
 
         /// <summary>
         /// Gets a value indicating whether this instance uniquely identifies an object.
@@ -419,10 +477,10 @@ namespace Energistics.Etp.Common.Datatypes
         {
             get
             {
-                if (_parent[0] == null)
-                    _parent[0] = CreateParent();
+                if (_parent == null)
+                    _parent = CreateParent();
 
-                return _parent[0].Value;
+                return _parent;
             }
         }
 
@@ -430,7 +488,7 @@ namespace Energistics.Etp.Common.Datatypes
         /// Creates the parent URI.
         /// </summary>
         /// <returns>The parent URI.</returns>
-        private EtpUri? CreateParent()
+        private EtpUri CreateParent()
         {
             if (!IsValid || IsBaseUri)
                 return this;
@@ -456,15 +514,15 @@ namespace Energistics.Etp.Common.Datatypes
         /// </returns>
         public bool IsRelatedTo(EtpUri other)
         {
-            return string.Equals(Family, other.Family, StringComparison.InvariantCultureIgnoreCase)
-                && string.Equals(Version, other.Version, StringComparison.InvariantCultureIgnoreCase);
+            return string.Equals(Family, other.Family, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(Version, other.Version, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
         /// Gets a collection of <see cref="Segment"/> items.
         /// </summary>
         /// <returns>A collection of <see cref="Segment"/> items.</returns>
-        public IEnumerable<Segment> GetObjectIds()
+        public IEnumerable<Segment> GetSegments()
         {
             if (_objectSegments == null)
                 yield break;
@@ -482,8 +540,21 @@ namespace Energistics.Etp.Common.Datatypes
         /// <returns></returns>
         public IReadOnlyDictionary<string, string> GetObjectIdMap()
         {
-            return GetObjectIds()
-                .ToDictionary(x => x.ObjectType, x => x.ObjectId, StringComparer.InvariantCultureIgnoreCase);
+            return GetSegments()
+                .ToDictionary(x => x.ObjectType, x => x.ObjectId, StringComparer.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Appends the specified object type and optional object identifier to the <see cref="EtpUri" />.
+        /// </summary>
+        /// <param name="dataObjecType">The data object type.</param>
+        /// <param name="objectId">The object identifier.</param>
+        /// <param name="objectVersion">The object version.</param>
+        /// <param name="encode">if set to <c>true</c> encode the object identifier value.</param>
+        /// <returns>A new <see cref="EtpUri" /> instance.</returns>
+        public EtpUri Append(IDataObjectType dataObjecType, string objectId = null, string objectVersion = null, bool encode = false)
+        {
+            return Append(dataObjecType?.Family, dataObjecType?.Version, dataObjecType?.ObjectType, objectId: objectId, objectVersion: objectVersion, encode: encode);
         }
 
         /// <summary>
@@ -585,7 +656,7 @@ namespace Energistics.Etp.Common.Datatypes
             var sb = new StringBuilder(Base);
             var appendSlash = Base[Base.Length - 1] != '/';
 
-            foreach (var segment in GetObjectIds())
+            foreach (var segment in GetSegments())
             {
                 if (appendSlash)
                     sb.Append("/");
@@ -615,7 +686,7 @@ namespace Energistics.Etp.Common.Datatypes
             var sb = new StringBuilder(Base);
             var appendSlash = Base[Base.Length - 1] != '/';
 
-            foreach (var segment in GetObjectIds())
+            foreach (var segment in GetSegments())
             {
                 if (appendSlash)
                     sb.Append("/");
@@ -657,7 +728,7 @@ namespace Energistics.Etp.Common.Datatypes
             else if (ObjectId == null) // Query or Template URI
             {
                 EtpUri canonical;
-                var segments = GetObjectIds().ToList();
+                var segments = GetSegments().ToList();
                 if (segments.Count > 1 && segments[segments.Count - 2].ObjectId != null)
                 {
                     var s = segments[segments.Count - 2];
@@ -690,20 +761,7 @@ namespace Energistics.Etp.Common.Datatypes
             return Uri;
         }
 
-        /// <summary>
-        /// Determines whether the specified <see cref="System.Object" />, is equal to this instance.
-        /// </summary>
-        /// <param name="obj">The <see cref="System.Object" /> to compare with this instance.</param>
-        /// <returns>
-        ///   <c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
-        /// </returns>
-        public override bool Equals(object obj)
-        {
-            if (!(obj is EtpUri))
-                return false;
-
-            return Equals((EtpUri)obj);
-        }
+        #region Equality and Inequality
 
         /// <summary>
         /// Determines whether the specified <see cref="EtpUri" />, is equal to this instance.
@@ -714,8 +772,40 @@ namespace Energistics.Etp.Common.Datatypes
         /// </returns>
         public bool Equals(EtpUri other)
         {
-            return string.Equals(other, this, StringComparison.InvariantCultureIgnoreCase);
+            if (other == null) return false;
+            var uri = Uri ?? string.Empty;
+            var otherUri = other.Uri ?? string.Empty;
+            return string.Equals(uri, otherUri, StringComparison.OrdinalIgnoreCase);
         }
+
+        /// <summary>
+        /// Determines whether the specified <see cref="System.Object" />, is equal to this instance.
+        /// </summary>
+        /// <param name="obj">The <see cref="System.Object" /> to compare with this instance.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
+        /// </returns>
+        public override bool Equals(object obj) => Equals(obj as EtpUri);
+
+        /// <summary>
+        /// Determines whether two <see cref="EtpUri" />s are equivalent.
+        /// </summary>
+        /// <param name="lhs">The <see cref="EtpUri" /> on the left-hand side of the operator.</param>
+        /// <param name="rhs">The <see cref="EtpUri" /> on the right-hand side of the operator.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified <see cref="EtpUri" /> instances are equivalent; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool operator ==(EtpUri lhs, EtpUri rhs) => Equals(lhs, rhs);
+
+        /// <summary>
+        /// Determines whether two <see cref="EtpUri" />s are not equivalent.
+        /// </summary>
+        /// <param name="lhs">The <see cref="EtpUri" /> on the left-hand side of the operator.</param>
+        /// <param name="rhs">The <see cref="EtpUri" /> on the right-hand side of the operator.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified <see cref="EtpUri" /> instances are not equivalent; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool operator !=(EtpUri lhs, EtpUri rhs) => !Equals(lhs, rhs);
 
         /// <summary>
         /// Returns a hash code for this instance.
@@ -728,6 +818,8 @@ namespace Energistics.Etp.Common.Datatypes
             return Uri.ToLowerInvariant().GetHashCode();
         }
 
+        #endregion
+
         /// <summary>
         /// Performs an implicit conversion from <see cref="EtpUri"/> to <see cref="System.String"/>.
         /// </summary>
@@ -735,7 +827,7 @@ namespace Energistics.Etp.Common.Datatypes
         /// <returns>The result of the conversion.</returns>
         public static implicit operator string(EtpUri uri)
         {
-            return uri.ToString();
+            return uri?.ToString();
         }
 
         /// <summary>
@@ -878,7 +970,7 @@ namespace Energistics.Etp.Common.Datatypes
         /// Represents an <see cref="EtpUri"/> path segment containing an
         /// object type and an optional object identifier (e.g. UUID or UID).
         /// </summary>
-        public struct Segment
+        public sealed class Segment
         {
             /// <summary>
             /// Initializes a new instance of the <see cref="Segment"/> struct.
@@ -926,6 +1018,12 @@ namespace Energistics.Etp.Common.Datatypes
             /// </summary>
             /// <value>The version.</value>
             public string ObjectVersion { get; }
+
+            /// <summary>
+            /// Gets the data object type.
+            /// </summary>
+            /// <value>The data object type.</value>
+            public EtpDataObjectType DataObjectType => new EtpDataObjectType(Family, Version, ObjectType);
         }
     }
 }

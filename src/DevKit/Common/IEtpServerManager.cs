@@ -19,7 +19,9 @@
 using Energistics.Etp.Common.Datatypes;
 using log4net;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Energistics.Etp.Common
 {
@@ -27,7 +29,7 @@ namespace Energistics.Etp.Common
     /// Defines the properties and methods needed to manage ETP servers.
     /// </summary>
     /// <seealso cref="System.IDisposable" />
-    public interface IEtpServerManager : IDisposable
+    public interface IEtpServerManager : IDisposable, IEtpSessionCapabilitiesRegistrar
     {
         /// <summary>
         /// Gets the logger for the server manager.
@@ -35,56 +37,26 @@ namespace Energistics.Etp.Common
         ILog Logger { get; }
 
         /// <summary>
-        /// Gets the name of the application.
+        /// Gets the server's parameters.
         /// </summary>
-        /// <value>The name of the application.</value>
-        string ApplicationName { get; }
+        EtpWebServerDetails WebServerDetails { get; }
 
         /// <summary>
-        /// Gets the application version.
+        /// Gets the endpoint info to use when creating servers.
         /// </summary>
-        /// <value>The application version.</value>
-        string ApplicationVersion { get; }
+        EtpEndpointInfo EndpointInfo { get; }
 
         /// <summary>
-        /// Gets the endpoint capabilities supported by this server manager.
+        /// Gets the endpoint details to use when creating servers.
         /// </summary>
-        /// <returns>A dictionary of endpoint capabilities supported by this server manager.</returns>
-        EtpEndpointCapabilities EndpointCapabilities { get; set; }
+        IEndpointDetails EndpointDetails { get; }
 
         /// <summary>
-        /// The server key used to generate the server instance identifier for all ETP session servers for this instance.
+        /// Gets the server capabilities for the specified ETP version.
         /// </summary>
-        string ServerKey { get; set; }
-
-        /// <summary>
-        /// Gets or sets the list of supported Avro message encodings.
-        /// </summary>
-        /// <value>The avro encodings supported by this server manager.</value>
-        IList<string> SupportedAvroEncodings { get; set; }
-
-        /// <summary>
-        /// Gets the protocols supported by this server manager.
-        /// </summary>
-        /// <returns>A list of protocols supported by this server manager.</returns>
-        IList<ISupportedProtocol> SupportedProtocols { get; set; }
-
-        /// <summary>
-        /// Gets or sets the compression types supported by this server manager.
-        /// </summary>
-        IList<string> SupportedCompression { get; set; }
-
-        /// <summary>
-        /// Gets or sets the list of objects supported by this server manager.
-        /// </summary>
-        /// <value>The objects supported by this server manager.</value>
-        IList<IDataObjectType> SupportedDataObjects { get; set; }
-
-        /// <summary>
-        /// Gets or sets the list of formats supported by this server manager.
-        /// </summary>
-        /// <value>The formats supported by this server manager.</value>
-        IList<string> SupportedFormats { get; set; }
+        /// <param name="version">The ETP version to get the capabilities for.</param>
+        /// <returns>The server capabilities.</returns>
+        IServerCapabilities ServerCapabilities(EtpVersion version);
 
         /// <summary>
         /// Gets or sets a delegate to process logging messages.
@@ -108,53 +80,40 @@ namespace Energistics.Etp.Common
         string Log(string message, params object[] args);
 
         /// <summary>
-        /// Initializes an <see cref="IEtpServer"/> instance.
+        /// Creates an <see cref="IEtpServer"/> instance.
         /// </summary>
-        /// <param name="server">The <see cref="IEtpServer"/> instance to initialize.</param>
-        void InitializeServer(IEtpServer server);
+        /// <param name="webSocket">The websocket to create the server for.</param>
+        /// <param name="etpVersion">The ETP version for the session.</param>
+        /// <param name="encoding">The ETP encoding for the session.</param>
+        /// <param name="headers">The websocket headers.</param>
+        /// <returns>The created server.</returns>
+        IEtpServer CreateServer(IEtpServerWebSocket webSocket, EtpVersion etpVersion, EtpEncoding encoding, IDictionary<string, string> headers);
 
         /// <summary>
-        /// Notifies the manager that a <see cref="IEtpServer"/> instance has disconnected.
+        /// Occurs when an ETP server is created.
         /// </summary>
-        /// <param name="server">The <see cref="IEtpServer"/> instance that has disconnected.</param>
-        void ServerDisconnected(IEtpServer server);
+        event EventHandler<EtpServerEventArgs> ServerCreated;
 
         /// <summary>
-        /// Occurs when an ETP session is connected.
+        /// Occurs when an server's ETP session is closed.
         /// </summary>
-        event EventHandler<IEtpSession> SessionConnected;
+        event EventHandler<EtpServerEventArgs> ServerSessionClosed;
 
         /// <summary>
-        /// Occurs when an ETP session is closed.
+        /// Stops all servers.
         /// </summary>
-        event EventHandler<IEtpSession> SessionClosed;
+        /// <param name="reason">The reason.</param>
+        void StopAll(string reason);
 
         /// <summary>
-        /// Resolves the ETP adapter for the specified ETP version.
+        /// Stops all servers.
         /// </summary>
-        /// <param name="version">The ETP version.</param>
-        /// <returns>The adapter for the version.</returns>
-        IEtpAdapter ResolveEtpAdapter(EtpVersion version);
+        /// <param name="reason">The reason.</param>
+        Task StopAllAsync(string reason);
 
         /// <summary>
-        /// Registers the ETP version-specific protocol handler for the specified contract type.
+        /// The set of currently active servers by Session ID.
         /// </summary>
-        /// <typeparam name="TContract">The type of the contract.</typeparam>
-        /// <typeparam name="THandler">The type of the handler.</typeparam>
-        void Register<TContract, THandler>() where TContract : IProtocolHandler where THandler : TContract;
-
-        /// <summary>
-        /// Registers an ETP version-specific protocol handler factory for the specified contract type.
-        /// </summary>
-        /// <typeparam name="TContract">The type of the contract.</typeparam>
-        /// <param name="factory">The factory.</param>
-        void Register<TContract>(Func<TContract> factory) where TContract : IProtocolHandler;
-
-        /// <summary>
-        /// Gets the supported protocols for the specified ETP version.
-        /// </summary>
-        /// <param name="version">The ETP version.</param>
-        /// <returns>A list of supported protocols.</returns>
-        IReadOnlyList<ISupportedProtocol> GetSupportedProtocols(EtpVersion version);
+        ConcurrentDictionary<Guid, IEtpServer> Servers { get; }
     }
 }

@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -26,33 +27,62 @@ namespace Energistics.Etp.v12.Protocol.Dataspace
     /// Defines the interface that must be implemented by the customer role of the Dataspace protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Dataspace, "customer", "store")]
-    public interface IDataspaceCustomer : IProtocolHandler
+    [ProtocolRole((int)Protocols.Dataspace, Roles.Customer, Roles.Store)]
+    public interface IDataspaceCustomer : IProtocolHandler<ICapabilitiesCustomer, ICapabilitiesStore>
     {
         /// <summary>
         /// Sends a GetDataspaces message to a store.
         /// </summary>
         /// <param name="lastChangedFilter">An optional filter to limit the dataspaces returned by date last changed.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long GetDataspaces(long? lastChangedFilter);
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetDataspaces> GetDataspaces(long? lastChangedFilter = null, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the GetDataspacesResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<GetDataspacesResponse> OnGetDataspacesResponse;
+        event EventHandler<ResponseEventArgs<GetDataspaces, GetDataspacesResponse>> OnGetDataspacesResponse;
 
         /// <summary>
         /// Sends a PutDataspaces message to a store.
         /// </summary>
         /// <param name="dataspaces">The dataspaces.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long PutDataspaces(IList<Datatypes.Object.Dataspace> dataspaces);
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PutDataspaces> PutDataspaces(IDictionary<string, Datatypes.Object.Dataspace> dataspaces, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Sends a PutDataspaces message to a store.
+        /// </summary>
+        /// <param name="dataspaces">The dataspaces.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PutDataspaces> PutDataspaces(IList<Datatypes.Object.Dataspace> dataspaces, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Handles the PutDataspacesResponse event from a store.
+        /// </summary>
+        event EventHandler<ResponseEventArgs<PutDataspaces, PutDataspacesResponse>> OnPutDataspacesResponse;
 
         /// <summary>
         /// Sends a DeleteDataspaces message to a store.
         /// </summary>
         /// <param name="uris">The URIs.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long DeleteDataspaces(IList<string> uris);
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<DeleteDataspaces> DeleteDataspaces(IDictionary<string, string> uris, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Sends a DeleteDataspaces message to a store.
+        /// </summary>
+        /// <param name="uris">The URIs.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<DeleteDataspaces> DeleteDataspaces(IList<string> uris, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Handles the DeleteDataspacesResponse event from a store.
+        /// </summary>
+        event EventHandler<ResponseEventArgs<DeleteDataspaces, DeleteDataspacesResponse>> OnDeleteDataspacesResponse;
     }
 }

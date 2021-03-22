@@ -16,8 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
 using Energistics.Etp.Common.Datatypes;
 
 namespace Energistics.Etp.Common
@@ -25,157 +23,121 @@ namespace Energistics.Etp.Common
     /// <summary>
     /// Provides common functionality for ETP endpoint capabilities.
     /// </summary>
-    public class EtpEndpointCapabilities
+    public class EtpEndpointCapabilities : EtpCapabilities, IEndpointCapabilities
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="EtpEndpointCapabilities"/> class.
+        /// Initializes a new <see cref="EtpEndpointCapabilities"/> instance.
         /// </summary>
         public EtpEndpointCapabilities()
         {
-            Capabilities = new Dictionary<string, IDataValue>();
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EtpEndpointCapabilities"/> class.
+        /// Initializes a new <see cref="EtpEndpointCapabilities"/> instance.
         /// </summary>
-        /// <param name="capabilities">The endpoint capabilities.</param>
-        public EtpEndpointCapabilities(IDictionary<string, IDataValue> capabilities)
+        /// <param name="version">The ETP version the capabilities are for.</param>
+        public EtpEndpointCapabilities(EtpVersion version)
+            : base(version)
         {
-            Capabilities = capabilities;
         }
 
         /// <summary>
-        /// The endpoint capabilities
+        /// Initializes a new <see cref="EtpEndpointCapabilities"/> instance.
         /// </summary>
-        public IDictionary<string, IDataValue> Capabilities { get; }
-
-        /// <summary>
-        /// The protocol capabilities as a data value dictionary.
-        /// </summary>
-        /// <typeparam name="TDataValue">The data value type.</typeparam>
-        /// <returns>The capabilities as a data value dictionary.</returns>
-        public Dictionary<string, TDataValue> AsDataValueDictionary<TDataValue>() where TDataValue : IDataValue, new()
+        /// <param name="capabilities">The capabilities to initialize this from.</param>
+        public EtpEndpointCapabilities(IReadOnlyCapabilities capabilities)
+            : base(capabilities)
         {
-            var dictionary = new Dictionary<string, TDataValue>();
-            foreach (var kvp in Capabilities)
-            {
-                dictionary[kvp.Key] = new TDataValue { Item = kvp.Value.Item };
-            }
-
-            return dictionary;
         }
 
         /// <summary>
-        /// This is the largest data object the store or customer can get or put. A store or customer can optionally specify these for protocols that handle data objects. Property of numberofbytes.
+        /// Initializes a new <see cref="EtpEndpointCapabilities"/> instance.
         /// </summary>
-        public long? MaxDataObjectSize
+        /// <param name="version">The ETP version the capabilities are for.</param>
+        /// <param name="capabilities">The capabilities to initialize this from.</param>
+        public EtpEndpointCapabilities(EtpVersion version, IReadOnlyDataValueDictionary capabilities)
+            : base(version, capabilities)
         {
-            get { return TryGetValue<long>("MaxDataObjectSize"); }
-            set { SetValue("MaxDataObjectSize", value); }
         }
 
         /// <summary>
-        /// This is the largest part size the store or customer can get or put. A store can optionally specify this for protocols that handle object parts. Property of numberofbytes.
+        /// The maximum time period in seconds that a store keeps the GrowingSatus for a growing object "active" after the last new part resulting in a change to the object's end index was added to the object.
         /// </summary>
-        public long? MaxPartSize
-        {
-            get { return TryGetValue<long>("MaxPartSize"); }
-            set { SetValue("MaxPartSize", value); }
-        }
+        public long? ActiveTimeoutPeriod { get; set; }
 
         /// <summary>
-        /// Maximum number of messages allowed for a multipart request/response at one time.
+        /// Details on how a client can authorize itself for connecting to a server.
         /// </summary>
-        public long? MaxConcurrentMultipart
-        {
-            get { return TryGetValue<long>("MaxConcurrentMultipart"); }
-            set { SetValue("MaxConcurrentMultipart", value); }
-        }
+        public string[] AuthorizationDetails { get; set; }
 
         /// <summary>
-        /// Maximum time interval between subsequent messages in the SAME multipart request or response.
+        /// The maximum time period in seconds--under normal operation on an uncongested session--for these conditions: 
+        /// <list type="bullet">
+        /// <item>after a change in an endpoint before that endpoint sends a change notification covering the change to any subscribed endpoint in any session.</item>
+        /// <item>if the the change was the result of a message WITHOUT a positive response, it is the maximum time until the change is reflected in read operations in any session.</item>
+        /// <item>If the change was the result of a message WITH a positive response, it is the maximum time until the change is reflectedin sessions other than the session where the change was made.RECOMMENDATION: Set as short as possible (i.e.a few seconds).</item>
+        /// </list>
         /// </summary>
-        public long? MaxMultipartMessageTimeInterval
-        {
-            get { return TryGetValue<long>("MaxMultipartMessageTimeInterval"); }
-            set { SetValue("MaxMultipartMessageTimeInterval", value); }
-        }
+        public long? ChangePropagationPeriod { get; set; }
 
         /// <summary>
-        /// Maximum size of the aggregate of all the parts of the multipart request or response.
+        /// The maximum time period in seconds time that a store retains the Canonical URI of a deleted data object and any change annotations for channels and growing objects. 
         /// </summary>
-        public long? MaxMultipartTotalSize
-        {
-            get { return TryGetValue<long>("MaxMultipartTotalSize"); }
-            set { SetValue("MaxMultipartTotalSize", value); }
-        }
+        public long? ChangeRetentionPeriod { get; set; }
 
         /// <summary>
-        /// Maximum size allowed for a WebSocket frame (which is determined by the library you use to implement WebSocket). WebSocket is the transport protocol used by ETP.
+        /// The maximum count of multipart messages allowed in parallel, in a single protocol, from one endpoint to another. The limit applies separately to each protocol, and separately from client to server and from server to client. The limit for an endpoint applies to the multipart messages that endpoint can receive.
         /// </summary>
-        public long? MaxWebSocketFramePayloadSize
-        {
-            get { return TryGetValue<long>("MaxWebSocketFramePayloadSize"); }
-            set { SetValue("MaxWebSocketFramePayloadSize", value); }
-        }
+        public long? MaxConcurrentMultipart { get; set; }
 
         /// <summary>
-        /// Maximum size allowed for a WebSocket message (which is composed of multiple WebSocket frames, which is determined by the library you use to implement WebSocket). WebSocket is the transport protocol used by ETP.
+        /// The maximum size in bytes of a data object allowed in a complete multipart message. Size in bytes is the size in bytes of the uncompressed string representation of the data object in the format in which it is sent or received.
         /// </summary>
-        public long? MaxWebSocketMessagePayloadSize
-        {
-            get { return TryGetValue<long>("MaxWebSocketMessagePayloadSize"); }
-            set { SetValue("MaxWebSocketMessagePayloadSize", value); }
-        }
+        public long? MaxDataObjectSize { get; set; }
 
         /// <summary>
-        /// Indicates whether an agent supports alternate URI formats (beyond the Energistics canonical URI, which MUST be supported) for requests.
+        /// The maximum size in bytes of each data object part allowed in a standalone message or a complete multipart message. Size in bytes is the total size in bytes of the uncompressed string representation of the data object part in the format in which it is sent or received.
         /// </summary>
-        public bool? SupportsAlternateRequestUris
-        {
-            get { return TryGetValue<bool>("SupportsAlternateRequestUris"); }
-            set { SetValue("SupportsAlternateRequestUris", value); }
-        }
+        public long? MaxPartSize { get; set; }
 
         /// <summary>
-        /// Tries to get the specified value from the dictionary as the specified type.
+        /// The maximum count of concurrent ETP sessions that may be established for a given endpoint across all clients. The determination of whether this limit is exceeded should be made at the time of receiving the HTTP WebSocket upgrade or connect request.
         /// </summary>
-        /// <typeparam name="T">The type of the return value.</typeparam>
-        /// <param name="name">The name of the value to retrieve.</param>
-        /// <returns>The value if present or the default value if it is not present or there is an error retrieving it.</returns>
-        private T? TryGetValue<T>(string name)
-            where T : struct
-        {
-            IDataValue value;
-            if (!Capabilities.TryGetValue(name, out value))
-                return null;
-
-            if (value?.Item == null)
-                return null;
-
-            try
-            {
-                return (T)Convert.ChangeType(value.Item, typeof(T));
-            }
-            catch
-            {
-                return null;
-            }
-        }
+        public long? MaxSessionGlobalCount { get; set; }
 
         /// <summary>
-        /// Sets the specified value in the dictionary.
+        /// The maximum count of concurrent ETP sessions that may be established for a given endpoint, by a specific client.
         /// </summary>
-        /// <typeparam name="T">The type of the item value.</typeparam>
-        /// <param name="name">The name of the value.</param>
-        /// <param name="value">The value to set.</param>
-        private void SetValue<T>(string name, T? value)
-            where T : struct
-        {
-            if (value == null)
-                Capabilities.Remove(name);
-            else
-                Capabilities[name] = new v12.Datatypes.DataValue { Item = value.Value };
-        }
+        public long? MaxSessionClientCount { get; set; }
+
+        /// <summary>
+        /// The maximum size in bytes allowed for a single WebSocket frame. The limit to use during a session is the minimum of the client's and the server's endpoint capability, which should be determined by the limits imposed by the WebSocket library used by each endpoint.
+        /// </summary>
+        public long? MaxWebSocketFramePayloadSize { get; set; }
+
+        /// <summary>
+        /// The maximum size in bytes allowed for a complete WebSocket message, which is composed of one or more WebSocket frames. The limit to use during a session is the minimum of the client's and the server's endpoint capability, which should be determined by the limits imposed by the WebSocket library used by each endpoint.
+        /// </summary>
+        public long? MaxWebSocketMessagePayloadSize { get; set; }
+
+        /// <summary>
+        /// The maximum time period in seconds--under normal operation on an uncongested session--allowed between subsequent messages in the SAME multipart request or response. The period is measured as the time between when each message has been fully sent or received via the WebSocket.
+        /// </summary>
+        public long? MultipartMessageTimeoutPeriod { get; set; }
+
+        /// <summary>
+        /// The maximum time period in seconds allowed between a request and the standalone response message or the first message in the multipart response message. The period is measured as the time between when the request message has been successfully sent via the WebSocket and when the first or only response message has been fully received via the WebSocket. When calculating this period, any Acknowledge messages or empty placeholder responses are ignored EXCEPT where these are the only and final response(s) to the request.
+        /// </summary>
+        public long? ResponseTimeoutPeriod { get; set; }
+
+        /// <summary>
+        /// Indicates whether an endpoint supports alternate URI formats--beyond the canonical Energistics URIs, which MUST be supported--for requests.
+        /// </summary>
+        public bool? SupportsAlternateRequestUris { get; set; }
+
+        /// <summary>
+        /// Indicates whether an endpoint supports message header extensions.
+        /// </summary>
+        public bool? SupportsMessageHeaderExtension { get; set; }
     }
 }

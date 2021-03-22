@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -26,66 +27,45 @@ namespace Energistics.Etp.v12.Protocol.Core
     /// Represents the server end of the interface that must be implemented for Protocol 0.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Core, "server", "client")]
+    [ProtocolRole((int)Protocols.Core, Roles.Server, Roles.Client)]
     public interface ICoreServer : IProtocolHandler
     {
         /// <summary>
-        /// Handles the RequestSession event from a client.
-        /// </summary>
-        event ProtocolEventHandler<RequestSession> OnRequestSession;
-
-        /// <summary>
-        /// Sends an OpenSession message to a client.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long OpenSession(IMessageHeader request);
-
-        /// <summary>
         /// Sends a Ping message.
         /// </summary>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long Ping();
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<Ping> Ping(IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the Ping event from a client.
         /// </summary>
-        event ProtocolEventHandler<Ping> OnPing;
+        event EventHandler<EmptyRequestEventArgs<Ping>> OnPing;
 
         /// <summary>
         /// Sends a Pong response message.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long Pong(IMessageHeader request);
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<Pong> Pong(IMessageHeader correlatedHeader, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the Pong event from a client.
         /// </summary>
-        event ProtocolEventHandler<Pong> OnPong;
+        event EventHandler<ResponseEventArgs<Ping, Pong>> OnPong;
 
         /// <summary>
         /// Handles the RenewSecurityToken event from a client.
         /// </summary>
-        event ProtocolEventHandler<RenewSecurityToken> OnRenewSecurityToken;
+        event EventHandler<EmptyRequestEventArgs<RenewSecurityToken>> OnRenewSecurityToken;
 
         /// <summary>
         /// Sends a RenewSecurityTokenResponse response message to a client.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long RenewSecurityTokenResponse(IMessageHeader request);
-
-        /// <summary>
-        /// Sends a CloseSession message to a client.
-        /// </summary>
-        /// <param name="reason">The reason.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long CloseSession(string reason = null);
-
-        /// <summary>
-        /// Handles the CloseSession event from a client.
-        /// </summary>
-        event ProtocolEventHandler<CloseSession> OnCloseSession;
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<RenewSecurityTokenResponse> RenewSecurityTokenResponse(IMessageHeader correlatedHeader, IMessageHeaderExtension extension = null);
     }
 }

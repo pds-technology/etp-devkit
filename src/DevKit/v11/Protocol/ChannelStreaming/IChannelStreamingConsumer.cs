@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -27,76 +28,93 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
     /// Defines the interface that must be implemented by the consumer role of the ChannelStreaming protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.ChannelStreaming, "consumer", "producer")]
-    public interface IChannelStreamingConsumer : IProtocolHandler
+    [ProtocolRole((int)Protocols.ChannelStreaming, Roles.Consumer, Roles.Producer)]
+    public interface IChannelStreamingConsumer : IProtocolHandlerWithCounterpartCapabilities<ICapabilitiesProducer>
     {
-        /// <summary>
-        /// Gets or sets a value indicating whether the producer is a Simple Streamer.
-        /// </summary>
-        /// <value>
-        /// <c>true</c> if the producer is a Simple Streamer; otherwise, <c>false</c>.
-        /// </value>
-        bool ProducerIsSimpleStreamer { get; }
-
         /// <summary>
         /// Sends a Start message to a producer with the specified throttling parameters.
         /// </summary>
         /// <param name="maxDataItems">The maximum data items.</param>
         /// <param name="maxMessageRate">The maximum message rate.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long Start(int maxDataItems = 10000, int maxMessageRate = 1000);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<Start> Start(int maxDataItems = 10000, int maxMessageRate = 1000);
+
+        /// <summary>
+        /// Event raised when there is an exception received in response to a Start message.
+        /// </summary>
+        event EventHandler<VoidResponseEventArgs<Start>> OnStartException;
 
         /// <summary>
         /// Sends a ChannelDescribe message to a producer with the specified URIs.
         /// </summary>
         /// <param name="uris">The list of URIs.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long ChannelDescribe(IList<string> uris);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelDescribe> ChannelDescribe(IList<string> uris);
 
         /// <summary>
         /// Sends a ChannelStreamingStart message to a producer.
         /// </summary>
         /// <param name="channelStreamingInfos">The list of <see cref="ChannelStreamingInfo"/> objects.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long ChannelStreamingStart(IList<ChannelStreamingInfo> channelStreamingInfos);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelStreamingStart> ChannelStreamingStart(IList<ChannelStreamingInfo> channelStreamingInfos);
+
+        /// <summary>
+        /// Event raised when there is an exception received in response to a ChannelStreamingStart message.
+        /// </summary>
+        event EventHandler<VoidResponseEventArgs<ChannelStreamingStart>> OnChannelStreamingStartException;
 
         /// <summary>
         /// Sends a ChannelStreamingStop message to a producer.
         /// </summary>
         /// <param name="channelIds">The list of channel identifiers.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long ChannelStreamingStop(IList<long> channelIds);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelStreamingStop> ChannelStreamingStop(IList<long> channelIds);
+
+        /// <summary>
+        /// Event raised when there is an exception received in response to a ChannelStreamingStop message.
+        /// </summary>
+        event EventHandler<VoidResponseEventArgs<ChannelStreamingStop>> OnChannelStreamingStopException;
 
         /// <summary>
         /// Sends a ChannelRangeRequest message to a producer.
         /// </summary>
         /// <param name="channelRangeInfos">The list of <see cref="ChannelRangeInfo"/> objects.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long ChannelRangeRequest(IList<ChannelRangeInfo> channelRangeInfos);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelRangeRequest> ChannelRangeRequest(IList<ChannelRangeInfo> channelRangeInfos);
+
+        /// <summary>
+        /// Handles the ChannelMetadata event from a simple streamer producer.
+        /// </summary>
+        event EventHandler<FireAndForgetEventArgs<ChannelMetadata>> OnSimpleStreamerChannelMetadata;
 
         /// <summary>
         /// Handles the ChannelMetadata event from a producer.
         /// </summary>
-        event ProtocolEventHandler<ChannelMetadata> OnChannelMetadata;
+        event EventHandler<ResponseEventArgs<ChannelDescribe, ChannelMetadata>> OnBasicStreamerChannelMetadata;
 
         /// <summary>
-        /// Handles the ChannelData event from a producer.
+        /// Handles the ChannelData event from a producer when sent as streaming data.
         /// </summary>
-        event ProtocolEventHandler<ChannelData> OnChannelData;
+        event EventHandler<FireAndForgetEventArgs<ChannelData>> OnStreamingChannelData;
+
+        /// <summary>
+        /// Handles the ChannelData event from a producer when sent in response to a ChannelRangeRequest.
+        /// </summary>
+        event EventHandler<ResponseEventArgs<ChannelRangeRequest, ChannelData>> OnChannelRangeRequestChannelData;
 
         /// <summary>
         /// Handles the ChannelDataChange event from a producer.
         /// </summary>
-        event ProtocolEventHandler<ChannelDataChange> OnChannelDataChange;
+        event EventHandler<FireAndForgetEventArgs<ChannelDataChange>> OnChannelDataChange;
 
         /// <summary>
         /// Handles the ChannelStatusChange event from a producer.
         /// </summary>
-        event ProtocolEventHandler<ChannelStatusChange> OnChannelStatusChange;
+        event EventHandler<FireAndForgetEventArgs<ChannelStatusChange>> OnChannelStatusChange;
 
         /// <summary>
         /// Handles the ChannelRemove event from a producer.
         /// </summary>
-        event ProtocolEventHandler<ChannelRemove> OnChannelRemove;
+        event EventHandler<FireAndForgetEventArgs<ChannelRemove>> OnChannelRemove;
     }
 }

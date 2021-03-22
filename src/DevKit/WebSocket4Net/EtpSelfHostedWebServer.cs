@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -36,23 +37,24 @@ namespace Energistics.Etp.WebSocket4Net
     /// <seealso cref="Energistics.Etp.Common.EtpWebServerBase" />
     public class EtpSelfHostedWebServer : IEtpSelfHostedWebServer
     {
-        private static readonly object EtpSessionKey = typeof(IEtpSession);
-        private readonly object _sync = new object();
+        private ConcurrentDictionary<string, EtpServerWebSocket> _webSockets = new ConcurrentDictionary<string, EtpServerWebSocket>();
         private WebSocketServer _server;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpSelfHostedWebServer"/> class.
         /// </summary>
         /// <param name="port">The port.</param>
-        /// <param name="application">The server application name.</param>
-        /// <param name="version">The server application version.</param>
-        public EtpSelfHostedWebServer(int port, string application, string version)
+        /// <param name="endpointInfo">The web server's endpoint information.</param>
+        /// <param name="endpointParameters">The web server's endpoint parameters.</param>
+        /// <param name="details">The web server's details.</param>
+        public EtpSelfHostedWebServer(int port, EtpEndpointInfo endpointInfo, EtpEndpointParameters endpointParameters = null, EtpWebServerDetails details = null)
         {
             Logger = LogManager.GetLogger(GetType());
 
-            ServerManager = new EtpServerManager(application, version);
+            Details = details ?? new EtpWebServerDetails();
+            ServerManager = new EtpServerManager(Details, endpointInfo, endpointParameters);
 
-            _server = new WebSocketServer(EtpSettings.EtpSubProtocols.Select(p => new BasicSubProtocol(p)));
+            _server = new WebSocketServer(Details.SupportedVersions.Select(v => new BasicSubProtocol(EtpFactory.GetSubProtocol(v))));
 
             _server.Setup(new ServerConfig
             {
@@ -62,7 +64,6 @@ namespace Energistics.Etp.WebSocket4Net
             });
 
             _server.NewSessionConnected += OnNewSessionConnected;
-            //_server.NewMessageReceived += OnNewMessageReceived;
             _server.NewDataReceived += OnNewDataReceived;
             _server.SessionClosed += OnSessionClosed;
 
@@ -79,6 +80,11 @@ namespace Energistics.Etp.WebSocket4Net
         /// Gets the server manager for this instance.
         /// </summary>
         public IEtpServerManager ServerManager { get; }
+
+        /// <summary>
+        /// Gets the server's parameters.
+        /// </summary>
+        public EtpWebServerDetails Details { get; }
 
         /// <summary>
         /// The root URL for the server.
@@ -134,17 +140,16 @@ namespace Energistics.Etp.WebSocket4Net
         /// <summary>
         /// Asynchronously stops the web server.
         /// </summary>
-        public Task StopAsync()
+        public async Task StopAsync()
         {
             Logger.Trace($"Stopping");
             if (IsRunning)
             {
-                CloseSessions();
+                _webSockets.Clear();
+                await ServerManager.StopAllAsync("Stopping server").ConfigureAwait(false);
                 _server.Stop();
             }
             Logger.Verbose($"Stopped");
-
-            return Task.FromResult(true);
         }
 
         /// <summary>
@@ -153,18 +158,36 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="session">The session.</param>
         private void OnNewSessionConnected(WebSocketSession session)
         {
-            lock (_sync)
+            var ws = new EtpServerWebSocket { WebSocketSession = session };
+            _webSockets[session.SessionID] = ws;
+
+            var headers = new Dictionary<string, string>();
+            foreach (var item in session.Items)
+                headers[item.Key.ToString()] = item.Value.ToString();
+
+            var version = EtpWebSocketValidation.GetEtpVersion(session.SubProtocol.Name);
+            var encoding = EtpWebSocketValidation.GetEtpEncoding(headers);
+            if (!Details.IsVersionSupported(version))
             {
-                var headers = new Dictionary<string, string>();
-                foreach (var item in session.Items)
-                    headers[item.Key.ToString()] = item.Value.ToString();
-
-                var server = new EtpServer(session, ServerManager.ApplicationName, ServerManager.ApplicationVersion, ServerManager.ServerKey, headers);
-
-                session.Items[EtpSessionKey] = server;
-
-                ServerManager.InitializeServer(server);
+                Logger.Debug($"Sub protocol not supported: {session.SubProtocol.Name}");
+                session.Close(CloseReason.ApplicationError);
+                return;
             }
+            if (encoding == null)
+            {
+                Logger.Debug($"Error getting ETP encoding.");
+                session.Close(CloseReason.ApplicationError);
+                return;
+            }
+            if (!Details.IsEncodingSupported(encoding.Value))
+            {
+                Logger.Debug($"Encoding not supported: {encoding.Value}");
+                session.Close(CloseReason.ApplicationError);
+                return;
+            }
+
+            var server = ServerManager.CreateServer(ws, version, encoding.Value, headers);
+            server.Start();
         }
 
         /// <summary>
@@ -174,28 +197,11 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="value">The value.</param>
         private void OnSessionClosed(WebSocketSession session, CloseReason value)
         {
-            lock (_sync)
+            EtpServerWebSocket ws;
+            if (_webSockets.TryRemove(session.SessionID, out ws))
             {
-                var server = GetEtpServer(session);
-
-                if (server != null)
-                {
-                    session.Items.Remove(EtpSessionKey);
-                    ServerManager.ServerDisconnected(server);
-                    server.Dispose();
-                }
+                ws.Closed();
             }
-        }
-
-        /// <summary>
-        /// Called when a new message is received.
-        /// </summary>
-        /// <param name="session">The session.</param>
-        /// <param name="message">The message.</param>
-        private void OnNewMessageReceived(WebSocketSession session, string message)
-        {
-            var server = GetEtpServer(session);
-            server?.OnMessageReceived(message);
         }
 
         /// <summary>
@@ -205,53 +211,11 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="data">The data.</param>
         private void OnNewDataReceived(WebSocketSession session, byte[] data)
         {
-            var server = GetEtpServer(session);
-            server?.OnDataReceived(data);
-        }
-
-        /// <summary>
-        /// Closes all connected WebSocket sessions.
-        /// </summary>
-        private void CloseSessions()
-        {
-            CheckDisposed();
-            const string reason = "Server stopping";
-
-            lock (_sync)
+            EtpServerWebSocket ws;
+            if (_webSockets.TryGetValue(session.SessionID, out ws))
             {
-                foreach (var session in _server.GetAllSessions())
-                {
-                    var server = GetEtpServer(session);
-                    session.Items.Remove(EtpSessionKey);
-
-                    if (server == null) continue;
-
-                    server.CloseWebSocket(reason);
-                    ServerManager.ServerDisconnected(server);
-                    server.Dispose();
-                }
+                ws.DataReceived(new ArraySegment<byte>(data));
             }
-        }
-
-        /// <summary>
-        /// Gets the ETP session associated with the specified WebSocket session.
-        /// </summary>
-        /// <param name="session">The WebSocket session.</param>
-        /// <returns>The <see cref="IEtpServer"/> associated with the WebSocket session.</returns>
-        private IEtpServer GetEtpServer(WebSocketSession session)
-        {
-            IEtpServer etpSession = null;
-            object item;
-
-            lock (_sync)
-            {
-                if (session.Items.TryGetValue(EtpSessionKey, out item))
-                {
-                    etpSession = item as IEtpServer;
-                }
-            }
-
-            return etpSession;
         }
 
         #region IDisposable Support
@@ -282,7 +246,6 @@ namespace Energistics.Etp.WebSocket4Net
 
                 // Unregister event handlers
                 _server.NewSessionConnected -= OnNewSessionConnected;
-                //_server.NewMessageReceived -= OnNewMessageReceived;
                 _server.NewDataReceived -= OnNewDataReceived;
                 _server.SessionClosed -= OnSessionClosed;
 

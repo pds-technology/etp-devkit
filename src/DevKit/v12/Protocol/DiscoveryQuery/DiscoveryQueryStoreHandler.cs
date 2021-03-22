@@ -16,11 +16,10 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
@@ -30,85 +29,57 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.DiscoveryQuery.IDiscoveryQueryStore" />
-    public class DiscoveryQueryStoreHandler : Etp12ProtocolHandler, IDiscoveryQueryStore
+    public class DiscoveryQueryStoreHandler : Etp12ProtocolHandler<CapabilitiesStore, ICapabilitiesStore, CapabilitiesCustomer, ICapabilitiesCustomer>, IDiscoveryQueryStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscoveryQueryStoreHandler"/> class.
         /// </summary>
-        public DiscoveryQueryStoreHandler() : base((int)Protocols.DiscoveryQuery, "store", "customer")
+        public DiscoveryQueryStoreHandler() : base((int)Protocols.DiscoveryQuery, Roles.Store, Roles.Customer)
         {
-            MaxResponseCount = EtpSettings.DefaultMaxResponseCount;
-
             RegisterMessageHandler<FindResources>(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResources, HandleFindResources);
-        }
-
-
-        /// <summary>
-        /// Indicates to a customer the maximum number of response messages a store will return.
-        /// </summary>
-        public long MaxResponseCount { get; set; }
-
-        /// <summary>
-        /// Gets the capabilities supported by the protocol handler.
-        /// </summary>
-        /// <param name="capabilities">The protocol's capabilities.</param>
-        public override void GetCapabilities(EtpProtocolCapabilities capabilities)
-        {
-            base.GetCapabilities(capabilities);
-
-            capabilities.MaxResponseCount = MaxResponseCount;
-        }
-
-        /// <summary>
-        /// Sends a FindResourcesResponse message to a customer.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="resources">The list of <see cref="Resource" /> objects.</param>
-        /// <param name="sortOrder">The sort order.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long FindResourcesResponse(IMessageHeader request, IList<Resource> resources, string sortOrder)
-        {
-            var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResourcesResponse, request.MessageId);
-
-            var response = new FindResourcesResponse
-            {
-                ServerSortOrder = string.Empty,
-            };
-
-            return SendMultipartResponse(header, response, resources, (m, i) => m.Resources = i);
         }
 
         /// <summary>
         /// Handles the FindResources event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<FindResources, ResourceResponse> OnFindResources;
+        public event EventHandler<ListRequestWithContextEventArgs<FindResources, Resource, ResponseContext>> OnFindResources;
 
         /// <summary>
-        /// Handles the FindResources message from a customer.
+        /// Sends a FindResourcesResponse message to a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The FindResources message.</param>
-        protected virtual void HandleFindResources(IMessageHeader header, FindResources message)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
+        /// <param name="serverSortOrder">The server sort order.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<FindResourcesResponse> FindResourcesResponse(IMessageHeader correlatedHeader, IList<Resource> resources, string serverSortOrder, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var args = Notify(OnFindResources, header, message, new ResourceResponse());
-            if (args.Cancel)
-                return;
-
-            if (!HandleFindResources(header, message, args.Context))
-                return;
-
-            FindResourcesResponse(header, args.Context.Resources, args.Context.ServerSortOrder);
+            var body = new FindResourcesResponse
+            {
+                Resources = resources ?? new List<Resource>(),
+                ServerSortOrder = serverSortOrder,
+            };
+            
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
         }
 
         /// <summary>
         /// Handles the FindResources message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        protected virtual bool HandleFindResources(IMessageHeader header, FindResources message, ResourceResponse response)
+        /// <param name="message">The FindResources message.</param>
+        protected virtual void HandleFindResources(EtpMessage<FindResources> message)
         {
-            return true;
+            HandleRequestMessage(message, OnFindResources, HandleFindResources,
+                responseMethod: (args) => FindResourcesResponse(args.Request?.Header, args.Responses, args.Context?.ServerSortOrder, isFinalPart: !args.HasErrors, extension: args.ResponseExtension));
+        }
+
+        /// <summary>
+        /// Handles the FindResources message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="ListRequestWithContextEventArgs{FindResources, Resource, ResponseContext}"/> instance containing the event data.</param>
+        protected virtual void HandleFindResources(ListRequestWithContextEventArgs<FindResources, Resource, ResponseContext> args)
+        {
         }
     }
 }

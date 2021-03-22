@@ -148,7 +148,7 @@ namespace Energistics.Etp.Common.Datatypes
         {
             var uuid = Uuid();
             var uri = new EtpUri("eml://witsml20/Log(" + uuid + ")/Channel(ROPA)");
-            var ids = uri.GetObjectIds().FirstOrDefault();
+            var ids = uri.GetSegments().FirstOrDefault();
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("Channel", uri.ObjectType);
@@ -167,7 +167,7 @@ namespace Energistics.Etp.Common.Datatypes
             var uuid2 = Uuid();
             var contentType = "application/x-witsml+xml;version=2.0;type=part_TrajectoryStation";
             var uri = new EtpUri($"eml://witsml20/Trajectory({uuid1})/TrajectoryStation({uuid2})");
-            var ids = uri.GetObjectIds().FirstOrDefault();
+            var ids = uri.GetSegments().FirstOrDefault();
 
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("TrajectoryStation", uri.ObjectType);
@@ -326,7 +326,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("1.4.1.1", uri.Version);
             Assert.AreEqual("well", uri.ObjectType);
-            Assert.AreEqual("xml", uri.Format);
+            Assert.AreEqual(Formats.Xml, uri.Format);
         }
 
         [TestMethod]
@@ -337,7 +337,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(uri.IsValid);
             Assert.AreEqual("1.4.1.1", uri.Version);
             Assert.AreEqual("well", uri.ObjectType);
-            Assert.AreEqual("xml", uri.Format);
+            Assert.AreEqual(Formats.Xml, uri.Format);
         }
 
         [TestMethod]
@@ -546,7 +546,7 @@ namespace Energistics.Etp.Common.Datatypes
             var uuid2 = Uuid();
 
             var uri = new EtpUri($"eml://custom-database/witsml14/well/wellbore({uuid})/log/logCurveInfo({uuid2})");
-            var segments = uri.GetObjectIds().ToList();
+            var segments = uri.GetSegments().ToList();
 
             Assert.AreEqual(null, segments[0].ObjectId);
             Assert.AreEqual(uuid, segments[1].ObjectId);

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.ChannelData;
@@ -31,9 +32,9 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
         {
         }
 
-        protected override void HandleStartStreaming(IMessageHeader header, StartStreaming startStreaming)
+        protected override void HandleStartStreaming(VoidRequestEventArgs<StartStreaming> args)
         {
-            base.HandleStartStreaming(header, startStreaming);
+            base.HandleStartStreaming(args);
 
             var channelMetaData = new List<ChannelMetadataRecord>()
             {
@@ -69,21 +70,20 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
                 },
             };
 
-            throw new NotImplementedException();
+            ChannelMetadata(channelMetaData);
 
-            //ChannelMetadata(header, channelMetaData);
+            var dataItems = new List<DataItem>
+            {
+                new DataItem()
+                {
+                    Indexes = new List<IndexValue> { new IndexValue { Item = 0L } },
+                    ChannelId = 1,
+                    Value = new DataValue { Item = 1 },
+                    ValueAttributes = new DataAttribute[0],
+                }
+            };
 
-            //var dataItems = new List<DataItem>
-            //{
-            //    new DataItem()
-            //    {
-            //        Indexes = new List<IndexValue> { new IndexValue { Item = 0L } },
-            //        ChannelId = 1,
-            //        Value = new DataValue { Item = 1 },
-            //        ValueAttributes = new DataAttribute[0],
-            //    }
-            //};
-            //ChannelData(header, dataItems, MessageFlags.MultiPartAndFinalPart);
+            ChannelData(dataItems);
         }
     }
 }

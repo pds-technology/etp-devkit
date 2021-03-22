@@ -49,11 +49,13 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Opens the WebSocket connection.
         /// </summary>
-        void Open();
+        /// <returns><c>true</c> if the socket was successfully opened; <c>false</c> otherwise.</returns>
+        bool Open();
 
         /// <summary>
         /// Asynchronously opens the WebSocket connection.
         /// </summary>
+        /// <returns><c>true</c> if the socket was successfully opened; <c>false</c> otherwise.</returns>
         Task<bool> OpenAsync();
     }
 }

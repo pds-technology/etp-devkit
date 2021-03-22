@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -28,12 +29,12 @@ namespace Energistics.Etp.v12.Protocol.SupportedTypes
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.SupportedTypes.ISupportedTypesStore" />
-    public class SupportedTypesStoreHandler : Etp12ProtocolHandler, ISupportedTypesStore
+    public class SupportedTypesStoreHandler : Etp12ProtocolHandler<CapabilitiesStore, ICapabilitiesStore, CapabilitiesCustomer, ICapabilitiesCustomer>, ISupportedTypesStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="SupportedTypesStoreHandler"/> class.
         /// </summary>
-        public SupportedTypesStoreHandler() : base((int)Protocols.SupportedTypes, "store", "customer")
+        public SupportedTypesStoreHandler() : base((int)Protocols.SupportedTypes, Roles.Store, Roles.Customer)
         {
             RegisterMessageHandler<GetSupportedTypes>(Protocols.SupportedTypes, MessageTypes.SupportedTypes.GetSupportedTypes, HandleGetSupportedTypes);
         }
@@ -41,48 +42,41 @@ namespace Energistics.Etp.v12.Protocol.SupportedTypes
         /// <summary>
         /// Handles the GetSupportedTypes event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetSupportedTypes, IList<SupportedType>> OnGetSupportedTypes;
+        public event EventHandler<ListRequestEventArgs<GetSupportedTypes, SupportedType>> OnGetSupportedTypes;
 
         /// <summary>
         /// Sends a GetSupportedTypesResponse message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
         /// <param name="supportedTypes">The list of <see cref="SupportedType" /> objects.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long GetSupportedTypesResponse(IMessageHeader request, IList<SupportedType> supportedTypes)
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetSupportedTypesResponse> GetSupportedTypesResponse(IMessageHeader correlatedHeader, IList<SupportedType> supportedTypes, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.SupportedTypes, MessageTypes.SupportedTypes.GetSupportedTypesResponse, request.MessageId);
-            var response = new GetSupportedTypesResponse();
+            var body = new GetSupportedTypesResponse
+            {
+                SupportedTypes = supportedTypes ?? new List<SupportedType>(),
+            };
 
-            return SendMultipartResponse(header, response, supportedTypes, (m, i) => m.SupportedTypes = i);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
         }
 
         /// <summary>
         /// Handles the GetSupportedTypes message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The GetSupportedTypes message.</param>
-        protected virtual void HandleGetSupportedTypes(IMessageHeader header, GetSupportedTypes message)
+        protected virtual void HandleGetSupportedTypes(EtpMessage<GetSupportedTypes> message)
         {
-            var args = Notify(OnGetSupportedTypes, header, message, new List<SupportedType>());
-            if (args.Cancel)
-                return;
-
-            if (!HandleGetSupportedTypes(header, message, args.Context))
-                return;
-
-            GetSupportedTypesResponse(header, args.Context);
+            HandleRequestMessage(message, OnGetSupportedTypes, HandleGetSupportedTypes,
+                responseMethod: (args) => GetSupportedTypesResponse(args.Request?.Header, args.Responses, isFinalPart: !args.HasErrors, extension: args.ResponseExtension));
         }
 
         /// <summary>
         /// Handles the GetSupportedTypes message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        protected virtual bool HandleGetSupportedTypes(IMessageHeader header, GetSupportedTypes message, IList<SupportedType> response)
+        /// <param name="args">The <see cref="ListRequestEventArgs{GetSupportedTypes, SupportedType}"/> instance containing the event data.</param>
+        protected virtual void HandleGetSupportedTypes(ListRequestEventArgs<GetSupportedTypes, SupportedType> args)
         {
-            return true;
         }
     }
 }

@@ -16,42 +16,41 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Collections.Generic;
+using System;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.v11.Datatypes;
 
 namespace Energistics.Etp.v11.Protocol.DataArray
 {
-    [ProtocolRole((int)Protocols.DataArray, "store", "customer")]
+    [ProtocolRole((int)Protocols.DataArray, Roles.Store, Roles.Customer)]
     public interface IDataArrayStore : IProtocolHandler
     {
         /// <summary>
         /// Sends a data array as a response for GetDataArray and GetDataArraySlice.
         /// </summary>
-        /// <param name="dimensions">The dimensions.</param>
-        /// <param name="data">The data array.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        long DataArray(IList<long> dimensions, AnyArray data);
+        /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
+        /// <param name="array">The data array.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<DataArray> DataArray(IMessageHeader correlatedHeader, DataArray array);
 
         /// <summary>
         /// Handles the GetDataArray event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetDataArray> OnGetDataArray;
+        event EventHandler<RequestEventArgs<GetDataArray, DataArray>> OnGetDataArray;
 
         /// <summary>
         /// Handles the GetDataArraySlice event from a customer.
         /// </summary>
-        event ProtocolEventHandler<GetDataArraySlice> OnGetDataArraySlice;
+        event EventHandler<RequestEventArgs<GetDataArraySlice, DataArray>> OnGetDataArraySlice;
 
         /// <summary>
         /// Handles the PutDataArray event from a customer.
         /// </summary>
-        event ProtocolEventHandler<PutDataArray> OnPutDataArray;
+        event EventHandler<VoidRequestEventArgs<PutDataArray>> OnPutDataArray;
 
         /// <summary>
         /// Handles the PutDataArraySlice event from a customer.
         /// </summary>
-        event ProtocolEventHandler<PutDataArraySlice> OnPutDataArraySlice;
+        event EventHandler<VoidRequestEventArgs<PutDataArraySlice>> OnPutDataArraySlice;
     }
 }

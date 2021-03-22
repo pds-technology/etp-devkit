@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -29,274 +30,367 @@ namespace Energistics.Etp.v12.Protocol.DataArray
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.DataArray.IDataArrayStore" />
-    public class DataArrayStoreHandler : Etp12ProtocolHandler, IDataArrayStore
+    public class DataArrayStoreHandler : Etp12ProtocolHandlerWithCapabilities<CapabilitiesStore, ICapabilitiesStore>, IDataArrayStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DataArrayStoreHandler"/> class.
         /// </summary>
-        public DataArrayStoreHandler() : base((int)Protocols.DataArray, "store", "customer")
+        public DataArrayStoreHandler() : base((int)Protocols.DataArray, Roles.Store, Roles.Customer)
         {
+            RegisterMessageHandler<GetDataArrayMetadata>(Protocols.DataArray, MessageTypes.DataArray.GetDataArrayMetadata, HandleGetDataArrayMetadata);
             RegisterMessageHandler<GetDataArrays>(Protocols.DataArray, MessageTypes.DataArray.GetDataArrays, HandleGetDataArrays);
             RegisterMessageHandler<GetDataSubarrays>(Protocols.DataArray, MessageTypes.DataArray.GetDataSubarrays, HandleGetDataSubarrays);
-            RegisterMessageHandler<PutDataArrays>(Protocols.DataArray, MessageTypes.DataArray.PutDataArrays, HandlePutDataArrays);
             RegisterMessageHandler<PutUninitializedDataArrays>(Protocols.DataArray, MessageTypes.DataArray.PutUninitializedDataArrays, HandlePutUninitializedDataArrays);
+            RegisterMessageHandler<PutDataArrays>(Protocols.DataArray, MessageTypes.DataArray.PutDataArrays, HandlePutDataArrays);
             RegisterMessageHandler<PutDataSubarrays>(Protocols.DataArray, MessageTypes.DataArray.PutDataSubarrays, HandlePutDataSubarrays);
-            RegisterMessageHandler<GetDataArrayMetadata>(Protocols.DataArray, MessageTypes.DataArray.GetDataArrayMetadata, HandleGetDataArrayMetadata);
+        }
+
+        /// <summary>
+        /// Handles the GetDataArrayMetadata event from a customer.
+        /// </summary>
+        public event EventHandler<MapRequestEventArgs<GetDataArrayMetadata, DataArrayMetadata>> OnGetDataArrayMetadata;
+
+        /// <summary>
+        /// Sends a GetDataArrayMetadataResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="arrayMetadata">The array metadata.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetDataArrayMetadataResponse> GetDataArrayMetadataResponse(IMessageHeader correlatedHeader, IDictionary<string, DataArrayMetadata> arrayMetadata, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetDataArrayMetadataResponse
+            {
+                ArrayMetadata = arrayMetadata ?? new Dictionary<string, DataArrayMetadata>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetDataArrayMetadataResponse and ProtocolException messages to a customer.
+        /// If there are no array metadata, an empty DataArrayMetadataRecord message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="arrayMetadata">The array metadata.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetDataArrayMetadataResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetDataArrayMetadataResponse> GetDataArrayMetadataResponse(IMessageHeader correlatedHeader, IDictionary<string, DataArrayMetadata> arrayMetadata, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(GetDataArrayMetadataResponse, correlatedHeader, arrayMetadata, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
         }
 
         /// <summary>
         /// Handles the GetDataArrays event from a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<GetDataArrays, Datatypes.DataArrayTypes.DataArray, ErrorInfo> OnGetDataArrays;
+        public event EventHandler<MapRequestEventArgs<GetDataArrays, Datatypes.DataArrayTypes.DataArray>> OnGetDataArrays;
 
         /// <summary>
-        /// Sends an GetDataArraysResponse message to a customer.
+        /// Sends a GetDataArraysResponse message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="dataArrays">The data arrays.</param>
-        /// <param name="errors">The errors.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long GetDataArraysResponse(IMessageHeader request, IDictionary<string, Datatypes.DataArrayTypes.DataArray> dataArrays, IDictionary<string, ErrorInfo> errors)
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetDataArraysResponse> GetDataArraysResponse(IMessageHeader correlatedHeader, IDictionary<string, Datatypes.DataArrayTypes.DataArray> dataArrays, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.GetDataArraysResponse, request.MessageId);
-
-            var response = new GetDataArraysResponse
+            var body = new GetDataArraysResponse
             {
+                DataArrays = dataArrays ?? new Dictionary<string, Datatypes.DataArrayTypes.DataArray>(),
             };
 
-            return SendMultipartResponse(header, response, dataArrays, errors, (m, i) => m.DataArrays = i);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetDataArraysResponse and ProtocolException messages to a customer.
+        /// If there are no data arrays, an empty DataArraysRecord message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="dataArrays">The data arrays.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetDataArraysResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetDataArraysResponse> GetDataArraysResponse(IMessageHeader correlatedHeader, IDictionary<string, Datatypes.DataArrayTypes.DataArray> dataArrays, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(GetDataArraysResponse, correlatedHeader, dataArrays, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
         }
 
         /// <summary>
         /// Handles the GetDataSubarrays event from a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<GetDataSubarrays, Datatypes.DataArrayTypes.DataArray, ErrorInfo> OnGetDataSubarrays;
+        public event EventHandler<MapRequestEventArgs<GetDataSubarrays, Datatypes.DataArrayTypes.DataArray>> OnGetDataSubarrays;
 
         /// <summary>
-        /// Sends an GetDataSubarraysResponse message to a customer.
+        /// Sends a GetDataSubarraysResponse message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="dataSubarrays">The data subarrays.</param>
-        /// <param name="errors">The errors.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long GetDataSubarraysResponse(IMessageHeader request, IDictionary<string, Datatypes.DataArrayTypes.DataArray> dataSubarrays, IDictionary<string, ErrorInfo> errors)
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetDataSubarraysResponse> GetDataSubarraysResponse(IMessageHeader correlatedHeader, IDictionary<string, Datatypes.DataArrayTypes.DataArray> dataSubarrays, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.GetDataSubarraysResponse, request.MessageId);
-
-            var response = new GetDataSubarraysResponse
+            var body = new GetDataSubarraysResponse
             {
+                DataSubarrays = dataSubarrays ?? new Dictionary<string, Datatypes.DataArrayTypes.DataArray>(),
             };
 
-            return SendMultipartResponse(header, response, dataSubarrays, errors, (m, i) => m.DataSubarrays = i);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetDataSubarraysResponse and ProtocolException messages to a customer.
+        /// If there are no data subarrays, an empty DataSubarraysRecord message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="dataSubarrays">The data subarrays.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetDataSubarraysResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetDataSubarraysResponse> GetDataSubarraysResponse(IMessageHeader correlatedHeader, IDictionary<string, Datatypes.DataArrayTypes.DataArray> dataSubarrays, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(GetDataSubarraysResponse, correlatedHeader, dataSubarrays, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
+
+        /// <summary>
+        /// Handles the PutUninitializedDataArrays event from a customer.
+        /// </summary>
+        public event EventHandler<MapRequestEventArgs<PutUninitializedDataArrays, string>> OnPutUninitializedDataArrays;
+
+        /// <summary>
+        /// Sends a PutUninitializedDataArraysResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutUninitializedDataArraysResponse> PutUninitializedDataArraysResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new PutUninitializedDataArraysResponse
+            {
+                Success = success ?? new Dictionary<string, string>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of PutUninitializedDataArraysResponse and ProtocolException messages to a customer.
+        /// If there are no successes, an empty PutUninitializedDataArraysResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the PutUninitializedDataArraysResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutUninitializedDataArraysResponse> PutUninitializedDataArraysResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(PutUninitializedDataArraysResponse, correlatedHeader, success, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
         }
 
         /// <summary>
         /// Handles the PutDataArrays event from a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<PutDataArrays, ErrorInfo> OnPutDataArrays;
+        public event EventHandler<MapRequestEventArgs<PutDataArrays, string>> OnPutDataArrays;
 
         /// <summary>
-        /// Handles the PutUninitializedDataArrays event from a customer.
+        /// Sends a PutDataArraysResponse message to a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<PutUninitializedDataArrays, ErrorInfo> OnPutUninitializedDataArrays;
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutDataArraysResponse> PutDataArraysResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new PutDataArraysResponse
+            {
+                Success = success ?? new Dictionary<string, string>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of PutDataArraysResponse and ProtocolException messages to a customer.
+        /// If there are no successes, an empty PutDataArraysResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the PutDataArraysResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutDataArraysResponse> PutDataArraysResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(PutDataArraysResponse, correlatedHeader, success, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
 
         /// <summary>
         /// Handles the PutDataSubarrays event from a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<PutDataSubarrays, ErrorInfo> OnPutDataSubarrays;
+        public event EventHandler<MapRequestEventArgs<PutDataSubarrays, string>> OnPutDataSubarrays;
 
         /// <summary>
-        /// Handles the GetDataArrayMetadata event from a customer.
+        /// Sends a PutDataSubarraysResponse message to a customer.
         /// </summary>
-        public event ProtocolEventWithErrorsHandler<GetDataArrayMetadata, DataArrayMetadata, ErrorInfo> OnGetDataArrayMetadata;
-
-        /// <summary>
-        /// Sends an GetDataArrayMetadataResponse message to a customer.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="arrayMetadata">The array metadata.</param>
-        /// <param name="errors">The errors.</param>
-        /// <returns>The positive message identifier on success; otherwise, a negative number.</returns>
-        public virtual long GetDataArrayMetadataResponse(IMessageHeader request, IDictionary<string, DataArrayMetadata> arrayMetadata, IDictionary<string, ErrorInfo> errors)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutDataSubarraysResponse> PutDataSubarraysResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.DataArray, MessageTypes.DataArray.GetDataArrayMetadataResponse, request.MessageId);
-
-            var response = new GetDataArrayMetadataResponse
+            var body = new PutDataSubarraysResponse
             {
+                Success = success ?? new Dictionary<string, string>(),
             };
 
-            return SendMultipartResponse(header, response, arrayMetadata, errors, (m, i) => m.ArrayMetadata = i);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
         }
 
         /// <summary>
-        /// Handles the GetDataArrays message from a customer.
+        /// Sends a complete multi-part set of PutDataSubarraysResponse and ProtocolException messages to a customer.
+        /// If there are no successes, an empty PutDataSubarraysResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The GetDataArrays message.</param>
-        protected virtual void HandleGetDataArrays(IMessageHeader header, GetDataArrays message)
-        {
-            var args = Notify(OnGetDataArrays, header, message, new Dictionary<string, Datatypes.DataArrayTypes.DataArray>(), new Dictionary<string, ErrorInfo>());
-            if (args.Cancel)
-                return;
-
-            if (!HandleGetDataArrays(header, message, args.Context, args.Errors))
-                return;
-
-            GetDataArraysResponse(header, args.Context, args.Errors);
-        }
-
-        /// <summary>
-        /// Handles the GetDataArrays message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
         /// <param name="errors">The errors.</param>
-        protected virtual bool HandleGetDataArrays(IMessageHeader header, GetDataArrays message, IDictionary<string, Datatypes.DataArrayTypes.DataArray> response, IDictionary<string, ErrorInfo> errors)
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the PutDataSubarraysResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutDataSubarraysResponse> PutDataSubarraysResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
         {
-            return true;
-        }
-
-        /// <summary>
-        /// Handles the GetDataSubarrays message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The GetDataSubarrays message.</param>
-        protected virtual void HandleGetDataSubarrays(IMessageHeader header, GetDataSubarrays message)
-        {
-            var args = Notify(OnGetDataSubarrays, header, message, new Dictionary<string, Datatypes.DataArrayTypes.DataArray>(), new Dictionary<string, ErrorInfo>());
-            if (args.Cancel)
-                return;
-
-            if (!HandleGetDataSubarrays(header, message, args.Context, args.Errors))
-                return;
-
-            GetDataSubarraysResponse(header, args.Context, args.Errors);
-        }
-
-        /// <summary>
-        /// Handles the GetDataSubarrays message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual bool HandleGetDataSubarrays(IMessageHeader header, GetDataSubarrays message, IDictionary<string, Datatypes.DataArrayTypes.DataArray> response, IDictionary<string, ErrorInfo> errors)
-        {
-            return true;
-        }
-
-        /// <summary>
-        /// Handles the PutDataArrays message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The PutDataArrays message.</param>
-        protected virtual void HandlePutDataArrays(IMessageHeader header, PutDataArrays message)
-        {
-            var args = Notify(OnPutDataArrays, header, message, new Dictionary<string, ErrorInfo>());
-            if (args.Cancel)
-                return;
-
-            if (!HandlePutDataArrays(header, message, args.Errors))
-                return;
-
-            SendMultipartResponse(header, message, args.Errors);
-        }
-
-        /// <summary>
-        /// Handles the PutDataArrays message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual bool HandlePutDataArrays(IMessageHeader header, PutDataArrays message, IDictionary<string, ErrorInfo> errors)
-        {
-            return true;
-        }
-
-        /// <summary>
-        /// Handles the PutUninitializedDataArrays message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The PutUninitializedDataArray message.</param>
-        protected virtual void HandlePutUninitializedDataArrays(IMessageHeader header, PutUninitializedDataArrays message)
-        {
-            var args = Notify(OnPutUninitializedDataArrays, header, message, new Dictionary<string, ErrorInfo>());
-            if (args.Cancel)
-                return;
-
-            if (!HandlePutUninitializedDataArrays(header, message, args.Errors))
-                return;
-
-            SendMultipartResponse(header, message, args.Errors);
-        }
-
-        /// <summary>
-        /// Handles the PutUninitializedDataArrays message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual bool HandlePutUninitializedDataArrays(IMessageHeader header, PutUninitializedDataArrays message, IDictionary<string, ErrorInfo> errors)
-        {
-            return true;
-        }
-
-        /// <summary>
-        /// Handles the PutDataSubarrays message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The PutDataSubarrays message.</param>
-        protected virtual void HandlePutDataSubarrays(IMessageHeader header, PutDataSubarrays message)
-        {
-            var args = Notify(OnPutDataSubarrays, header, message, new Dictionary<string, ErrorInfo>());
-            if (args.Cancel)
-                return;
-
-            if (!HandlePutDataSubarrays(header, message, args.Errors))
-                return;
-
-            SendMultipartResponse(header, message, args.Errors);
-        }
-
-        /// <summary>
-        /// Handles the PutDataSubarrays message from a customer.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual bool HandlePutDataSubarrays(IMessageHeader header, PutDataSubarrays message, IDictionary<string, ErrorInfo> errors)
-        {
-            return true;
+            return SendMapResponse(PutDataSubarraysResponse, correlatedHeader, success, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
         }
 
         /// <summary>
         /// Handles the GetDataArrayMetadata message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
         /// <param name="message">The GetDataArrayMetadata message.</param>
-        protected virtual void HandleGetDataArrayMetadata(IMessageHeader header, GetDataArrayMetadata message)
+        protected virtual void HandleGetDataArrayMetadata(EtpMessage<GetDataArrayMetadata> message)
         {
-            var args = Notify(OnGetDataArrayMetadata, header, message, new Dictionary<string, DataArrayMetadata>(), new Dictionary<string, ErrorInfo>());
-            if (args.Cancel)
-                return;
-
-            if (!HandleGetDataArrayMetadata(header, message, args.Context, args.Errors))
-                return;
-
-            GetDataArrayMetadataResponse(header, args.Context, args.Errors);
+            HandleRequestMessage(message, OnGetDataArrayMetadata, HandleGetDataArrayMetadata,
+                responseMethod: (args) => GetDataArrayMetadataResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
         }
 
         /// <summary>
-        /// Handles the GetDataArrayMetadata message from a customer.
+        /// Handles the response to an GetDataArrayMetadata message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="response">The response.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual bool HandleGetDataArrayMetadata(IMessageHeader header, GetDataArrayMetadata message, IDictionary<string, DataArrayMetadata> response, IDictionary<string, ErrorInfo> errors)
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetDataArrayMetadata, DataArrayMetadata, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleGetDataArrayMetadata(MapRequestEventArgs<GetDataArrayMetadata, DataArrayMetadata> args)
         {
-            return true;
+        }
+
+        /// <summary>
+        /// Handles the GetDataArrays message from a customer.
+        /// </summary>
+        /// <param name="message">The GetDataArrays message.</param>
+        protected virtual void HandleGetDataArrays(EtpMessage<GetDataArrays> message)
+        {
+            HandleRequestMessage(message, OnGetDataArrays, HandleGetDataArrays,
+                responseMethod: (args) => GetDataArraysResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the response to an GetDataArrays message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetDataArrays, Datatypes.DataArrayTypes.DataArray, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleGetDataArrays(MapRequestEventArgs<GetDataArrays, Datatypes.DataArrayTypes.DataArray> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GetDataSubarrays message from a customer.
+        /// </summary>
+        /// <param name="message">The GetDataSubarrays message.</param>
+        protected virtual void HandleGetDataSubarrays(EtpMessage<GetDataSubarrays> message)
+        {
+            HandleRequestMessage(message, OnGetDataSubarrays, HandleGetDataSubarrays,
+                responseMethod: (args) => GetDataSubarraysResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the response to an GetDataSubarrays message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetDataSubarrays, Datatypes.DataArrayTypes.DataArray, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleGetDataSubarrays(MapRequestEventArgs<GetDataSubarrays, Datatypes.DataArrayTypes.DataArray> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the PutUninitializedDataArrays message from a customer.
+        /// </summary>
+        /// <param name="message">The PutUninitializedDataArrays message.</param>
+        protected virtual void HandlePutUninitializedDataArrays(EtpMessage<PutUninitializedDataArrays> message)
+        {
+            HandleRequestMessage(message, OnPutUninitializedDataArrays, HandlePutUninitializedDataArrays,
+                responseMethod: (args) => PutUninitializedDataArraysResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the response to an PutUninitializedDataArrays message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{PutUninitializedDataArrays, string, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandlePutUninitializedDataArrays(MapRequestEventArgs<PutUninitializedDataArrays, string> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the PutDataArrays message from a customer.
+        /// </summary>
+        /// <param name="message">The PutDataArrays message.</param>
+        protected virtual void HandlePutDataArrays(EtpMessage<PutDataArrays> message)
+        {
+            HandleRequestMessage(message, OnPutDataArrays, HandlePutDataArrays,
+                responseMethod: (args) => PutDataArraysResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the response to an PutDataArrays message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{PutDataArrays, string, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandlePutDataArrays(MapRequestEventArgs<PutDataArrays, string> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the PutDataSubarrays message from a customer.
+        /// </summary>
+        /// <param name="message">The PutDataSubarrays message.</param>
+        protected virtual void HandlePutDataSubarrays(EtpMessage<PutDataSubarrays> message)
+        {
+            HandleRequestMessage(message, OnPutDataSubarrays, HandlePutDataSubarrays,
+                responseMethod: (args) => PutDataSubarraysResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the response to an PutDataSubarrays message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{PutDataSubarrays, string, ErrorInfo}"/> instance containing the event data.</param>
+        protected virtual void HandlePutDataSubarrays(MapRequestEventArgs<PutDataSubarrays, string> args)
+        {
         }
     }
 }

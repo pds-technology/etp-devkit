@@ -37,19 +37,16 @@ namespace Energistics.Etp
             _server.Start();
 
             // Create a Basic authorization header dictionary
-            var headers = Authorization.Basic(TestSettings.Username, TestSettings.Password);
-
-            // Specify preference for JSON encoding
-            headers[EtpSettings.EtpEncodingHeader] = Settings.Default.EtpEncodingJson;
+            var authorization = Authorization.Basic(TestSettings.Username, TestSettings.Password);
 
             // Initialize an EtpClient with a valid Uri, app name and version, and headers
-            using (_client = CreateClient(TestSettings.WebSocketType, TestSettings.EtpSubProtocol, _server.Uri.ToWebSocketUri().ToString(), headers))
+            using (_client = CreateClient(TestSettings.WebSocketType, TestSettings.EtpVersion, _server.Uri.ToWebSocketUri().ToString(), authorization: authorization, etpEncoding: EtpEncoding.Json))
             {
                 // Open the connection (uses an async extension method)
                 await _client.OpenAsyncWithTimeout().ConfigureAwait(false);
 
                 // Assert the current state of the connection
-                Assert.IsTrue(_client.IsOpen);
+                Assert.IsTrue(_client.IsWebSocketOpen);
             }
 
             _server.Dispose();
