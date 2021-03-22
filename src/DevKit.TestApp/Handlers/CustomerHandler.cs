@@ -49,7 +49,6 @@ namespace Energistics.Etp.Handlers
 
         public override void PrintConsoleOptions()
         {
-            Console.WriteLine(" D - Set store primary dataspace name");
             DiscoveryHandler.PrintConsoleOptions();
             ChannelHandler.PrintConsoleOptions();
             ObjectHandler.PrintConsoleOptions();

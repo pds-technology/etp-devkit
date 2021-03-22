@@ -87,8 +87,10 @@ namespace Energistics.Etp.Handlers
             Console.WriteLine(" D - Set store primary dataspace name");
             if (Registrar?.IsEtpVersionSupported(EtpVersion.v11) ?? false && Session?.IsSessionOpen == false)
             {
-                Console.WriteLine(" B - Set ETP 1.1 channel streaming to basic streaming");
-                Console.WriteLine(" P - Set ETP 1.1 channel streaming to simple streaming");
+                if (v11ChannelStreamingHandler.Capabilities.SimpleStreamer ?? false)
+                    Console.WriteLine(" B - Set ETP 1.1 channel streaming to simple streaming");
+                else
+                    Console.WriteLine(" B - Set ETP 1.1 channel streaming to basic streaming");
             }
             Console.WriteLine(" G - Start / stop background channel data generation");
         }
@@ -97,14 +99,17 @@ namespace Energistics.Etp.Handlers
         {
             if (IsKey(info, "B"))
             {
-                Console.WriteLine("Setting store to basic streamer for new ETP 1.1 sessions.");
-                SetBasicStreamer();
-                return true;
-            }
-            else if (IsKey(info, "P"))
-            {
-                Console.WriteLine("Setting store to simple streamer for new ETP 1.1 sessions.");
-                SetSimpleStreamer();
+                if (v11ChannelStreamingHandler.Capabilities.SimpleStreamer ?? false)
+                {
+                    Console.WriteLine("Setting store to basic streamer for new ETP 1.1 sessions.");
+                    SetBasicStreamer();
+                }
+                else
+                {
+                    Console.WriteLine("Setting store to simple streamer for new ETP 1.1 sessions.");
+                    SetSimpleStreamer();
+                }
+
                 return true;
             }
             else if (IsKey(info, "G"))
@@ -554,7 +559,7 @@ namespace Energistics.Etp.Handlers
                     continue;
                 }
                 if (Store.StopChannelStreaming(sessionId, channelId))
-                    args.ResponseMap[kvp.Key] = Store.GetChannel(sessionId, channelId).StoreLastWrite.ToEtpTimestamp();
+                    args.ResponseMap[kvp.Key] = channelId;
                 else
                     args.ErrorMap[kvp.Key] = handler.ErrorInfo().RequestDenied($"Could not stop streaming for Channel {channelId}.");
             }

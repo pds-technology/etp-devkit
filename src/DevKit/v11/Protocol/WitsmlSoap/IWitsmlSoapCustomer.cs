@@ -26,7 +26,7 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
     /// Defines the interface that must be implemented by the customer role of the WitsmlSoap protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Store, Roles.Customer, Roles.Store)]
+    [ProtocolRole((int)Protocols.WitsmlSoap, Roles.Customer, Roles.Store)]
     public interface IWitsmlSoapCustomer : IProtocolHandler
     {
         /// <summary>

@@ -42,6 +42,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
             RegisterMessageHandler<OpenChannelsResponse>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.OpenChannelsResponse, HandleOpenChannelsResponse);
             RegisterMessageHandler<ReplaceRangeResponse>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ReplaceRangeResponse, HandleReplaceRangeResponse);
             RegisterMessageHandler<TruncateChannelsResponse>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.TruncateChannelsResponse, HandleTruncateChannelsResponse);
+            RegisterMessageHandler<ChannelsClosed>(Protocols.ChannelDataLoad, MessageTypes.ChannelDataLoad.ChannelsClosed, HandleChannelsClosed);
         }
 
         /// <summary>

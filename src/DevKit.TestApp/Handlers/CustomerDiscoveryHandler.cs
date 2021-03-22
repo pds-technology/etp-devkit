@@ -19,6 +19,8 @@
 using System;
 using Energistics.Etp.Common;
 using System.Collections.Generic;
+using Energistics.Etp.Data;
+using Energistics.Etp.Common.Datatypes;
 
 namespace Energistics.Etp.Handlers
 {
@@ -35,7 +37,6 @@ namespace Energistics.Etp.Handlers
                 Registrar.Register(new v12.Protocol.Dataspace.DataspaceCustomerHandler());
                 Registrar.Register(new v12.Protocol.Discovery.DiscoveryCustomerHandler());
                 Registrar.Register(new v12.Protocol.SupportedTypes.SupportedTypesCustomerHandler());
-                Registrar.Register(new v12.Protocol.Store.StoreCustomerHandler());
             }
         }
 
@@ -99,7 +100,10 @@ namespace Energistics.Etp.Handlers
                 if (version == EtpVersion.v11)
                     Session.Handler<v11.Protocol.Discovery.IDiscoveryCustomer>().GetResources(uri);
                 else if (version == EtpVersion.v12)
-                    Session.Handler<v12.Protocol.Discovery.IDiscoveryCustomer>().GetResources(GetContextInfo(uri), v12.Datatypes.Object.ContextScopeKind.sources, countObjects: true);
+                {
+                    var context = GetContext(uri);
+                    Session.Handler<v12.Protocol.Discovery.IDiscoveryCustomer>().GetResources(context.ContextInfo12, context.ContextScopeKind12, countObjects: true);
+                }
             }
             else if (IsKey(info, "Q"))
             {
@@ -158,17 +162,76 @@ namespace Energistics.Etp.Handlers
                 Console.WriteLine(EtpExtensions.Serialize(e.Response.Body.SupportedTypes, true));
         }
 
-        private v12.Datatypes.Object.ContextInfo GetContextInfo(string uri)
+        private MockGraphContext GetContext(string uri)
         {
-            return new v12.Datatypes.Object.ContextInfo
+            var context = new MockGraphContext
             {
-                Uri = uri,
-                DataObjectTypes = new List<string>(),
+                Uri = new EtpUri(uri),
+                DataObjectTypes = new HashSet<EtpDataObjectType>(),
                 Depth = 1,
+                IncludeSelf = false,
+                IncludeSources = true,
+                IncludeTargets = false,
                 IncludeSecondarySources = false,
                 IncludeSecondaryTargets = false,
-                NavigableEdges = v12.Datatypes.Object.RelationshipKind.Primary,
+                NavigatePrimaryEdges = true,
+                NavigateSecondaryEdges = false,
             };
+
+            while (true)
+            {
+                Console.WriteLine("Choose an option:");
+                Console.WriteLine(" D - Set depth");
+                Console.WriteLine($" S - {(context.IncludeSelf ? "Exclude" : "Include")} Self");
+                Console.WriteLine($" O - {(context.IncludeSources ? "Exclude" : "Include")} Sources");
+                Console.WriteLine($" P - {(context.IncludeSecondarySources ? "Exclude" : "Include")} Secondary Sources");
+                Console.WriteLine($" T - {(context.IncludeTargets ? "Exclude" : "Include")} Targets");
+                Console.WriteLine($" U - {(context.IncludeSecondaryTargets ? "Exclude" : "Include")} Secondary Targets");
+                Console.WriteLine($" 1 - {(context.NavigatePrimaryEdges ? "Do Not " : "")}Navigate Primary Edges");
+                Console.WriteLine($" 2 - {(context.NavigateSecondaryEdges ? "Do Not " : "")}Navigate Primary Edges");
+                Console.WriteLine($" Y - Add Data Types");
+                Console.WriteLine($" (enter / other) - Submit request");
+                Console.WriteLine();
+
+                var info = Console.ReadKey();
+
+                Console.WriteLine(" - processing...");
+                Console.WriteLine();
+                if (IsKey(info, "D"))
+                {
+                    Console.WriteLine("Enter depth:");
+                    var depth = Console.ReadLine();
+                    int depthValue;
+                    if (int.TryParse(depth, out depthValue))
+                        context.Depth = depthValue;
+                }
+                else if (IsKey(info, "S"))
+                    context.IncludeSelf = !context.IncludeSelf;
+                else if (IsKey(info, "O"))
+                    context.IncludeSources = !context.IncludeSources;
+                else if (IsKey(info, "P"))
+                    context.IncludeSecondarySources = !context.IncludeSecondarySources;
+                else if (IsKey(info, "T"))
+                    context.IncludeTargets = !context.IncludeTargets;
+                else if (IsKey(info, "U"))
+                    context.IncludeSecondaryTargets = !context.IncludeSecondaryTargets;
+                else if (IsKey(info, "1"))
+                    context.NavigatePrimaryEdges = !context.NavigatePrimaryEdges;
+                else if (IsKey(info, "2"))
+                    context.NavigateSecondaryEdges = !context.NavigateSecondaryEdges;
+                else if (IsKey(info, "Y"))
+                {
+                    Console.WriteLine("Enter data type:");
+                    var dataType = Console.ReadLine();
+                    var dataTypeValue = new EtpDataObjectType(dataType);
+                    if (dataTypeValue.IsValid)
+                        context.DataObjectTypes.Add(dataTypeValue);
+                }
+                else
+                    break;
+            }
+
+            return context;
         }
     }
 }

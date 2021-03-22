@@ -117,6 +117,13 @@ namespace Energistics.Etp.Common
         EtpMessage<IProtocolException> ProtocolException(EtpException exception, bool isFinalPart = false, IMessageHeaderExtension extension = null);
 
         /// <summary>
+        /// Returns whether this handler can handle a message with the specified message body type.
+        /// </summary>
+        /// <param name="messageBodyType">The message body type</param>
+        /// <returns><c>true</c> if this handler can handle messages with the specified message body type; <c>false</c> otherwise.</returns>
+        bool CanHandleMessage(Type messageBodyType);
+
+        /// <summary>
         /// Handles the message based on the message type contained in the specified <see cref="IMessageHeader" />.
         /// </summary>
         /// <param name="message">The message.</param>

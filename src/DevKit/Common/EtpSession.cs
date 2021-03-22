@@ -465,6 +465,7 @@ namespace Energistics.Etp.Common
                 SessionSupportedFormats
             );
 
+            header.PrepareHeader(correlatedHeader, false, false);
             var body = EtpFactory.CreateOpenSession(EtpVersion, InstanceInfo, sessionDetails, SessionId);
 
             var message = new EtpMessage<IOpenSession>(header, body);
@@ -1489,7 +1490,7 @@ namespace Energistics.Etp.Common
                     ? $"{EtpExtensions.Serialize(message.Extension)}{Environment.NewLine}"
                     : string.Empty;
 
-                Logger.Verbose($"[{SessionKey}] {action} at {now.ToString(TimestampFormat)}: Name: {message.MessageName}; Message:{EtpExtensions.Serialize(message.Header)}{Environment.NewLine}{extension}{EtpExtensions.Serialize(message.Body, true)}");
+                Logger.Verbose($"[{SessionKey}] {action} at {now.ToString(TimestampFormat)}: Name: {message.MessageName}; Message: {EtpExtensions.Serialize(message.Header)}{Environment.NewLine}{extension}{EtpExtensions.Serialize(message.Body, true)}");
             }
         }
 

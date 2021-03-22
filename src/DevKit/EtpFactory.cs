@@ -931,6 +931,48 @@ namespace Energistics.Etp
         }
 
         /// <summary>
+        /// Tries to get the protocol number for an ETP message.
+        /// </summary>
+        /// <param name="version">The ETP version.</param>
+        /// <param name="messageBodyType">The message body type to get the protocol for.</param>
+        /// <returns>The protocol number on success; -1 otherwise.</returns>
+        public static int TryGetProtocolNumber(EtpVersion version, Type messageBodyType)
+        {
+            switch (version)
+            {
+                case EtpVersion.v11: return v11.MessageReflection.TryGetProtocolNumber(messageBodyType);
+                case EtpVersion.v12: return v12.MessageReflection.TryGetProtocolNumber(messageBodyType);
+                default:
+                    {
+                        var message = $"Unsupported ETP version: {version}.";
+                        Logger.Debug(message);
+                        throw new InvalidOperationException(message);
+                    }
+            }
+        }
+
+        /// <summary>
+        /// Tries to get the message type number for an ETP message.
+        /// </summary>
+        /// <param name="version">The ETP version.</param>
+        /// <param name="messageBodyType">The message body type to get the protocol for.</param>
+        /// <returns>The message type number on success; -1 otherwise.</returns>
+        public static int TryGetMessageTypeNumber(EtpVersion version, Type messageBodyType)
+        {
+            switch (version)
+            {
+                case EtpVersion.v11: return v11.MessageReflection.TryGetMessageTypeNumber(messageBodyType);
+                case EtpVersion.v12: return v12.MessageReflection.TryGetMessageTypeNumber(messageBodyType);
+                default:
+                    {
+                        var message = $"Unsupported ETP version: {version}.";
+                        Logger.Debug(message);
+                        throw new InvalidOperationException(message);
+                    }
+            }
+        }
+
+        /// <summary>
         /// Gets the name of a protocol.
         /// </summary>
         /// <typeparam name="TProtocol">The protocol enum.</typeparam>

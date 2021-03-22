@@ -39,6 +39,7 @@ namespace Energistics.Etp.v12.Protocol.Transaction
         {
             RegisterMessageHandler<StartTransactionResponse>(Protocols.Transaction, MessageTypes.Transaction.StartTransactionResponse, HandleStartTransactionResponse);
             RegisterMessageHandler<CommitTransactionResponse>(Protocols.Transaction, MessageTypes.Transaction.CommitTransactionResponse, HandleCommitTransactionResponse);
+            RegisterMessageHandler<RollbackTransactionResponse>(Protocols.Transaction, MessageTypes.Transaction.RollbackTransactionResponse, HandleRollbackTransactionResponse);
         }
 
         /// <summary>

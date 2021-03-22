@@ -301,7 +301,21 @@ namespace Energistics.Etp.Common
         /// Occurs when no response has been received in a timely fashion to a previously sent request message.
         /// </summary>
         public event EventHandler<MessageEventArgs> OnRequestTimedOut;
-        
+
+        /// <summary>
+        /// Returns whether this handler can handle a message with the specified message body type.
+        /// </summary>
+        /// <param name="messageBodyType">The message body type</param>
+        /// <returns><c>true</c> if this handler can handle messages with the specified message body type; <c>false</c> otherwise.</returns>
+        public bool CanHandleMessage(Type messageBodyType)
+        {
+            var protocol = EtpFactory.TryGetProtocolNumber(EtpVersion, messageBodyType);
+            var messageType = EtpFactory.TryGetMessageTypeNumber(EtpVersion, messageBodyType);
+
+            var messageKey = EtpExtensions.CreateMessageKey(protocol, messageType);
+            return MessageHandlers.ContainsKey(messageKey);
+        }
+
         /// <summary>
         /// Handles the message based on the message type contained in the specified <see cref="IMessageHeader" />.
         /// </summary>

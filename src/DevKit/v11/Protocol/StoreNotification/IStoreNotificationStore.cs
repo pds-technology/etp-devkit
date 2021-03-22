@@ -27,7 +27,7 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
     /// Defines the interface that must be implemented by the store role of the store notification protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Store, Roles.Store, Roles.Customer)]
+    [ProtocolRole((int)Protocols.StoreNotification, Roles.Store, Roles.Customer)]
     public interface IStoreNotificationStore : IProtocolHandler
     {
         /// <summary>

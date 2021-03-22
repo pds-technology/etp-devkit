@@ -26,6 +26,10 @@ namespace Energistics.Etp.Data
 {
     public class MockGraphContext
     {
+        public MockGraphContext()
+        {
+        }
+
         public MockGraphContext(IChannelDescribeSubscription subscription)
             : this(subscription.Uri, MockObject.GrowingObjectTypes)
         {
@@ -114,16 +118,35 @@ namespace Energistics.Etp.Data
             NavigateSecondaryEdges = true;
         }
 
-        public EtpUri Uri { get; }
-        public bool IncludeSelf { get; }
-        public bool IncludeSources { get; }
-        public bool IncludeTargets { get; }
+        public EtpUri Uri { get; set; }
+        public bool IncludeSelf { get; set; }
+        public bool IncludeSources { get; set; }
+        public bool IncludeTargets { get; set; }
         public bool IsSelfOnly => IncludeSelf && !IncludeSources && !IncludeTargets;
-        public int Depth { get; }
-        public ISet<EtpDataObjectType> DataObjectTypes { get; }
-        public bool NavigatePrimaryEdges { get; }
-        public bool NavigateSecondaryEdges { get; }
-        public bool IncludeSecondaryTargets { get; }
-        public bool IncludeSecondarySources { get; }
+        public int Depth { get; set; }
+        public ISet<EtpDataObjectType> DataObjectTypes { get; set; }
+        public bool NavigatePrimaryEdges { get; set; }
+        public bool NavigateSecondaryEdges { get; set; }
+        public bool IncludeSecondaryTargets { get; set; }
+        public bool IncludeSecondarySources { get; set; }
+
+        public v12.Datatypes.Object.ContextInfo ContextInfo12 => new v12.Datatypes.Object.ContextInfo
+        {
+            Uri = Uri,
+            Depth = Depth,
+            IncludeSecondarySources = IncludeSecondarySources,
+            IncludeSecondaryTargets = IncludeSecondaryTargets,
+            NavigableEdges = (NavigatePrimaryEdges && NavigateSecondaryEdges)
+                ? v12.Datatypes.Object.RelationshipKind.Both
+                : (NavigateSecondaryEdges ? v12.Datatypes.Object.RelationshipKind.Secondary : v12.Datatypes.Object.RelationshipKind.Primary),
+            DataObjectTypes = DataObjectTypes.Select(dt => dt.ToString()).ToList(),
+        };
+
+        public v12.Datatypes.Object.ContextScopeKind ContextScopeKind12 =>
+            IsSelfOnly
+                ? v12.Datatypes.Object.ContextScopeKind.self
+                : (IncludeSources
+                    ? (IncludeSelf ? v12.Datatypes.Object.ContextScopeKind.sourcesOrSelf : v12.Datatypes.Object.ContextScopeKind.sources)
+                    : (IncludeSelf ? v12.Datatypes.Object.ContextScopeKind.targetsOrSelf : v12.Datatypes.Object.ContextScopeKind.targets));
     };
 }

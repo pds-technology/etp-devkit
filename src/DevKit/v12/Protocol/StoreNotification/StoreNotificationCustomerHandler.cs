@@ -38,6 +38,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// </summary>
         public StoreNotificationCustomerHandler() : base((int)Protocols.StoreNotification, Roles.Customer, Roles.Store)
         {
+            RegisterMessageHandler<SubscribeNotificationsResponse>(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotificationsResponse, HandleSubscribeNotificationsResponse);
             RegisterMessageHandler<UnsolicitedStoreNotifications>(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsolicitedStoreNotifications, HandleUnsolicitedStoreNotifications);
             RegisterMessageHandler<ObjectChanged>(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectChanged, HandleObjectChanged);
             RegisterMessageHandler<Chunk>(Protocols.StoreNotification, MessageTypes.StoreNotification.Chunk, HandleChunk);

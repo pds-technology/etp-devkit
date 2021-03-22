@@ -49,8 +49,10 @@ namespace Energistics.Etp.Endpoints
         protected void InitializeRegistrar(IEtpSessionCapabilitiesRegistrar registrar, CustomerHandler customerHandler)
         {
             customerHandler.InitializeRegistrar(registrar);
-            registrar.Register(new EtpSupportedDataObject(new EtpDataObjectType(MockWitsmlObject.Type, "*")));
-            registrar.Register(new EtpSupportedDataObject(new EtpDataObjectType(MockCommonObject.Type, "*")));
+            registrar.Register(new EtpSupportedDataObject(MockCommonObject.Type.ToWildCard()));
+            registrar.Register(new EtpSupportedDataObject(MockWitsmlObject.Type.ToWildCard()));
+            registrar.Register(new EtpSupportedDataObject(MockResqmlObject.Type.ToWildCard()));
+            registrar.Register(new EtpSupportedDataObject(MockProdmlObject.Type.ToWildCard()));
         }
     }
 }
