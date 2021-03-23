@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System.IO;
+using System.Reflection;
 using log4net.Config;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -28,7 +29,7 @@ namespace Energistics.Etp
         [AssemblyInitialize]
         public static void Initialize(TestContext context)
         {
-            XmlConfigurator.Configure(new FileInfo("log4net.config"));
+            XmlConfigurator.Configure(log4net.LogManager.GetRepository(Assembly.GetExecutingAssembly()), new FileInfo("log4net.config"));
         }
     }
 }

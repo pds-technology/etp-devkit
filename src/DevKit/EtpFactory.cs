@@ -175,16 +175,17 @@ namespace Energistics.Etp
             {
                 case WebSocketType.Native:
                     return new Native.EtpServerManager(webServerDetails, endpointInfo, endpointParameters: endpointParameters);
+#if NETFRAMEWORK
                 case WebSocketType.WebSocket4Net:
                     return new WebSocket4Net.EtpServerManager(webServerDetails, endpointInfo, endpointParameters: endpointParameters);
-
+#endif
                 default:
-                    throw new ArgumentException($"Unrecognized WebSocket type: {webSocketType}", "webSocketType");
+                    throw new ArgumentException($"Unsupported WebSocket type: {webSocketType}", "webSocketType");
             }
         }
-        #endregion
+#endregion
 
-        #region IEtpSelfHostedWebServer
+#region IEtpSelfHostedWebServer
         /// <summary>
         /// Creates an <see cref="IEtpSelfHostedWebServer"/> using the default WebSocket type.
         /// </summary>
@@ -216,16 +217,17 @@ namespace Energistics.Etp
             {
                 case WebSocketType.Native:
                     return new Native.EtpSelfHostedWebServer(port, endpointInfo, endpointParameters: endpointParameters, details: details);
+#if NETFRAMEWORK
                 case WebSocketType.WebSocket4Net:
                     return new WebSocket4Net.EtpSelfHostedWebServer(port, endpointInfo, endpointParameters: endpointParameters, details: details);
-
+#endif
                 default:
-                    throw new ArgumentException($"Unrecognized WebSocket type: {webSocketType}", "webSocketType");
+                    throw new ArgumentException($"Unsupported WebSocket type: {webSocketType}", "webSocketType");
             }
         }
-        #endregion
+#endregion
         
-        #region Miscellaneous
+#region Miscellaneous
 
         /// <summary>
         /// Creates a client endpoint info
@@ -1005,6 +1007,6 @@ namespace Energistics.Etp
             }
         }
 
-        #endregion
+#endregion
     }
 }

@@ -75,6 +75,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(json.Contains(hexEscaped));
         }
 
+        [Ignore]
         [TestMethod]
         public void ByteArrayConverter_WriteJson_Can_Serialize_Compressed_Byte_Array_In_Avro_Format()
         {
@@ -113,14 +114,10 @@ namespace Energistics.Etp.Common.Datatypes
         {
             var json = "{ \"data\": \"" + Escape(HexGzip) + "\", \"contentEncoding\": \"gzip\" }";
 
-            var instance = EtpExtensions.Deserialize<v11.Datatypes.Object.DataObject>(json);
+            var dataObject = EtpExtensions.Deserialize<v11.Datatypes.Object.DataObject>(json);
 
-            var dataObject = new v11.Datatypes.Object.DataObject();
-            dataObject.SetString(Xml, EtpCompression.Gzip);
-
-            var expected = dataObject.Data;
-
-            CollectionAssert.AreEqual(expected, instance.Data);
+            var actual = dataObject.GetString();
+            Assert.AreEqual(Xml, actual);
         }
 
         private string Escape(string value)

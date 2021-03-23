@@ -72,7 +72,6 @@
     <Reference Include="SuperWebSocket, Version=0.9.0.0, Culture=neutral, PublicKeyToken=7ba53b9a7cef5d1c, processorArchitecture=MSIL">
       <HintPath>$(SolutionDir)\packages\SuperWebSocket.0.9.0.2\lib\net40\SuperWebSocket.dll</HintPath>
     </Reference>
-    <Reference Include="System.Net" />
     <Reference Include="Titanium.Web.Proxy, Version=3.0.684.0, Culture=neutral, PublicKeyToken=8e41e1f1c790d7cf, processorArchitecture=MSIL">
       <HintPath>$(SolutionDir)\packages\Titanium.Web.Proxy.3.0.684\lib\net45\Titanium.Web.Proxy.dll</HintPath>
     </Reference>

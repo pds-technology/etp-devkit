@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+using System.Reflection;
 using Energistics.Etp.Endpoints;
 using log4net.Config;
 
@@ -27,7 +28,7 @@ namespace Energistics.Etp
     {
         public static void Main(string[] args)
         {
-            XmlConfigurator.ConfigureAndWatch(new FileInfo("log4net.config"));
+            XmlConfigurator.ConfigureAndWatch(log4net.LogManager.GetRepository(Assembly.GetExecutingAssembly()), new FileInfo("log4net.config"));
             Start();
         }
 
