@@ -98,6 +98,6 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <summary>
         /// Handles the SubscriptionEnded event from a store when not sent in response to a request.
         /// </summary>
-        event EventHandler<FireAndForgetEventArgs<SubscriptionEnded>> OnNotificationSubscriptionEnded;
+        event EventHandler<NotificationEventArgs<SubscriptionInfo, SubscriptionEnded>> OnNotificationSubscriptionEnded;
     }
 }

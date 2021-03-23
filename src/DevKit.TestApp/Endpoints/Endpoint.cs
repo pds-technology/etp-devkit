@@ -270,8 +270,8 @@ namespace Energistics.Etp.Endpoints
             server.OnProtocolException += OnProtocolException;
             if (server.EtpVersion == EtpVersion.v12)
             {
-                server.Handler<v12.Protocol.Core.ICoreClient>().OnPing += OnPing;
-                server.Handler<v12.Protocol.Core.ICoreClient>().OnPong += OnPong;
+                server.Handler<v12.Protocol.Core.ICoreServer>().OnPing += OnPing;
+                server.Handler<v12.Protocol.Core.ICoreServer>().OnPong += OnPong;
             }
 
             InitializeServer(server);

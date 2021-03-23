@@ -131,7 +131,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <summary>
         /// Handles the PartSubscriptionEnded event from a store when not sent in response to a request.
         /// </summary>
-        public event EventHandler<FireAndForgetEventArgs<PartSubscriptionEnded>> OnNotificationPartSubscriptionEnded;
+        public event EventHandler<NotificationEventArgs<SubscriptionInfo, PartSubscriptionEnded>> OnNotificationPartSubscriptionEnded;
 
         /// <summary>
         /// Handles the ProtocolException message.
@@ -250,7 +250,8 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         {
             if (message.Header.CorrelationId == 0)
             {
-                HandleFireAndForgetMessage(message, OnNotificationPartSubscriptionEnded, HandleNotificationPartSubscriptionEnded);
+                var subscription = TryGetSubscription<SubscriptionInfo>(message.Body);
+                HandleNotificationMessage(subscription, message, OnNotificationPartSubscriptionEnded, HandleNotificationPartSubscriptionEnded);
             }
             else
             {
@@ -262,8 +263,8 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <summary>
         /// Handles the PartSubscriptionEnded message from a store when sent as a notification.
         /// </summary>
-        /// <param name="args">The <see cref="FireAndForgetEventArgs{PartSubscriptionEnded}"/> instance containing the event data.</param>
-        protected virtual void HandleNotificationPartSubscriptionEnded(FireAndForgetEventArgs<PartSubscriptionEnded> args)
+        /// <param name="args">The <see cref="NotificationEventArgs{SubscriptionInfo, PartSubscriptionEnded}"/> instance containing the event data.</param>
+        protected virtual void HandleNotificationPartSubscriptionEnded(NotificationEventArgs<SubscriptionInfo, PartSubscriptionEnded> args)
         {
         }
 

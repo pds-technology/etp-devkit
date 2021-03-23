@@ -33,6 +33,7 @@ namespace Energistics.Etp.Handlers
         public MockWellbore Wellbore02 { get; }
         public MockWellbore Wellbore03 { get; }
         public MockWellbore Wellbore04 { get; }
+        public MockWellbore Wellbore05 { get; }
         public MockChannelSet TimeChannelSet01 { get; }
         public MockChannel TimeChannel01 { get; }
         public MockChannel TimeChannel02 { get; }
@@ -232,6 +233,15 @@ namespace Energistics.Etp.Handlers
                 Parent = Well01,
             };
 
+            Wellbore05 = new MockWellbore
+            {
+                Dataspace = this,
+                Title = "Wellbore 05 - Automatic Subscription",
+                Creation = creation,
+                LastUpdate = creation,
+                Parent = Well01,
+            };
+
             TimeChannel01 = new MockChannel(true)
             {
                 Dataspace = this,
@@ -343,6 +353,7 @@ namespace Energistics.Etp.Handlers
                 Wellbore01,
                 Wellbore02,
                 Wellbore03,
+                Wellbore05,
                 RootProperty,
                 Velocity,
                 PenetrationRate,

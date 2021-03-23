@@ -144,7 +144,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <summary>
         /// Handles the SubscriptionEnded event from a store when not sent in response to a request.
         /// </summary>
-        public event EventHandler<FireAndForgetEventArgs<SubscriptionEnded>> OnNotificationSubscriptionEnded;
+        public event EventHandler<NotificationEventArgs<SubscriptionInfo, SubscriptionEnded>> OnNotificationSubscriptionEnded;
 
         /// <summary>
         /// Handles the ProtocolException message.
@@ -304,7 +304,8 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         {
             if (message.Header.CorrelationId == 0)
             {
-                HandleFireAndForgetMessage(message, OnNotificationSubscriptionEnded, HandleNotificationSubscriptionEnded);
+                var subscription = TryGetSubscription<SubscriptionInfo>(message.Body);
+                HandleNotificationMessage(subscription, message, OnNotificationSubscriptionEnded, HandleNotificationSubscriptionEnded);
             }
             else
             {
@@ -316,8 +317,8 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <summary>
         /// Handles the SubscriptionEnded message from a store when sent as a notification.
         /// </summary>
-        /// <param name="args">The <see cref="FireAndForgetEventArgs{SubscriptionEnded}"/> instance containing the event data.</param>
-        protected virtual void HandleNotificationSubscriptionEnded(FireAndForgetEventArgs<SubscriptionEnded> args)
+        /// <param name="args">The <see cref="NotificationEventArgs{SubscriptionInfo, SubscriptionEnded}"/> instance containing the event data.</param>
+        protected virtual void HandleNotificationSubscriptionEnded(NotificationEventArgs<SubscriptionInfo, SubscriptionEnded> args)
         {
         }
 

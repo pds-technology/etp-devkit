@@ -131,35 +131,40 @@ namespace Energistics.Etp.Handlers
             return true;
         }
 
-        private void OnGetDataspacesResponse(object sender, ResponseEventArgs<v12.Protocol.Dataspace.GetDataspaces, v12.Protocol.Dataspace.GetDataspacesResponse> e)
+        private void OnGetDataspacesResponse(object sender, ResponseEventArgs<v12.Protocol.Dataspace.GetDataspaces, v12.Protocol.Dataspace.GetDataspacesResponse> args)
         {
-            if (e.Response != null)
-                Console.WriteLine(EtpExtensions.Serialize(e.Response.Body.Dataspaces, true));
+            if (args.Response == null) return;
+
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.Dataspaces, true));
         }
 
-        private void OnGetResourcesResponse(object sender, ResponseEventArgs<v11.Protocol.Discovery.GetResources, v11.Protocol.Discovery.GetResourcesResponse> e)
+        private void OnGetResourcesResponse(object sender, ResponseEventArgs<v11.Protocol.Discovery.GetResources, v11.Protocol.Discovery.GetResourcesResponse> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(e.Response.Body.Resource, true));
+            if (args.Response == null) return;
+
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.Resource, true));
         }
 
-        private void OnGetResourcesResponse(object sender, DualResponseEventArgs<v12.Protocol.Discovery.GetResources, v12.Protocol.Discovery.GetResourcesResponse, v12.Protocol.Discovery.GetResourcesEdgesResponse> e)
+        private void OnGetResourcesResponse(object sender, DualResponseEventArgs<v12.Protocol.Discovery.GetResources, v12.Protocol.Discovery.GetResourcesResponse, v12.Protocol.Discovery.GetResourcesEdgesResponse> args)
         {
-            if (e.Response1 != null)
-                Console.WriteLine(EtpExtensions.Serialize(e.Response1.Body.Resources, true));
-            if (e.Response2 != null)
-                Console.WriteLine(EtpExtensions.Serialize(e.Response2.Body.Edges, true));
+            if (args.Response1 != null)
+                Console.WriteLine(EtpExtensions.Serialize(args.Response1.Body.Resources, true));
+            if (args.Response2 != null)
+                Console.WriteLine(EtpExtensions.Serialize(args.Response2.Body.Edges, true));
         }
 
-        private void OnGetDeletedResourcesResponse(object sender, ResponseEventArgs<v12.Protocol.Discovery.GetDeletedResources, v12.Protocol.Discovery.GetDeletedResourcesResponse> e)
+        private void OnGetDeletedResourcesResponse(object sender, ResponseEventArgs<v12.Protocol.Discovery.GetDeletedResources, v12.Protocol.Discovery.GetDeletedResourcesResponse> args)
         {
-            if (e.Response != null)
-                Console.WriteLine(EtpExtensions.Serialize(e.Response.Body.DeletedResources, true));
+            if (args.Response == null) return;
+
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.DeletedResources, true));
         }
 
-        private void OnGetSupportedTypesResponse(object sender, ResponseEventArgs<v12.Protocol.SupportedTypes.GetSupportedTypes, v12.Protocol.SupportedTypes.GetSupportedTypesResponse> e)
+        private void OnGetSupportedTypesResponse(object sender, ResponseEventArgs<v12.Protocol.SupportedTypes.GetSupportedTypes, v12.Protocol.SupportedTypes.GetSupportedTypesResponse> args)
         {
-            if (e.Response != null)
-                Console.WriteLine(EtpExtensions.Serialize(e.Response.Body.SupportedTypes, true));
+            if (args.Response == null) return;
+
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.SupportedTypes, true));
         }
 
         private MockGraphContext GetContext(string uri)

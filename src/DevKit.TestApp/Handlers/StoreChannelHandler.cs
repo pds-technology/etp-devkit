@@ -248,6 +248,10 @@ namespace Energistics.Etp.Handlers
                 args.FinalError = handler.ErrorInfo().RequestDenied();
                 return;
             }
+            if (!Store.HasChannelSubscription(sessionId))
+            {
+                args.FinalError = handler.ErrorInfo().InvalidState("Start must be sent before ChannelDescribe.");
+            }
 
             var allAddedChannels = new List<MockObject>();
             foreach (var subscription in args.Request.Body.GetSubscriptions(sessionId)) // Register metadata subscriptions
@@ -285,6 +289,11 @@ namespace Energistics.Etp.Handlers
                 args.FinalError = handler.ErrorInfo().RequestDenied();
                 return;
             }
+            if (!Store.HasChannelSubscription(sessionId))
+            {
+                args.FinalError = handler.ErrorInfo().InvalidState("Start must be sent before ChannelStreamingStart.");
+            }
+
             HashSet<long> startedChannels, stoppedChannels, closedChannels, invalidChannels;
             if (!Store.ValidateChannelIds(sessionId, args.Request.Body.Channels.Select(si => si.ChannelId), out startedChannels, out stoppedChannels, out closedChannels, out invalidChannels))
             {
@@ -318,9 +327,13 @@ namespace Energistics.Etp.Handlers
                 if (!Store.StartChannelStreaming(sessionId, channelId, streamingInfo.ReceiveChangeNotification, new MockIndex(streamingInfo.StartIndex)))
                     args.ErrorMap[channelId.ToString()] = handler.ErrorInfo().RequestDenied($"Could not start streaming for Channel {streamingInfo.ChannelId} ({growingObject.Mnemonic}).");
             }
-            // Send removed channel IDs
-            foreach (var channelId in closedChannels)
-                handler.ChannelRemove(channelId);
+
+            args.PostResponseAction = () =>
+            {
+                // Send removed channel IDs
+                foreach (var channelId in closedChannels)
+                    handler.ChannelRemove(channelId);
+            };
         }
 
         private void OnChannelStreamingStop(object sender, VoidRequestEventArgs<v11.Protocol.ChannelStreaming.ChannelStreamingStop> args)
@@ -339,6 +352,10 @@ namespace Energistics.Etp.Handlers
             {
                 args.FinalError = handler.ErrorInfo().RequestDenied();
                 return;
+            }
+            if (!Store.HasChannelSubscription(sessionId))
+            {
+                args.FinalError = handler.ErrorInfo().InvalidState("Start must be sent before ChannelStreamingStop.");
             }
             HashSet<long> startedChannels, stoppedChannels, closedChannels, invalidChannels;
             if (!Store.ValidateChannelIds(sessionId, args.Request.Body.Channels, out startedChannels, out stoppedChannels, out closedChannels, out invalidChannels))
@@ -372,6 +389,10 @@ namespace Energistics.Etp.Handlers
             {
                 args.FinalError = handler.ErrorInfo().RequestDenied();
                 return;
+            }
+            if (!Store.HasChannelSubscription(sessionId))
+            {
+                args.FinalError = handler.ErrorInfo().InvalidState("Start must be sent before ChannelRangeRequest.");
             }
             HashSet<long> startedChannels, stoppedChannels, closedChannels, invalidChannels;
             if (!Store.ValidateChannelIds(sessionId, args.Request.Body.ChannelRanges.SelectMany(cr => cr.ChannelId), out startedChannels, out stoppedChannels, out closedChannels, out invalidChannels))

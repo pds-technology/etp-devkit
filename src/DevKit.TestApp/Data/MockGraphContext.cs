@@ -139,7 +139,7 @@ namespace Energistics.Etp.Data
             NavigableEdges = (NavigatePrimaryEdges && NavigateSecondaryEdges)
                 ? v12.Datatypes.Object.RelationshipKind.Both
                 : (NavigateSecondaryEdges ? v12.Datatypes.Object.RelationshipKind.Secondary : v12.Datatypes.Object.RelationshipKind.Primary),
-            DataObjectTypes = DataObjectTypes.Select(dt => dt.ToString()).ToList(),
+            DataObjectTypes = DataObjectTypes?.Select(dt => dt.ToString()).ToList() ?? new List<string>(),
         };
 
         public v12.Datatypes.Object.ContextScopeKind ContextScopeKind12 =>

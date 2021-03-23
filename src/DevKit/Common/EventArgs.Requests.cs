@@ -99,6 +99,11 @@ namespace Energistics.Etp.Common
         /// Gets or sets a message header extension to send with the final error.
         /// </summary>
         public IMessageHeaderExtension FinalErrorExtension { get; set; }
+
+        /// <summary>
+        /// An optional action to execute after sending the full response including any errors.
+        /// </summary>
+        public Action PostResponseAction { get; set; }
     }
 
     /// <summary>

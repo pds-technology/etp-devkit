@@ -265,6 +265,8 @@ namespace Energistics.Etp.Handlers
 
         private void OnBasicStreamerChannelMetadata(object sender, ResponseEventArgs<v11.Protocol.ChannelStreaming.ChannelDescribe, v11.Protocol.ChannelStreaming.ChannelMetadata> args)
         {
+            if (args.Response == null) return;
+
             foreach (var metadata in args.Response.Body.Channels)
                 ChannelMetadata[metadata.ChannelId] = metadata;
 
@@ -315,8 +317,7 @@ namespace Energistics.Etp.Handlers
 
         private void OnGetChannelMetadataResponse(object sender, ResponseEventArgs<v12.Protocol.ChannelSubscribe.GetChannelMetadata, v12.Protocol.ChannelSubscribe.GetChannelMetadataResponse> args)
         {
-            if (args.Response == null)
-                return;
+            if (args.Response == null) return;
 
             foreach (var metadata in args.Response.Body.Metadata.Values)
                 ChannelMetadata[metadata.Id] = metadata;

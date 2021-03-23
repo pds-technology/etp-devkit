@@ -82,7 +82,7 @@ namespace Energistics.Etp.Store
 
         public EtpSupportedDataObjectCollection SupportedDataObjects { get; } = new EtpSupportedDataObjectCollection();
 
-        private DateTime StoreLastWrite { get; set; }
+        public DateTime StoreLastWrite { get; private set; }
         private BackgroundLoop ActiveStatusLoop { get; } = new BackgroundLoop();
         private bool Locked { get; set; }
 

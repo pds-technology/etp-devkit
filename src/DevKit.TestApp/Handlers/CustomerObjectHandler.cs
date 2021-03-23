@@ -51,8 +51,14 @@ namespace Energistics.Etp.Handlers
             else if (Session.EtpVersion == EtpVersion.v12)
             {
                 Session.Handler<v12.Protocol.Store.IStoreCustomer>().OnGetDataObjectsResponse += OnGetDataObjectsResponse;
+                Session.Handler<v12.Protocol.StoreNotification.IStoreNotificationCustomer>().OnUnsolicitedStoreNotifications += OnUnsolicitedStoreNotifications;
                 Session.Handler<v12.Protocol.StoreNotification.IStoreNotificationCustomer>().OnObjectChanged += OnObjectChanged;
+                Session.Handler<v12.Protocol.StoreNotification.IStoreNotificationCustomer>().OnObjectChangedChunk += OnObjectChangedChunk;
+                Session.Handler<v12.Protocol.StoreNotification.IStoreNotificationCustomer>().OnObjectActiveStatusChanged += OnObjectActiveStatusChanged;
+                Session.Handler<v12.Protocol.StoreNotification.IStoreNotificationCustomer>().OnObjectAccessRevoked += OnObjectAccessRevoked;
                 Session.Handler<v12.Protocol.StoreNotification.IStoreNotificationCustomer>().OnObjectDeleted += OnObjectDeleted;
+                Session.Handler<v12.Protocol.StoreNotification.IStoreNotificationCustomer>().OnNotificationSubscriptionEnded += OnNotificationSubscriptionEnded;
+                Session.Handler<v12.Protocol.StoreNotification.IStoreNotificationCustomer>().OnResponseSubscriptionEnded += OnResponseSubscriptionEnded;
             }
         }
 
@@ -139,50 +145,109 @@ namespace Energistics.Etp.Handlers
             return true;
         }
 
-        private void OnObject(object sender, ResponseEventArgs<v11.Protocol.Store.GetObject, v11.Protocol.Store.Object> e)
+        private void OnObject(object sender, ResponseEventArgs<v11.Protocol.Store.GetObject, v11.Protocol.Store.Object> args)
         {
-            Console.WriteLine(e.Response.Body.DataObject.GetString());
+            if (args.Response == null) return;
+
+            Console.WriteLine(args.Response.Body.DataObject.GetString());
         }
 
-        private void OnChangeNotification(object sender, NotificationEventArgs<v11.Datatypes.Object.NotificationRequestRecord, v11.Protocol.StoreNotification.ChangeNotification> e)
+        private void OnChangeNotification(object sender, NotificationEventArgs<v11.Datatypes.Object.NotificationRequestRecord, v11.Protocol.StoreNotification.ChangeNotification> args)
         {
-            var @string = e.Notification.Body.Change.DataObject?.GetString();
-            if (e.Notification.Body.Change.DataObject != null)
-                e.Notification.Body.Change.DataObject.Data = null;
+            if (args.Notification == null) return;
 
-            Console.WriteLine(EtpExtensions.Serialize(e.Notification.Body, true));
+            var @string = args.Notification.Body.Change.DataObject?.GetString();
+            if (args.Notification.Body.Change.DataObject != null)
+                args.Notification.Body.Change.DataObject.Data = null;
+
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
             if (!string.IsNullOrEmpty(@string))
                 Console.WriteLine(@string);
         }
 
-        private void OnDeleteNotification(object sender, NotificationEventArgs<v11.Datatypes.Object.NotificationRequestRecord, v11.Protocol.StoreNotification.DeleteNotification> e)
+        private void OnDeleteNotification(object sender, NotificationEventArgs<v11.Datatypes.Object.NotificationRequestRecord, v11.Protocol.StoreNotification.DeleteNotification> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(e.Notification.Body, true));
+            if (args.Notification == null) return;
+
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
         }
 
-        private void OnGetDataObjectsResponse(object sender, DualResponseEventArgs<v12.Protocol.Store.GetDataObjects, v12.Protocol.Store.GetDataObjectsResponse, v12.Protocol.Store.Chunk> e)
+        private void OnGetDataObjectsResponse(object sender, DualResponseEventArgs<v12.Protocol.Store.GetDataObjects, v12.Protocol.Store.GetDataObjectsResponse, v12.Protocol.Store.Chunk> args)
         {
-            if (e.Response1 != null)
+            if (args.Response1 != null)
             {
-                foreach (var dataObject in e.Response1.Body.DataObjects.Values)
-                    Console.WriteLine(dataObject.GetString());
+                foreach (var dataObject in args.Response1.Body.DataObjects.Values)
+                {
+                    var @string = dataObject.GetString();
+                    dataObject.Data = null;
+                    Console.WriteLine(EtpExtensions.Serialize(dataObject, true));
+                    if (!string.IsNullOrEmpty(@string))
+                        Console.WriteLine(@string);
+                }
             }
+            if (args.Response2 != null)
+                Console.WriteLine($"Chunk received for {args.Response2.Body.BlobIdGuid.UuidGuid} with {args.Response2.Body.Data?.Length ?? 0} bytes.");
         }
 
-        private void OnObjectChanged(object sender, NotificationEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.ObjectChanged> e)
-        {
-            var @string = e.Notification.Body.Change.DataObject?.GetString();
-            if (e.Notification.Body.Change.DataObject != null)
-                e.Notification.Body.Change.DataObject.Data = null;
 
-            Console.WriteLine(EtpExtensions.Serialize(e.Notification.Body, true));
+        private void OnUnsolicitedStoreNotifications(object sender, FireAndForgetEventArgs<v12.Protocol.StoreNotification.UnsolicitedStoreNotifications> args)
+        {
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body, true));
+        }
+
+        private void OnObjectChanged(object sender, NotificationEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.ObjectChanged> args)
+        {
+            if (args.Notification == null) return;
+
+            var @string = args.Notification.Body.Change.DataObject?.GetString();
+            if (args.Notification.Body.Change.DataObject != null)
+                args.Notification.Body.Change.DataObject.Data = null;
+
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
             if (!string.IsNullOrEmpty(@string))
                 Console.WriteLine(@string);
         }
 
-        private void OnObjectDeleted(object sender, NotificationEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.ObjectDeleted> e)
+        private void OnObjectChangedChunk(object sender, NotificationWithDataEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.ObjectChanged, v12.Protocol.StoreNotification.Chunk> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(e.Notification.Body, true));
+            if (args.Data == null) return;
+
+            Console.WriteLine($"Chunk received for {args.Data.Body.BlobIdGuid.UuidGuid} with {args.Data.Body.Data?.Length ?? 0} bytes.");
+        }
+
+        private void OnObjectActiveStatusChanged(object sender, NotificationEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.ObjectActiveStatusChanged> args)
+        {
+            if (args.Notification == null) return;
+
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
+        }
+
+        private void OnObjectAccessRevoked(object sender, NotificationEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.ObjectAccessRevoked> args)
+        {
+            if (args.Notification == null) return;
+
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
+        }
+
+        private void OnObjectDeleted(object sender, NotificationEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.ObjectDeleted> args)
+        {
+            if (args.Notification == null) return;
+
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
+        }
+
+        private void OnNotificationSubscriptionEnded(object sender, NotificationEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.SubscriptionEnded> args)
+        {
+            if (args.Notification == null) return;
+
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
+        }
+
+        private void OnResponseSubscriptionEnded(object sender, ResponseEventArgs<v12.Protocol.StoreNotification.UnsubscribeNotifications, v12.Protocol.StoreNotification.SubscriptionEnded> args)
+        {
+            if (args.Response == null) return;
+
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body, true));
         }
     }
 }

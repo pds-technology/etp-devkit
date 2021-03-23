@@ -53,9 +53,26 @@ namespace Energistics.Etp.Data
             Context = new MockGraphContext(new EtpUri(uri));
         }
 
+        public MockSubscriptionInfo(EtpVersion version, MockObject mockObject, Guid requestUuid)
+        {
+            RequestUuid = requestUuid;
+            IncludeObjectData = true;
+            Context = new MockGraphContext(mockObject.Uri(version));
+        }
+
+
         public Guid RequestUuid { get; }
         public string Format { get; } = Formats.Xml;
         public bool IncludeObjectData { get; }
         public MockGraphContext Context { get; }
+
+        public v12.Datatypes.Object.SubscriptionInfo SubsriptionInfo12 => new v12.Datatypes.Object.SubscriptionInfo
+        {
+            Format = Format,
+            Context = Context.ContextInfo12,
+            Scope = Context.ContextScopeKind12,
+            IncludeObjectData = IncludeObjectData,
+            RequestUuid = RequestUuid.ToUuid<v12.Datatypes.Uuid>(),
+        };
     };
 }

@@ -87,6 +87,6 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         /// <summary>
         /// Handles the PartSubscriptionEnded event from a store when not sent in response to a request.
         /// </summary>
-        event EventHandler<FireAndForgetEventArgs<PartSubscriptionEnded>> OnNotificationPartSubscriptionEnded;
+        event EventHandler<NotificationEventArgs<SubscriptionInfo, PartSubscriptionEnded>> OnNotificationPartSubscriptionEnded;
     }
 }

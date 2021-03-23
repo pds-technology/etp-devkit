@@ -441,6 +441,8 @@ namespace Energistics.Etp.Common
 
             if (args.HasFinalError)
                 ProtocolException(args.FinalError, correlatedHeader: args.Request.Header, isFinalPart: true, extension: args.FinalErrorExtension);
+
+            args.PostResponseAction?.Invoke();
         }
 
         /// <summary>
@@ -467,6 +469,8 @@ namespace Energistics.Etp.Common
 
             if (args.HasFinalError)
                 ProtocolException(args.FinalError, correlatedHeader: args.Request.Header, isFinalPart: true, extension: args.FinalErrorExtension);
+
+            args.PostResponseAction?.Invoke();
         }
 
         /// <summary>

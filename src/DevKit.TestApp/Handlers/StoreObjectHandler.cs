@@ -64,6 +64,7 @@ namespace Energistics.Etp.Handlers
             else if (Session.EtpVersion == EtpVersion.v12)
             {
                 Session.Handler<v12.Protocol.Store.IStoreStore>().OnGetDataObjects += OnGetDataObjects;
+                Session.Handler<v12.Protocol.StoreNotification.IStoreNotificationStore>().OnStarted += OnStoreNotificationStoreStarted;
                 Session.Handler<v12.Protocol.StoreNotification.IStoreNotificationStore>().OnSubscribeNotifications += OnSubscribeNotifications;
                 Session.Handler<v12.Protocol.StoreNotification.IStoreNotificationStore>().OnUnsubscribeNotifications += OnUnsubscribeNotifications;
             }
@@ -219,6 +220,19 @@ namespace Energistics.Etp.Handlers
                         args.ErrorMap[kvp.Key] = handler.ErrorInfo().NotFound(args.Request.Body.Uris[kvp.Key]);
                 }
             }
+        }
+
+        private void OnStoreNotificationStoreStarted(object sender, EventArgs args)
+        {
+            var handler = (v12.Protocol.StoreNotification.IStoreNotificationStore)sender;
+            Store.ExecuteWithLock(() =>
+            {
+                var callbacks = CreateStoreNotificationCallbacks(handler);
+                var uuid = Guid.NewGuid();
+                var subscriptionInfo = new MockSubscriptionInfo(EtpVersion.v12, Dataspace.Wellbore05, uuid);
+                if (Store.SubscribeObjectNotifications(EtpVersion.v12, Store.StoreLastWrite, true, subscriptionInfo, callbacks))
+                    handler.UnsolicitedStoreNotifications(new List<v12.Datatypes.Object.SubscriptionInfo> { subscriptionInfo.SubsriptionInfo12 });
+            });
         }
 
         private void OnSubscribeNotifications(object sender, MapRequestEventArgs<v12.Protocol.StoreNotification.SubscribeNotifications, string> args)
