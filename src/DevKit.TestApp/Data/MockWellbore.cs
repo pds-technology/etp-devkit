@@ -48,7 +48,7 @@ $@"{indentation}<Wellbore{Namespaces(embedded)} schemaVersion=""2.0"" uuid=""{Uu
 {indentation}    <Title>{Title}</Title>
 {indentation}    <Originator>ETP DevKit</Originator>
 {indentation}    <Creation>{Creation.ToUniversalTime():O}</Creation>
-{indentation}    <Format>[Energistics:ETP DevKit {typeof(IEtpSession).Assembly.GetName().Version}]</Format>
+{indentation}    <Format>Energistics:ETP DevKit {typeof(IEtpSession).Assembly.GetName().Version}</Format>
 {indentation}    <LastUpdate>{LastUpdate.ToUniversalTime():O}</LastUpdate>
 {indentation}  </Citation>
 {indentation}  <IsActive>{(IsActive ? "true" : "false")}</IsActive>

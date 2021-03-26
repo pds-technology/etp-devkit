@@ -120,7 +120,7 @@ $@"{indentation}<Channel{Namespaces(embedded)} schemaVersion=""2.0"" uuid=""{Uui
 {indentation}    <Title>{Title}</Title>
 {indentation}    <Originator>ETP DevKit</Originator>
 {indentation}    <Creation>{Creation.ToUniversalTime():O}</Creation>
-{indentation}    <Format>[Energistics:ETP DevKit {typeof(IEtpSession).Assembly.GetName().Version}]</Format>
+{indentation}    <Format>Energistics:ETP DevKit {typeof(IEtpSession).Assembly.GetName().Version}</Format>
 {indentation}    <LastUpdate>{LastUpdate.ToUniversalTime():O}</LastUpdate>
 {indentation}  </Citation>
 {indentation}  <Mnemonic>{Mnemonic}</Mnemonic>
@@ -146,7 +146,8 @@ $@"{indentation}<Channel{Namespaces(embedded)} schemaVersion=""2.0"" uuid=""{Uui
 {indentation}  <EndIndex xsi:type=""{(IsTime ? "TimeIndexValue" : "DepthIndexValue")}"">
 {indentation}    <{(IsTime ? "Time" : "Depth")}>{(IsTime ? TimeEndIndex?.ToString("O", CultureInfo.InvariantCulture) : DepthEndIndex?.ToString(CultureInfo.InvariantCulture))}</{(IsTime ? "Time" : "Depth")}>
 {indentation}  </EndIndex>
-{indentation}  <LoggingCompanyName>ETP DevKit</LoggingCompanyName>
+{indentation}  <LoggingCompanyName>Energistics</LoggingCompanyName>
+{indentation}  <LoggingCompanyCode>1000</LoggingCompanyCode>
 {indentation}  <Index>
 {indentation}    <IndexType>{(IsTime ? "date time" : "measured depth")}</IndexType>
 {indentation}    <Uom>{IndexUom}</Uom>

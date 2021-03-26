@@ -49,6 +49,7 @@ namespace Energistics.Etp.Handlers
                 Session.Handler<v11.Protocol.ChannelStreaming.IChannelStreamingConsumer>().OnSimpleStreamerChannelMetadata += OnSimpleStreamerChannelMetadata;
                 Session.Handler<v11.Protocol.ChannelStreaming.IChannelStreamingConsumer>().OnBasicStreamerChannelMetadata += OnBasicStreamerChannelMetadata;
                 Session.Handler<v11.Protocol.ChannelStreaming.IChannelStreamingConsumer>().OnStreamingChannelData += OnStreamingChannelData;
+                Session.Handler<v11.Protocol.ChannelStreaming.IChannelStreamingConsumer>().OnChannelRangeRequestChannelData += OnChannelRangeRequestChannelData;
                 Session.Handler<v11.Protocol.ChannelStreaming.IChannelStreamingConsumer>().OnChannelRemove += OnChannelRemove;
                 Session.Handler<v11.Protocol.ChannelStreaming.IChannelStreamingConsumer>().OnChannelStatusChange += OnChannelStatusChange;
                 Session.Handler<v11.Protocol.ChannelStreaming.IChannelStreamingConsumer>().OnChannelDataChange += OnChannelDataChange;
@@ -59,6 +60,11 @@ namespace Energistics.Etp.Handlers
                 Session.Handler<v12.Protocol.ChannelStreaming.IChannelStreamingConsumer>().OnChannelData += OnChannelData;
                 Session.Handler<v12.Protocol.ChannelSubscribe.IChannelSubscribeCustomer>().OnGetChannelMetadataResponse += OnGetChannelMetadataResponse;
                 Session.Handler<v12.Protocol.ChannelSubscribe.IChannelSubscribeCustomer>().OnChannelData += OnChannelData;
+                Session.Handler<v12.Protocol.ChannelSubscribe.IChannelSubscribeCustomer>().OnRangeReplaced += OnRangeReplaced;
+                Session.Handler<v12.Protocol.ChannelSubscribe.IChannelSubscribeCustomer>().OnChannelsTruncated += OnChannelsTruncated;
+                Session.Handler<v12.Protocol.ChannelSubscribe.IChannelSubscribeCustomer>().OnNotificationSubscriptionsStopped += OnNotificationSubscriptionsStopped;
+                Session.Handler<v12.Protocol.ChannelSubscribe.IChannelSubscribeCustomer>().OnResponseSubscriptionsStopped += OnResponseSubscriptionsStopped;
+                Session.Handler<v12.Protocol.ChannelSubscribe.IChannelSubscribeCustomer>().OnGetRangesResponse += OnGetRangesResponse;
             }
         }
 
@@ -289,6 +295,11 @@ namespace Energistics.Etp.Handlers
             Console.WriteLine(EtpExtensions.Serialize(args.Message.Body.Data, true));
         }
 
+        private void OnChannelRangeRequestChannelData(object sender, ResponseEventArgs<v11.Protocol.ChannelStreaming.ChannelRangeRequest, v11.Protocol.ChannelStreaming.ChannelData> args)
+        {
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.Data, true));
+        }
+
         private void OnChannelRemove(object sender, FireAndForgetEventArgs<v11.Protocol.ChannelStreaming.ChannelRemove> args)
         {
             ChannelMetadata.TryRemove(args.Message.Body.ChannelId, out _);
@@ -327,6 +338,31 @@ namespace Energistics.Etp.Handlers
         private void OnChannelData(object sender, FireAndForgetEventArgs<v12.Protocol.ChannelSubscribe.ChannelData> args)
         {
             Console.WriteLine(EtpExtensions.Serialize(args.Message.Body.Data, true));
+        }
+
+        private void OnRangeReplaced(object sender, FireAndForgetEventArgs<v12.Protocol.ChannelSubscribe.RangeReplaced> args)
+        {
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body, true));
+        }
+
+        private void OnChannelsTruncated(object sender, FireAndForgetEventArgs<v12.Protocol.ChannelSubscribe.ChannelsTruncated> args)
+        {
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body, true));
+        }
+
+        private void OnNotificationSubscriptionsStopped(object sender, FireAndForgetEventArgs<v12.Protocol.ChannelSubscribe.SubscriptionsStopped> args)
+        {
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body, true));
+        }
+
+        private void OnResponseSubscriptionsStopped(object sender, ResponseEventArgs<v12.Protocol.ChannelSubscribe.UnsubscribeChannels, v12.Protocol.ChannelSubscribe.SubscriptionsStopped> args)
+        {
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body, true));
+        }
+
+        private void OnGetRangesResponse(object sender, ResponseEventArgs<v12.Protocol.ChannelSubscribe.GetRanges, v12.Protocol.ChannelSubscribe.GetRangesResponse> args)
+        {
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body, true));
         }
     }
 }

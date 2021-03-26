@@ -122,7 +122,7 @@ $@"{indentation}<ChannelSet{Namespaces(embedded)} schemaVersion=""2.0"" uuid=""{
 {indentation}    <Title>{Title}</Title>
 {indentation}    <Originator>ETP DevKit</Originator>
 {indentation}    <Creation>{Creation.ToUniversalTime():O}</Creation>
-{indentation}    <Format>[Energistics:ETP DevKit {typeof(IEtpSession).Assembly.GetName().Version}]</Format>
+{indentation}    <Format>Energistics:ETP DevKit {typeof(IEtpSession).Assembly.GetName().Version}</Format>
 {indentation}    <LastUpdate>{LastUpdate.ToUniversalTime():O}</LastUpdate>
 {indentation}  </Citation>
 {indentation}  <Index>
