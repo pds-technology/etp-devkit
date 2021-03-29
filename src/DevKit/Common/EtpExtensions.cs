@@ -71,12 +71,13 @@ namespace Energistics.Etp.Common
                 new StringEnumConverter(),
 
                 // TODO: new Etp11.Datatypes.DataValueConverter(),
+                new v11.Datatypes.DataValueConverter(),
                 new v11.Datatypes.ChannelData.StreamingStartIndexConverter(),
                 new v11.Datatypes.Object.GrowingObjectIndexConverter(),
 
-                // TODO: new Etp12.Datatypes.DataValueConverter(),
+                new v12.Datatypes.DataValueConverter(),
                 new v12.Datatypes.IndexValueConverter(),
-                // new v12.Datatypes.Object.GrowingObjectIndexConverter()
+                // TODO: new v12.Datatypes.Object.GrowingObjectIndexConverter()
             }
         };
 

@@ -723,8 +723,6 @@ namespace Energistics.Etp.Common
                 }
             }
 
-            // TODO: Log unsupported compression received from counterpart.
-
             SessionSupportedCompression = supportedCompression;
             return true;
         }
@@ -749,8 +747,6 @@ namespace Energistics.Etp.Common
                 else
                     Logger.Trace($"[{SessionKey}] Ignoring format not supported by counterpart: {format}");
             }
-
-            // TODO: Log unsupported formats received from counterpart.
 
             SessionSupportedFormats = supportedFormats;
             return true;

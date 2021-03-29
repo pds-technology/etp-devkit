@@ -233,7 +233,6 @@ namespace Energistics.Etp.Native
         {
             try
             {
-                // TODO: Handle server cap URL
                 HttpListenerContext context = await _httpListener.GetContextAsync().ConfigureAwait(false);
                 if (token.IsCancellationRequested)
                 {

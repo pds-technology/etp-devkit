@@ -149,7 +149,8 @@ namespace Energistics.Etp.Native
         /// <param name="port">The port number.</param>
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
-        public void SetProxy(string host, int port, string username = null, string password = null)
+        /// <param name="useDefaultCredentials">Whether or not to use default credentials.</param>
+        public void SetProxy(string host, int port, string username = null, string password = null, bool useDefaultCredentials = false)
         {
             if (Socket == null) return;
 
@@ -161,7 +162,7 @@ namespace Energistics.Etp.Native
                 proxy.Credentials = new NetworkCredential(username, password);
             }
 
-            // TODO: Handle using default credentials
+            proxy.UseDefaultCredentials = useDefaultCredentials;
 
             ClientSocket.Options.Proxy = proxy;
         }

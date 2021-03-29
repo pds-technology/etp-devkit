@@ -17,7 +17,10 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Energistics.Etp.v11.Datatypes
 {
@@ -27,10 +30,36 @@ namespace Energistics.Etp.v11.Datatypes
     /// <seealso cref="Newtonsoft.Json.JsonConverter" />
     public class DataValueConverter : JsonConverter
     {
+        private const string ItemPropertyName = "item";
+
+        private static readonly Dictionary<Type, string> TypeToName = new Dictionary<Type, string>
+        {
+            [typeof(bool)] = "boolean",
+            [typeof(int)] = "int",
+            [typeof(long)] = "long",
+            [typeof(float)] = "float",
+            [typeof(double)] = "double",
+            [typeof(string)] = "string",
+            [typeof(byte[])] = "bytes",
+            [typeof(ArrayOfDouble)] = "Energistics.Etp.v12.Datatypes.ArrayOfDouble",
+        };
+
+        private static readonly Dictionary<string, Type> NameToType = new Dictionary<string, Type>
+        {
+            ["boolean"] = typeof(bool),
+            ["int"] = typeof(int),
+            ["long"] = typeof(long),
+            ["float"] = typeof(float),
+            ["double"] = typeof(double),
+            ["string"] = typeof(string),
+            ["bytes"] = typeof(byte[]),
+            ["Energistics.Etp.v12.Datatypes.ArrayOfDouble"] = typeof(ArrayOfDouble),
+        };
+
         /// <summary>
         /// Determines whether this instance can convert the specified object type.
         /// </summary>
-        /// <param name="objectType">The object type.</param>
+        /// <param name="objectType">Type of the object.</param>
         /// <returns>
         /// <c>true</c> if this instance can convert the specified object type; otherwise, <c>false</c>.
         /// </returns>
@@ -49,7 +78,40 @@ namespace Energistics.Etp.v11.Datatypes
         /// <returns>The object value.</returns>
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            if (reader.TokenType == JsonToken.Null)
+                return null;
+
+            var dataValue = new DataValue();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var propertyName = reader.Value.ToString();
+                reader.Read();
+
+                if (!ItemPropertyName.Equals(propertyName))
+                    continue;
+
+                var value = serializer.Deserialize(reader);
+                if (value == null)
+                {
+                    dataValue.Item = null;
+                }
+                else if (value is JObject)
+                {
+                    var itemValue = (value as JObject).Properties().FirstOrDefault(p => NameToType.ContainsKey(p.Name));
+                    if (itemValue == null)
+                        throw new JsonSerializationException($"Unsupported data type: {value}");
+
+                    dataValue.Item = itemValue.ToObject(NameToType[itemValue.Name]);
+                }
+                else
+                {
+                    // Handle case where avro-json format is not used
+                    dataValue.Item = value;
+                }
+            }
+
+            return dataValue;
         }
 
         /// <summary>
@@ -60,7 +122,36 @@ namespace Energistics.Etp.v11.Datatypes
         /// <param name="serializer">The calling serializer.</param>
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            var index = value as DataValue;
+
+            if (index == null)
+            {
+                writer.WriteNull();
+                return;
+            }
+
+            writer.WriteStartObject();
+            writer.WritePropertyName(ItemPropertyName);
+
+            if (index.Item == null)
+            {
+                writer.WriteNull();
+            }
+            else
+            {
+                writer.WriteStartObject();
+
+                string typeName;
+                if (!TypeToName.TryGetValue(index.Item.GetType(), out typeName))
+                    throw new JsonSerializationException($"Unsupported data type '{index.Item.GetType().FullName}' for value '{index.Item}'.");
+
+                writer.WritePropertyName(typeName);
+
+                serializer.Serialize(writer, index.Item, index.Item.GetType());
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndObject();
         }
     }
 }

@@ -8,8 +8,8 @@
     <Company>Energistics</Company>
     <Product>ETP DevKit</Product>
     <Copyright>Copyright © 2016</Copyright>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <PreBuildEvent />
     <PreBuildEvent />

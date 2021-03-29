@@ -17,20 +17,62 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Energistics.Etp.v12.Datatypes
 {
     /// <summary>
-    /// Converts a <see cref="IndexValue"/> to and from JSON.
+    /// Converts a <see cref="DataValue"/> to and from JSON.
     /// </summary>
     /// <seealso cref="Newtonsoft.Json.JsonConverter" />
-    public class IndexValueConverter : JsonConverter
+    public class DataValueConverter : JsonConverter
     {
         private const string ItemPropertyName = "item";
-        private const string LongDataType = "long";
-        private const string DoubleDataType = "double";
+
+        private static readonly Dictionary<Type, string> TypeToName = new Dictionary<Type, string>
+        {
+            [typeof(bool)] = "boolean",
+            [typeof(int)] = "int",
+            [typeof(long)] = "long",
+            [typeof(float)] = "float",
+            [typeof(double)] = "double",
+            [typeof(string)] = "string",
+            [typeof(byte[])] = "bytes",
+            [typeof(ArrayOfBoolean)] = "Energistics.Etp.v12.Datatypes.ArrayOfBoolean",
+            [typeof(ArrayOfNullableBoolean)] = "Energistics.Etp.v12.Datatypes.ArrayOfNullableBoolean",
+            [typeof(ArrayOfInt)] = "Energistics.Etp.v12.Datatypes.ArrayOfInt",
+            [typeof(ArrayOfNullableInt)] = "Energistics.Etp.v12.Datatypes.ArrayOfNullableInt",
+            [typeof(ArrayOfLong)] = "Energistics.Etp.v12.Datatypes.ArrayOfLong",
+            [typeof(ArrayOfNullableLong)] = "Energistics.Etp.v12.Datatypes.ArrayOfNullableLong",
+            [typeof(ArrayOfFloat)] = "Energistics.Etp.v12.Datatypes.ArrayOfFloat",
+            [typeof(ArrayOfDouble)] = "Energistics.Etp.v12.Datatypes.ArrayOfDouble",
+            [typeof(ArrayOfString)] = "Energistics.Etp.v12.Datatypes.ArrayOfString",
+            [typeof(AnySparseArray)] = "Energistics.Etp.v12.Datatypes.AnySparseArray",
+        };
+
+        private static readonly Dictionary<string, Type> NameToType = new Dictionary<string, Type>
+        {
+            ["boolean"] = typeof(bool),
+            ["int"] = typeof(int),
+            ["long"] = typeof(long),
+            ["float"] = typeof(float),
+            ["double"] = typeof(double),
+            ["string"] = typeof(string),
+            ["bytes"] = typeof(byte[]),
+            ["Energistics.Etp.v12.Datatypes.ArrayOfBoolean"] = typeof(ArrayOfBoolean),
+            ["Energistics.Etp.v12.Datatypes.ArrayOfNullableBoolean"] = typeof(ArrayOfNullableBoolean),
+            ["Energistics.Etp.v12.Datatypes.ArrayOfInt"] = typeof(ArrayOfInt),
+            ["Energistics.Etp.v12.Datatypes.ArrayOfNullableInt"] = typeof(ArrayOfNullableInt),
+            ["Energistics.Etp.v12.Datatypes.ArrayOfLong"] = typeof(ArrayOfLong),
+            ["Energistics.Etp.v12.Datatypes.ArrayOfNullableLong"] = typeof(ArrayOfNullableLong),
+            ["Energistics.Etp.v12.Datatypes.ArrayOfFloat"] = typeof(ArrayOfFloat),
+            ["Energistics.Etp.v12.Datatypes.ArrayOfDouble"] = typeof(ArrayOfDouble),
+            ["Energistics.Etp.v12.Datatypes.ArrayOfString"] = typeof(ArrayOfString),
+            ["Energistics.Etp.v12.Datatypes.AnySparseArray"] = typeof(AnySparseArray),
+        };
 
         /// <summary>
         /// Determines whether this instance can convert the specified object type.
@@ -41,7 +83,7 @@ namespace Energistics.Etp.v12.Datatypes
         /// </returns>
         public override bool CanConvert(Type objectType)
         {
-            return typeof(IndexValue) == objectType;
+            return typeof(DataValue) == objectType;
         }
 
         /// <summary>
@@ -57,7 +99,7 @@ namespace Energistics.Etp.v12.Datatypes
             if (reader.TokenType == JsonToken.Null)
                 return null;
 
-            var index = new IndexValue();
+            var dataValue = new DataValue();
 
             while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
             {
@@ -68,49 +110,26 @@ namespace Energistics.Etp.v12.Datatypes
                     continue;
 
                 var value = serializer.Deserialize(reader);
-
-                // Handle case where avro-json format is not used
-                if (value is long || value is double)
+                if (value == null)
                 {
-                    index.Item = value;
-                }
-                // Handle number sent as string
-                else if (value is string)
-                {
-                    long longValue;
-                    double doubleValue;
-
-                    if (long.TryParse(value.ToString(), out longValue))
-                        index.Item = longValue;
-                    else if (double.TryParse(value.ToString(), out doubleValue))
-                        index.Item = doubleValue;
+                    dataValue.Item = null;
                 }
                 else if (value is JObject)
                 {
-                    var jObject = value as JObject;
-                    var longProperty = jObject.Property(LongDataType);
-                    var doubleProperty = jObject.Property(DoubleDataType);
-
-                    if (longProperty != null)
-                    {
-                        index.Item = longProperty.Value.Value<long>();
-                    }
-                    else if (doubleProperty != null)
-                    {
-                        index.Item = doubleProperty.Value.Value<double>();
-                    }
-                    else
-                    {
+                    var itemValue = (value as JObject).Properties().FirstOrDefault(p => NameToType.ContainsKey(p.Name));
+                    if (itemValue == null)
                         throw new JsonSerializationException($"Unsupported data type: {value}");
-                    }
+
+                    dataValue.Item = itemValue.ToObject(NameToType[itemValue.Name]);
                 }
-                else if (value != null)
+                else
                 {
-                    throw new JsonSerializationException($"Unsupported data type: {value}");
+                    // Handle case where avro-json format is not used
+                    dataValue.Item = value;
                 }
             }
 
-            return index;
+            return dataValue;
         }
 
         /// <summary>
@@ -121,7 +140,7 @@ namespace Energistics.Etp.v12.Datatypes
         /// <param name="serializer">The calling serializer.</param>
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var index = value as IndexValue;
+            var index = value as DataValue;
 
             if (index == null)
             {
@@ -140,12 +159,11 @@ namespace Energistics.Etp.v12.Datatypes
             {
                 writer.WriteStartObject();
 
-                if (index.Item is long)
-                    writer.WritePropertyName(LongDataType);
-                else if (index.Item is double)
-                    writer.WritePropertyName(DoubleDataType);
-                else
+                string typeName;
+                if (!TypeToName.TryGetValue(index.Item.GetType(), out typeName))
                     throw new JsonSerializationException($"Unsupported data type '{index.Item.GetType().FullName}' for value '{index.Item}'.");
+
+                writer.WritePropertyName(typeName);
 
                 serializer.Serialize(writer, index.Item, index.Item.GetType());
                 writer.WriteEndObject();

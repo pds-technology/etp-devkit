@@ -36,7 +36,8 @@ namespace Energistics.Etp.Common
         /// <param name="port">The port number.</param>
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
-        void SetProxy(string host, int port, string username = null, string password = null);
+        /// <param name="useDefaultCredentials">Whether or not to use default credentials.</param>
+        void SetProxy(string host, int port, string username = null, string password = null, bool useDefaultCredentials = false);
 
         /// <summary>
         /// Sets security options.

@@ -247,10 +247,13 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="port">The port number.</param>
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
-        public void SetProxy(string host, int port, string username = null, string password = null)
+        /// <param name="useDefaultCredentials">Whether or not to use default credentials.</param>
+        public void SetProxy(string host, int port, string username = null, string password = null, bool useDefaultCredentials = false)
         {
             if (_socket == null) return;
             var endPoint = new DnsEndPoint(host, port);
+            if (useDefaultCredentials)
+                throw new NotSupportedException("Default Credentials not supported with WebSocket4Net");
             var authorization = Security.Authorization.Basic(username, password);
             _socket.Proxy = new HttpConnectProxy(endPoint, authorization.Value);
         }
