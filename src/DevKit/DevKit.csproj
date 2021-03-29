@@ -41,12 +41,6 @@
   <PropertyGroup>
     <PreBuildEvent />
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net5.0' ">
-    <Compile Remove="WebSocket4Net\EtpSelfHostedWebServer.cs" />
-    <Compile Remove="WebSocket4Net\EtpServer.cs" />
-    <Compile Remove="WebSocket4Net\EtpServerManager.cs" />
-    <Compile Remove="WebSocket4Net\EtpServerWebSocket.cs" />
-  </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net452' " >
     <PackageReference Include="Apache.Avro" Version="1.10.2" />
     <PackageReference Include="log4net" Version="2.0.12" />

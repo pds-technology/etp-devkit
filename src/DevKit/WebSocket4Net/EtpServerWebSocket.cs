@@ -1,4 +1,6 @@
-﻿//----------------------------------------------------------------------- 
+﻿#if !(NETCOREAPP || NETSTANDARD)
+
+//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
 // Copyright 2019 Energistics
@@ -95,3 +97,5 @@ namespace Energistics.Etp.WebSocket4Net
         public void Closed() => _closedCallback?.Invoke();
     }
 }
+
+#endif
