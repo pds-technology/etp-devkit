@@ -283,14 +283,14 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
-        /// Determines whether the message can be automatically acknowledged.  All messages except the ETP 1.1 ChannelDescribe
-        /// and GrowingObjectGetRange messages can be automatically acknowledged.  These two messages may use Acknowledge with the NoData
-        /// flag to indicate an empty result so cannot be automatically acknowledged.
+        /// Determines whether the message can be immediately acknowledged.  All messages except the ETP 1.1 ChannelDescribe
+        /// and GrowingObjectGetRange messages can be immediately acknowledged.  These two messages may use Acknowledge with the NoData
+        /// flag to indicate an empty result so cannot be immediately acknowledged.
         /// </summary>
         /// <param name="header">The header.</param>
         /// <param name="etpVersion">The ETP version for the header.</param>
         /// <returns><c>true</c> if the message can have an optional header extension; otherwise, <c>false</c>.</returns>
-        public static bool CanAutoAcknowledge(this IMessageHeader header, EtpVersion etpVersion)
+        public static bool CanImmediatelyAcknowledge(this IMessageHeader header, EtpVersion etpVersion)
         {
             if (etpVersion == EtpVersion.v12)
                 return true;

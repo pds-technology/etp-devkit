@@ -55,6 +55,7 @@ namespace Energistics.Etp.Handlers
 
         protected override void InitializeSessionCore()
         {
+            Session.SessionClosed += OnServerSessionClosed;
             if (Session.EtpVersion == EtpVersion.v11)
             {
                 Session.Handler<v11.Protocol.Store.IStoreStore>().OnGetObject += OnGetObject;
@@ -140,6 +141,16 @@ namespace Energistics.Etp.Handlers
             }
         }
 
+        private void OnServerSessionClosed(object sender, SessionClosedEventArgs args)
+        {
+            var server = (IEtpSession)sender;
+
+            Store.ExecuteWithLock(() =>
+            {
+                Store.CancelAllObjectNotifications(server.SessionId);
+            });
+        }
+
         private void OnGetObject(object sender, RequestEventArgs<v11.Protocol.Store.GetObject, v11.Datatypes.Object.DataObject> args)
         {
             Store.ExecuteWithLock(() =>
@@ -172,7 +183,7 @@ namespace Energistics.Etp.Handlers
             var subscriptionInfo = new MockSubscriptionInfo(request);
             var callbacks = CreateStoreNotificationCallbacks(handler);
 
-            if (!Store.SubscribeObjectNotifications(EtpVersion.v11, request.StartTime.ToUtcDateTime(), false, subscriptionInfo, callbacks))
+            if (!Store.SubscribeObjectNotifications(EtpVersion.v11, request.StartTime.ToUtcDateTime(), false, handler.Session.SessionId, subscriptionInfo, callbacks))
                 args.FinalError = handler.ErrorInfo().RequestUuidRejected(args.Request.Body.Request);
         }
 
@@ -230,7 +241,7 @@ namespace Energistics.Etp.Handlers
                 var callbacks = CreateStoreNotificationCallbacks(handler);
                 var uuid = Guid.NewGuid();
                 var subscriptionInfo = new MockSubscriptionInfo(EtpVersion.v12, Dataspace.Wellbore05, uuid);
-                if (Store.SubscribeObjectNotifications(EtpVersion.v12, Store.StoreLastWrite, true, subscriptionInfo, callbacks))
+                if (Store.SubscribeObjectNotifications(EtpVersion.v12, Store.StoreLastWrite, true, handler.Session.SessionId, subscriptionInfo, callbacks))
                     handler.UnsolicitedStoreNotifications(new List<v12.Datatypes.Object.SubscriptionInfo> { subscriptionInfo.SubsriptionInfo12 });
             });
         }
@@ -252,7 +263,7 @@ namespace Energistics.Etp.Handlers
             {
                 var callbacks = CreateStoreNotificationCallbacks(handler);
                 var subscriptionInfo = new MockSubscriptionInfo(kvp.Value);
-                if (Store.SubscribeObjectNotifications(EtpVersion.v12, kvp.Value.StartTime.ToUtcDateTime(), true, subscriptionInfo, callbacks))
+                if (Store.SubscribeObjectNotifications(EtpVersion.v12, kvp.Value.StartTime.ToUtcDateTime(), true, handler.Session.SessionId, subscriptionInfo, callbacks))
                     args.ResponseMap[kvp.Key] = string.Empty;
                 else
                     args.ErrorMap[kvp.Key] = handler.ErrorInfo().RequestUuidRejected(kvp.Value);

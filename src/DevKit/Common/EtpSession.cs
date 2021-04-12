@@ -187,11 +187,6 @@ namespace Energistics.Etp.Common
         public Guid SessionId { get; private set; }
 
         /// <summary>
-        /// Whether or not the session should automatically acknowledge messages that can be immediately acknowledged and request acknowledgement.
-        /// </summary>
-        public bool AutoAcknowledgeMessages { get; set; } = true;
-
-        /// <summary>
         /// Gets a value indicating whether the underlying websocket connection is open.
         /// </summary>
         /// <value>
@@ -1205,6 +1200,8 @@ namespace Energistics.Etp.Common
                     Logger.Verbose($"[{SessionKey}] Binary message received: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
                 }
 
+                HandleHeader(header);
+
                 using (var decompressionStream = header.IsCompressed() ? EtpCompression.TryGetDecompresionStream(SessionSupportedCompression, inputStream) : null)
                 {
                     // decompress message body if compression has been negotiated
@@ -1252,6 +1249,8 @@ namespace Energistics.Etp.Common
                 Logger.Verbose($"[{SessionKey}] JSON message received: Name: {header.ToMessageName()}; Header: {headerJson}");
             }
 
+            HandleHeader(header);
+
             var headerExtensionJson = header.HasHeaderExtension()
                 ? array[1].ToString()
                 : null;
@@ -1265,6 +1264,18 @@ namespace Energistics.Etp.Common
 
             // call processing action
             HandleMessage(header, extension, null, body);
+        }
+
+        private void HandleHeader(IMessageHeader header)
+        {
+            // Handle global Acknowledge request
+            if (header.IsAcknowledgeRequested())
+            {
+                if (header.IsAcknowledge())
+                    ProtocolException(header.Protocol, ErrorInfo().InvalidState());
+                else if (header.CanImmediatelyAcknowledge(EtpVersion))
+                    Acknowledge(header.Protocol, header);
+            }
         }
 
         /// <summary>
@@ -1318,15 +1329,6 @@ namespace Energistics.Etp.Common
 
             try
             {
-                // Handle global Acknowledge request
-                if (AutoAcknowledgeMessages && header.IsAcknowledgeRequested() && header.CanAutoAcknowledge(EtpVersion))
-                {
-                    if (isSessionManagementMessage)
-                        Acknowledge((int)Protocols.Core, header);
-                    else
-                        handler.Acknowledge(header);
-                }
-
                 if (isSessionManagementMessage)
                 {
                     if (header.IsRequestSession())

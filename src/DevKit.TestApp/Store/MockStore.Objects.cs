@@ -30,6 +30,7 @@ namespace Energistics.Etp.Store
     {
         private class ObjectSubscription : Subscription<MockObject>
         {
+            public Guid SessionId { get; set; }
             public MockObject Root { get; set; }
             public bool EndIfRootDeleted { get; set; }
             public MockSubscriptionInfo SubscriptionInfo { get; set; }
@@ -67,7 +68,7 @@ namespace Energistics.Etp.Store
             RefreshSubscriptionObjects(subscription, objects);
         }
 
-        public bool SubscribeObjectNotifications(EtpVersion version, DateTime startTime, bool endIfRootDeleted, MockSubscriptionInfo subscriptionInfo, MockObjectCallbacks callbacks)
+        public bool SubscribeObjectNotifications(EtpVersion version, DateTime startTime, bool endIfRootDeleted, Guid sessionId, MockSubscriptionInfo subscriptionInfo, MockObjectCallbacks callbacks)
         {
             CheckLocked();
 
@@ -85,6 +86,7 @@ namespace Energistics.Etp.Store
 
             ObjectSubscriptionsByRequestUuid[subscriptionInfo.RequestUuid] = new ObjectSubscription
             {
+                SessionId = sessionId,
                 Version = version,
                 Uuid = subscriptionInfo.RequestUuid,
                 LastStoreWriteTime = startTime,
@@ -103,6 +105,17 @@ namespace Energistics.Etp.Store
             CheckLocked();
 
             return ObjectSubscriptionsByRequestUuid.Remove(requestUuid);
+        }
+
+        public void CancelAllObjectNotifications(Guid sessionId)
+        {
+            CheckLocked();
+
+            var requestUuids = ObjectSubscriptionsByRequestUuid.Values.Where(s => s.SessionId == sessionId).Select(s => s.Uuid).ToList();
+
+            foreach (var requestUuid in requestUuids)
+                UnsubscribeObjectNotifications(requestUuid);
+
         }
 
         private void SendObjectNotifications(CancellationToken token)

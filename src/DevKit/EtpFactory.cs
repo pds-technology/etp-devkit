@@ -513,7 +513,7 @@ namespace Energistics.Etp
             requestSession.ApplicationVersion = clientInfo.ApplicationVersion;
             requestSession.ClientInstanceId = clientInfo.InstanceId;
 
-            requestSession.SetRequestedProtocolsFrom(clientDetails.SupportedProtocols.Where(s => s.Protocol != (int)Protocols.Core).Select(s => CreateSupportedProtocol(version, s, false)));
+            requestSession.SetRequestedProtocolsFrom(clientDetails.SupportedProtocols.Where(s => s.EtpVersion == version && s.Protocol != (int)Protocols.Core).Select(s => CreateSupportedProtocol(version, s, false)));
             if (version == EtpVersion.v12 || clientDetails.SupportedProtocols.Any(p => string.Equals(p.Role, Roles.Store, StringComparison.OrdinalIgnoreCase)))
                 requestSession.SetSupportedDataObjectsFrom(clientDetails.SupportedDataObjects.Select(d => CreateSupportedDataObject(version, d)));
             else
@@ -562,7 +562,7 @@ namespace Energistics.Etp
             openSession.SessionId = sessionId;
             openSession.ServerInstanceId = serverInfo.InstanceId;
 
-            openSession.SetSupportedProtocolsFrom(sessionDetails.SupportedProtocols.Where(s => s.Protocol != (int)Protocols.Core).Select(s => CreateSupportedProtocol(version, s, true)));
+            openSession.SetSupportedProtocolsFrom(sessionDetails.SupportedProtocols.Where(s => s.EtpVersion == version && s.Protocol != (int)Protocols.Core).Select(s => CreateSupportedProtocol(version, s, true)));
             if (version == EtpVersion.v12 || sessionDetails.SupportedProtocols.Any(p => string.Equals(p.Role, Roles.Store, StringComparison.OrdinalIgnoreCase)))
                 openSession.SetSupportedDataObjectsFrom(sessionDetails.SupportedDataObjects.Select(d => CreateSupportedDataObject(version, d)));
             else
@@ -629,13 +629,13 @@ namespace Energistics.Etp
 
             serverCapabilities.ApplicationName = info.ApplicationName;
             serverCapabilities.ApplicationVersion = info.ApplicationVersion;
-            serverCapabilities.ContactInformation = EtpFactory.CreateContact(version, webServerDetails.OrganizationName, webServerDetails.ContactName, webServerDetails.ContactPhone, webServerDetails.ContactEmail);
+            serverCapabilities.ContactInformation = CreateContact(version, webServerDetails.OrganizationName, webServerDetails.ContactName, webServerDetails.ContactPhone, webServerDetails.ContactEmail);
 
             serverCapabilities.SupportedCompression = details.SupportedCompression.ToList();
             serverCapabilities.SupportedEncodings = webServerDetails.SupportedEncodings.Select(e => e.ToHeaderValue()).ToList();
             serverCapabilities.SupportedFormats = details.SupportedFormats.ToList();
 
-            serverCapabilities.SetSupportedProtocolsFrom(details.SupportedProtocols.Where(s => s.Protocol != (int)Protocols.Core).Select(s => CreateSupportedProtocol(version, s, true)));
+            serverCapabilities.SetSupportedProtocolsFrom(details.SupportedProtocols.Where(s => s.EtpVersion == version && s.Protocol != (int)Protocols.Core).Select(s => CreateSupportedProtocol(version, s, true)));
             serverCapabilities.SetSupportedDataObjectsFrom(details.SupportedDataObjects.Select(d => CreateSupportedDataObject(version, d)));
             serverCapabilities.SetEndpointCapabilitiesFrom(details.Capabilities);
 
@@ -656,8 +656,8 @@ namespace Energistics.Etp
         {
             switch (version)
             {
-                case EtpVersion.v11: return new v11.Datatypes.Contact { OrganizationName = organizationName, ContactName = contactName, ContactPhone = contactPhone, ContactEmail = contactEmail };
-                case EtpVersion.v12: return new v12.Datatypes.Contact { OrganizationName = organizationName, ContactName = contactName, ContactPhone = contactPhone, ContactEmail = contactEmail };
+                case EtpVersion.v11: return new v11.Datatypes.Contact { OrganizationName = organizationName ?? string.Empty, ContactName = contactName ?? string.Empty, ContactPhone = contactPhone ?? string.Empty, ContactEmail = contactEmail ?? string.Empty };
+                case EtpVersion.v12: return new v12.Datatypes.Contact { OrganizationName = organizationName ?? string.Empty, ContactName = contactName ?? string.Empty, ContactPhone = contactPhone ?? string.Empty, ContactEmail = contactEmail ?? string.Empty };
                 default:
                     {
                         var message = $"Unsupported ETP version: {version}.";

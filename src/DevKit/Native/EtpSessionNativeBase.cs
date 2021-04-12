@@ -194,6 +194,7 @@ namespace Energistics.Etp.Native
             }
             catch (OperationCanceledException)
             {
+                Logger.Trace($"[{SessionKey}] Receive loop canceled.");
             }
             catch (Exception ex)
             {
