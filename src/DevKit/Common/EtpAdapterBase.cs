@@ -195,7 +195,7 @@ namespace Energistics.Etp.Common
         /// <param name="extension">The message header extension, if any.</param>
         /// <param name="body">The message body.</param>
         /// <returns>The message.</returns>
-        private EtpMessage CreateMessage<TInterface, TBody>(IMessageHeader header, TBody body, IMessageHeaderExtension extension = null) where TInterface : ISpecificRecord where TBody : TInterface
+        private static EtpMessage CreateMessage<TInterface, TBody>(IMessageHeader header, TBody body, IMessageHeaderExtension extension = null) where TInterface : ISpecificRecord where TBody : TInterface
         {
             return new EtpMessage<TInterface>(header, body, extension: extension);
         }

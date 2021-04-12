@@ -632,7 +632,7 @@ namespace Energistics.Etp.Common
                 }
             }
 
-            if (HandlersByProtocol.Count == 0)
+            if (HandlersByProtocol.IsEmpty)
             {
                 Logger.Debug(Log($"[{SessionKey}] No handlers registered were registered for any protocol."));
             }
@@ -1285,7 +1285,7 @@ namespace Energistics.Etp.Common
             if (!HandlersByProtocol.TryGetValue(header.Protocol, out handler) && !isSessionManagementMessage)
             {
                 // Protocol handlers are cleared when the session is disposed or the socket is closed, but this method can still be called during or after that.
-                if (HandlersByProtocol.Count == 0)
+                if (HandlersByProtocol.IsEmpty)
                     Logger.Trace($"[{SessionKey}] Ignoring message on closed session: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
                 else
                 {

@@ -160,6 +160,8 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="session">The session.</param>
         private void OnNewSessionConnected(WebSocketSession session)
         {
+            Logger.Info($"Handling WebSocket request from {session.RemoteEndPoint}.");
+
             var ws = new EtpServerWebSocket { WebSocketSession = session };
             _webSockets[session.SessionID] = ws;
 

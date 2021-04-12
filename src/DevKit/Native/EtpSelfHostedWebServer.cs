@@ -182,7 +182,7 @@ namespace Energistics.Etp.Native
             return combined;
         }
 
-        private void CleanUpContext(HttpListenerContext context)
+        private static void CleanUpContext(HttpListenerContext context)
         {
             context.Request.InputStream.Close();
             context.Response.Close();
@@ -204,7 +204,7 @@ namespace Energistics.Etp.Native
             return false;
         }
 
-        private void HandleServerCapabilitiesRequest(HttpListenerRequest request, HttpListenerResponse response, IDictionary<string, string> headers)
+        private void HandleServerCapabilitiesRequest(HttpListenerResponse response, IDictionary<string, string> headers)
         {
             if (headers.ContainsKey(EtpHeaders.GetVersions) && string.Equals(headers[EtpHeaders.GetVersions], "true", StringComparison.OrdinalIgnoreCase))
             {
@@ -243,7 +243,8 @@ namespace Energistics.Etp.Native
                 var headers = GetCombinedHeaders(context.Request.Headers, context.Request.QueryString);
                 if (IsServerCapabilitiesRequest(context.Request))
                 {
-                    HandleServerCapabilitiesRequest(context.Request, context.Response, headers);
+                    Logger.Info($"Handling ServerCapabilities request from {context.Request.RemoteEndPoint}.");
+                    HandleServerCapabilitiesRequest(context.Response, headers);
                     CleanUpContext(context);
                     return;
                 }
@@ -253,6 +254,8 @@ namespace Energistics.Etp.Native
                     CleanUpContext(context);
                     return;
                 }
+
+                Logger.Info($"Handling WebSocket request from {context.Request.RemoteEndPoint}.");
 
                 if (!EtpWebSocketValidation.IsWebSocketRequestUpgrading(headers))
                 {
@@ -371,7 +374,7 @@ namespace Energistics.Etp.Native
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(true);
             // NOTE: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
+             GC.SuppressFinalize(this);
         }
 
         #endregion

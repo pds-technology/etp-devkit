@@ -40,6 +40,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent />
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net452' ">
     <PackageReference Include="Apache.Avro" Version="1.10.2" />

@@ -26,6 +26,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent />
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Apache.Avro" Version="1.10.2" />
