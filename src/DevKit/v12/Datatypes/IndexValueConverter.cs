@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Globalization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -80,9 +81,9 @@ namespace Energistics.Etp.v12.Datatypes
                     long longValue;
                     double doubleValue;
 
-                    if (long.TryParse(value.ToString(), out longValue))
+                    if (long.TryParse(value.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out longValue))
                         index.Item = longValue;
-                    else if (double.TryParse(value.ToString(), out doubleValue))
+                    else if (double.TryParse(value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out doubleValue))
                         index.Item = doubleValue;
                 }
                 else if (value is JObject)

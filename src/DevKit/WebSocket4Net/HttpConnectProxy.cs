@@ -3,6 +3,7 @@
 // Modified to support authorization headers and HTTP 1.0 responses.
 
 using System;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -227,7 +228,7 @@ namespace Energistics.Etp.WebSocket4Net
 
             int statusCode;
             //Status code should be 2**
-            if (!int.TryParse(line.Substring(pos + 1, statusPos - pos - 1), out statusCode) || (statusCode > 299 || statusCode < 200))
+            if (!int.TryParse(line.Substring(pos + 1, statusPos - pos - 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out statusCode) || (statusCode > 299 || statusCode < 200))
             {
                 OnException("the proxy server refused the connection");
                 return;

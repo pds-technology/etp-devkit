@@ -185,7 +185,8 @@ namespace Energistics.Etp
         }
 #endregion
 
-#region IEtpSelfHostedWebServer
+        #region IEtpSelfHostedWebServer
+
         /// <summary>
         /// Creates an <see cref="IEtpSelfHostedWebServer"/> using the default WebSocket type.
         /// </summary>
@@ -227,7 +228,7 @@ namespace Energistics.Etp
         }
 #endregion
         
-#region Miscellaneous
+        #region Miscellaneous
 
         /// <summary>
         /// Creates a client endpoint info
@@ -444,8 +445,8 @@ namespace Energistics.Etp
         {
             switch (version)
             {
-                case EtpVersion.v11: return new v11.Protocol.Core.ProtocolException { ErrorCode = error?.Code ?? 0, ErrorMessage = error?.Message };
-                case EtpVersion.v12: return new v12.Protocol.Core.ProtocolException { Error = error == null ? null : new v12.Datatypes.ErrorInfo { Code = error.Code, Message = error.Message }, Errors = new Dictionary<string, v12.Datatypes.ErrorInfo>() };
+                case EtpVersion.v11: return new v11.Protocol.Core.ProtocolException { ErrorCode = error?.Code ?? 0, ErrorMessage = error?.Message ?? string.Empty };
+                case EtpVersion.v12: return new v12.Protocol.Core.ProtocolException { Error = error == null ? null : new v12.Datatypes.ErrorInfo { Code = error.Code, Message = error.Message ?? string.Empty }, Errors = new Dictionary<string, v12.Datatypes.ErrorInfo>() };
                 default:
                     {
                         var message = $"Unsupported ETP version: {version}.";
@@ -509,8 +510,8 @@ namespace Energistics.Etp
         {
             var requestSession = CreateRequestSession(version);
 
-            requestSession.ApplicationName = clientInfo.ApplicationName;
-            requestSession.ApplicationVersion = clientInfo.ApplicationVersion;
+            requestSession.ApplicationName = clientInfo.ApplicationName ?? string.Empty;
+            requestSession.ApplicationVersion = clientInfo.ApplicationVersion ?? string.Empty;
             requestSession.ClientInstanceId = clientInfo.InstanceId;
 
             requestSession.SetRequestedProtocolsFrom(clientDetails.SupportedProtocols.Where(s => s.EtpVersion == version && s.Protocol != (int)Protocols.Core).Select(s => CreateSupportedProtocol(version, s, false)));
@@ -557,8 +558,8 @@ namespace Energistics.Etp
         {
             var openSession = CreateOpenSession(version);
 
-            openSession.ApplicationName = serverInfo.ApplicationName;
-            openSession.ApplicationVersion = serverInfo.ApplicationVersion;
+            openSession.ApplicationName = serverInfo.ApplicationName ?? string.Empty;
+            openSession.ApplicationVersion = serverInfo.ApplicationVersion ?? string.Empty;
             openSession.SessionId = sessionId;
             openSession.ServerInstanceId = serverInfo.InstanceId;
 
@@ -584,8 +585,8 @@ namespace Energistics.Etp
         {
             switch (version)
             {
-                case EtpVersion.v11: return new v11.Protocol.Core.CloseSession { Reason = reason };
-                case EtpVersion.v12: return new v12.Protocol.Core.CloseSession { Reason = reason };
+                case EtpVersion.v11: return new v11.Protocol.Core.CloseSession { Reason = reason ?? string.Empty };
+                case EtpVersion.v12: return new v12.Protocol.Core.CloseSession { Reason = reason ?? string.Empty };
                 default:
                     {
                         var message = $"Unsupported ETP version: {version}.";
@@ -627,8 +628,8 @@ namespace Energistics.Etp
         {
             var serverCapabilities = CreateServerCapabilities(version);
 
-            serverCapabilities.ApplicationName = info.ApplicationName;
-            serverCapabilities.ApplicationVersion = info.ApplicationVersion;
+            serverCapabilities.ApplicationName = info.ApplicationName ?? string.Empty;
+            serverCapabilities.ApplicationVersion = info.ApplicationVersion ?? string.Empty;
             serverCapabilities.ContactInformation = CreateContact(version, webServerDetails.OrganizationName, webServerDetails.ContactName, webServerDetails.ContactPhone, webServerDetails.ContactEmail);
 
             serverCapabilities.SupportedCompression = details.SupportedCompression.ToList();

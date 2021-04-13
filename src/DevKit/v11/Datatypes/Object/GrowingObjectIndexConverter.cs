@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Globalization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -76,7 +77,7 @@ namespace Energistics.Etp.v11.Datatypes.Object
                     index.Item = value;
                 }
                 // Handle number sent as string
-                else if (value is string && long.TryParse(value.ToString(), out longValue))
+                else if (value is string && long.TryParse(value.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out longValue))
                 {
                     index.Item = longValue;
                 }
