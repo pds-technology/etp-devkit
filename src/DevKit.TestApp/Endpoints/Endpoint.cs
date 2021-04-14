@@ -31,7 +31,8 @@ namespace Energistics.Etp.Endpoints
     public abstract class Endpoint
     {
         public string AppVersion { get; } = typeof(Program).Assembly.GetName().Version.ToString();
-        public string AppName { get; } = "ETP DevKit TestApp";
+        public string ServerAppName { get; } = "ETP DevKit TestApp Server";
+        public string ClientAppName { get; } = "ETP DevKit TestApp Client";
         public string DefaultClientUri { get; set; } = "ws://localhost:9000";
         public int ServerPort { get; set; } = 9000;
         private static ILog Logger { get; }
@@ -68,7 +69,7 @@ namespace Energistics.Etp.Endpoints
             var supportedVersions = new List<EtpVersion> { EtpVersion.v11, EtpVersion.v12 };
             var supportedEncodings = new List<EtpEncoding> { EtpEncoding.Binary, EtpEncoding.Json };
             var serverDetails = new EtpWebServerDetails(supportedVersions, supportedEncodings);
-            var endpointInfo = EtpFactory.CreateServerEndpointInfo(AppName, AppVersion);
+            var endpointInfo = EtpFactory.CreateServerEndpointInfo(ServerAppName, AppVersion);
 
             using (var webServer = EtpFactory.CreateSelfHostedWebServer(WebSocketType.Native, ServerPort, endpointInfo, details: serverDetails))
             {
@@ -181,7 +182,7 @@ namespace Energistics.Etp.Endpoints
             }
             Console.WriteLine();
 
-            var endpointInfo = EtpFactory.CreateClientEndpointInfo(AppName, AppVersion, Assembly.GetExecutingAssembly().FullName);
+            var endpointInfo = EtpFactory.CreateClientEndpointInfo(ClientAppName, AppVersion, Assembly.GetExecutingAssembly().FullName);
             using (var client = EtpFactory.CreateClient(WebSocketType.Native, string.IsNullOrEmpty(webSocketUri) ? DefaultClientUri : webSocketUri, version, EtpEncoding.Binary, endpointInfo, authorization: authorization))
             {
                 client.OnProtocolException += OnProtocolException;

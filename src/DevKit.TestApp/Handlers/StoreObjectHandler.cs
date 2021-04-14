@@ -236,6 +236,10 @@ namespace Energistics.Etp.Handlers
         private void OnStoreNotificationStoreStarted(object sender, EventArgs args)
         {
             var handler = (v12.Protocol.StoreNotification.IStoreNotificationStore)sender;
+
+            if (!handler.Session.SessionSupportedDataObjects.IsSupported(Dataspace.Wellbore05.DataObjectType))
+                return;
+
             Store.ExecuteWithLock(() =>
             {
                 var callbacks = CreateStoreNotificationCallbacks(handler);
@@ -258,7 +262,6 @@ namespace Energistics.Etp.Handlers
         {
             var handler = (v12.Protocol.StoreNotification.IStoreNotificationStore)sender;
 
-            var startTime = DateTime.UtcNow;
             foreach (var kvp in args.Request.Body.Request)
             {
                 var callbacks = CreateStoreNotificationCallbacks(handler);

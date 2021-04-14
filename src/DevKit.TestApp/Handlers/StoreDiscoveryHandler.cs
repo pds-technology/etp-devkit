@@ -141,6 +141,7 @@ namespace Energistics.Etp.Handlers
             else if (uri.IsDataRootUri || uri.IsObjectUri) // List data objects
             {
                 resources = Store.GetObjects(EtpVersion.v12, new MockGraphContext(args.Request.Body), activeStatusFilter, args.Request.Body.StoreLastWriteFilter?.ToUtcDateTime())
+                    .Where(o => handler.Session.SessionSupportedDataObjects.IsSupported(o.DataObjectType))
                     .Select(o => o.Resource12);
             }
             else
@@ -168,6 +169,7 @@ namespace Energistics.Etp.Handlers
             else
             {
                 resources = Store.GetDeletedObjects(EtpVersion.v12, uri, objectTypes: args.Request.Body.DataObjectTypes.ToDataObjectTypes(), deleteTimeFilter: args.Request.Body.DeleteTimeFilter?.ToUtcDateTime())
+                    .Where(o => handler.Session.SessionSupportedDataObjects.IsSupported(o.DataObjectType))
                     .Select(@do => @do.DeletedResource12);
             }
 
@@ -193,6 +195,7 @@ namespace Energistics.Etp.Handlers
             else if (uri.IsDataRootUri || uri.IsObjectUri) // List types of data objects available
             {
                 supportedTypes = Store.GetSupportedTypes(EtpVersion.v12, new MockGraphContext(args.Request.Body), args.Request.Body.ReturnEmptyTypes)
+                    .Where(st => handler.Session.SessionSupportedDataObjects.IsSupported(st.DataObjectType))
                     .Select(st => st.SupportedType12);
             }
             else

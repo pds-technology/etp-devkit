@@ -186,15 +186,21 @@ namespace Energistics.Etp.Handlers
             while (true)
             {
                 Console.WriteLine("Choose an option:");
-                Console.WriteLine(" D - Set depth");
-                Console.WriteLine($" S - {(context.IncludeSelf ? "Exclude" : "Include")} Self");
-                Console.WriteLine($" O - {(context.IncludeSources ? "Exclude" : "Include")} Sources");
-                Console.WriteLine($" P - {(context.IncludeSecondarySources ? "Exclude" : "Include")} Secondary Sources");
-                Console.WriteLine($" T - {(context.IncludeTargets ? "Exclude" : "Include")} Targets");
-                Console.WriteLine($" U - {(context.IncludeSecondaryTargets ? "Exclude" : "Include")} Secondary Targets");
-                Console.WriteLine($" 1 - {(context.NavigatePrimaryEdges ? "Do Not " : "")}Navigate Primary Edges");
-                Console.WriteLine($" 2 - {(context.NavigateSecondaryEdges ? "Do Not " : "")}Navigate Primary Edges");
+                Console.WriteLine($" D - Set depth (current value: {context.Depth})");
+                Console.WriteLine($" S - Toggle Include Self (current value: {(context.IncludeSelf ? "Include" : "Exclude")})");
+                Console.WriteLine($" O - Toggle Include Sources (current value: {(context.IncludeSources ? "Include" : "Exclude")})");
+                Console.WriteLine($" P - Toggle Include Secondary Sources (current value: {(context.IncludeSecondarySources ? "Include" : "Exclude")})");
+                Console.WriteLine($" T - Toggle Include Targets (current value: {(context.IncludeTargets ? "Include" : "Exclude")})");
+                Console.WriteLine($" U - Toggle Include Secondary Targets (current value: {(context.IncludeSecondaryTargets ? "Include" : "Exclude")})");
+                Console.WriteLine($" 1 - Toggle Navigate Primary Edges (current value: {(context.NavigatePrimaryEdges ? "Navigate" : "Do Not Navigate")})");
+                Console.WriteLine($" 2 - Toggle Navigate Secondary Edges (current value: {(context.NavigateSecondaryEdges ? "Navigate" : "Do Not Navigate")})");
                 Console.WriteLine($" Y - Add Data Types");
+                if (context.DataObjectTypes.Count > 0)
+                {
+                    Console.WriteLine($"     Current Data Types:");
+                    foreach (var dataType in context.DataObjectTypes)
+                        Console.WriteLine($"       {dataType}");
+                }
                 Console.WriteLine($" (enter / other) - Submit request");
                 Console.WriteLine();
 
