@@ -297,7 +297,7 @@ namespace Energistics.Etp.Native
                     Logger.Verbose($"[{SessionKey}] Waiting for receive loop to stop.");
 
                     if (_receiveLoopTask != null)
-                        AsyncContext.Run(() => _receiveLoopTask);
+                        AsyncContext.Run(() => _receiveLoopTask.ConfigureAwait(false));
                 }
                 catch (OperationCanceledException)
                 {
