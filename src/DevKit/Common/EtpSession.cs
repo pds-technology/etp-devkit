@@ -1101,7 +1101,10 @@ namespace Energistics.Etp.Common
                     Logger.Verbose($"[{SessionKey}] Acquiring send lock was canceled in CloseWebSocketAsync");
                     return;
                 }
-
+                catch (ObjectDisposedException)
+                {
+                    Logger.Verbose($"[{SessionKey}] Sendlock was already disopsed. No need to acquire and stop acquiring.");
+                }
                 Logger.Trace($"[{SessionKey}] Closing WebSocket: {reason}");
 
                 _sendTokenSource.Cancel();
