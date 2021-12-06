@@ -16,7 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
+using Energistics.Avro.Encoding;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
@@ -36,30 +36,22 @@ namespace Energistics.Etp.v12
             RegisterMessageDecoderOverride<ICloseSession, CloseSession>(Protocols.Core, MessageTypes.Core.CloseSession);
             RegisterMessageDecoderOverride<IProtocolException, ProtocolException>(Protocols.Core, MessageTypes.Core.ProtocolException);
             RegisterMessageDecoderOverride<IAcknowledge, Acknowledge>(Protocols.Core, MessageTypes.Core.Acknowledge);
+            RegisterMessageDecoderOverride<IPing, Ping>(Protocols.Core, MessageTypes.Core.Ping);
+            RegisterMessageDecoderOverride<IPong, Pong>(Protocols.Core, MessageTypes.Core.Pong);
         }
 
         public override bool IsProtocolExceptionMultiPart => true;
 
         public override bool AreSupportedDataObjectsNegotiated => true;
 
-        public override IMessageHeader DecodeMessageHeader(Decoder decoder)
+        public override IMessageHeader DecodeMessageHeader(IAvroDecoder decoder)
         {
-            return decoder.Decode<MessageHeader>();
+            return decoder.DecodeAvroObject<MessageHeader>();
         }
 
-        public override IMessageHeader DeserializeMessageHeader(string content)
+        public override IMessageHeaderExtension DecodeMessageHeaderExtension(IAvroDecoder decoder)
         {
-            return EtpExtensions.Deserialize<MessageHeader>(content);
-        }
-
-        public override IMessageHeaderExtension DecodeMessageHeaderExtension(Decoder decoder)
-        {
-            return decoder.Decode<MessageHeaderExtension>();
-        }
-
-        public override IMessageHeaderExtension DeserializeMessageHeaderExtension(string content)
-        {
-            return EtpExtensions.Deserialize<MessageHeaderExtension>(content);
+            return decoder.DecodeAvroObject<MessageHeaderExtension>();
         }
 
         /// <summary>

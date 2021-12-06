@@ -53,6 +53,9 @@ namespace Energistics.Etp.Handlers
         public MockPropertyKind Length{ get; }
         public MockPropertyKind Depth { get; }
         public MockPropertyKind MeasuredDepth { get; }
+        public MockPropertyKind Time { get; }
+        public MockPropertyKind AbsoluteTime { get; }
+        public MockPropertyKind TimeStamp { get; }
 
         public MockFamily Witsml { get; }
         public MockFamily Eml { get; }
@@ -71,7 +74,6 @@ namespace Energistics.Etp.Handlers
                 LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
                 IsAbstract = "false",
                 QuantityClass = "unitless",
-                Parent = null,
             };
 
             Velocity = new MockPropertyKind
@@ -83,7 +85,6 @@ namespace Energistics.Etp.Handlers
                 LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
                 IsAbstract = "false",
                 QuantityClass = "length per time",
-                Parent = RootProperty,
             };
 
             PenetrationRate = new MockPropertyKind
@@ -95,7 +96,6 @@ namespace Energistics.Etp.Handlers
                 LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
                 IsAbstract = "false",
                 QuantityClass = "length per time",
-                Parent = Velocity,
             };
 
             AvgPenetrationRate = new MockPropertyKind
@@ -107,7 +107,6 @@ namespace Energistics.Etp.Handlers
                 LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
                 IsAbstract = "false",
                 QuantityClass = "length per time",
-                Parent = PenetrationRate,
             };
 
             Force = new MockPropertyKind
@@ -119,7 +118,6 @@ namespace Energistics.Etp.Handlers
                 LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
                 IsAbstract = "false",
                 QuantityClass = "force",
-                Parent = RootProperty,
             };
 
             Load = new MockPropertyKind
@@ -131,7 +129,6 @@ namespace Energistics.Etp.Handlers
                 LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
                 IsAbstract = "false",
                 QuantityClass = "force",
-                Parent = Force,
             };
 
             HookLoad = new MockPropertyKind
@@ -143,7 +140,6 @@ namespace Energistics.Etp.Handlers
                 LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
                 IsAbstract = "false",
                 QuantityClass = "force",
-                Parent = Load,
             };
 
             Length = new MockPropertyKind
@@ -155,7 +151,6 @@ namespace Energistics.Etp.Handlers
                 LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
                 IsAbstract = "false",
                 QuantityClass = "length",
-                Parent = RootProperty,
             };
 
             Depth = new MockPropertyKind
@@ -167,7 +162,6 @@ namespace Energistics.Etp.Handlers
                 LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
                 IsAbstract = "false",
                 QuantityClass = "length",
-                Parent = Length,
             };
 
             MeasuredDepth = new MockPropertyKind
@@ -179,8 +173,56 @@ namespace Energistics.Etp.Handlers
                 LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
                 IsAbstract = "false",
                 QuantityClass = "length",
-                Parent = Depth,
             };
+
+            Time = new MockPropertyKind
+            {
+                Dataspace = this,
+                Uuid = Guid.Parse("3a72f130-4ebf-4ea9-a330-a610a4e4ed0e"),
+                Title = "time",
+                Creation = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
+                LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
+                IsAbstract = "false",
+                QuantityClass = "time",
+            };
+
+            AbsoluteTime = new MockPropertyKind
+            {
+                Dataspace = this,
+                Uuid = Guid.Parse("df21fba2-fe8c-4d66-9a73-fbd0e6013abb"),
+                Title = "absolute time",
+                Creation = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
+                LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
+                IsAbstract = "false",
+                QuantityClass = "time",
+            };
+
+            TimeStamp = new MockPropertyKind
+            {
+                Dataspace = this,
+                Uuid = Guid.Parse("6a2ecc9b-7561-41eb-8c6d-adf83538c085"),
+                Title = "time stamp",
+                Creation = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
+                LastUpdate = DateTime.Parse("2016-12-09T17:30:47Z").ToUniversalTime(),
+                IsAbstract = "false",
+                QuantityClass = "time",
+            };
+
+            Velocity.SetParent(RootProperty, creation);
+            PenetrationRate.SetParent(Velocity, creation);
+            AvgPenetrationRate.SetParent(PenetrationRate, creation);
+
+            Force.SetParent(RootProperty, creation);
+            Load.SetParent(Force, creation);
+            HookLoad.SetParent(Load, creation);
+
+            Length.SetParent(RootProperty, creation);
+            Depth.SetParent(Length, creation);
+            MeasuredDepth.SetParent(Depth, creation);
+
+            Time.SetParent(RootProperty, creation);
+            AbsoluteTime.SetParent(Time, creation);
+            TimeStamp.SetParent(AbsoluteTime, creation);
 
             Well01 = new MockWell
             {
@@ -203,8 +245,8 @@ namespace Energistics.Etp.Handlers
                 Title = "Wellbore 01",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Well01,
             };
+            Wellbore01.SetWell(Well01, creation);
 
             Wellbore02 = new MockWellbore
             {
@@ -212,8 +254,8 @@ namespace Energistics.Etp.Handlers
                 Title = "Wellbore 02",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Well01,
             };
+            Wellbore02.SetWell(Well01, creation);
 
             Wellbore03 = new MockWellbore
             {
@@ -221,8 +263,8 @@ namespace Energistics.Etp.Handlers
                 Title = "Wellbore 03 - Deleted Periodically",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Well01,
             };
+            Wellbore03.SetWell(Well01, creation);
 
             Wellbore04 = new MockWellbore
             {
@@ -230,8 +272,8 @@ namespace Energistics.Etp.Handlers
                 Title = "Wellbore 04 - Permanently Deleted",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Well01,
             };
+            Wellbore04.SetWell(Well01, creation);
 
             Wellbore05 = new MockWellbore
             {
@@ -239,8 +281,8 @@ namespace Energistics.Etp.Handlers
                 Title = "Wellbore 05 - Automatic Subscription",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Well01,
             };
+            Wellbore05.SetWell(Well01, creation);
 
             TimeChannel01 = new MockChannel(true)
             {
@@ -248,12 +290,12 @@ namespace Energistics.Etp.Handlers
                 Title = "Average ROP",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Wellbore01,
 
-                ChannelClass = AvgPenetrationRate,
+                ChannelPropertyKind = AvgPenetrationRate,
                 Mnemonic = "ROPA",
                 Uom = "m/h",
             };
+            TimeChannel01.SetWellbore(Wellbore01, creation);
 
             TimeChannel02 = new MockChannel(true)
             {
@@ -261,12 +303,12 @@ namespace Energistics.Etp.Handlers
                 Title = "Hook Load",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Wellbore01,
 
-                ChannelClass = HookLoad,
+                ChannelPropertyKind = HookLoad,
                 Mnemonic = "HKLD",
                 Uom = "10 kN",
             };
+            TimeChannel02.SetWellbore(Wellbore01, creation);
 
             TimeChannel03 = new MockChannel(true)
             {
@@ -274,12 +316,12 @@ namespace Energistics.Etp.Handlers
                 Title = "Bit Depth - Periodically Deleted",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Wellbore01,
 
-                ChannelClass = MeasuredDepth,
+                ChannelPropertyKind = MeasuredDepth,
                 Mnemonic = "BDEP",
                 Uom = "m",
             };
+            TimeChannel03.SetWellbore(Wellbore01, creation);
 
             TimeChannel04 = new MockChannel(true)
             {
@@ -287,12 +329,12 @@ namespace Energistics.Etp.Handlers
                 Title = "Hole Depth - Periodically Unjoined",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Wellbore01,
 
-                ChannelClass = MeasuredDepth,
+                ChannelPropertyKind = MeasuredDepth,
                 Mnemonic = "HDEP",
                 Uom = "m",
             };
+            TimeChannel04.SetWellbore(Wellbore01, creation);
 
             TimeChannelSet01 = new MockChannelSet
             {
@@ -300,13 +342,12 @@ namespace Energistics.Etp.Handlers
                 Title = "Time ChannelSet 01",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Wellbore01,
-                Channels = new List<MockChannel> {  TimeChannel01, TimeChannel02, TimeChannel03, TimeChannel04 },
             };
-            TimeChannel01.Container = TimeChannelSet01;
-            TimeChannel02.Container = TimeChannelSet01;
-            TimeChannel03.Container = TimeChannelSet01;
-            TimeChannel04.Container = TimeChannelSet01;
+            TimeChannelSet01.SetWellbore(Wellbore01, creation);
+            TimeChannel01.JoinContainer(TimeChannelSet01, creation);
+            TimeChannel02.JoinContainer(TimeChannelSet01, creation);
+            TimeChannel03.JoinContainer(TimeChannelSet01, creation);
+            TimeChannel04.JoinContainer(TimeChannelSet01, creation);
 
             DepthChannel01 = new MockChannel(false)
             {
@@ -314,12 +355,12 @@ namespace Energistics.Etp.Handlers
                 Title = "Average ROP",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Wellbore01,
 
-                ChannelClass = AvgPenetrationRate,
+                ChannelPropertyKind = AvgPenetrationRate,
                 Mnemonic = "ROPA",
                 Uom = "m/h",
             };
+            DepthChannel01.SetWellbore(Wellbore01, creation);
 
             DepthChannel02 = new MockChannel(false)
             {
@@ -327,12 +368,12 @@ namespace Energistics.Etp.Handlers
                 Title = "Hook Load",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Wellbore01,
 
-                ChannelClass = HookLoad,
+                ChannelPropertyKind = HookLoad,
                 Mnemonic = "HKLD",
                 Uom = "10 kN",
             };
+            DepthChannel02.SetWellbore(Wellbore01, creation);
 
             DepthChannelSet01 = new MockChannelSet
             {
@@ -340,11 +381,10 @@ namespace Energistics.Etp.Handlers
                 Title = "Depth ChannelSet 01",
                 Creation = creation,
                 LastUpdate = creation,
-                Parent = Wellbore01,
-                Channels = new List<MockChannel> {  DepthChannel01, DepthChannel02 }
             };
-            DepthChannel01.Container = DepthChannelSet01;
-            DepthChannel02.Container = DepthChannelSet01;
+            DepthChannelSet01.SetWellbore(Wellbore01, creation);
+            DepthChannel01.JoinContainer(DepthChannelSet01, creation);
+            DepthChannel02.JoinContainer(DepthChannelSet01, creation);
 
             var objects = new List<MockObject>
             {
@@ -364,6 +404,9 @@ namespace Energistics.Etp.Handlers
                 Length,
                 Depth,
                 MeasuredDepth,
+                Time,
+                AbsoluteTime,
+                TimeStamp,
                 TimeChannelSet01,
                 TimeChannel01,
                 TimeChannel02,
@@ -375,9 +418,11 @@ namespace Energistics.Etp.Handlers
             };
 
             Objects.Clear();
-            Objects.AddRange(objects);
-            foreach (var @object in Objects)
+            foreach (var @object in objects)
+            {
+                Objects[@object.Uuid] = @object;
                 @object.Create(creation);
+            }
 
             var deletedObjects = new List<MockObject>
             {
@@ -385,7 +430,8 @@ namespace Energistics.Etp.Handlers
             };
 
             DeletedObjects.Clear();
-            DeletedObjects.AddRange(deletedObjects);
+            foreach (var deletedObject in deletedObjects)
+                DeletedObjects[deletedObject.Uuid] = deletedObject;
 
             Witsml = new MockFamily
             {

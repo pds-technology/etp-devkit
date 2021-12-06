@@ -38,69 +38,56 @@ namespace Energistics.Etp.v12.Protocol.Core
         /// </summary>
         public CoreServerHandler() : base((int)Protocols.Core, Roles.Server, Roles.Client)
         {
-            RegisterMessageHandler<Ping>(Protocols.Core, MessageTypes.Core.Ping, HandlePing);
-            RegisterMessageHandler<Pong>(Protocols.Core, MessageTypes.Core.Pong, HandlePong);
-            RegisterMessageHandler<RenewSecurityToken>(Protocols.Core, MessageTypes.Core.RenewSecurityToken, HandleRenewSecurityToken);
+            RegisterMessageHandler<Authorize>(Protocols.Core, MessageTypes.Core.Authorize, HandleAuthorize);
+            RegisterMessageHandler<AuthorizeResponse>(Protocols.Core, MessageTypes.Core.AuthorizeResponse, HandleAuthorizeResponse);
         }
 
         /// <summary>
-        /// Sends a Ping message.
+        /// Sends an Authorize message to a client.
         /// </summary>
+        /// <param name="authorization">The authorization.</param>
+        /// <param name="supplementalAuthorization">The supplemental authorization.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<Ping> Ping(IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<Authorize> Authorize(string authorization, IDictionary<string, string> supplementalAuthorization, IMessageHeaderExtension extension = null)
         {
-            var body = new Ping
+            var body = new Authorize
             {
+                Authorization = authorization,
+                SupplementalAuthorization = supplementalAuthorization ?? new Dictionary<string, string>(),
             };
 
-            return SendRequest(body, extension: extension, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
+            return SendRequest(body, extension: extension);
         }
 
         /// <summary>
-        /// Handles the Ping event from a client.
+        /// Handles the Authorize event from a client.
         /// </summary>
-        public event EventHandler<EmptyRequestEventArgs<Ping>> OnPing;
+        public event EventHandler<RequestWithContextEventArgs<Authorize, bool, AuthorizeContext>> OnAuthorize;
 
         /// <summary>
-        /// Sends a Pong response message.
+        /// Sends an AuthorizeResponse response message to a client.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">Whether or not authorization was successful.</param>
+        /// <param name="challenges">Challenges that may be used when authorization was not successful.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<Pong> Pong(IMessageHeader correlatedHeader, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<AuthorizeResponse> AuthorizeResponse(IMessageHeader correlatedHeader, bool success, IList<string> challenges, IMessageHeaderExtension extension = null)
         {
-            var body = new Pong
+            var body = new AuthorizeResponse
             {
-            };
-
-            return SendResponse(body, correlatedHeader, extension: extension, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
-        }
-
-        /// <summary>
-        /// Handles the Pong event from a client.
-        /// </summary>
-        public event EventHandler<ResponseEventArgs<Ping, Pong>> OnPong;
-
-        /// <summary>
-        /// Handles the RenewSecurityToken event from a client.
-        /// </summary>
-        public event EventHandler<EmptyRequestEventArgs<RenewSecurityToken>> OnRenewSecurityToken;
-
-        /// <summary>
-        /// Sends a RenewSecurityTokenResponse response message to a client.
-        /// </summary>
-        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
-        /// <param name="extension">The message header extension.</param>
-        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<RenewSecurityTokenResponse> RenewSecurityTokenResponse(IMessageHeader correlatedHeader, IMessageHeaderExtension extension = null)
-        {
-            var body = new RenewSecurityTokenResponse
-            {
+                Success = success,
+                Challenges = challenges ?? new List<string>(),
             };
 
             return SendResponse(body, correlatedHeader, extension: extension);
         }
+
+        /// <summary>
+        /// Handles the AuthorizeResponse event from a client.
+        /// </summary>
+        public event EventHandler<ResponseEventArgs<Authorize, AuthorizeResponse>> OnAuthorizeResponse;
 
         /// <summary>
         /// Handles the ProtocolException message.
@@ -111,18 +98,8 @@ namespace Energistics.Etp.v12.Protocol.Core
             base.HandleProtocolException(message);
 
             var request = TryGetCorrelatedMessage(message);
-            if (request is EtpMessage<Ping>)
-                HandleResponseMessage(request as EtpMessage<Ping>, message, OnPong, HandlePong);
-        }
-
-        /// <summary>
-        /// Handles the Ping message from a client.
-        /// </summary>
-        /// <param name="message">The Ping message.</param>
-        protected virtual void HandlePing(EtpMessage<Ping> message)
-        {
-            HandleRequestMessage(message, OnPing, HandlePing,
-                responseMethod: (args) => Pong(args.Request?.Header, extension: args.ResponseExtension));
+            if (request is EtpMessage<Authorize>)
+                HandleResponseMessage(request as EtpMessage<Authorize>, message, OnAuthorizeResponse, HandleAuthorizeResponse);
         }
 
         /// <summary>
@@ -134,38 +111,38 @@ namespace Energistics.Etp.v12.Protocol.Core
         }
 
         /// <summary>
-        /// Handles the Pong message from a client.
+        /// Handles the Authorize message from a client.
         /// </summary>
-        /// <param name="message">The Pong message.</param>
-        protected virtual void HandlePong(EtpMessage<Pong> message)
+        /// <param name="message">The Authorize message.</param>
+        protected virtual void HandleAuthorize(EtpMessage<Authorize> message)
         {
-            var request = TryGetCorrelatedMessage<Ping>(message);
-            HandleResponseMessage(request, message, OnPong, HandlePong);
+            HandleRequestMessage(message, OnAuthorize, HandleAuthorize,
+                responseMethod: (args) => AuthorizeResponse(args.Request?.Header, args.Response, args.Context.Challenges, extension: args.ResponseExtension));
         }
 
         /// <summary>
-        /// Handles the response to a Pong message from a client.
+        /// Handles the Authorize message from a client.
         /// </summary>
-        /// <param name="args">The <see cref="ResponseEventArgs{Ping, Pong}"/> instance containing the event data.</param>
-        protected virtual void HandlePong(ResponseEventArgs<Ping, Pong> args)
+        /// <param name="args">The <see cref="RequestWithContextEventArgs{Authorize, bool, AuthorizeContext}"/> instance containing the event data.</param>
+        protected virtual void HandleAuthorize(RequestWithContextEventArgs<Authorize, bool, AuthorizeContext> args)
         {
         }
 
         /// <summary>
-        /// Handles the RenewSecurityToken message from a client.
+        /// Handles the AuthorizeResponse message from a client.
         /// </summary>
-        /// <param name="message">The RenewSecurityToken message.</param>
-        protected virtual void HandleRenewSecurityToken(EtpMessage<RenewSecurityToken> message)
+        /// <param name="message">The AuthorizeResponse message.</param>
+        protected virtual void HandleAuthorizeResponse(EtpMessage<AuthorizeResponse> message)
         {
-            HandleRequestMessage(message, OnRenewSecurityToken, HandleRenewSecurityToken,
-                responseMethod: (args) => RenewSecurityTokenResponse(args.Request?.Header, extension: args.ResponseExtension));
+            var request = TryGetCorrelatedMessage<Authorize>(message);
+            HandleResponseMessage(request, message, OnAuthorizeResponse, HandleAuthorizeResponse);
         }
 
         /// <summary>
-        /// Handles the RenewSecurityToken message from a client.
+        /// Handles the AuthorizeResponse message from a client.
         /// </summary>
-        /// <param name="args">The <see cref="EmptyRequestEventArgs{RenewSecurityToken}"/> instance containing the event data.</param>
-        protected virtual void HandleRenewSecurityToken(EmptyRequestEventArgs<RenewSecurityToken> args)
+        /// <param name="args">The <see cref="ResponseEventArgs{Authorize, AuthorizeResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleAuthorizeResponse(ResponseEventArgs<Authorize, AuthorizeResponse> args)
         {
         }
     }

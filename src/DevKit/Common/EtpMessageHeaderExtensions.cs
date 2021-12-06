@@ -67,6 +67,26 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
+        /// Checks if this header is from a ping message.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <returns><c>true</c> if the header is from a ping message; <c>false</c> otherwise.</returns>
+        public static bool IsPing(this IMessageHeader header)
+        {
+            return header.Protocol == (int)Protocols.Core && header.MessageType == (int)MessageTypes.Core.Ping;
+        }
+
+        /// <summary>
+        /// Checks if this header is from a pong message.
+        /// </summary>
+        /// <param name="header">The message header.</param>
+        /// <returns><c>true</c> if the header is from a pong message; <c>false</c> otherwise.</returns>
+        public static bool IsPong(this IMessageHeader header)
+        {
+            return header.Protocol == (int)Protocols.Core && header.MessageType == (int)MessageTypes.Core.Pong;
+        }
+
+        /// <summary>
         /// Checks if this header is from a close session message.
         /// </summary>
         /// <param name="header">The message header.</param>
@@ -75,6 +95,7 @@ namespace Energistics.Etp.Common
         {
             return header.Protocol == (int)Protocols.Core && header.MessageType == (int)MessageTypes.Core.CloseSession;
         }
+
         /// <summary>
         /// Checks if this header has a correlation ID.
         /// </summary>
@@ -277,30 +298,6 @@ namespace Energistics.Etp.Common
         {
             // Never compress RequestSession or OpenSession in Core protocol
             if (header.Protocol == 0 && (header.IsRequestSession() || header.IsOpenSession()))
-                return false;
-
-            return true;
-        }
-
-        /// <summary>
-        /// Determines whether the message can be immediately acknowledged.  All messages except the ETP 1.1 ChannelDescribe
-        /// and GrowingObjectGetRange messages can be immediately acknowledged.  These two messages may use Acknowledge with the NoData
-        /// flag to indicate an empty result so cannot be immediately acknowledged.
-        /// </summary>
-        /// <param name="header">The header.</param>
-        /// <param name="etpVersion">The ETP version for the header.</param>
-        /// <returns><c>true</c> if the message can have an optional header extension; otherwise, <c>false</c>.</returns>
-        public static bool CanImmediatelyAcknowledge(this IMessageHeader header, EtpVersion etpVersion)
-        {
-            if (etpVersion == EtpVersion.v12)
-                return true;
-
-            // Do not auto acknowledge ChannelDescribe
-            if (header.Protocol == (int)v11.Protocols.ChannelStreaming && header.MessageType == (int)v11.MessageTypes.ChannelStreaming.ChannelDescribe)
-                return false;
-
-            // Do not auto acknowledge GrowingObjectGetRange
-            if (header.Protocol == (int)v11.Protocols.GrowingObject && header.MessageType == (int)v11.MessageTypes.GrowingObject.GrowingObjectGetRange)
                 return false;
 
             return true;

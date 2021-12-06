@@ -40,13 +40,13 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
             {
                 new ChannelMetadataRecord()
                 {
-                    Uri = "eml://witsml20/Channel(test)",
+                    Uri = "eml:///witsml20.Channel(18c518fa-1a11-43a1-9a86-36d651ddbf7d)",
                     Id = 1,
                     Indexes = new List<IndexMetadataRecord>()
                     {
                         new IndexMetadataRecord()
                         {
-                            IndexKind = ChannelIndexKind.Depth,
+                            IndexKind = ChannelIndexKind.MeasuredDepth,
                             Interval = new Datatypes.Object.IndexInterval
                             {
                                 StartIndex = new IndexValue { Item = 0L },
@@ -59,12 +59,12 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
                         },
                     },
                     ChannelName = "test",
-                    DataType = DataValueType.typeDouble,
+                    DataKind = ChannelDataKind.typeDouble,
                     Uom = "m",
                     Status = ActiveStatusKind.Active,
                     AxisVectorLengths = new int[0],
                     Source = "ETP DevKit",
-                    MeasureClass = "TestClass",
+                    ChannelClassUri = "eml:///eml21.PropertyKind(44964f15-701a-48b0-aec2-281186bddc24)",
                     CustomData = new Dictionary<string, DataValue>(),
                     AttributeMetadata = new AttributeMetadataRecord[0],
                 },

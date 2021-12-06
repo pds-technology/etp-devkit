@@ -201,7 +201,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
             var body = new GetRanges
             {
                 ChannelRanges = channelRanges ?? new List<ChannelRangeInfo>(),
-                RequestUuid = requestUuid.ToUuid<Uuid>()
+                RequestUuid = requestUuid
             };
 
             return SendRequest(body, extension: extension);
@@ -222,7 +222,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         {
             var body = new CancelGetRanges()
             {
-                RequestUuid = requestUuid.ToUuid<Uuid>(),
+                RequestUuid = requestUuid,
             };
 
             return SendRequest(body, extension: extension);

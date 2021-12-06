@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using Energistics.Etp.Common.Datatypes;
-using System.Collections.Generic;
 
 namespace Energistics.Etp.Common
 {
@@ -31,10 +30,10 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="qualifiedType">The data object's qualified type.</param>
         /// <param name="capabilities">The data object's capabilities</param>
-        public EtpSupportedDataObject(IDataObjectType qualifiedType, List<string> capabilities)
+        public EtpSupportedDataObject(IDataObjectType qualifiedType, IReadOnlyCapabilities capabilities)
         {
             QualifiedType = qualifiedType;
-            Capabilities = capabilities ?? new List<string>();
+            Capabilities = capabilities == null ? new EtpDataObjectCapabilities() : new EtpDataObjectCapabilities(capabilities);
         }
 
         /// <summary>
@@ -44,7 +43,7 @@ namespace Energistics.Etp.Common
         public EtpSupportedDataObject(ISupportedDataObject supportedDataObject)
         {
             QualifiedType = supportedDataObject.QualifiedType;
-            Capabilities = new List<string>(supportedDataObject.DataObjectCapabilities);
+            Capabilities = new EtpDataObjectCapabilities(supportedDataObject.EtpVersion, supportedDataObject.DataObjectCapabilities);
         }
 
         /// <summary>
@@ -54,7 +53,7 @@ namespace Energistics.Etp.Common
         public EtpSupportedDataObject(IEndpointSupportedDataObject supportedDataObject)
         {
             QualifiedType = supportedDataObject.QualifiedType;
-            Capabilities = new List<string>(supportedDataObject.Capabilities);
+            Capabilities = new EtpDataObjectCapabilities(supportedDataObject.Capabilities);
         }
 
         /// <summary>
@@ -64,6 +63,7 @@ namespace Energistics.Etp.Common
         public EtpSupportedDataObject(IDataObjectType qualifiedType)
         {
             QualifiedType = qualifiedType;
+            Capabilities = new EtpDataObjectCapabilities();
         }
 
         /// <summary>
@@ -79,21 +79,16 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Gets the capabilities supported for this object.
         /// </summary>
-        public List<string> Capabilities { get; } = new List<string>();
+        public EtpDataObjectCapabilities Capabilities { get; }
 
         /// <summary>
         /// Gets the capabilities supported for this object as a read-only list.
         /// </summary>
-        IReadOnlyList<string> IEndpointSupportedDataObject.Capabilities => Capabilities;
+        IDataObjectCapabilities IEndpointSupportedDataObject.Capabilities => Capabilities;
 
         /// <summary>
         /// Gets the capabilities supported for this object.
         /// </summary>
-        public List<string> CounterpartCapabilities { get; set; } = new List<string>();
-
-        /// <summary>
-        /// Gets the counterpart's capabilities supported for this object as a read-only list.
-        /// </summary>
-        IReadOnlyList<string> ISessionSupportedDataObject.CounterpartCapabilities => CounterpartCapabilities;
+        public IDataObjectCapabilities CounterpartCapabilities { get; set; }
     }
 }

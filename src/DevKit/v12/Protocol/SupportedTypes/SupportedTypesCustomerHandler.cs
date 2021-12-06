@@ -55,7 +55,7 @@ namespace Energistics.Etp.v12.Protocol.SupportedTypes
         {
             var body = new GetSupportedTypes
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 Scope = scope,
                 ReturnEmptyTypes = returnEmptyTypes,
                 CountObjects = countObjects,

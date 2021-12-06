@@ -23,7 +23,7 @@ using System.Collections.Generic;
 
 namespace Energistics.Etp.Data
 {
-    public class MockWellbore : MockWitsmlActiveObject
+    public class MockWellbore : MockWitsmlWellObject, IMockActiveObject
     {
         new public static EtpDataObjectType Type { get; } = new EtpDataObjectType(MockWitsmlObject.Type, "Wellbore");
 
@@ -53,10 +53,10 @@ $@"{indentation}<Wellbore{Namespaces(embedded)} schemaVersion=""2.0"" uuid=""{Uu
 {indentation}  </Citation>
 {indentation}  <IsActive>{(IsActive ? "true" : "false")}</IsActive>
 {indentation}  <Well>
-{indentation}    <ContentType xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Parent.ContentType}</ContentType>
-{indentation}    <Title xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Parent.Title}</Title>
-{indentation}    <Uuid xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Parent.Uuid}</Uuid>
-{indentation}    <Uri xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Parent.Uri(version)}</Uri>
+{indentation}    <ContentType xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Well.ContentType}</ContentType>
+{indentation}    <Title xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Well.Title}</Title>
+{indentation}    <Uuid xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Well.Uuid}</Uuid>
+{indentation}    <Uri xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Well.Uri(version)}</Uri>
 {indentation}  </Well>
 {indentation}</Wellbore>";
     }

@@ -115,7 +115,7 @@ namespace Energistics.Etp.Endpoints
                     {
                         if (server.EtpVersion == EtpVersion.v12)
                         {
-                            server.Handler<v12.Protocol.Core.ICoreServer>().Ping();
+                            server.Ping();
                         }
                     }
                 }
@@ -168,28 +168,43 @@ namespace Energistics.Etp.Endpoints
             Console.WriteLine();
 
             Console.WriteLine("Select from the following options:");
-            Console.WriteLine(" 1 - ETP 1.1");
-            Console.WriteLine(" 2 - ETP 1.2");
+            Console.WriteLine(" 1 - ETP 1.1, JSON encoding");
+            Console.WriteLine(" 2 - ETP 1.1, binary encoding");
+            Console.WriteLine(" 3 - ETP 1.2, JSON encoding");
+            Console.WriteLine(" 4 - ETP 1.2, binary encoding");
             info = Console.ReadKey();
             var version = EtpVersion.Unknown;
+            var encoding = EtpEncoding.Binary;
             if (IsKey(info, "1"))
             {
                 version = EtpVersion.v11;
+                encoding = EtpEncoding.Json;
             }
             else if (IsKey(info, "2"))
             {
+                version = EtpVersion.v11;
+                encoding = EtpEncoding.Binary;
+            }
+            else if (IsKey(info, "3"))
+            {
                 version = EtpVersion.v12;
+                encoding = EtpEncoding.Json;
+            }
+            else if (IsKey(info, "4"))
+            {
+                version = EtpVersion.v12;
+                encoding = EtpEncoding.Binary;
             }
             Console.WriteLine();
 
             var endpointInfo = EtpFactory.CreateClientEndpointInfo(ClientAppName, AppVersion, Assembly.GetExecutingAssembly().FullName);
-            using (var client = EtpFactory.CreateClient(WebSocketType.Native, string.IsNullOrEmpty(webSocketUri) ? DefaultClientUri : webSocketUri, version, EtpEncoding.Binary, endpointInfo, authorization: authorization))
+            using (var client = EtpFactory.CreateClient(WebSocketType.Native, string.IsNullOrEmpty(webSocketUri) ? DefaultClientUri : webSocketUri, version, encoding, endpointInfo, authorization: authorization))
             {
                 client.OnProtocolException += OnProtocolException;
                 if (client.EtpVersion == EtpVersion.v12)
                 {
-                    client.Handler<v12.Protocol.Core.ICoreClient>().OnPing += OnPing;
-                    client.Handler<v12.Protocol.Core.ICoreClient>().OnPong += OnPong;
+                    client.OnPing += OnPing;
+                    client.OnPong += OnPong;
                 }
                 InitializeClient(client);
                 HandleClient(client);
@@ -248,7 +263,7 @@ namespace Energistics.Etp.Endpoints
                 else if (IsKey(info, "P"))
                 {
                     if (client.EtpVersion == EtpVersion.v12)
-                        client.Handler<v12.Protocol.Core.ICoreClient>().Ping();
+                        client.Ping();
                 }
                 else if (IsKey(info, "Z"))
                     Console.Clear();
@@ -271,8 +286,8 @@ namespace Energistics.Etp.Endpoints
             server.OnProtocolException += OnProtocolException;
             if (server.EtpVersion == EtpVersion.v12)
             {
-                server.Handler<v12.Protocol.Core.ICoreServer>().OnPing += OnPing;
-                server.Handler<v12.Protocol.Core.ICoreServer>().OnPong += OnPong;
+                server.OnPing += OnPing;
+                server.OnPong += OnPong;
             }
 
             InitializeServer(server);
@@ -283,15 +298,14 @@ namespace Energistics.Etp.Endpoints
             Console.WriteLine(string.Join("Protocol Exception:", Environment.NewLine, EtpExtensions.Serialize(args.Message.Body)));
         }
 
-        private void OnPing(object sender, EmptyRequestEventArgs<v12.Protocol.Core.Ping> args)
+        private void OnPing(object sender, MessageEventArgs<IPing> args)
         {
-            Console.WriteLine(string.Join("Ping:", Environment.NewLine, EtpExtensions.Serialize(args.Request.Body)));
+            Console.WriteLine(string.Join("Ping:", Environment.NewLine, EtpExtensions.Serialize(args.Message.Body)));
         }
 
-        private void OnPong(object sender, ResponseEventArgs<v12.Protocol.Core.Ping, v12.Protocol.Core.Pong> args)
+        private void OnPong(object sender, MessageEventArgs<IPong> args)
         {
-            if (args.Response != null)
-                Console.WriteLine(string.Join("Pong:", Environment.NewLine, EtpExtensions.Serialize(args.Response.Body)));
+            Console.WriteLine(string.Join("Pong:", Environment.NewLine, EtpExtensions.Serialize(args.Message.Body)));
         }
 
         protected bool IsKey(ConsoleKeyInfo info, string key)

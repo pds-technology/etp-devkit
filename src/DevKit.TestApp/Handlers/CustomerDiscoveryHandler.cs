@@ -135,36 +135,36 @@ namespace Energistics.Etp.Handlers
         {
             if (args.Response == null) return;
 
-            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.Dataspaces, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body));
         }
 
         private void OnGetResourcesResponse(object sender, ResponseEventArgs<v11.Protocol.Discovery.GetResources, v11.Protocol.Discovery.GetResourcesResponse> args)
         {
             if (args.Response == null) return;
 
-            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.Resource, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.Resource));
         }
 
         private void OnGetResourcesResponse(object sender, DualResponseEventArgs<v12.Protocol.Discovery.GetResources, v12.Protocol.Discovery.GetResourcesResponse, v12.Protocol.Discovery.GetResourcesEdgesResponse> args)
         {
             if (args.Response1 != null)
-                Console.WriteLine(EtpExtensions.Serialize(args.Response1.Body.Resources, true));
+                Console.WriteLine(EtpExtensions.Serialize(args.Response1.Body));
             if (args.Response2 != null)
-                Console.WriteLine(EtpExtensions.Serialize(args.Response2.Body.Edges, true));
+                Console.WriteLine(EtpExtensions.Serialize(args.Response2.Body));
         }
 
         private void OnGetDeletedResourcesResponse(object sender, ResponseEventArgs<v12.Protocol.Discovery.GetDeletedResources, v12.Protocol.Discovery.GetDeletedResourcesResponse> args)
         {
             if (args.Response == null) return;
 
-            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.DeletedResources, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body));
         }
 
         private void OnGetSupportedTypesResponse(object sender, ResponseEventArgs<v12.Protocol.SupportedTypes.GetSupportedTypes, v12.Protocol.SupportedTypes.GetSupportedTypesResponse> args)
         {
             if (args.Response == null) return;
 
-            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.SupportedTypes, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body));
         }
 
         private MockGraphContext GetContext(string uri)

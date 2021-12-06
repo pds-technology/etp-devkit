@@ -38,7 +38,7 @@ namespace Energistics.Etp.Common
         /// <param name="header">The message header</param>
         /// <param name="body">The message body</param>
         /// <param name="extension">The message extension</param>
-        public EtpMessage(IMessageHeader header, Avro.Specific.ISpecificRecord body, IMessageHeaderExtension extension = null)
+        public EtpMessage(IMessageHeader header, IEtpMessageBody body, IMessageHeaderExtension extension = null)
         {
             Header = header;
             Extension = extension;
@@ -58,7 +58,7 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// The message body.
         /// </summary>
-        public Avro.Specific.ISpecificRecord Body { get; set; }
+        public IEtpMessageBody Body { get; set; }
 
         /// <summary>
         /// Gets the ETP Version for this message.
@@ -75,7 +75,7 @@ namespace Energistics.Etp.Common
     /// Represents a complete ETP Message
     /// </summary>
     public class EtpMessage<T> : EtpMessage
-        where T : Avro.Specific.ISpecificRecord
+        where T : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new <see cref="EtpMessage{T}"/> instance.

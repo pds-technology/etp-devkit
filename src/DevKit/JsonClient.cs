@@ -22,8 +22,10 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Web;
+using Energistics.Avro.Encoding;
+using Energistics.Avro.Encoding.Json;
 using Energistics.Etp.Common;
-using Newtonsoft.Json.Linq;
+using Energistics.Json;
 using Authorization = Energistics.Etp.Security.Authorization;
 
 namespace Energistics.Etp
@@ -105,8 +107,8 @@ namespace Energistics.Etp
 
                 try
                 {
-                    var json = JObject.Parse(response);
-                    token = json["access_token"].Value<string>();
+                    using (var reader = new JsonReader(response))
+                        token = reader.Read().GetValue("access_token");
                 }
                 catch
                 {
@@ -136,7 +138,8 @@ namespace Energistics.Etp
             headers.SetAuthorization(Authorization);
             var json = DownloadJson(url);
 
-            return EtpExtensions.Deserialize<List<string>>(json);
+            using (var reader = new JsonReader(json))
+                return (reader.Read() as Json.Tokens.Array).Values.Select(token => token.GetValue()).ToList();
 
         }
 
@@ -151,7 +154,8 @@ namespace Energistics.Etp
             var json = DownloadJson(url);
             var capServerType = GetServerCapabilitiesType(url);
 
-            return EtpExtensions.Deserialize(capServerType, json);
+            using (var decoder = new JsonAvroDecoder(json))
+                return decoder.DecodeAvroObject<v11.Datatypes.ServerCapabilities>();
         }
 
         /// <summary>

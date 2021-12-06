@@ -16,7 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.Specific;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes;
@@ -62,7 +61,7 @@ namespace Energistics.Etp.v12.Protocol
         /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
         /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
         public virtual EtpMessage<TBody> SendMapResponse<TBody, TResponse>(Func<IMessageHeader, IDictionary<string, TResponse>, bool, IMessageHeaderExtension, EtpMessage<TBody>> responseMethod, IMessageHeader correlatedHeader, IDictionary<string, TResponse> response, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
-            where TBody : ISpecificRecord
+            where TBody : IEtpMessageBody
         {
             var message = responseMethod(correlatedHeader, response, /* isFinalPart: */ ((errors == null || errors.Count == 0) && setFinalPart), /* extension: */ responseExtension);
             if (message == null)
@@ -96,7 +95,7 @@ namespace Energistics.Etp.v12.Protocol
         /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
         /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
         public virtual EtpMessage<TBody> SendMapResponse<TBody, TResponse, TContext>(Func<IMessageHeader, IDictionary<string, TResponse>, TContext, bool, IMessageHeaderExtension, EtpMessage<TBody>> responseMethod, IMessageHeader correlatedHeader, IDictionary<string, TResponse> response, TContext context, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
-            where TBody : ISpecificRecord
+            where TBody : IEtpMessageBody
         {
             var message = responseMethod(correlatedHeader, response, context, /* isFinalPart: */ ((errors == null || errors.Count == 0) && setFinalPart), /* extension: */ responseExtension);
             if (message == null)

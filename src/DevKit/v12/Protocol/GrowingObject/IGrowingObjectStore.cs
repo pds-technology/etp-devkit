@@ -70,11 +70,11 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// Sends a PutGrowingDataObjectsHeaderResponse message to a customer.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
-        /// <param name="uris">The URIs.</param>
+        /// <param name="success">The successes.</param>
         /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<PutGrowingDataObjectsHeaderResponse> PutGrowingDataObjectsHeaderResponse(IMessageHeader correlatedHeader, IDictionary<string, string> uris, bool isFinalPart = true, IMessageHeaderExtension extension = null);
+        EtpMessage<PutGrowingDataObjectsHeaderResponse> PutGrowingDataObjectsHeaderResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, bool isFinalPart = true, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Sends a complete multi-part set of PutGrowingDataObjectsHeaderResponse and ProtocolException messages to a customer.
@@ -82,13 +82,13 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// If there are no errors, no ProtocolException message is sent.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
-        /// <param name="uris">The URIs.</param>
+        /// <param name="success">The successes.</param>
         /// <param name="errors">The errors.</param>
         /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
         /// <param name="responseExtension">The message header extension for the PutGrowingDataObjectsHeaderResponse message.</param>
         /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
         /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
-        EtpMessage<PutGrowingDataObjectsHeaderResponse> PutGrowingDataObjectsHeaderResponse(IMessageHeader correlatedHeader, IDictionary<string, string> uris, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null);
+        EtpMessage<PutGrowingDataObjectsHeaderResponse> PutGrowingDataObjectsHeaderResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null);
 
         /// <summary>
         /// Handles the GetPartsMetadata event from a customer.
@@ -118,6 +118,35 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
         /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
         EtpMessage<GetPartsMetadataResponse> GetPartsMetadataResponse(IMessageHeader correlatedHeader, IDictionary<string, PartsMetadataInfo> metadata, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null);
+        
+        /// <summary>
+        /// Handles the GetChangeAnnotations event from a customer.
+        /// </summary>
+        event EventHandler<MapRequestEventArgs<GetChangeAnnotations, ChangeResponseInfo>> OnGetChangeAnnotations;
+
+        /// <summary>
+        /// Sends a GetChangeAnnotationsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="changes">The changes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetChangeAnnotationsResponse> GetChangeAnnotationsResponse(IMessageHeader correlatedHeader, IDictionary<string, ChangeResponseInfo> changes, bool isFinalPart = true, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetChangeAnnotationsResponse and ProtocolException messages to a customer.
+        /// If there are no changes, an empty ChangeAnnotationsRecord message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="changes">The changes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetChangeAnnotationsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetChangeAnnotationsResponse> GetChangeAnnotationsResponse(IMessageHeader correlatedHeader, IDictionary<string, ChangeResponseInfo> changes, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null);
 
         /// <summary>
         /// Handles the GetParts event from a customer.

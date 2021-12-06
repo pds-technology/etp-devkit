@@ -26,21 +26,21 @@ namespace Energistics.Etp.Data
     {
         public MockSubscriptionInfo(Common.Datatypes.ChannelData.IChannelDescribeSubscription subscription)
         {
-            RequestUuid = subscription.RequestUuidGuid.UuidGuid;
+            RequestUuid = subscription.RequestUuid;
             IncludeObjectData = false;
             Context = new MockGraphContext(subscription);
         }
 
         public MockSubscriptionInfo(v11.Datatypes.Object.NotificationRequestRecord request)
         {
-            RequestUuid = request.RequestUuidGuid.UuidGuid;
+            RequestUuid = request.RequestUuid;
             IncludeObjectData = request.IncludeObjectData;
             Context = new MockGraphContext(request);
         }
 
         public MockSubscriptionInfo(v12.Datatypes.Object.SubscriptionInfo subscriptionInfo)
         {
-            RequestUuid = subscriptionInfo.RequestUuidGuid.UuidGuid;
+            RequestUuid = subscriptionInfo.RequestUuid;
             IncludeObjectData = subscriptionInfo.IncludeObjectData;
             Format = subscriptionInfo.Format;
             Context = new MockGraphContext(subscriptionInfo);
@@ -72,7 +72,7 @@ namespace Energistics.Etp.Data
             Context = Context.ContextInfo12,
             Scope = Context.ContextScopeKind12,
             IncludeObjectData = IncludeObjectData,
-            RequestUuid = RequestUuid.ToUuid<v12.Datatypes.Uuid>(),
+            RequestUuid = RequestUuid,
         };
     };
 }

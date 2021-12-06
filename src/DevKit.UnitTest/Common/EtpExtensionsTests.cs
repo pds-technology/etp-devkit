@@ -16,7 +16,8 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
+using Energistics.Avro.Encoding;
+using Energistics.Avro.Encoding.Binary;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -185,10 +186,10 @@ namespace Energistics.Etp.Common
             bytes = expectedMessage.Encode();
 
             using (var inputStream = new MemoryStream(bytes))
+            using (var decoder = new BinaryAvroDecoder(inputStream))
             {
-                var decoder = new BinaryDecoder(inputStream);
-                var actualHeader = decoder.Decode<v11.Datatypes.MessageHeader>();
-                var actualBody = decoder.Decode<v11.Protocol.Core.RequestSession>();
+                var actualHeader = decoder.DecodeAvroObject<v11.Datatypes.MessageHeader>();
+                var actualBody = decoder.DecodeAvroObject<v11.Protocol.Core.RequestSession>();
 
                 Assert.AreEqual(expectedHeader.MessageFlags, actualHeader.MessageFlags, nameof(expectedHeader.MessageFlags));
                 Assert.AreEqual(expectedHeader.Protocol, actualHeader.Protocol, nameof(expectedHeader.Protocol));

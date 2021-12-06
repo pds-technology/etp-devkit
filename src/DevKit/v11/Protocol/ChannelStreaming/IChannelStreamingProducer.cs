@@ -28,7 +28,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
     /// Defines the interface that must be implemented by the producer role of the ChannelStreaming protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.ChannelStreaming, Roles.Producer, Roles.Consumer)]
+    [ProtocolRole((int)Protocols.ChannelStreaming, Common.Roles.Producer, Common.Roles.Consumer)]
     public interface IChannelStreamingProducer : IProtocolHandlerWithCapabilities<ICapabilitiesProducer>
     {
         /// <summary>

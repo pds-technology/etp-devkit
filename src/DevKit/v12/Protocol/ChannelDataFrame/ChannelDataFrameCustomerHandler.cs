@@ -22,6 +22,7 @@ using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 using System;
+using System.Collections.Generic;
 
 namespace Energistics.Etp.v12.Protocol.ChannelDataFrame
 {
@@ -46,13 +47,15 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataFrame
         /// Sends a GetFrameMetadata message to a store.
         /// </summary>
         /// <param name="uri">The frame URI.</param>
+        /// <param name="includeAllChannelSecondaryIndexes">Whether or not to include all channel secondary indexes.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<GetFrameMetadata> GetFrameMetadata(string uri, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<GetFrameMetadata> GetFrameMetadata(string uri, bool includeAllChannelSecondaryIndexes, IMessageHeaderExtension extension = null)
         {
             var body = new GetFrameMetadata()
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
+                IncludeAllChannelSecondaryIndexes = includeAllChannelSecondaryIndexes,
             };
 
             return SendRequest(body, extension: extension);
@@ -67,17 +70,21 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataFrame
         /// Sends a GetFrame message to a store.
         /// </summary>
         /// <param name="uri">The frame URI.</param>
+        /// <param name="includeAllChannelSecondaryIndexes">Whether or not to include all channel secondary indexes.</param>
         /// <param name="requestedInterval">The requested interval.</param>
+        /// <param name="requestedSecondaryIntervals">The requested secondary intervals.</param>
         /// <param name="requestUuid">The request UUID.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<GetFrame> GetFrame(string uri, IndexInterval requestedInterval, Guid requestUuid, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<GetFrame> GetFrame(string uri, bool includeAllChannelSecondaryIndexes, IndexInterval requestedInterval, IList<IndexInterval> requestedSecondaryIntervals, Guid requestUuid, IMessageHeaderExtension extension = null)
         {
             var body = new GetFrame()
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
+                IncludeAllChannelSecondaryIndexes = includeAllChannelSecondaryIndexes,
                 RequestedInterval = requestedInterval,
-                RequestUuid = requestUuid.ToUuid<Uuid>(),
+                RequestedSecondaryIntervals = requestedSecondaryIntervals ?? new List<IndexInterval>(),
+                RequestUuid = requestUuid,
             };
 
             return SendRequest(body, extension: extension);
@@ -98,7 +105,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataFrame
         {
             var body = new CancelGetFrame()
             {
-                RequestUuid = requestUuid.ToUuid<Uuid>(),
+                RequestUuid = requestUuid,
             };
 
             return SendRequest(body, extension: extension);

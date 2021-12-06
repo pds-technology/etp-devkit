@@ -81,10 +81,6 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
                 header.Timestamp = ack.Header.Timestamp;
                 return new EtpMessage<ObjectFragment>(header, new ObjectFragment());
             }
-            else if (correlatedHeader.IsAcknowledgeRequested())
-            {
-                Acknowledge(correlatedHeader);
-            }
 
             EtpMessage<ObjectFragment> message = null;
 

@@ -28,53 +28,6 @@ namespace Energistics.Etp.Store
 {
     public partial class MockStore
     {
-        public class ChannelDataQuery
-        {
-            public IMockGrowingObject Channel { get; set; }
-            public long ChannelId { get; set; }
-            public IComparable StartIndex { get; set; }
-            public bool IsStartIndexInclusive { get; set; }
-            public IComparable EndIndex { get; set; }
-        }
-
-        private class ChannelSubscriptionInfo
-        {
-            public Guid ChannelScopeUuid { get; set; }
-            public long ChannelId { get; set; }
-            public MockObject Channel { get; set; }
-            public bool IsStarted { get; set; }
-            public bool SendChanges { get; set; }
-            public ChannelDataQuery Query { get; set; }
-        }
-
-        private class ChannelSubscription : Subscription<ChannelSubscriptionInfo>
-        {
-            public bool AutoStart { get; set; }
-            public int MaxDataItems { get; set; }
-            public TimeSpan MaxMessageRate { get; set; }
-            public long NextChannelId { get; set; } = 0;
-            public Dictionary<long, ChannelSubscriptionInfo> ValidChannelIds { get; } = new Dictionary<long, ChannelSubscriptionInfo>();
-            public Dictionary<Guid, MockSubscriptionInfo> ChannelScopesByChannelScopeUuid { get; } = new Dictionary<Guid, MockSubscriptionInfo>();
-            public Dictionary<Guid, ChannelSubscriptionInfo> ChannelSubscriptionsByChannelUuid { get; } = new Dictionary<Guid, ChannelSubscriptionInfo>();
-            public Dictionary<Guid, Guid> ChannelScopeUuidByChannelUuid { get; } = new Dictionary<Guid, Guid>();
-            new public MockGrowingObjectCallbacks Callbacks { get { return base.Callbacks as MockGrowingObjectCallbacks; } set { base.Callbacks = value; } }
-            public override ChannelSubscriptionInfo GetContext(MockObject @object)
-            {
-                ChannelSubscriptionInfo info;
-                if (@object != null && ChannelSubscriptionsByChannelUuid.TryGetValue(@object.Uuid, out info))
-                    return info;
-                else
-                    return null;
-            }
-            public override Guid SubscriptionUuid(ChannelSubscriptionInfo context) => context?.ChannelScopeUuid ?? default(Guid);
-            public override bool CanSendUpdated(ChannelSubscriptionInfo context) => false;
-            public override bool CanSendJoined(ChannelSubscriptionInfo context) => true;
-            public override bool CanSendUnjoined(ChannelSubscriptionInfo context) => context?.IsStarted ?? false;
-            public override bool CanSendActiveStatusChanged(ChannelSubscriptionInfo context) => context != null && context.IsStarted && context.SendChanges;
-            public override bool CanSendDeleted(ChannelSubscriptionInfo context) => context?.IsStarted ?? false;
-            public DateTime LastSendTime { get; set; } = DateTime.MinValue;
-        }
-
         private Dictionary<Guid, ChannelSubscription> ChannelSubscriptionsBySessionId { get; } = new Dictionary<Guid, ChannelSubscription>();
 
         private BackgroundLoop ChannelNotificationLoop { get; } = new BackgroundLoop();
@@ -148,7 +101,7 @@ namespace Energistics.Etp.Store
             {
                 Version = version,
                 Uuid = sessionId,
-                LastStoreWriteTime = StoreLastWrite,
+                LastNotificationTime = StoreLastWrite,
                 AutoStart = autoStart,
                 MaxDataItems = maxDataItems,
                 MaxMessageRate = maxMessageRate,
@@ -185,21 +138,15 @@ namespace Energistics.Etp.Store
 
             channelSubscription.ChannelScopesByChannelScopeUuid[channelScopeUuid] = channelScope;
 
-            RefreshSubscriptions(); // Make sure subscription knows about all relevant objects.
+            RefreshChannelSubscription(channelSubscription);
 
-            // Remove joined objects relating this
-            foreach (var kvp in channelSubscription.AddedObjects)
-            {
-                if (channelSubscription.ChannelScopeUuidByChannelUuid[kvp.Key] == channelScopeUuid)
-                    addedChannels.Add(kvp.Value);
-            }
-            foreach (var @object in addedChannels)
-                channelSubscription.AddedObjects.Remove(@object.Uuid);
+            foreach (var channel in channelSubscription.Objects.Values)
+                addedChannels.Add(channel);
 
             return true;
         }
 
-        public bool RemoveChannelSubscriptionChannelScope(Guid sessionId, IRequestUuidGuidSource request)
+        public bool RemoveChannelSubscriptionChannelScope(Guid sessionId, IRequestUuidSource request)
         {
             CheckLocked();
 
@@ -208,10 +155,10 @@ namespace Energistics.Etp.Store
                 return false;
 
             MockSubscriptionInfo subscriptionInfo;
-            if (!channelSubscription.ChannelScopesByChannelScopeUuid.TryGetValue(request.RequestUuidGuid.UuidGuid, out subscriptionInfo))
+            if (!channelSubscription.ChannelScopesByChannelScopeUuid.TryGetValue(request.RequestUuid, out subscriptionInfo))
                 return false;
 
-            if (!channelSubscription.ChannelScopesByChannelScopeUuid.Remove(request.RequestUuidGuid.UuidGuid))
+            if (!channelSubscription.ChannelScopesByChannelScopeUuid.Remove(request.RequestUuid))
                 return false;
 
             return UnsubscribeObjectNotifications(subscriptionInfo.RequestUuid);
@@ -424,26 +371,29 @@ namespace Energistics.Etp.Store
         {
             CheckLocked();
 
-            SendNotificationsForObjectsAddedToScope(subscription);
-            SendUpdatedNotificationsForObjectsInScope(subscription);
-            SendActivatedNotificationsForObjectsInScope(subscription);
+            RefreshSubscriptions();
+
+            SendJoinedSubscriptionNotifications(subscription);
+            SendCreatedNotifications(subscription);
+            SendUpdatedNotifications(subscription);
+            SendActivatedNotifications(subscription);
 
             SendChannelDataNotifications(subscription);
 
-            SendDeactivatedNotificationsForObjectsInScope(subscription);
-            SendNotificationsForObjectsRemovedFromScope(subscription);
+            SendDeactivatedNotifications(subscription);
+            SendUnjoinedSubscriptionNotifications(subscription);
 
-            foreach (var @object in subscription.RemovedObjects.Values)
+            foreach (var @object in subscription.GetAllRemovedObjects())
             {
                 subscription.ChannelScopeUuidByChannelUuid.Remove(@object.Uuid);
                 subscription.ChannelSubscriptionsByChannelUuid.Remove(@object.Uuid);
                 subscription.ChannelScopeUuidByChannelUuid.Remove(@object.Uuid);
             }
 
-            subscription.AddedObjects.Clear();
-            subscription.RemovedObjects.Clear();
+            subscription.PreviousObjects = subscription.Objects;
+            subscription.Objects = new Dictionary<Guid, MockObject>();
 
-            subscription.LastStoreWriteTime = StoreLastWrite;
+            subscription.LastNotificationTime = StoreLastWrite;
         }
 
         private void SendChannelDataNotifications(ChannelSubscription subscription)

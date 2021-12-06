@@ -41,6 +41,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
             RegisterMessageHandler<GetGrowingDataObjectsHeader>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetGrowingDataObjectsHeader, HandleGetGrowingDataObjectsHeader);
             RegisterMessageHandler<PutGrowingDataObjectsHeader>(Protocols.GrowingObject, MessageTypes.GrowingObject.PutGrowingDataObjectsHeader, HandlePutGrowingDataObjectsHeader);
             RegisterMessageHandler<GetPartsMetadata>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadata, HandleGetPartsMetadata);
+            RegisterMessageHandler<GetChangeAnnotations>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetChangeAnnotations, HandleGetChangeAnnotations);
             RegisterMessageHandler<GetParts>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetParts, HandleGetParts);
             RegisterMessageHandler<GetPartsByRange>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRange, HandleGetPartsByRange);
             RegisterMessageHandler<PutParts>(Protocols.GrowingObject, MessageTypes.GrowingObject.PutParts, HandlePutParts);
@@ -97,15 +98,15 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// Sends a PutGrowingDataObjectsHeaderResponse message to a customer.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
-        /// <param name="uris">The URIs.</param>
+        /// <param name="success">The successes.</param>
         /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<PutGrowingDataObjectsHeaderResponse> PutGrowingDataObjectsHeaderResponse(IMessageHeader correlatedHeader, IDictionary<string, string> uris, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<PutGrowingDataObjectsHeaderResponse> PutGrowingDataObjectsHeaderResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
             var body = new PutGrowingDataObjectsHeaderResponse
             {
-                Uris = uris ?? new Dictionary<string, string>(),
+                Success = success ?? new Dictionary<string, string>(),
             };
 
             return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
@@ -117,15 +118,15 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// If there are no errors, no ProtocolException message is sent.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
-        /// <param name="uris">The URIs.</param>
+        /// <param name="success">The successes.</param>
         /// <param name="errors">The errors.</param>
         /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
         /// <param name="responseExtension">The message header extension for the PutGrowingDataObjectsHeaderResponse message.</param>
         /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
         /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<PutGrowingDataObjectsHeaderResponse> PutGrowingDataObjectsHeaderResponse(IMessageHeader correlatedHeader, IDictionary<string, string> uris, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        public virtual EtpMessage<PutGrowingDataObjectsHeaderResponse> PutGrowingDataObjectsHeaderResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
         {
-            return SendMapResponse(PutGrowingDataObjectsHeaderResponse, correlatedHeader, uris, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+            return SendMapResponse(PutGrowingDataObjectsHeaderResponse, correlatedHeader, success, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
         }
 
         /// <summary>
@@ -169,6 +170,46 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         }
 
         /// <summary>
+        /// Handles the GetChangeAnnotations event from a customer.
+        /// </summary>
+        public event EventHandler<MapRequestEventArgs<GetChangeAnnotations, ChangeResponseInfo>> OnGetChangeAnnotations;
+
+        /// <summary>
+        /// Sends a GetChangeAnnotationsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="changes">The changes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetChangeAnnotationsResponse> GetChangeAnnotationsResponse(IMessageHeader correlatedHeader, IDictionary<string, ChangeResponseInfo> changes, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetChangeAnnotationsResponse
+            {
+                Changes = changes ?? new Dictionary<string, ChangeResponseInfo>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetChangeAnnotationsResponse and ProtocolException messages to a customer.
+        /// If there are no changes, an empty ChangeAnnotationsRecord message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="changes">The changes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetChangeAnnotationsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetChangeAnnotationsResponse> GetChangeAnnotationsResponse(IMessageHeader correlatedHeader, IDictionary<string, ChangeResponseInfo> changes, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(GetChangeAnnotationsResponse, correlatedHeader, changes, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
+
+        /// <summary>
         /// Handles the GetParts event from a customer.
         /// </summary>
         public event EventHandler<MapRequestWithContextEventArgs<GetParts, ObjectPart, ResponseContext>> OnGetParts;
@@ -186,7 +227,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         {
             var body = new GetPartsResponse
             {
-                Uri = context?.Uri,
+                Uri = context?.Uri ?? string.Empty,
                 Format = context?.Format ?? Formats.Xml,
                 Parts = parts ?? new Dictionary<string, ObjectPart>(),
             };
@@ -264,7 +305,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         {
             var body = new GetPartsByRangeResponse
             {
-                Uri = context?.Uri,
+                Uri = context?.Uri ?? string.Empty,
                 Format = context?.Format ?? Formats.Xml,
                 Parts = parts ?? new List<ObjectPart>(),
             };
@@ -400,7 +441,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the GetGrowingDataObjectsHeader message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{GetGrowingDataObjectsHeader, DataObject, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetGrowingDataObjectsHeader, DataObject}"/> instance containing the event data.</param>
         protected virtual void HandleGetGrowingDataObjectsHeader(MapRequestEventArgs<GetGrowingDataObjectsHeader, DataObject> args)
         {
         }
@@ -418,7 +459,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the PutGrowingDataObjectsHeader message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{PutGrowingDataObjectsHeader, string, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{PutGrowingDataObjectsHeader, string}"/> instance containing the event data.</param>
         protected virtual void HandlePutGrowingDataObjectsHeader(MapRequestEventArgs<PutGrowingDataObjectsHeader, string> args)
         {
         }
@@ -436,8 +477,26 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the GetPartsMetadata message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{GetPartsMetadata, PartsMetadataInfo, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetPartsMetadata, PartsMetadataInfo}"/> instance containing the event data.</param>
         protected virtual void HandleGetPartsMetadata(MapRequestEventArgs<GetPartsMetadata, PartsMetadataInfo> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GetChangeAnnotations message from a customer.
+        /// </summary>
+        /// <param name="message">The GetChangeAnnotations message.</param>
+        protected virtual void HandleGetChangeAnnotations(EtpMessage<GetChangeAnnotations> message)
+        {
+            HandleRequestMessage(message, OnGetChangeAnnotations, HandleGetChangeAnnotations,
+                responseMethod: (args) => GetChangeAnnotationsResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the response to an GetChangeAnnotations message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetChangeAnnotations, ChangeResponseInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleGetChangeAnnotations(MapRequestEventArgs<GetChangeAnnotations, ChangeResponseInfo> args)
         {
         }
 
@@ -454,7 +513,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the GetParts message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{GetParts, ObjectPart, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetParts, ObjectPart}"/> instance containing the event data.</param>
         protected virtual void HandleGetParts(MapRequestEventArgs<GetParts, ObjectPart> args)
         {
         }
@@ -490,7 +549,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the PutParts message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{PutParts, string, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{PutParts, string}"/> instance containing the event data.</param>
         protected virtual void HandlePutParts(MapRequestEventArgs<PutParts, string> args)
         {
         }
@@ -508,7 +567,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// <summary>
         /// Handles the DeleteParts message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{DeleteParts, string, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{DeleteParts, string}"/> instance containing the event data.</param>
         protected virtual void HandleDeleteParts(MapRequestEventArgs<DeleteParts, string> args)
         {
         }

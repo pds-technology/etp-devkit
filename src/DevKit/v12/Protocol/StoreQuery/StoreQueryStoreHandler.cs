@@ -59,7 +59,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
             var body = new FindDataObjectsResponse
             {
                 DataObjects = dataObjects ?? new List<DataObject>(),
-                ServerSortOrder = serverSortOrder,
+                ServerSortOrder = serverSortOrder ?? string.Empty,
             };
 
             return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
@@ -79,8 +79,8 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         {
             var body = new Chunk
             {
-                BlobId = blobId.ToUuid<Uuid>(),
-                Data = data,
+                BlobId = blobId,
+                Data = data ?? new byte[0],
                 Final = final,
             };
 
@@ -111,7 +111,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
             {
                 for (int i = 0; i < chunks.Count; i++)
                 {
-                    var ret = FindDataObjectsResponseChunk(correlatedHeader, chunks[i].BlobIdGuid.UuidGuid, chunks[i].Data, chunks[i].Final, isFinalPart: (i == chunks.Count - 1 && setFinalPart), extension: i < chunkExtensions?.Count ? chunkExtensions[i] : null);
+                    var ret = FindDataObjectsResponseChunk(correlatedHeader, chunks[i].BlobId, chunks[i].Data, chunks[i].Final, isFinalPart: (i == chunks.Count - 1 && setFinalPart), extension: i < chunkExtensions?.Count ? chunkExtensions[i] : null);
                     if (ret == null)
                         return null;
                 }

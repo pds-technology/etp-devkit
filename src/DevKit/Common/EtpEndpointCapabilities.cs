@@ -61,7 +61,7 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
-        /// The maximum time period in seconds that a store keeps the GrowingSatus for a growing object "active" after the last new part resulting in a change to the object's end index was added to the object.
+        /// The minimum time period in seconds that a store keeps the GrowingSatus for a growing object "active" after the last new part resulting in a change to the object's end index was added to the object.
         /// </summary>
         public long? ActiveTimeoutPeriod { get; set; }
 
@@ -81,7 +81,7 @@ namespace Energistics.Etp.Common
         public long? ChangePropagationPeriod { get; set; }
 
         /// <summary>
-        /// The maximum time period in seconds time that a store retains the Canonical URI of a deleted data object and any change annotations for channels and growing objects. 
+        /// The minimum time period in seconds time that a store retains the Canonical URI of a deleted data object and any change annotations for channels and growing objects. 
         /// </summary>
         public long? ChangeRetentionPeriod { get; set; }
 
@@ -101,14 +101,14 @@ namespace Energistics.Etp.Common
         public long? MaxPartSize { get; set; }
 
         /// <summary>
-        /// The maximum count of concurrent ETP sessions that may be established for a given endpoint across all clients. The determination of whether this limit is exceeded should be made at the time of receiving the HTTP WebSocket upgrade or connect request.
-        /// </summary>
-        public long? MaxSessionGlobalCount { get; set; }
-
-        /// <summary>
         /// The maximum count of concurrent ETP sessions that may be established for a given endpoint, by a specific client.
         /// </summary>
         public long? MaxSessionClientCount { get; set; }
+
+        /// <summary>
+        /// The maximum count of concurrent ETP sessions that may be established for a given endpoint across all clients. The determination of whether this limit is exceeded should be made at the time of receiving the HTTP WebSocket upgrade or connect request.
+        /// </summary>
+        public long? MaxSessionGlobalCount { get; set; }
 
         /// <summary>
         /// The maximum size in bytes allowed for a single WebSocket frame. The limit to use during a session is the minimum of the client's and the server's endpoint capability, which should be determined by the limits imposed by the WebSocket library used by each endpoint.
@@ -129,6 +129,16 @@ namespace Energistics.Etp.Common
         /// The maximum time period in seconds allowed between a request and the standalone response message or the first message in the multipart response message. The period is measured as the time between when the request message has been successfully sent via the WebSocket and when the first or only response message has been fully received via the WebSocket. When calculating this period, any Acknowledge messages or empty placeholder responses are ignored EXCEPT where these are the only and final response(s) to the request.
         /// </summary>
         public long? ResponseTimeoutPeriod { get; set; }
+
+        /// <summary>
+        /// The maximum time period in seconds a server will wait to receive a RequestSession message from a client after the WebSocket connection has been established.
+        /// </summary>
+        public long? RequestSessionTimeoutPeriod { get; set; }
+
+        /// <summary>
+        /// The maximum time period in seconds a client or server will wait for a valid ETP session to be established.
+        /// </summary>
+        public long? SessionEstablishmentTimeoutPeriod { get; set; }
 
         /// <summary>
         /// Indicates whether an endpoint supports alternate URI formats--beyond the canonical Energistics URIs, which MUST be supported--for requests.

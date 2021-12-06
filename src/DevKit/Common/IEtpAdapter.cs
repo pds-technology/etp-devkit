@@ -16,8 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
-using Avro.Specific;
+using Energistics.Avro.Encoding;
 using Energistics.Etp.Common.Datatypes;
 using System;
 
@@ -31,23 +30,17 @@ namespace Energistics.Etp.Common
 
         bool AreSupportedDataObjectsNegotiated { get; }
 
-        IMessageHeader DecodeMessageHeader(Decoder decoder);
+        IMessageHeader DecodeMessageHeader(IAvroDecoder decoder);
 
-        IMessageHeader DeserializeMessageHeader(string json);
+        IMessageHeaderExtension DecodeMessageHeaderExtension(IAvroDecoder decoder);
 
-        IMessageHeaderExtension DecodeMessageHeaderExtension(Decoder decoder);
-
-        IMessageHeaderExtension DeserializeMessageHeaderExtension(string json);
-
-        void RegisterMessageDecoder<T>(object protocol, object messageType) where T : ISpecificRecord;
+        void RegisterMessageDecoder<T>(object protocol, object messageType) where T : class, IEtpMessageBody, new();
 
         bool IsMessageDecoderRegistered(object protocol, object messageType);
 
-        bool IsMessageDecoderRegistered<T>() where T : ISpecificRecord;
+        bool IsMessageDecoderRegistered<T>() where T : IEtpMessageBody;
 
-        EtpMessage DecodeMessage(IMessageHeader header, IMessageHeaderExtension extension, Decoder decoder);
-
-        EtpMessage DeserializeMessage(IMessageHeader header, IMessageHeaderExtension extension, string body);
+        EtpMessage DecodeMessage(IMessageHeader header, IMessageHeaderExtension extension, IAvroDecoder decoder);
 
         IProtocolHandler CreateDefaultCoreHandler(bool clientHandler);
 

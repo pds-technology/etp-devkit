@@ -25,11 +25,11 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Avro.IO;
-using Avro.Specific;
+using Energistics.Avro.Encoding;
+using Energistics.Avro.Encoding.Binary;
+using Energistics.Avro.Encoding.Json;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
-using Newtonsoft.Json.Linq;
 using Nito.AsyncEx;
 
 
@@ -252,6 +252,11 @@ namespace Energistics.Etp.Common
         public IReadOnlyList<string> SessionSupportedFormats { get; private set; }
 
         /// <summary>
+        /// The high water mark timestamp for the counterpart.
+        /// </summary>
+        public DateTime CounterpartHighWaterMark { get; private set; }
+
+        /// <summary>
         /// Gets the collection of registered protocol handlers by Type.
         /// </summary>
         /// <value>The handlers.</value>
@@ -399,7 +404,7 @@ namespace Energistics.Etp.Common
 
             RequestSessionMessage = message;
 
-            return await SendMessageAsync(message, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp()).ConfigureAwait(CaptureAsyncContext);
+            return await SendMessageAsync(message, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow).ConfigureAwait(CaptureAsyncContext);
         }
 
         protected virtual void HandleRequestSession(EtpMessage<IRequestSession> message)
@@ -407,15 +412,6 @@ namespace Energistics.Etp.Common
             Logger.Verbose($"[{SessionKey}] Handling request session.");
 
             RequestSessionMessage = message;
-            if (!message.Body.IsClientInstanceIdValid)
-            {
-                Logger.Debug($"[{SessionKey}] Invalid client instance ID: {message.Body.RawClientInstanceId}.  Closing session.");
-
-                ProtocolException((int)Protocols.Core, ErrorInfo().InvalidArgument(nameof(message.Body.ClientInstanceId), message.Body.RawClientInstanceId), correlatedHeader: message.Header);
-                RaiseSessionOpened(false);
-                CloseSession();
-                return;
-            }
 
             var success = InitializeSession(message.ToEndpointInfo(), message.ToEndpointDetails());
 
@@ -467,7 +463,7 @@ namespace Energistics.Etp.Common
 
             OpenSessionMessage = message;
 
-            message = SendMessage(message, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow.ToEtpTimestamp());
+            message = SendMessage(message, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow);
 
             IsSessionOpen = message != null;
 
@@ -482,24 +478,6 @@ namespace Energistics.Etp.Common
         protected virtual void HandleOpenSession(EtpMessage<IOpenSession> message)
         {
             Logger.Verbose($"[{SessionKey}] Handling open session.");
-
-            if (!message.Body.IsSessionIdValid || !message.Body.IsServerInstanceIdValid)
-            {
-                if (!message.Body.IsSessionIdValid)
-                {
-                    Logger.Debug($"[{SessionKey}] Invalid session ID: {message.Body.RawSessionId}.  Closing session.");
-                    ProtocolException((int)Protocols.Core, ErrorInfo().InvalidArgument(nameof(message.Body.SessionId), message.Body.RawSessionId), correlatedHeader: message.Header);
-                }
-                else
-                {
-                    Logger.Debug($"[{SessionKey}] Invalid server instance ID: {message.Body.RawServerInstanceId}.  Closing session.");
-                    ProtocolException((int)Protocols.Core, ErrorInfo().InvalidArgument(nameof(message.Body.SessionId), message.Body.RawServerInstanceId), correlatedHeader: message.Header);
-                }
-
-                RaiseSessionOpened(false);
-                CloseSession();
-                return;
-            }
 
             SessionId = message.Body.SessionId;
             var success = InitializeSession(message.ToEndpointInfo(), message.ToEndpointDetails());
@@ -667,7 +645,7 @@ namespace Energistics.Etp.Common
                     continue;
                 }
 
-                supportedDataObjectList.Add(new EtpSupportedDataObject(supportedDataObject.QualifiedType, new List<string>(supportedDataObject.Capabilities)));
+                supportedDataObjectList.Add(new EtpSupportedDataObject(supportedDataObject.QualifiedType, supportedDataObject.Capabilities));
             }
 
             var counterpartSupportedDataObjectList = new List<EtpSupportedDataObject>();
@@ -680,7 +658,7 @@ namespace Energistics.Etp.Common
                     continue;
                 }
 
-                counterpartSupportedDataObjectList.Add(new EtpSupportedDataObject(counterpartSupportedDataObject.QualifiedType, new List<string>(counterpartSupportedDataObject.Capabilities)));
+                counterpartSupportedDataObjectList.Add(new EtpSupportedDataObject(counterpartSupportedDataObject.QualifiedType, counterpartSupportedDataObject.Capabilities));
             }
 
             SessionSupportedDataObjects = EtpSupportedDataObjectCollection.GetSupportedDataObjectCollection(supportedDataObjectList, counterpartSupportedDataObjectList, Adapter.AreSupportedDataObjectsNegotiated);
@@ -746,7 +724,6 @@ namespace Energistics.Etp.Common
             SessionSupportedFormats = supportedFormats;
             return true;
         }
-
 
         /// <summary>
         /// Initializes the capabilities for use in this session where special handling is needed to account for both the instance and the counterpart's capability values..
@@ -865,11 +842,80 @@ namespace Energistics.Etp.Common
             return SendMessage(message);
         }
 
-
         /// <summary>
         /// Occurs when a ProtocolException message is received for any protocol.
         /// </summary>
         public event EventHandler<MessageEventArgs<IProtocolException>> OnProtocolException;
+
+        /// <summary>
+        /// Sends a Ping message.
+        /// </summary>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public EtpMessage<IPing> Ping(IMessageHeaderExtension extension = null)
+        {
+            var header = EtpFactory.CreateMessageHeader(EtpVersion, Protocols.Core, MessageTypes.Core.Ping);
+
+            var body = EtpFactory.CreatePing(EtpVersion);
+            if (body == null)
+                return null;
+
+            var message = new EtpMessage<IPing>(header, body, extension: extension);
+
+            return SendMessage(message, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow);
+        }
+
+        /// <summary>
+        /// Handles a Ping message.
+        /// </summary>
+        /// <param name="message">The Ping message.</param>
+        protected virtual void HandlePing(EtpMessage<IPing> message)
+        {
+            Logger.Verbose($"[{SessionKey}] Handling ping.");
+
+            OnPing?.Invoke(this, new MessageEventArgs<IPing>(message));
+
+            Pong();
+        }
+
+        /// <summary>
+        /// Event raised when a ping response is received from the counterpart.
+        /// </summary>
+        public event EventHandler<MessageEventArgs<IPing>> OnPing;
+
+        /// <summary>
+        /// Sends a Pong message.
+        /// </summary>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        protected virtual EtpMessage<IPong> Pong(IMessageHeaderExtension extension = null)
+        {
+            var header = EtpFactory.CreateMessageHeader(EtpVersion, Protocols.Core, MessageTypes.Core.Pong);
+
+            var body = EtpFactory.CreatePong(EtpVersion);
+            if (body == null)
+                return null;
+
+            var message = new EtpMessage<IPong>(header, body, extension: extension);
+
+            return SendMessage(message, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow);
+        }
+
+        /// <summary>
+        /// Event raised when a pong response is received from the counterpart.
+        /// </summary>
+        public event EventHandler<MessageEventArgs<IPong>> OnPong;
+
+        /// <summary>
+        /// Handles a Pong message.
+        /// </summary>
+        /// <param name="message">The Pong message.</param>
+        protected virtual void HandlePong(EtpMessage<IPong> message)
+        {
+            Logger.Verbose($"[{SessionKey}] Handling pong.");
+
+            OnPong?.Invoke(this, new MessageEventArgs<IPong>(message));
+        }
 
         /// <summary>
         /// Sends a CloseSession message to the session's counterpart.
@@ -946,6 +992,11 @@ namespace Energistics.Etp.Common
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
 
         /// <summary>
+        /// Event raised when the counterpart's high water mark has changed.
+        /// </summary>
+        public event EventHandler<HighWaterMarkChangedEventArgs> CounterpartHighWaterMarkChanged;
+
+        /// <summary>
         /// Synchronously sends the message.
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -953,7 +1004,7 @@ namespace Energistics.Etp.Common
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
         public EtpMessage<T> SendMessage<T>(EtpMessage<T> message, Action<EtpMessage<T>> onBeforeSend = null)
-            where T : ISpecificRecord
+            where T : IEtpMessageBody
         {
             return AsyncContext.Run(() => SendMessageAsync(message, onBeforeSend));
         }
@@ -965,7 +1016,7 @@ namespace Energistics.Etp.Common
         /// <param name="message">The message.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public async Task<EtpMessage<T>> SendMessageAsync<T>(EtpMessage<T> message, Action<EtpMessage<T>> onBeforeSend = null) where T : ISpecificRecord
+        public async Task<EtpMessage<T>> SendMessageAsync<T>(EtpMessage<T> message, Action<EtpMessage<T>> onBeforeSend = null) where T : IEtpMessageBody
         {
             if (!IsSendingEnabled)
             {
@@ -1023,7 +1074,7 @@ namespace Energistics.Etp.Common
                     var includeExtension = CounterpartDetails?.Capabilities?.SupportsMessageHeaderExtension ?? false;
                     var bytes = Encoding == EtpEncoding.Json
                         ? message.Serialize(includeExtension: includeExtension)
-                        : message.Encode(includeExtension: includeExtension, compression: SessionSupportedCompression);
+                        : message.Encode(asBinary: Encoding == EtpEncoding.Binary, includeExtension: includeExtension, compression: SessionSupportedCompression);
 
                     var data = new ArraySegment<byte>(bytes);
                     if (!await SendAsync(data).ConfigureAwait(CaptureAsyncContext))
@@ -1103,7 +1154,7 @@ namespace Energistics.Etp.Common
                 }
                 catch (ObjectDisposedException)
                 {
-                    Logger.Verbose($"[{SessionKey}] Sendlock was already disopsed. No need to acquire and stop acquiring.");
+                    Logger.Verbose($"[{SessionKey}] Sendlock was already disposed. No need to acquire and stop acquiring.");
                 }
                 Logger.Trace($"[{SessionKey}] Closing WebSocket: {reason}");
 
@@ -1190,11 +1241,10 @@ namespace Energistics.Etp.Common
             DataReceived?.Invoke(this, new DataReceivedEventArgs(data));
 
             using (var inputStream = new MemoryStream(data.Array, data.Offset, data.Count, false))
+            using (var headerDecoder = new BinaryAvroDecoder(inputStream))
             {
-                // create avro binary decoder to read from memory stream
-                var decoder = new BinaryDecoder(inputStream);
                 // deserialize the header
-                var header = Adapter.DecodeMessageHeader(decoder);
+                var header = Adapter.DecodeMessageHeader(headerDecoder);
                 header.Timestamp = DateTime.UtcNow;
 
                 // log message metadata
@@ -1203,31 +1253,26 @@ namespace Energistics.Etp.Common
                     Logger.Verbose($"[{SessionKey}] Binary message received: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
                 }
 
-                HandleHeader(header);
+                if (!HandleHeader(header))
+                    return;
 
                 using (var decompressionStream = header.IsCompressed() ? EtpCompression.TryGetDecompresionStream(SessionSupportedCompression, inputStream) : null)
+                using (var bodyDecoder = Encoding == EtpEncoding.Binary ? (IAvroDecoder)new BinaryAvroDecoder(decompressionStream ?? inputStream) : new JsonAvroDecoder(decompressionStream ?? inputStream))
                 {
                     // decompress message body if compression has been negotiated
-                    if (header.IsCompressed())
+                    if (header.IsCompressed() && !header.CanBeCompressed())
                     {
-                        if (header.CanBeCompressed())
-                        {
-                            decoder = new BinaryDecoder(decompressionStream);
-                        }
-                        else
-                        {
-                            ProtocolException(header.Protocol, ErrorInfo().CompressionNotSupported(), header);
-                            return;
-                        }
+                        ProtocolException(header.Protocol, ErrorInfo().CompressionNotSupported(), header);
+                        return;
                     }
 
                     // Header Extension and Body are compressed
                     var extension = header.CanHaveHeaderExtension() && header.HasHeaderExtension()
-                        ? Adapter.DecodeMessageHeaderExtension(decoder)
+                        ? Adapter.DecodeMessageHeaderExtension(bodyDecoder)
                         : null;
 
                     // call processing action
-                    HandleMessage(header, extension, decoder, null);
+                    HandleMessage(header, extension, bodyDecoder);
                 }
             }
         }
@@ -1240,45 +1285,49 @@ namespace Energistics.Etp.Common
         {
             MessageReceived?.Invoke(this, new MessageReceivedEventArgs(message));
 
-            // split message header and body
-            var array = JArray.Parse(message);
-            var headerJson = array[0].ToString();
-            var header = Adapter.DeserializeMessageHeader(headerJson);
-            header.Timestamp = DateTime.UtcNow;
-
-            // log message metadata
-            if (Logger.IsVerboseEnabled())
+            using (var decoder = new JsonAvroDecoder(message))
             {
-                Logger.Verbose($"[{SessionKey}] JSON message received: Name: {header.ToMessageName()}; Header: {headerJson}");
+                decoder.DecodeArrayStart();
+                var header = Adapter.DecodeMessageHeader(decoder);
+                decoder.DecodeArrayItemSeparator();
+                header.Timestamp = DateTime.UtcNow;
+
+                // log message metadata
+                if (Logger.IsVerboseEnabled())
+                {
+                    Logger.Verbose($"[{SessionKey}] JSON message received: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
+                }
+
+                HandleHeader(header);
+
+                var extension = header.HasHeaderExtension() ? Adapter.DecodeMessageHeaderExtension(decoder) : null;
+                if (header.HasHeaderExtension())
+                    decoder.DecodeArrayItemSeparator();
+
+                // call processing action
+                HandleMessage(header, extension, decoder);
             }
-
-            HandleHeader(header);
-
-            var headerExtensionJson = header.HasHeaderExtension()
-                ? array[1].ToString()
-                : null;
-            var body = headerExtensionJson == null
-                ? array[1].ToString()
-                : array[2].ToString();
-
-            var extension = headerExtensionJson == null
-                ? null
-                : Adapter.DeserializeMessageHeaderExtension(headerExtensionJson);
-
-            // call processing action
-            HandleMessage(header, extension, null, body);
         }
 
-        private void HandleHeader(IMessageHeader header)
+        private bool HandleHeader(IMessageHeader header)
         {
             // Handle global Acknowledge request
             if (header.IsAcknowledgeRequested())
             {
-                if (header.IsAcknowledge())
+                if (EtpVersion == EtpVersion.v11) // Can't request Acknowledge in ETP 1.1
+                {
+                    ProtocolException(header.Protocol, ErrorInfo().InvalidArgument("messageFlags", header.MessageFlags));
+                    return false;
+                }
+                else if (header.IsAcknowledge())
+                {
                     ProtocolException(header.Protocol, ErrorInfo().InvalidState());
-                else if (header.CanImmediatelyAcknowledge(EtpVersion))
-                    Acknowledge(header.Protocol, header);
+                    return false;
+                }
+                Acknowledge(header.Protocol, header);
             }
+
+            return true;
         }
 
         /// <summary>
@@ -1287,14 +1336,13 @@ namespace Energistics.Etp.Common
         /// <param name="header">The header.</param>
         /// <param name="extension">The header extension.</param>
         /// <param name="decoder">The decoder.</param>
-        /// <param name="content">The body.</param>
-        protected void HandleMessage(IMessageHeader header, IMessageHeaderExtension extension, Decoder decoder, string content)
+        protected void HandleMessage(IMessageHeader header, IMessageHeaderExtension extension, IAvroDecoder decoder)
         {
             if (Logger.IsVerboseEnabled())
                 Logger.Verbose($"[{SessionKey}] Handling message: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
 
             IProtocolHandler handler;
-            var isSessionManagementMessage = header.IsRequestSession() || header.IsOpenSession() || header.IsCloseSession();
+            var isSessionManagementMessage = header.IsRequestSession() || header.IsOpenSession() || header.IsCloseSession() || header.IsPing() || header.IsPong();
 
             if (!HandlersByProtocol.TryGetValue(header.Protocol, out handler) && !isSessionManagementMessage)
             {
@@ -1317,9 +1365,7 @@ namespace Energistics.Etp.Common
                 return;
             }
 
-            var message = decoder != null
-                ? Adapter.DecodeMessage(header, extension, decoder)
-                : Adapter.DeserializeMessage(header, extension, content);
+            var message = Adapter.DecodeMessage(header, extension, decoder);
 
             if (message == null)
             {
@@ -1332,6 +1378,16 @@ namespace Energistics.Etp.Common
 
             try
             {
+                var counterpartHighWaterMark = CounterpartHighWaterMark;
+                var messageTimestamp = message.Body.GetLatestChangeTimestamp();
+
+                if (messageTimestamp > counterpartHighWaterMark)
+                {
+                    CounterpartHighWaterMark = messageTimestamp;
+                    Logger.Trace($"[{SessionKey}] Counterpart high water mark updated: Old: {counterpartHighWaterMark:O}; New: {messageTimestamp:O}");
+                    CounterpartHighWaterMarkChanged?.Invoke(this, new HighWaterMarkChangedEventArgs(messageTimestamp));
+                }
+
                 if (isSessionManagementMessage)
                 {
                     if (header.IsRequestSession())
@@ -1340,6 +1396,10 @@ namespace Energistics.Etp.Common
                         HandleOpenSession(message as EtpMessage<IOpenSession>);
                     else if (header.IsCloseSession())
                         HandleCloseSession(message as EtpMessage<ICloseSession>);
+                    else if (header.IsPing())
+                        HandlePing(message as EtpMessage<IPing>);
+                    else if (header.IsPong())
+                        HandlePong(message as EtpMessage<IPong>);
                 }
                 else if (header.IsProtocolException())
                 {
@@ -1447,7 +1507,7 @@ namespace Energistics.Etp.Common
         /// <typeparam name="T">The type of message.</typeparam>
         /// <param name="message">The message.</param>
         protected void Sending<T>(EtpMessage<T> message)
-            where T : ISpecificRecord
+            where T : IEtpMessageBody
         {
             var now = DateTime.Now;
 
@@ -1457,13 +1517,13 @@ namespace Energistics.Etp.Common
                 Log(EtpExtensions.Serialize(message.Header));
                 if (message.Extension != null)
                     Log(EtpExtensions.Serialize(message.Extension));
-                Log(EtpExtensions.Serialize(message.Body, true));
+                Log(EtpExtensions.Serialize(message.Body));
             }
 
             if (Logger.IsVerboseEnabled())
             {
-                var extension = message.Extension == null ? string.Empty : $"{Environment.NewLine}{EtpExtensions.Serialize(message.Body, true)}";
-                Logger.Verbose($"[{SessionKey}] Sending message at {now.ToString(TimestampFormat)}: Name: {message.MessageName}; Message: {EtpExtensions.Serialize(message.Header)}{Environment.NewLine}{EtpExtensions.Serialize(message.Body, true)}{extension}");
+                var extension = message.Extension == null ? string.Empty : $"{Environment.NewLine}{EtpExtensions.Serialize(message.Body)}";
+                Logger.Verbose($"[{SessionKey}] Sending message at {now.ToString(TimestampFormat)}: Name: {message.MessageName}; Message: {EtpExtensions.Serialize(message.Header)}{Environment.NewLine}{EtpExtensions.Serialize(message.Body)}{extension}");
             }
         }
 
@@ -1482,7 +1542,7 @@ namespace Energistics.Etp.Common
                 Log(EtpExtensions.Serialize(message.Header));
                 if (message.Extension != null)
                     Log(EtpExtensions.Serialize(message.Header));
-                Log(EtpExtensions.Serialize(message, true));
+                Log(EtpExtensions.Serialize(message.Body));
             }
 
             if (Logger.IsVerboseEnabled())
@@ -1491,7 +1551,7 @@ namespace Energistics.Etp.Common
                     ? $"{EtpExtensions.Serialize(message.Extension)}{Environment.NewLine}"
                     : string.Empty;
 
-                Logger.Verbose($"[{SessionKey}] {action} at {now.ToString(TimestampFormat)}: Name: {message.MessageName}; Message: {EtpExtensions.Serialize(message.Header)}{Environment.NewLine}{extension}{EtpExtensions.Serialize(message.Body, true)}");
+                Logger.Verbose($"[{SessionKey}] {action} at {now.ToString(TimestampFormat)}: Name: {message.MessageName}; Message: {EtpExtensions.Serialize(message.Header)}{Environment.NewLine}{extension}{EtpExtensions.Serialize(message.Body)}");
             }
         }
 

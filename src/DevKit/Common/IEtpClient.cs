@@ -30,6 +30,16 @@ namespace Energistics.Etp.Common
     public interface IEtpClient : IEtpSession
     {
         /// <summary>
+        /// Gets a value indicating whether the underlying websocket is actively being kept alive by sending WebSocket ping messages.
+        /// </summary>
+        bool IsWebSocketKeptAlive { get; }
+
+        /// <summary>
+        /// Gets a value indicating the frequency at which WebSocket ping messages are being sent to keep the underlying WebSocket alive.
+        /// </summary>
+        TimeSpan WebSocketKeepAliveInterval { get; }
+
+        /// <summary>
         /// Sets the proxy server host name and port number.
         /// </summary>
         /// <param name="host">The host name.</param>
@@ -46,6 +56,13 @@ namespace Energistics.Etp.Common
         /// <param name="acceptInvalidCertificates">Whether or not to accept invalid certificates.</param>
         /// <param name="clientCertificate">The client certificate to use.</param>
         void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates, X509Certificate2 clientCertificate = null);
+
+        /// <summary>
+        /// Sets the interval at which the underlying websocket will be actively kept alive by sending WebSocket ping messages.
+        /// A value of 0 will disable sending ping messages.
+        /// </summary>
+        /// <param name="keepAliveInterval">The time interval to wait between sending WebSocket ping messages.</param>
+        void SetWebSocketKeepAliveInterval(TimeSpan keepAliveInterval);
 
         /// <summary>
         /// Opens the WebSocket connection.

@@ -66,7 +66,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
                     ContentType = null,
                     Source = "ETP DevKit",
                     MeasureClass = "TestClass",
-                    Uuid = "test",
+                    Uuid = default(System.Guid),
                     CustomData = new Dictionary<string, DataValue>(),
                     DomainObject = null,
                 },

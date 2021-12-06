@@ -102,7 +102,7 @@ namespace Energistics.Etp.Common
                 if (!intersection || counterpartFamily != null)
                 {
                     supportedDataObjects.Add(instanceFamily);
-                    instanceFamily.CounterpartCapabilities = counterpartFamily?.Capabilities ?? new List<string>();
+                    instanceFamily.CounterpartCapabilities = counterpartFamily?.Capabilities ?? new EtpDataObjectCapabilities();
                 }
             }
 
@@ -128,7 +128,7 @@ namespace Energistics.Etp.Common
                 if (!intersection || counterpartDataObject != null)
                 {
                     supportedDataObjects.Add(instanceType);
-                    instanceType.CounterpartCapabilities = counterpartDataObject?.Capabilities ?? new List<string>();
+                    instanceType.CounterpartCapabilities = counterpartDataObject?.Capabilities ?? new EtpDataObjectCapabilities();
                 }
             }
 

@@ -89,7 +89,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Handles the GetChangeAnnotations event from a customer.
         /// </summary>
-        public event EventHandler<MapRequestEventArgs<GetChangeAnnotations, ChannelChangeResponseInfo>> OnGetChangeAnnotations;
+        public event EventHandler<MapRequestEventArgs<GetChangeAnnotations, ChangeResponseInfo>> OnGetChangeAnnotations;
 
         /// <summary>
         /// Sends a GetChangeAnnotationsResponse message to a customer.
@@ -99,11 +99,11 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<GetChangeAnnotationsResponse> GetChangeAnnotationsResponse(IMessageHeader correlatedHeader, IDictionary<string, ChannelChangeResponseInfo> changes, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<GetChangeAnnotationsResponse> GetChangeAnnotationsResponse(IMessageHeader correlatedHeader, IDictionary<string, ChangeResponseInfo> changes, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
             var body = new GetChangeAnnotationsResponse
             {
-                Changes = changes ?? new Dictionary<string, ChannelChangeResponseInfo>(),
+                Changes = changes ?? new Dictionary<string, ChangeResponseInfo>(),
             };
 
             return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
@@ -121,7 +121,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <param name="responseExtension">The message header extension for the GetChangeAnnotationsResponse message.</param>
         /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
         /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<GetChangeAnnotationsResponse> GetChangeAnnotationsResponse(IMessageHeader correlatedHeader, IDictionary<string, ChannelChangeResponseInfo> changes, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        public virtual EtpMessage<GetChangeAnnotationsResponse> GetChangeAnnotationsResponse(IMessageHeader correlatedHeader, IDictionary<string, ChangeResponseInfo> changes, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
         {
             return SendMapResponse(GetChangeAnnotationsResponse, correlatedHeader, changes, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
         }
@@ -189,7 +189,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <param name="channels">The list of <see cref="TruncateInfo" /> objects.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<ChannelsTruncated> ChannelsTruncated(long changeTime, IList<TruncateInfo> channels, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<ChannelsTruncated> ChannelsTruncated(DateTime changeTime, IList<TruncateInfo> channels, IMessageHeaderExtension extension = null)
         {
             var body = new ChannelsTruncated
             {
@@ -211,7 +211,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<RangeReplaced> RangeReplaced(long changeTime, IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> data, bool isFinalPart = true, IMessageHeader correlatedHeader = null, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<RangeReplaced> RangeReplaced(DateTime changeTime, IList<long> channelIds, IndexInterval changedInterval, IList<DataItem> data, bool isFinalPart = true, IMessageHeader correlatedHeader = null, IMessageHeaderExtension extension = null)
         {
             var body = new RangeReplaced
             {
@@ -227,21 +227,23 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Handles the UnsubscribeChannels event from a customer.
         /// </summary>
-        public event EventHandler<MapRequestEventArgs<UnsubscribeChannels, long>> OnUnsubscribeChannels;
+        public event EventHandler<MapRequestWithContextEventArgs<UnsubscribeChannels, long, SubscriptionsStoppedReason>> OnUnsubscribeChannels;
 
         /// <summary>
         /// Sends a SubscriptionsStopped message to a customer in response to a UnsubscribeChannels message.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="channelIds">The channel IDs.</param>
+        /// <param name="reason">The human readable reason why the subscriptions were stopped.</param>
         /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<SubscriptionsStopped> ResponseSubscriptionsStopped(IMessageHeader correlatedHeader, IDictionary<string, long> channelIds, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<SubscriptionsStopped> ResponseSubscriptionsStopped(IMessageHeader correlatedHeader, IDictionary<string, long> channelIds, string reason, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
             var body = new SubscriptionsStopped
             {
                 ChannelIds = channelIds ?? new Dictionary<string, long>(),
+                Reason = reason ?? string.Empty,
             };
 
             return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
@@ -254,27 +256,30 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="channelIds">The channel IDs.</param>
+        /// <param name="reason">The human readable reason why the subscriptions were stopped.</param>
         /// <param name="errors">The errors.</param>
         /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
         /// <param name="responseExtension">The message header extension for the SubscriptionsStopped message.</param>
         /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
         /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<SubscriptionsStopped> ResponseSubscriptionsStopped(IMessageHeader correlatedHeader, IDictionary<string, long> channelIds, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        public virtual EtpMessage<SubscriptionsStopped> ResponseSubscriptionsStopped(IMessageHeader correlatedHeader, IDictionary<string, long> channelIds, string reason, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
         {
-            return SendMapResponse(ResponseSubscriptionsStopped, correlatedHeader, channelIds, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+            return SendMapResponse(ResponseSubscriptionsStopped, correlatedHeader, channelIds, reason, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
         }
 
         /// <summary>
         /// Sends a SubscriptionsStopped message to a customer as a notification.
         /// </summary>
-        /// <param name="channelIds">The IDs of the closed channels.</param>
+        /// <param name="channelIds">The IDs of the channels for which subscriptions were stopped.</param>
+        /// <param name="reason">The human readable reason why the subscriptions were stopped.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<SubscriptionsStopped> NotificationSubscriptionsStopped(IDictionary<string, long> channelIds, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<SubscriptionsStopped> NotificationSubscriptionsStopped(IDictionary<string, long> channelIds, string reason, IMessageHeaderExtension extension = null)
         {
             var body = new SubscriptionsStopped
             {
                 ChannelIds = channelIds ?? new Dictionary<string, long>(),
+                Reason = reason ?? string.Empty,
             };
 
             return SendNotification(body, extension: extension, isMultiPart: true, isFinalPart: true);
@@ -283,10 +288,11 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Sends a SubscriptionsStopped message to a customer as a notification.
         /// </summary>
-        /// <param name="channelIds">The IDs of the closed channels.</param>
+        /// <param name="channelIds">The IDs of the channels for which subscriptions were stopped.</param>
+        /// <param name="reason">The human readable reason why the subscriptions were stopped.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<SubscriptionsStopped> NotificationSubscriptionsStopped(IList<long> channelIds, IMessageHeaderExtension extension = null) => NotificationSubscriptionsStopped(channelIds.ToMap(), extension: extension);
+        public virtual EtpMessage<SubscriptionsStopped> NotificationSubscriptionsStopped(IList<long> channelIds, string reason, IMessageHeaderExtension extension = null) => NotificationSubscriptionsStopped(channelIds.ToMap(), reason, extension: extension);
 
         /// <summary>
         /// Handles the GetRanges event from a customer.
@@ -336,7 +342,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Handles the response to an GetChannelMetadata message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{GetChannelMetadata, ChannelMetadataRecord, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetChannelMetadata, ChannelMetadataRecord}"/> instance containing the event data.</param>
         protected virtual void HandleGetChannelMetadata(MapRequestEventArgs<GetChannelMetadata, ChannelMetadataRecord> args)
         {
         }
@@ -354,8 +360,8 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Handles the response to an GetChangeAnnotations message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{GetChangeAnnotations, ChannelChangeResponseInfo, ErrorInfo}"/> instance containing the event data.</param>
-        protected virtual void HandleGetChangeAnnotations(MapRequestEventArgs<GetChangeAnnotations, ChannelChangeResponseInfo> args)
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetChangeAnnotations, ChangeResponseInfo}"/> instance containing the event data.</param>
+        protected virtual void HandleGetChangeAnnotations(MapRequestEventArgs<GetChangeAnnotations, ChangeResponseInfo> args)
         {
         }
 
@@ -372,7 +378,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// <summary>
         /// Handles the response to an SubscribeChannels message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{SubscribeChannels, string, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{SubscribeChannels, string}"/> instance containing the event data.</param>
         protected virtual void HandleSubscribeChannels(MapRequestEventArgs<SubscribeChannels, string> args)
         {
         }
@@ -384,14 +390,14 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         protected virtual void HandleUnsubscribeChannels(EtpMessage<UnsubscribeChannels> message)
         {
             HandleRequestMessage(message, OnUnsubscribeChannels, HandleUnsubscribeChannels,
-                responseMethod: (args) => ResponseSubscriptionsStopped(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+                responseMethod: (args) => ResponseSubscriptionsStopped(args.Request?.Header, args.ResponseMap, args.Context.Reason, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
         }
 
         /// <summary>
         /// Handles the response to a UnsubscribeChannels message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{UnsubscribeChannels, long, ErrorInfo}"/> instance containing the event data.</param>
-        protected virtual void HandleUnsubscribeChannels(MapRequestEventArgs<UnsubscribeChannels, long> args)
+        /// <param name="args">The <see cref="MapRequestWithContextEventArgs{UnsubscribeChannels, long, SubscriptionsStoppedReason}"/> instance containing the event data.</param>
+        protected virtual void HandleUnsubscribeChannels(MapRequestWithContextEventArgs<UnsubscribeChannels, long, SubscriptionsStoppedReason> args)
         {
         }
 
@@ -405,7 +411,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
 
             HandleRequestMessage(message, OnGetRanges, HandleGetRanges,
                 args: new ListRequestEventArgs<GetRanges, DataItem>(message) { FinalError = error },
-                responseMethod: (args) => GetRangesResponse(args.Request?.Header, message.Body.RequestUuid.ToGuid(), args.Responses, isFinalPart: !args.HasErrors, unregisterRequest: true, extension: args.ResponseExtension));
+                responseMethod: (args) => GetRangesResponse(args.Request?.Header, message.Body.RequestUuid, args.Responses, isFinalPart: !args.HasErrors, unregisterRequest: true, extension: args.ResponseExtension));
         }
 
         /// <summary>

@@ -23,7 +23,7 @@ using System.Collections.Generic;
 
 namespace Energistics.Etp.Data
 {
-    public abstract class MockWitsmlGrowingObject : MockWitsmlActiveObject, IMockGrowingObject
+    public abstract class MockWitsmlGrowingObject : MockWitsmlWellboreObject, IMockActiveObject, IMockGrowingObject
     {
         public string Mnemonic { get; set; }
         public abstract bool IsTime { get; }
@@ -31,14 +31,14 @@ namespace Energistics.Etp.Data
         public double DepthScaleValue => 1000.0;
         public string DataType { get; set; }
         public string Uom { get; set; } = string.Empty;
-        public MockPropertyKind ChannelClass { get; set; }
+        public MockPropertyKind ChannelPropertyKind { get; set; }
+        public MockPropertyKind IndexPropertyKind { get; set; }
         public string IndexMnemonic { get; set; }
         public string IndexUom { get; set; }
         public IComparable StartIndex => IsTime ? (IComparable)TimeStartIndex : DepthStartIndex;
         public IComparable EndIndex => IsTime ? (IComparable)TimeEndIndex : DepthEndIndex;
         public List<double> DepthIndexes { get; } = new List<double>();
         public List<DateTime> TimeIndexes { get; } = new List<DateTime>();
-        public DateTime AppendTime { get; private set; }
         public double? DepthStartIndex => DepthIndexes.Count > 0 ? (double?)DepthIndexes[0] : null;
         public double? DepthEndIndex => DepthIndexes.Count > 0 ? (double?)DepthIndexes[DepthIndexes.Count - 1] : null;
         public DateTime? TimeStartIndex => TimeIndexes.Count > 0 ? (DateTime?)TimeIndexes[0] : null;
@@ -50,11 +50,13 @@ namespace Energistics.Etp.Data
         public abstract object Value(int dataIndex);
         public double LongToDepthIndex(long value) => value / DepthScaleValue;
         public long DepthIndexToLong(double value) => (long)(value * DepthScaleValue);
-        protected void SetAppendTime(DateTime appendTime)
+
+        protected override void UpdateDataLastWrite(DateTime lastWrite)
         {
-            AppendTime = appendTime;
-            UpdateDataLastWrite(appendTime);
-            SetActive(true, appendTime);
+            base.UpdateDataLastWrite(lastWrite);
+            SetActive(true, lastWrite);
+            if (Wellbore != null)
+                Wellbore.SetActive(true, lastWrite);
         }
 
         public MockDataItem DataItem(EtpVersion version, long channelId, int dataIndex, bool nullIndex)
@@ -145,10 +147,41 @@ namespace Energistics.Etp.Data
             }
         }
 
+        public v11.Datatypes.ChannelData.IndexMetadataRecord IndexMetadataRecord11 => new v11.Datatypes.ChannelData.IndexMetadataRecord
+        {
+            Uri = string.Concat(Uri(EtpVersion.v11), IndexMnemonic),
+            IndexType = IsTime ? v11.Datatypes.ChannelData.ChannelIndexTypes.Time : v11.Datatypes.ChannelData.ChannelIndexTypes.Depth,
+            Uom = IndexUom,
+            Mnemonic = IndexMnemonic,
+            Direction = v11.Datatypes.ChannelData.IndexDirections.Increasing,
+            Scale = 3,
+            DepthDatum = IsTime ? string.Empty : "KB",
+            TimeDatum = string.Empty,
+            Description = string.Empty,
+            CustomData = new Dictionary<string, v11.Datatypes.DataValue>(),
+        };
+
+        public v12.Datatypes.ChannelData.IndexMetadataRecord IndexMetadataRecord12 => new v12.Datatypes.ChannelData.IndexMetadataRecord
+        {
+            Name = IndexMnemonic,
+            Uom = IndexUom,
+            DepthDatum = IsTime ? string.Empty : "KB",
+            Direction = v12.Datatypes.ChannelData.IndexDirection.Increasing,
+            IndexKind = IsTime ? v12.Datatypes.ChannelData.ChannelIndexKind.DateTime : v12.Datatypes.ChannelData.ChannelIndexKind.MeasuredDepth,
+            IndexPropertyKindUri = IndexPropertyKind.Uri(EtpVersion.v12),
+            Interval = new v12.Datatypes.Object.IndexInterval
+            {
+                StartIndex = new v12.Datatypes.IndexValue { Item = IsTime ? TimeStartIndex?.ToEtpTimestamp() : DepthStartIndex },
+                EndIndex = new v12.Datatypes.IndexValue { Item = IsTime ? TimeEndIndex?.ToEtpTimestamp() : DepthEndIndex },
+                DepthDatum = IsTime ? string.Empty : "KB",
+                Uom = IndexUom,
+            }
+        };
+
         public v11.Datatypes.ChannelData.ChannelMetadataRecord ChannelMetadataRecord11(long channelId) => new v11.Datatypes.ChannelData.ChannelMetadataRecord
         {
             ChannelId = channelId,
-            Uuid = Uuid.ToString(),
+            Uuid = Uuid,
             ChannelUri = Uri(EtpVersion.v11),
             ChannelName = Mnemonic,
             ContentType = ContentType,
@@ -156,22 +189,10 @@ namespace Energistics.Etp.Data
             DataType = DataType,
             Status = IsActive ? v11.Datatypes.ChannelData.ChannelStatuses.Active : v11.Datatypes.ChannelData.ChannelStatuses.Inactive,
             Uom = Uom,
-            MeasureClass = ChannelClass?.Title ?? string.Empty,
+            MeasureClass = ChannelPropertyKind?.Title ?? string.Empty,
             Indexes = new List<v11.Datatypes.ChannelData.IndexMetadataRecord>
             {
-                new v11.Datatypes.ChannelData.IndexMetadataRecord
-                {
-                    Uri = string.Concat(Uri(EtpVersion.v11), IndexMnemonic),
-                    IndexType = IsTime ? v11.Datatypes.ChannelData.ChannelIndexTypes.Time : v11.Datatypes.ChannelData.ChannelIndexTypes.Depth,
-                    Uom = IndexUom,
-                    Mnemonic = IndexMnemonic,
-                    Direction = v11.Datatypes.ChannelData.IndexDirections.Increasing,
-                    Scale = 3,
-                    DepthDatum = IsTime ? string.Empty : "KB",
-                    TimeDatum = string.Empty,
-                    Description = string.Empty,
-                    CustomData = new Dictionary<string, v11.Datatypes.DataValue>(),
-                }
+                IndexMetadataRecord11,
             },
             StartIndex = IsTime ? TimeStartIndex?.ToEtpTimestamp() : (DepthStartIndex == null ? (long?)null : DepthIndexToLong(DepthStartIndex.Value)),
             EndIndex = IsTime ? TimeEndIndex?.ToEtpTimestamp() : (DepthEndIndex == null ? (long?)null : DepthIndexToLong(DepthEndIndex.Value)),

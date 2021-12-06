@@ -87,10 +87,6 @@ namespace Energistics.Etp.v11.Protocol.Discovery
                 header.Timestamp = ack.Header.Timestamp;
                 return new EtpMessage<GetResourcesResponse>(header, new GetResourcesResponse());
             }
-            else if (correlatedHeader.IsAcknowledgeRequested())
-            {
-                Acknowledge(correlatedHeader);
-            }
 
             EtpMessage<GetResourcesResponse> message = null;
 

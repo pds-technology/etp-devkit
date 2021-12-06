@@ -24,20 +24,24 @@ namespace Energistics.Etp.Store
 {
     public class MockObjectCallbacks
     {
+        public delegate void JoinedSubscriptionCallback(Guid subscriptionUuid, MockObject @object, bool includeData);
         public delegate void CreatedCallback(Guid subscriptionUuid, MockObject @object, bool includeData);
         public delegate void UpdatedCallback(Guid subscriptionUuid, MockObject @object, bool includeData);
         public delegate void JoinedCallback(Guid subscriptionUuid, MockObject @object, bool includeData);
         public delegate void UnjoinedCallback(Guid subscriptionUuid, MockObject @object, bool includeData);
         public delegate void ActiveStatusChangedCallback(Guid subscriptionUuid, MockObject @object, bool isActive);
         public delegate void DeletedCallback(Guid subscriptionUuid, MockObject @object);
-        public delegate void SubscriptionEndedCallback(Guid subscriptionUuid);
-        
+        public delegate void SubscriptionEndedCallback(Guid subscriptionUuid, string reason);
+        public delegate void UnjoinedSubscriptionCallback(Guid subscriptionUuid, MockObject @object, bool includeData);
+
+        public JoinedSubscriptionCallback JoinedSubscription { get; set; }
         public CreatedCallback Created { get; set; }
         public UpdatedCallback Updated { get; set; }
         public JoinedCallback Joined { get; set; }
         public UnjoinedCallback Unjoined { get; set; }
         public ActiveStatusChangedCallback ActiveStatusChanged { get; set; }
         public DeletedCallback Deleted { get; set; }
+        public UnjoinedSubscriptionCallback UnjoinedSubscription { get; set; }
         public SubscriptionEndedCallback SubscriptionEnded { get; set; }
     }
 

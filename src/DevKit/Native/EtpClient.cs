@@ -17,15 +17,11 @@
 //-----------------------------------------------------------------------
 
 using Energistics.Etp.Common;
-using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.Properties;
 using Nito.AsyncEx;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
-using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
@@ -73,6 +69,16 @@ namespace Energistics.Etp.Native
         /// The URI.
         /// </summary>
         private Uri Uri { get; set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the underlying websocket is actively being kept alive by sending WebSocket ping messages.
+        /// </summary>
+        public bool IsWebSocketKeptAlive => ClientSocket.Options.KeepAliveInterval != TimeSpan.Zero;
+
+        /// <summary>
+        /// Gets a value indicating the frequency at which WebSocket ping messages are being sent to keep the underlying WebSocket alive.
+        /// </summary>
+        public TimeSpan WebSocketKeepAliveInterval => ClientSocket.Options.KeepAliveInterval;
 
         /// <summary>
         /// Opens the WebSocket connection.
@@ -153,6 +159,8 @@ namespace Energistics.Etp.Native
         public void SetProxy(string host, int port, string username = null, string password = null, bool useDefaultCredentials = false)
         {
             if (Socket == null) return;
+            if (IsWebSocketOpen)
+                throw new InvalidOperationException("Proxy must be set before the WebSocket connection is opened.");
 
             var endPoint = new DnsEndPoint(host, port);
             var proxy = new WebProxy(endPoint.Host, endPoint.Port);
@@ -175,6 +183,9 @@ namespace Energistics.Etp.Native
         /// <param name="clientCertificate">The client certificate to use.</param>
         public void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates, X509Certificate2 clientCertificate = null)
         {
+            if (IsWebSocketOpen)
+                throw new InvalidOperationException("Security options must be set before the WebSocket connection is opened.");
+
             if (clientCertificate != null)
                 ClientSocket.Options.ClientCertificates.Add(clientCertificate);
 
@@ -185,6 +196,19 @@ namespace Energistics.Etp.Native
                     (sender, certificate, chain, sslPolicyErrors) => true;
             else
                 ServicePointManager.ServerCertificateValidationCallback = null;
+        }
+
+        /// <summary>
+        /// Sets the interval at which the underlying websocket will be actively kept alive by sending WebSocket ping messages.
+        /// A value of 0 will disable sending ping messages.
+        /// </summary>
+        /// <param name="keepAliveInterval">The time interval to wait between sending WebSocket ping messages.</param>
+        public void SetWebSocketKeepAliveInterval(TimeSpan keepAliveInterval)
+        {
+            if (IsWebSocketOpen)
+                throw new InvalidOperationException("WebSocket keep alive interval must be set before the WebSocket connection is opened.");
+
+            ClientSocket.Options.KeepAliveInterval = keepAliveInterval;
         }
 
         /// <summary>

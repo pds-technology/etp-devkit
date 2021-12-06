@@ -16,32 +16,23 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Energistics.Etp.Common;
 using System;
 
 namespace Energistics.Etp.Data
 {
-    public abstract class MockWitsmlActiveObject : MockWitsmlObject, IMockActiveObject
+    public abstract class MockWitsmlWellObject : MockWitsmlObject
     {
-        public bool IsActive { get; private set; }
+        public MockWell Well { get; private set; }
 
-        public DateTime ActiveChangeTime { get; private set; } = 0L.ToUtcDateTime();
-
-        public override void Create(DateTime createdTime)
+        public void SetWell(MockWell well, DateTime updateTime)
         {
-            base.Create(createdTime);
-            IsActive = false;
-            ActiveChangeTime = StoreCreated;
-        }
+            if (Well != null)
+                RemoveParent(well, updateTime, true);
 
-        public void SetActive(bool active, DateTime activeChangeTime)
-        {
-            if (IsActive == active)
-                return;
+            Well = well;
 
-            IsActive = active;
-            ActiveChangeTime = activeChangeTime;
-            UpdateObjectLastWrite(activeChangeTime);
+            if (Well != null)
+                AddParent(well, updateTime, true);
         }
     }
 }

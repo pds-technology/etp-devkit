@@ -34,5 +34,10 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataFrame
         /// The maximum time period in seconds for updates to a channel to be visible.
         /// </summary>
         long? FrameChangeDetectionPeriod { get; }
+
+        /// <summary>
+        /// Indicates whether an endpoint supports filtering requested data by secondary index values. If the filtering can be technically supported by an endpoint, this capability should be true.
+        /// </summary>
+        bool? SupportsSecondaryIndexFiltering { get; }
     }
 }

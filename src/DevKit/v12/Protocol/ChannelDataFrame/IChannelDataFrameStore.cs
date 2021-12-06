@@ -51,19 +51,20 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataFrame
         /// <summary>
         /// Handles the GetFrame event from a customer.
         /// </summary>
-        event EventHandler<DualListRequestEventArgs<GetFrame, string, FrameRow>> OnGetFrame;
+        event EventHandler<SingleAndListRequestEventArgs<GetFrame, FrameHeader, FrameRow>> OnGetFrame;
 
         /// <summary>
         /// Sends a GetFrameResponseHeader message to a customer.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
         /// <param name="requestUuid">The request UUID associated with this response.</param>
+        /// <param name="indexes">The index metadata.</param>
         /// <param name="channelUris">The channel URIs.</param>
         /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
         /// <param name="unregisterRequest">Whether or not to unregister the request when sending the message.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<GetFrameResponseHeader> GetFrameResponseHeader(IMessageHeader correlatedHeader, Guid requestUuid, IList<string> channelUris, bool isFinalPart = false, bool unregisterRequest = false, IMessageHeaderExtension extension = null);
+        EtpMessage<GetFrameResponseHeader> GetFrameResponseHeader(IMessageHeader correlatedHeader, Guid requestUuid, IList<IndexMetadataRecord> indexes, IList<string> channelUris, bool isFinalPart = false, bool unregisterRequest = false, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Sends a GetFrameResponseRows message to a customer.
@@ -83,18 +84,26 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataFrame
         /// </summary>
         /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
         /// <param name="requestUuid">The request UUID associated with this response.</param>
+        /// <param name="indexes">The index metadata.</param>
         /// <param name="channelUris">The channel URIs.</param>
         /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
         /// <param name="unregisterRequest">Whether or not to unregister the request when sending the message.</param>
         /// <param name="headerExtension">The message header extension for the GetFrameResponseHeader message.</param>
         /// <param name="rowsExtension">The message header extension for the GetFrameResponseRows message.</param>
         /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
-        EtpMessage<GetFrameResponseHeader> GetFrameResponse(IMessageHeader correlatedHeader, Guid requestUuid, IList<string> channelUris, IList<FrameRow> frame, bool setFinalPart = true, bool unregisterRequest = true, IMessageHeaderExtension headerExtension = null, IMessageHeaderExtension rowsExtension = null);
+        EtpMessage<GetFrameResponseHeader> GetFrameResponse(IMessageHeader correlatedHeader, Guid requestUuid, IList<IndexMetadataRecord> indexes, IList<string> channelUris, IList<FrameRow> frame, bool setFinalPart = true, bool unregisterRequest = true, IMessageHeaderExtension headerExtension = null, IMessageHeaderExtension rowsExtension = null);
 
         /// <summary>
         /// Handles the CancelGetFrame event from a customer.
         /// </summary>
         event EventHandler<CancellationRequestEventArgs<GetFrame, CancelGetFrame>> OnCancelGetFrame;
+    }
+
+    public class FrameHeader
+    {
+        public IList<IndexMetadataRecord> Indexes { get; set; }
+
+        public IList<string> ChannelUris { get; set; }
     }
 
     public class FrameMetadata

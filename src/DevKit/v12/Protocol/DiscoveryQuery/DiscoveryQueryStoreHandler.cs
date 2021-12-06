@@ -58,7 +58,7 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
             var body = new FindResourcesResponse
             {
                 Resources = resources ?? new List<Resource>(),
-                ServerSortOrder = serverSortOrder,
+                ServerSortOrder = serverSortOrder ?? string.Empty,
             };
             
             return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);

@@ -31,5 +31,13 @@ namespace Energistics.Etp.Data
         public override object Value(int dataIndex) => Parts[dataIndex];
 
         public abstract string Xml(EtpVersion version, bool withParts, string indentation = "", bool embedded = false);
+
+        public v12.Datatypes.Object.PartsMetadataInfo PartsMetadataInfo12(long channelId) => new v12.Datatypes.Object.PartsMetadataInfo
+        {
+            Name = Title,
+            Uri = Uri(EtpVersion.v12),
+            Index = IndexMetadataRecord12,
+            CustomData = new Dictionary<string, v12.Datatypes.DataValue>(),
+        };
     }
 }

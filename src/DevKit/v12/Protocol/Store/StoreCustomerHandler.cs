@@ -119,8 +119,8 @@ namespace Energistics.Etp.v12.Protocol.Store
         {
             var body = new Chunk
             {
-                BlobId = blobId.ToUuid<Uuid>(),
-                Data = data,
+                BlobId = blobId,
+                Data = data ?? new byte[0],
                 Final = final,
             };
 
@@ -147,7 +147,7 @@ namespace Energistics.Etp.v12.Protocol.Store
             {
                 for (int i = 0; i < chunks.Count; i++)
                 {
-                    var ret = PutDataObjectsChunk(message.Header, chunks[i].BlobIdGuid.UuidGuid, chunks[i].Data, chunks[i].Final, isFinalPart: (i == chunks.Count - 1 && setFinalPart), extension: i < chunkExtensions?.Count ? chunkExtensions[i] : null);
+                    var ret = PutDataObjectsChunk(message.Header, chunks[i].BlobId, chunks[i].Data, chunks[i].Final, isFinalPart: (i == chunks.Count - 1 && setFinalPart), extension: i < chunkExtensions?.Count ? chunkExtensions[i] : null);
                     if (ret == null)
                         return null;
                 }

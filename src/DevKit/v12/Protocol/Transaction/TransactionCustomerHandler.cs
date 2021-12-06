@@ -77,7 +77,7 @@ namespace Energistics.Etp.v12.Protocol.Transaction
         {
             var body = new CommitTransaction
             {
-                TransactionUuid = transactionUuid.ToUuid<Uuid>(),
+                TransactionUuid = transactionUuid,
             };
 
             return SendRequest(body, extension: extension);
@@ -98,7 +98,7 @@ namespace Energistics.Etp.v12.Protocol.Transaction
         {
             var body = new RollbackTransaction
             {
-                TransactionUuid = transactionUuid.ToUuid<Uuid>(),
+                TransactionUuid = transactionUuid,
             };
 
             return SendRequest(body, extension: extension);

@@ -117,7 +117,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         {
             var body = new ObjectChanged
             {
-                RequestUuid = requestUuid.ToUuid<Uuid>(),
+                RequestUuid = requestUuid,
                 Change = change,
             };
 
@@ -138,8 +138,8 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         {
             var body = new Chunk
             {
-                BlobId = blobId.ToUuid<Uuid>(),
-                Data = data,
+                BlobId = blobId,
+                Data = data ?? new byte[0],
                 Final = final,
             };
 
@@ -155,11 +155,11 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <param name="resource">The resource on which the active status has changed.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<ObjectActiveStatusChanged> ObjectActiveStatusChanged(Guid requestUuid, ActiveStatusKind activeStatus, long changeTime, Resource resource, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<ObjectActiveStatusChanged> ObjectActiveStatusChanged(Guid requestUuid, ActiveStatusKind activeStatus, DateTime changeTime, Resource resource, IMessageHeaderExtension extension = null)
         {
             var body = new ObjectActiveStatusChanged
             {
-                RequestUuid = requestUuid.ToUuid<Uuid>(),
+                RequestUuid = requestUuid,
                 ActiveStatus = activeStatus,
                 Resource = resource,
                 ChangeTime = changeTime,
@@ -176,11 +176,11 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <param name="changeTime">The change time.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<ObjectAccessRevoked> ObjectAccessRevoked(Guid requestUuid, string uri, long changeTime, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<ObjectAccessRevoked> ObjectAccessRevoked(Guid requestUuid, string uri, DateTime changeTime, IMessageHeaderExtension extension = null)
         {
             var body = new ObjectAccessRevoked
             {
-                RequestUuid = requestUuid.ToUuid<Uuid>(),
+                RequestUuid = requestUuid,
                 ChangeTime = changeTime,
             };
 
@@ -195,12 +195,12 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <param name="changeTime">The change time.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<ObjectDeleted> ObjectDeleted(Guid requestUuid, string uri, long changeTime, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<ObjectDeleted> ObjectDeleted(Guid requestUuid, string uri, DateTime changeTime, IMessageHeaderExtension extension = null)
         {
             var body = new ObjectDeleted
             {
-                RequestUuid = requestUuid.ToUuid<Uuid>(),
-                Uri = uri,
+                RequestUuid = requestUuid,
+                Uri = uri ?? string.Empty,
                 ChangeTime = changeTime,
             };
 
@@ -210,20 +210,22 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <summary>
         /// Handles the UnsubscribeNotifications event from a customer.
         /// </summary>
-        public event EventHandler<RequestEventArgs<UnsubscribeNotifications, Guid>> OnUnsubscribeNotifications;
+        public event EventHandler<RequestWithContextEventArgs<UnsubscribeNotifications, Guid, SubscriptionEndedReason>> OnUnsubscribeNotifications;
 
         /// <summary>
         /// Sends a SubscriptionEnded message to a customer in response to a UnsubscribeNotifications message.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="requestUuid">The reqyest UUId.</param>
+        /// <param name="reason">The human readable reason why the subscription ended.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<SubscriptionEnded> ResponseSubscriptionEnded(IMessageHeader correlatedHeader, Guid requestUuid, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<SubscriptionEnded> ResponseSubscriptionEnded(IMessageHeader correlatedHeader, Guid requestUuid, string reason, IMessageHeaderExtension extension = null)
         {
             var body = new SubscriptionEnded
             {
-                RequestUuid = requestUuid.ToUuid<Uuid>(),
+                RequestUuid = requestUuid,
+                Reason = reason ?? string.Empty,
             };
 
             return SendResponse(body, correlatedHeader, extension: extension);
@@ -233,13 +235,15 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// Sends a SubscriptionEnded message to a customer as a notification.
         /// </summary>
         /// <param name="requestUuid">The reqyest UUId.</param>
+        /// <param name="reason">The human readable reason why the subscription ended.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<SubscriptionEnded> NotificationSubscriptionEnded(Guid requestUuid, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<SubscriptionEnded> NotificationSubscriptionEnded(Guid requestUuid, string reason, IMessageHeaderExtension extension = null)
         {
             var body = new SubscriptionEnded
             {
-                RequestUuid = requestUuid.ToUuid<Uuid>(),
+                RequestUuid = requestUuid,
+                Reason = reason ?? string.Empty,
             };
 
             return SendNotification(body, extension: extension);
@@ -261,7 +265,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <summary>
         /// Handles the response to an SubscribeNotifications message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{SubscribeNotifications, string, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{SubscribeNotifications, string}"/> instance containing the event data.</param>
         protected virtual void HandleSubscribeNotifications(MapRequestEventArgs<SubscribeNotifications, string> args)
         {
         }
@@ -275,15 +279,15 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
             var error = TryUnregisterSubscription(message.Body, nameof(message.Body.RequestUuid), message);
 
             HandleRequestMessage(message, OnUnsubscribeNotifications, HandleUnsubscribeNotifications,
-                args: new RequestEventArgs<UnsubscribeNotifications, Guid>(message) { FinalError = error },
-                responseMethod: (args) => { if (!args.HasErrors) { ResponseSubscriptionEnded(args.Request?.Header, args.Response, extension: args.ResponseExtension); } });
+                args: new RequestWithContextEventArgs<UnsubscribeNotifications, Guid, SubscriptionEndedReason>(message) { FinalError = error },
+                responseMethod: (args) => { if (!args.HasErrors) { ResponseSubscriptionEnded(args.Request?.Header, args.Response, args.Context.Reason, extension: args.ResponseExtension); } });
         }
 
         /// <summary>
         /// Handles the response to a UnsubscribeNotification message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="RequestEventArgs{UnsubscribeNotification, Guid}"/> instance containing the event data.</param>
-        protected virtual void HandleUnsubscribeNotifications(RequestEventArgs<UnsubscribeNotifications, Guid> args)
+        /// <param name="args">The <see cref="RequestWithContextEventArgs{UnsubscribeNotification, Guid, SubscriptionEndedReason}"/> instance containing the event data.</param>
+        protected virtual void HandleUnsubscribeNotifications(RequestWithContextEventArgs<UnsubscribeNotifications, Guid, SubscriptionEndedReason> args)
         {
         }
     }

@@ -28,6 +28,6 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Gets the counterpart's capabilities supported for this object.
         /// </summary>
-        IReadOnlyList<string> CounterpartCapabilities { get; }
+        IDataObjectCapabilities CounterpartCapabilities { get; }
     }
 }

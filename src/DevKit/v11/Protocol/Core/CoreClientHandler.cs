@@ -45,7 +45,7 @@ namespace Energistics.Etp.v11.Protocol.Core
         {
             var body = new RenewSecurityToken
             {
-                Token = token
+                Token = token ?? string.Empty
             };
 
             return SendRequest(body);

@@ -39,6 +39,6 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// Gets the capabilities supported for this object.
         /// </summary>
-        IReadOnlyList<string> Capabilities { get; }
+        IDataObjectCapabilities Capabilities { get; }
     }
 }

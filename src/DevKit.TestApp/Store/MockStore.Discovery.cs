@@ -123,7 +123,7 @@ namespace Energistics.Etp.Store
             if (dataspace == null)
             {
                 if (uri.IsRootUri)
-                    objects = Dataspaces.SelectMany(d => d.Objects);
+                    objects = Dataspaces.SelectMany(d => d.Objects.Values);
                 else
                     yield break;
             }
@@ -133,9 +133,9 @@ namespace Energistics.Etp.Store
                 if (uri.IsBaseUri)
                 {
                     if (uri.IsFamilyVersionUri)
-                        objects = dataspace.Objects.FilterByFamilyAndVersion(uri.DataObjectType);
+                        objects = dataspace.Objects.Values.FilterByFamilyAndVersion(uri.DataObjectType);
                     else
-                        objects = dataspace.Objects;
+                        objects = dataspace.Objects.Values;
                 }
                 else
                 {
@@ -166,7 +166,7 @@ namespace Energistics.Etp.Store
             if (dataspace == null)
                 yield break;
 
-            foreach (var @object in dataspace.DeletedObjects.FilterByType(objectTypes).FilterByStoreLastWrite(deleteTimeFilter))
+            foreach (var @object in dataspace.DeletedObjects.Values.FilterByType(objectTypes).FilterByStoreLastWrite(deleteTimeFilter))
                 yield return @object;
         }
 
@@ -182,15 +182,15 @@ namespace Energistics.Etp.Store
             if (dataspace == null || context.IsSelfOnly)
                 yield break;
 
-            IEnumerable<IDataObjectType> supportedTypes;
+            IEnumerable<IDataObjectType> primarySupportedTypes, secondarySupportedTypes = Enumerable.Empty<IDataObjectType>();
             IEnumerable<MockObject> objects;
             if (uri.IsDataRootUri)
             {
-                supportedTypes = SupportedDataObjects.Select(sdo => sdo.QualifiedType);
+                primarySupportedTypes = SupportedDataObjects.Select(sdo => sdo.QualifiedType);
                 if (uri.IsFamilyVersionUri)
-                    supportedTypes = supportedTypes.FilterByFamilyAndVersion(uri.DataObjectType);
+                    primarySupportedTypes = primarySupportedTypes.FilterByFamilyAndVersion(uri.DataObjectType);
 
-                objects = dataspace.Objects;
+                objects = dataspace.Objects.Values;
             }
             else
             {
@@ -198,17 +198,24 @@ namespace Energistics.Etp.Store
                 if (!ObjectsByUri[version].TryGetValue(uri, out @object))
                     yield break;
 
-                supportedTypes = @object.SupportedSourceAndTargetTypes(context);
+                primarySupportedTypes = @object.SupportedPrimarySourceAndTargetTypes(context);
+                secondarySupportedTypes = @object.SupportedSecondarySourceAndTargetTypes(context);
                 objects = @object.SourcesAndTargets(context);
             }
 
-            foreach (var supportedType in supportedTypes)
+            foreach (var supportedType in primarySupportedTypes)
             {
                 var count = objects.Count(o => o.DataObjectType.MatchesExact(supportedType));
                 if (count > 0 || includeEmptyTypes)
-                    yield return new MockSupportedType { Uri = uri.Append(supportedType), DataObjectType = supportedType, ObjectCount = count };
+                    yield return new MockSupportedType { Uri = uri.Append(supportedType), DataObjectType = supportedType, ObjectCount = count, IsPrimaryRelationship = true };
+            }
+
+            foreach (var supportedType in secondarySupportedTypes)
+            {
+                var count = objects.Count(o => o.DataObjectType.MatchesExact(supportedType));
+                if (count > 0 || includeEmptyTypes)
+                    yield return new MockSupportedType { Uri = uri.Append(supportedType), DataObjectType = supportedType, ObjectCount = count, IsPrimaryRelationship = false };
             }
         }
-
     }
 }

@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
 
@@ -104,6 +103,23 @@ namespace Energistics.Etp.Common
         }
     }
 
+    public class HighWaterMarkChangedEventArgs : EventArgs
+    {
+        /// <summary>
+        /// The new high water mark.
+        /// </summary>
+        public DateTime HighWaterMark { get; }
+
+        /// <summary>
+        /// Initializes a new <see cref="HighWaterMarkChangedEventArgs"/> instance.
+        /// </summary>
+        /// <param name="highWaterMark">The new high water mark.</param>
+        public HighWaterMarkChangedEventArgs(DateTime highWaterMark)
+        {
+            HighWaterMark = highWaterMark;
+        }
+    }
+
     /// <summary>
     /// Provides information about a session that has been closed.
     /// </summary>
@@ -158,7 +174,7 @@ namespace Energistics.Etp.Common
     /// </summary>
     /// <typeparam name="TMessage">The type of the message body.</typeparam>
     /// <seealso cref="System.EventArgs" />
-    public class MessageEventArgs<TMessage> : EventArgs where TMessage : ISpecificRecord
+    public class MessageEventArgs<TMessage> : EventArgs where TMessage : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageEventArgs{TMessage}"/> class.
@@ -181,7 +197,7 @@ namespace Energistics.Etp.Common
     /// </summary>
     /// <typeparam name="TMessage">The type of the message body.</typeparam>
     /// <seealso cref="System.EventArgs" />
-    public class FireAndForgetEventArgs<TMessage> : EventArgs where TMessage : ISpecificRecord
+    public class FireAndForgetEventArgs<TMessage> : EventArgs where TMessage : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="FireAndForgetEventArgs{TMessage}"/> class.

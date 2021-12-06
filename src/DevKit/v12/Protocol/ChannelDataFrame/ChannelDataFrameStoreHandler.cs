@@ -60,7 +60,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataFrame
         {
             var body = new GetFrameMetadataResponse()
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 Indexes = indexes ?? new List<IndexMetadataRecord>(),
                 Channels = channels ?? new List<FrameChannelMetadataRecord>(),
             };
@@ -71,22 +71,24 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataFrame
         /// <summary>
         /// Handles the GetFrame event from a customer.
         /// </summary>
-        public event EventHandler<DualListRequestEventArgs<GetFrame, string, FrameRow>> OnGetFrame;
+        public event EventHandler<SingleAndListRequestEventArgs<GetFrame, FrameHeader, FrameRow>> OnGetFrame;
 
         /// <summary>
         /// Sends a GetFrameResponseHeader message to a customer.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
         /// <param name="requestUuid">The request UUID associated with this response.</param>
+        /// <param name="indexes">The index metadata.</param>
         /// <param name="channelUris">The channel URIs.</param>
         /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
         /// <param name="unregisterRequest">Whether or not to unregister the request when sending the message.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<GetFrameResponseHeader> GetFrameResponseHeader(IMessageHeader correlatedHeader, Guid requestUuid, IList<string> channelUris, bool isFinalPart = false, bool unregisterRequest = true, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<GetFrameResponseHeader> GetFrameResponseHeader(IMessageHeader correlatedHeader, Guid requestUuid, IList<IndexMetadataRecord> indexes, IList<string> channelUris, bool isFinalPart = false, bool unregisterRequest = true, IMessageHeaderExtension extension = null)
         {
             var body = new GetFrameResponseHeader()
             {
+                Indexes = indexes ?? new List<IndexMetadataRecord>(),
                 ChannelUris = channelUris ?? new List<string>(),
             };
 
@@ -129,18 +131,19 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataFrame
         /// </summary>
         /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
         /// <param name="requestUuid">The request UUID associated with this response.</param>
+        /// <param name="indexes">The index metadata.</param>
         /// <param name="channelUris">The channel URIs.</param>
         /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
         /// <param name="unregisterRequest">Whether or not to unregister the request when sending the message.</param>
         /// <param name="headerExtension">The message header extension for the GetFrameResponseHeader message.</param>
         /// <param name="rowsExtension">The message header extension for the GetFrameResponseRows message.</param>
         /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<GetFrameResponseHeader> GetFrameResponse(IMessageHeader correlatedHeader, Guid requestUuid, IList<string> channelUris, IList<FrameRow> frame, bool setFinalPart = true, bool unregisterRequest = true, IMessageHeaderExtension headerExtension = null, IMessageHeaderExtension rowsExtension = null)
+        public virtual EtpMessage<GetFrameResponseHeader> GetFrameResponse(IMessageHeader correlatedHeader, Guid requestUuid, IList<IndexMetadataRecord> indexes, IList<string> channelUris, IList<FrameRow> frame, bool setFinalPart = true, bool unregisterRequest = true, IMessageHeaderExtension headerExtension = null, IMessageHeaderExtension rowsExtension = null)
         {
             if (frame == null || frame.Count == 0)
-                return GetFrameResponseHeader(correlatedHeader, requestUuid, null, isFinalPart: setFinalPart, unregisterRequest: unregisterRequest, extension: headerExtension);
+                return GetFrameResponseHeader(correlatedHeader, requestUuid, null, null, isFinalPart: setFinalPart, unregisterRequest: unregisterRequest, extension: headerExtension);
 
-            var message = GetFrameResponseHeader(correlatedHeader, requestUuid, channelUris, isFinalPart: false, unregisterRequest: false, extension: headerExtension);
+            var message = GetFrameResponseHeader(correlatedHeader, requestUuid, indexes, channelUris, isFinalPart: false, unregisterRequest: false, extension: headerExtension);
             if (message == null)
             {
                 if (unregisterRequest)
@@ -188,15 +191,15 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataFrame
             var error = TryRegisterRequest(message.Body, nameof(message.Body.RequestUuid), message);
 
             HandleRequestMessage(message, OnGetFrame, HandleGetFrame,
-                args: new DualListRequestEventArgs<GetFrame, string, FrameRow>(message) { FinalError = error },
-                responseMethod: (args) => GetFrameResponse(args.Request?.Header, message.Body.RequestUuid.ToGuid(), args.Responses1, args.Responses2, setFinalPart: !args.HasErrors, unregisterRequest: true, headerExtension: args.Response1Extension, rowsExtension: args.Response2Extension));
+                args: new SingleAndListRequestEventArgs<GetFrame, FrameHeader, FrameRow>(message) { FinalError = error },
+                responseMethod: (args) => GetFrameResponse(args.Request?.Header, message.Body.RequestUuid, args.Response1.Indexes, args.Response1.ChannelUris, args.Responses2, setFinalPart: !args.HasErrors, unregisterRequest: true, headerExtension: args.Response1Extension, rowsExtension: args.Response2Extension));
         }
 
         /// <summary>
         /// Handles the GetFrame message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="DualListRequestEventArgs{GetFrame, string, FrameRow}"/> instance containing the event data.</param>
-        protected virtual void HandleGetFrame(DualListRequestEventArgs<GetFrame, string, FrameRow> args)
+        /// <param name="args">The <see cref="SingleAndListRequestEventArgs{GetFrame, FrameHeader, FrameRow}"/> instance containing the event data.</param>
+        protected virtual void HandleGetFrame(SingleAndListRequestEventArgs<GetFrame, FrameHeader, FrameRow> args)
         {
         }
 

@@ -70,7 +70,7 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
         {
             var body = new WMLS_GetCap()
             {
-                OptionsIn = optionsIn,
+                OptionsIn = optionsIn ?? string.Empty,
             };
 
             return SendRequest(body);
@@ -113,10 +113,10 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
         {
             var body = new WMLS_GetFromStore()
             {
-                WMLtypeIn = wmlTypeIn,
-                XMLin = xmlIn,
-                OptionsIn = optionsIn,
-                CapabilitiesIn = capabilitiesIn,
+                WMLtypeIn = wmlTypeIn ?? string.Empty,
+                XMLin = xmlIn ?? string.Empty,
+                OptionsIn = optionsIn ?? string.Empty,
+                CapabilitiesIn = capabilitiesIn ?? string.Empty,
             };
 
             return SendRequest(body);
@@ -139,10 +139,10 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
         {
             var body = new WMLS_AddToStore()
             {
-                WMLtypeIn = wmlTypeIn,
-                XMLin = xmlIn,
-                OptionsIn = optionsIn,
-                CapabilitiesIn = capabilitiesIn,
+                WMLtypeIn = wmlTypeIn ?? string.Empty,
+                XMLin = xmlIn ?? string.Empty,
+                OptionsIn = optionsIn ?? string.Empty,
+                CapabilitiesIn = capabilitiesIn ?? string.Empty,
             };
 
             return SendRequest(body);
@@ -165,10 +165,10 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
         {
             var body = new WMLS_UpdateInStore()
             {
-                WMLtypeIn = wmlTypeIn,
-                XMLin = xmlIn,
-                OptionsIn = optionsIn,
-                CapabilitiesIn = capabilitiesIn,
+                WMLtypeIn = wmlTypeIn ?? string.Empty,
+                XMLin = xmlIn ?? string.Empty,
+                OptionsIn = optionsIn ?? string.Empty,
+                CapabilitiesIn = capabilitiesIn ?? string.Empty,
             };
 
             return SendRequest(body);
@@ -191,10 +191,10 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
         {
             var body = new WMLS_DeleteFromStore()
             {
-                WMLtypeIn = wmlTypeIn,
-                XMLin = xmlIn,
-                OptionsIn = optionsIn,
-                CapabilitiesIn = capabilitiesIn,
+                WMLtypeIn = wmlTypeIn ?? string.Empty,
+                XMLin = xmlIn ?? string.Empty,
+                OptionsIn = optionsIn ?? string.Empty,
+                CapabilitiesIn = capabilitiesIn ?? string.Empty,
             };
 
             return SendRequest(body);

@@ -59,7 +59,7 @@ namespace Energistics.Etp.v12.Protocol.Transaction
         {
             var body = new StartTransactionResponse
             {
-                TransactionUuid = transactionUuid.ToUuid<Uuid>(),
+                TransactionUuid = transactionUuid,
                 Successful = successful,
                 FailureReason = failureReason ?? string.Empty,
             };
@@ -85,7 +85,7 @@ namespace Energistics.Etp.v12.Protocol.Transaction
         {
             var body = new CommitTransactionResponse
             {
-                TransactionUuid = transactionUuid.ToUuid<Uuid>(),
+                TransactionUuid = transactionUuid,
                 Successful = successful,
                 FailureReason = failureReason ?? string.Empty,
             };
@@ -111,7 +111,7 @@ namespace Energistics.Etp.v12.Protocol.Transaction
         {
             var body = new RollbackTransactionResponse
             {
-                TransactionUuid = transactionUuid.ToUuid<Uuid>(),
+                TransactionUuid = transactionUuid,
                 Successful = successful,
                 FailureReason = failureReason ?? string.Empty,
             };

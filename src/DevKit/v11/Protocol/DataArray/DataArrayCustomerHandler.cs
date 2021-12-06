@@ -49,7 +49,7 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         {
             var body = new GetDataArray
             {
-                Uri = uri
+                Uri = uri ?? string.Empty
             };
 
             return SendRequest(body);
@@ -67,7 +67,7 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         {
             var body = new GetDataArraySlice
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 Start = start ?? new List<long>(),
                 Count = count ?? new List<long>(),
             };
@@ -87,7 +87,7 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         {
             var body = new PutDataArray
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 Data = data,
                 Dimensions = dimensions ?? new List<long>(),
             };
@@ -109,7 +109,7 @@ namespace Energistics.Etp.v11.Protocol.DataArray
         {
             var body = new PutDataArraySlice
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 Data = data,
                 Dimensions = dimensions ?? new List<long>(),
                 Start = start ?? new List<long>(),

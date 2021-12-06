@@ -35,7 +35,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelStreamingProducerHandler"/> class.
         /// </summary>
-        public ChannelStreamingProducerHandler() : base((int)Protocols.ChannelStreaming, Roles.Producer, Roles.Consumer)
+        public ChannelStreamingProducerHandler() : base((int)Protocols.ChannelStreaming, Common.Roles.Producer, Common.Roles.Consumer)
         {
             RegisterMessageHandler<Start>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.Start, HandleStart);
             RegisterMessageHandler<ChannelDescribe>(Protocols.ChannelStreaming, MessageTypes.ChannelStreaming.ChannelDescribe, HandleChannelDescribe);
@@ -190,7 +190,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
             var body = new ChannelRemove()
             {
                 ChannelId = channelId,
-                RemoveReason = reason
+                RemoveReason = reason ?? string.Empty
             };
 
             return SendNotification(body);

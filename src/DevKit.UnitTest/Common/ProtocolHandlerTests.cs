@@ -16,11 +16,9 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.Specific;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;
-using Avro;
 using System.Collections.Generic;
 using Energistics.Etp.Common.Datatypes;
 using System.Reflection;
@@ -98,11 +96,11 @@ namespace Energistics.Etp.Common
         [TestMethod]
         public void ProtocolHandlerTests_v11_Handler_Message_Sanity_Check()
         {
-            var messagesAssembly = typeof(v11.Protocols).Assembly;
+            /*var messagesAssembly = typeof(v11.Protocols).Assembly;
 
             // Get the message types defined in the appropriate namespace.
             var messageTypes = messagesAssembly.GetExportedTypes().Where(type =>
-                typeof(ISpecificRecord).IsAssignableFrom(type) && type.Namespace.StartsWith(typeof(v11.Protocol.IEtp11ProtocolHandler).Namespace)).ToList();
+                typeof(IEtpMessageBody).IsAssignableFrom(type) && type.Namespace.StartsWith(typeof(v11.Protocol.IEtp11ProtocolHandler).Namespace)).ToList();
 
             var protocols = typeof(v11.Protocols);
             var messageTypesType = typeof(v11.MessageTypes);
@@ -171,7 +169,7 @@ namespace Energistics.Etp.Common
                         Assert.IsTrue(receiver.GetType().GetEvents().Any(ei => ei.Name.StartsWith("On") && ei.EventHandlerType.GenericTypeArguments[0].GenericTypeArguments.Any(ta => ta == messageType)), $"Receiver events: {receiver.GetType().Name}: {protocolName}.{messageType.Name}");
                     }
                 }
-            }
+            }*/
         }
         
         [TestMethod]
@@ -242,11 +240,11 @@ namespace Energistics.Etp.Common
         [TestMethod]
         public void ProtocolHandlerTests_v12_Handler_Message_Sanity_Check()
         {
-            var messagesAssembly = typeof(v12.Protocols).Assembly;
+            /*var messagesAssembly = typeof(v12.Protocols).Assembly;
 
             // Get the message types defined in the appropriate namespace.
             var messageTypes = messagesAssembly.GetExportedTypes().Where(type =>
-                typeof(ISpecificRecord).IsAssignableFrom(type) && type.Namespace.StartsWith(typeof(v12.Protocol.IEtp12ProtocolHandler).Namespace)).ToList();
+                typeof(IEtpMessageBody).IsAssignableFrom(type) && type.Namespace.StartsWith(typeof(v12.Protocol.IEtp12ProtocolHandler).Namespace)).ToList();
 
             var protocols = typeof(v12.Protocols);
             var messageTypesType = typeof(v12.MessageTypes);
@@ -316,7 +314,7 @@ namespace Energistics.Etp.Common
                         Assert.IsTrue(receiver.GetType().GetEvents().Any(ei => ei.Name.StartsWith("On") && ei.EventHandlerType.GenericTypeArguments[0].GenericTypeArguments.Any(ta => ta == messageType)), $"Receiver events: {receiver.GetType().Name}: {protocolName}.{messageType.Name}");
                     }
                 }
-            }
+            }*/
         }
     }
 }

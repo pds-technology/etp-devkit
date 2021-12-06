@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using Energistics.Etp.Common;
-using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Data;
 using System;
 using System.Collections.Generic;
@@ -28,24 +27,6 @@ namespace Energistics.Etp.Store
 {
     public partial class MockStore
     {
-        private class ObjectSubscription : Subscription<MockObject>
-        {
-            public Guid SessionId { get; set; }
-            public MockObject Root { get; set; }
-            public bool EndIfRootDeleted { get; set; }
-            public MockSubscriptionInfo SubscriptionInfo { get; set; }
-            public bool SendAllChanges { get; set; }
-            public override MockObject GetContext(MockObject @object) => @object;
-            public override bool IncludeObjectData(MockObject context) => SubscriptionInfo?.IncludeObjectData ?? false;
-            public override IEnumerable<MockObject> GetCandidateObjects()
-            {
-                if (SendAllChanges)
-                    return Objects.Values.FilterByStoreLastWrite(LastStoreWriteTime);
-                else
-                    return Objects.Values.FilterByObjectLastWrite(LastStoreWriteTime);
-            }
-        }
-
         private Dictionary<Guid, ObjectSubscription> ObjectSubscriptionsByRequestUuid { get; } = new Dictionary<Guid, ObjectSubscription>();
         private BackgroundLoop ObjectNotificationLoop { get; } = new BackgroundLoop();
 
@@ -68,7 +49,7 @@ namespace Energistics.Etp.Store
             RefreshSubscriptionObjects(subscription, objects);
         }
 
-        public bool SubscribeObjectNotifications(EtpVersion version, DateTime startTime, bool endIfRootDeleted, Guid sessionId, MockSubscriptionInfo subscriptionInfo, MockObjectCallbacks callbacks)
+        public bool SubscribeObjectNotifications(EtpVersion version, bool sendHistoricalChanges, DateTime historicalChangesStartTime, bool endIfRootDeleted, Guid sessionId, MockSubscriptionInfo subscriptionInfo, MockObjectCallbacks callbacks)
         {
             CheckLocked();
 
@@ -89,11 +70,11 @@ namespace Energistics.Etp.Store
                 SessionId = sessionId,
                 Version = version,
                 Uuid = subscriptionInfo.RequestUuid,
-                LastStoreWriteTime = startTime,
+                LastNotificationTime = sendHistoricalChanges ? historicalChangesStartTime : StoreLastWrite,
                 SubscriptionInfo = subscriptionInfo,
                 Callbacks = callbacks,
                 Root = root,
-                SendAllChanges = startTime < StoreLastWrite,
+                SendHistoricalChanges = sendHistoricalChanges,
                 EndIfRootDeleted = endIfRootDeleted,
             };
 
@@ -140,23 +121,27 @@ namespace Energistics.Etp.Store
         {
             CheckLocked();
 
-            SendNotificationsForObjectsAddedToScope(subscription);
-            SendUpdatedNotificationsForObjectsInScope(subscription);
-            SendActivatedNotificationsForObjectsInScope(subscription);
-            SendDeactivatedNotificationsForObjectsInScope(subscription);
-            SendNotificationsForObjectsRemovedFromScope(subscription);
+            RefreshSubscriptions();
 
-            subscription.AddedObjects.Clear();
-            subscription.RemovedObjects.Clear();
+            SendJoinedSubscriptionNotifications(subscription);
+            SendCreatedNotifications(subscription);
+            SendUpdatedNotifications(subscription);
+            SendJoinedAndUnjoinedNotifications(subscription);
+            SendActivatedNotifications(subscription);
+            SendDeactivatedNotifications(subscription);
+            SendUnjoinedSubscriptionNotifications(subscription);
+
+            subscription.PreviousObjects = subscription.Objects;
+            subscription.Objects = new Dictionary<Guid, MockObject>();
 
             if (subscription.Root?.IsDeleted ?? false && subscription.EndIfRootDeleted)
             {
-                subscription.Callbacks.SubscriptionEnded?.Invoke(subscription.Uuid);
+                subscription.Callbacks.SubscriptionEnded?.Invoke(subscription.Uuid, $"Object Deleted: {subscription.Root.Uri(subscription.Version)}");
                 ObjectSubscriptionsByRequestUuid.Remove(subscription.Uuid);
             }
-            subscription.SendAllChanges = false; // Only send all changes the first time
 
-            subscription.LastStoreWriteTime = StoreLastWrite;
+            subscription.LastNotificationTime = StoreLastWrite;
+            subscription.SendHistoricalChanges = false; // Only send historical changes the first time.
         }
     }
 }

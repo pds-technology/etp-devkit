@@ -16,8 +16,10 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using Energistics.Avro.Encoding.Converter;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -34,9 +36,9 @@ namespace Energistics.Etp.Data
         public EtpUri Uri(EtpVersion version) => new EtpUri(version, Name);
         public static string ContentType => EtpContentType.DataspaceContentType;
 
-        public List<MockObject> Objects { get; } = new List<MockObject>();
+        public Dictionary<Guid, MockObject> Objects { get; } = new Dictionary<Guid, MockObject>();
 
-        public List<MockObject> DeletedObjects { get; } = new List<MockObject>();
+        public Dictionary<Guid, MockObject> DeletedObjects { get; } = new Dictionary<Guid, MockObject>();
 
         public List<MockFamily> Families { get; } = new List<MockFamily>();
 
@@ -51,14 +53,15 @@ namespace Energistics.Etp.Data
             CustomData = new Dictionary<string, string>(),
             ChannelSubscribable = true,
             ObjectNotifiable = true,
-            LastChanged = Objects.Count > 0 ? Objects.Max(o => o.StoreLastWrite).ToEtpTimestamp() : 0L,
+            LastChanged = Objects.Count > 0 ? Objects.Values.Max(o => o.StoreLastWrite) : AvroConverter.UtcMinDateTime,
         };
 
         public v12.Datatypes.Object.Dataspace Dataspace12 => new v12.Datatypes.Object.Dataspace
         {
             Uri = Uri(EtpVersion.v12),
             Path = Name,
-            LastChanged = Objects.Count > 0 ? Objects.Max(o => o.StoreLastWrite).ToEtpTimestamp() : 0L,
+            StoreLastWrite = Objects.Count > 0 ? Objects.Values.Max(o => o.StoreLastWrite) : AvroConverter.UtcMinDateTime,
+            StoreCreated = Objects.Count > 0 ? Objects.Values.Min(o => o.StoreCreated) : AvroConverter.UtcMinDateTime,
             CustomData = new Dictionary<string, v12.Datatypes.DataValue>(),
         };
     }

@@ -20,11 +20,13 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Energistics.Avro.Encoding.Json;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using log4net;
@@ -209,10 +211,24 @@ namespace Energistics.Etp.Native
             if (headers.ContainsKey(EtpHeaders.GetVersions) && string.Equals(headers[EtpHeaders.GetVersions], "true", StringComparison.OrdinalIgnoreCase))
             {
                 response.ContentType = "application/json";
-                var @string = EtpExtensions.Serialize(EtpWebSocketValidation.GetSupportedSubProtocols(Details.SupportedVersions));
-                var bytes = System.Text.Encoding.UTF8.GetBytes(@string);
-                response.ContentLength64 = bytes.Length;
-                response.OutputStream.Write(bytes, 0, bytes.Length);
+                using (var writer = new StringWriter())
+                {
+                    using (var encoder = new JsonAvroEncoder(writer))
+                    {
+                        encoder.EncodeArrayStart(Details.SupportedVersions.Count, Details.SupportedVersions.Count);
+                        var separator = false;
+                        for (int i = 0; i < Details.SupportedVersions.Count; i++)
+                        {
+                            if (separator)
+                                encoder.EncodeArrayItemSeparator();
+                            encoder.EncodeString(Details.SupportedVersions[i].ToString());
+                        }
+                        encoder.EncodeArrayEnd();
+                    }
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(writer.ToString());
+                    response.ContentLength64 = bytes.Length;
+                    response.OutputStream.Write(bytes, 0, bytes.Length);
+                }
             }
             else
             {
@@ -221,11 +237,19 @@ namespace Energistics.Etp.Native
                     version = EtpVersion.v12;
 
                 var serverCapabilities = ServerManager.ServerCapabilities(version);
-                response.ContentType = "application/json";
-                var @string = EtpExtensions.Serialize(serverCapabilities);
-                var bytes = System.Text.Encoding.UTF8.GetBytes(@string);
-                response.ContentLength64 = bytes.Length;
-                response.OutputStream.Write(bytes, 0, bytes.Length);
+                using (var writer = new StringWriter())
+                {
+                    using (var encoder = new JsonAvroEncoder(writer))
+                    {
+                        serverCapabilities.Encode(encoder);
+                    }
+
+                    response.ContentType = "application/json";
+                    var @string = writer.ToString();
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(@string);
+                    response.ContentLength64 = bytes.Length;
+                    response.OutputStream.Write(bytes, 0, bytes.Length);
+                }
             }
         }
 

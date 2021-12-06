@@ -35,7 +35,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelStreamingConsumerHandler"/> class.
         /// </summary>
-        public ChannelStreamingConsumerHandler() : base((int)Protocols.ChannelStreaming, Roles.Consumer, Roles.Producer)
+        public ChannelStreamingConsumerHandler() : base((int)Protocols.ChannelStreaming, Common.Roles.Consumer, Common.Roles.Producer)
         {
             ChannelMetadataRecords = new List<ChannelMetadataRecord>(0);
 
@@ -99,7 +99,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         {
             var body = new ChannelStreamingStart()
             {
-                Channels = channelStreamingInfos
+                Channels = channelStreamingInfos ?? new List<ChannelStreamingInfo>()
             };
 
             return SendRequest(body);
@@ -139,7 +139,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         {
             var body = new ChannelRangeRequest()
             {
-                ChannelRanges = channelRangeInfos
+                ChannelRanges = channelRangeInfos ?? new List<ChannelRangeInfo>()
             };
 
             return SendRequest(body);

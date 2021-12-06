@@ -58,9 +58,9 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         {
             var body = new FindPartsResponse
             {
-                Uri = context?.Uri,
-                Format = context?.Format,
-                ServerSortOrder = context?.ServerSortOrder,
+                Uri = context?.Uri ?? string.Empty,
+                Format = context?.Format ?? Formats.Xml,
+                ServerSortOrder = context?.ServerSortOrder ?? string.Empty,
                 Parts = parts ?? new List<ObjectPart>(),
             };
 

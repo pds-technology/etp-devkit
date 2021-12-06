@@ -63,6 +63,16 @@ namespace Energistics.Etp.WebSocket4Net
         }
 
         /// <summary>
+        /// Gets a value indicating whether the underlying websocket is actively being kept alive by sending WebSocket ping messages.
+        /// </summary>
+        public bool IsWebSocketKeptAlive => _socket.EnableAutoSendPing;
+
+        /// <summary>
+        /// Gets a value indicating the frequency at which WebSocket ping messages are being sent to keep the underlying WebSocket alive.
+        /// </summary>
+        public TimeSpan WebSocketKeepAliveInterval => TimeSpan.FromSeconds(_socket.AutoSendPingInterval);
+
+        /// <summary>
         /// Gets a value indicating whether the underlying websocket connection is open.
         /// </summary>
         /// <value>
@@ -251,6 +261,9 @@ namespace Energistics.Etp.WebSocket4Net
         public void SetProxy(string host, int port, string username = null, string password = null, bool useDefaultCredentials = false)
         {
             if (_socket == null) return;
+            if (IsWebSocketOpen)
+                throw new InvalidOperationException("Proxy must be set before the WebSocket connection is opened.");
+
             var endPoint = new DnsEndPoint(host, port);
             if (useDefaultCredentials)
                 throw new NotSupportedException("Default Credentials not supported with WebSocket4Net");
@@ -266,12 +279,37 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="clientCertificate">The client certificate to use.</param>
         public void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates, X509Certificate2 clientCertificate = null)
         {
+            if (IsWebSocketOpen)
+                throw new InvalidOperationException("Security options must be set before the WebSocket connection is opened.");
+
             _socket.Security.EnabledSslProtocols = (SslProtocols)enabledSslProtocols;
             _socket.Security.AllowCertificateChainErrors = acceptInvalidCertificates;
             _socket.Security.AllowNameMismatchCertificate = acceptInvalidCertificates;
             _socket.Security.AllowUnstrustedCertificate = acceptInvalidCertificates;
             if (clientCertificate != null)
                 _socket.Security.Certificates.Add(clientCertificate);
+        }
+
+        /// <summary>
+        /// Sets the interval at which the underlying websocket will be actively kept alive by sending WebSocket ping messages.
+        /// A value of 0 will disable sending ping messages.
+        /// </summary>
+        /// <param name="keepAliveInterval">The time interval to wait between sending WebSocket ping messages.</param>
+        public void SetWebSocketKeepAliveInterval(TimeSpan keepAliveInterval)
+        {
+            if (IsWebSocketOpen)
+                throw new InvalidOperationException("WebSocket keep alive interval must be set before the WebSocket connection is opened.");
+
+            if (keepAliveInterval == TimeSpan.Zero)
+            {
+                _socket.EnableAutoSendPing = false;
+                _socket.AutoSendPingInterval = 0;
+            }
+            else
+            {
+                _socket.EnableAutoSendPing = true;
+                _socket.AutoSendPingInterval = Math.Max(1, (int)keepAliveInterval.TotalSeconds);
+            }
         }
 
         /// <summary>

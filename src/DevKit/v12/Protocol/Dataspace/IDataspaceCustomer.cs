@@ -33,10 +33,10 @@ namespace Energistics.Etp.v12.Protocol.Dataspace
         /// <summary>
         /// Sends a GetDataspaces message to a store.
         /// </summary>
-        /// <param name="lastChangedFilter">An optional filter to limit the dataspaces returned by date last changed.</param>
+        /// <param name="storeLastWriteFilter">An optional filter to limit the dataspaces returned by store last write.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<GetDataspaces> GetDataspaces(long? lastChangedFilter = null, IMessageHeaderExtension extension = null);
+        EtpMessage<GetDataspaces> GetDataspaces(DateTime? storeLastWriteFilter = null, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the GetDataspacesResponse event from a store.

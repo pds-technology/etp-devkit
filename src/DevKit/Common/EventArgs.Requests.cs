@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
 
@@ -30,7 +29,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TRequest">The type of the message body.</typeparam>
     /// <seealso cref="System.EventArgs" />
     public abstract class RequestEventArgsBase<TRequest> : EventArgs
-        where TRequest : ISpecificRecord
+        where TRequest : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EmptyRequestEventArgs{TRequest}"/> class.
@@ -117,7 +116,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TRequest">The type of the message body.</typeparam>
     /// <seealso cref="System.EventArgs" />
     public class EmptyRequestEventArgs<TRequest> : RequestEventArgsBase<TRequest>
-        where TRequest : ISpecificRecord
+        where TRequest : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EmptyRequestEventArgs{TRequest}"/> class.
@@ -144,7 +143,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TRequest">The type of the message body.</typeparam>
     /// <seealso cref="System.EventArgs" />
     public class VoidRequestEventArgs<TRequest> : RequestEventArgsBase<TRequest>
-        where TRequest : ISpecificRecord
+        where TRequest : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="VoidRequestEventArgs{TRequest}"/> class.
@@ -172,7 +171,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TCancellation">The type of the cancellation request message body.</typeparam>
     /// <seealso cref="System.EventArgs" />
     public class CancellationRequestEventArgs<TRequest, TCancellation> : RequestEventArgsBase<TRequest>
-        where TRequest : ISpecificRecord where TCancellation : ISpecificRecord
+        where TRequest : IEtpMessageBody where TCancellation : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CancellationRequestEventArgs{TRequest, TCancellation}"/> class.
@@ -210,7 +209,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TResponse">The type of the response content to send in the response message.</typeparam>
     /// <seealso cref="System.EventArgs" />
     public class RequestEventArgs<TRequest, TResponse> : RequestEventArgsBase<TRequest>
-        where TRequest : ISpecificRecord
+        where TRequest : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="RequestEventArgs{TRequest, TResponse}"/> class.
@@ -237,6 +236,39 @@ namespace Energistics.Etp.Common
         public override bool HasNonErrorResponse => Response != null;
     }
 
+
+    /// <summary>
+    /// Provides information about a request message that has been received and that produces a single response object and optionally collects information for the response.
+    /// Set <see cref="SendResponse"/> to <c>true</c> if the DevKit should send the response to the request.
+    /// Set <see cref="SendResponse"/> to <c>false</c> if your code has already sent any necessary responses to the request.
+    /// Set <see cref="Response"/> to the content that should be sent in the response message.
+    /// Set <see cref="ResponseExtension"/> to provide a message header extension that will be used for the response to this message.
+    /// Set <see cref="Error"/> to provide a terminating protocol exception in response to the message.
+    /// Set <see cref="ErrorExtension"/> to provide a message header extension that will be used for the terminating protocol exception.
+    /// </summary>
+    /// <typeparam name="TRequest">The type of the request message body.</typeparam>
+    /// <typeparam name="TResponse">The type of the response content to send in the response message.</typeparam>
+    /// <typeparam name="TContext">Type type of additional context provided with the response.</typeparam>
+    /// <seealso cref="System.EventArgs" />
+    public class RequestWithContextEventArgs<TRequest, TResponse, TContext> : RequestEventArgs<TRequest, TResponse>
+        where TRequest : IEtpMessageBody
+        where TContext : class, new()
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RequestWithContextEventArgs{TRequest, TResponse, TContext}"/> class.
+        /// </summary>
+        /// <param name="request">The request message.</param>
+        public RequestWithContextEventArgs(EtpMessage<TRequest> request)
+            : base(request)
+        {
+        }
+
+        /// <summary>
+        /// Gets or sets the context.
+        /// </summary>
+        public TContext Context { get; } = new TContext();
+    }
+
     /// <summary>
     /// Provides information about a request message that has been received and that produces a list of response objects and optionally collects information for the response.
     /// Set <see cref="SendResponse"/> to <c>true</c> if the DevKit should send the responses to the request.
@@ -249,7 +281,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TRequest">The type of the request message body.</typeparam>
     /// <typeparam name="TResponse">The type of the response content to send in the response messages.</typeparam>
     public class ListRequestEventArgs<TRequest, TResponse> : RequestEventArgsBase<TRequest>
-        where TRequest : ISpecificRecord
+        where TRequest : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ListRequestEventArgs{TRequest, TResponse}"/> class.
@@ -289,7 +321,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TResponse">The type of the response content to send in the response messages.</typeparam>
     /// <typeparam name="TContext">Type type of additional context provided with the response.</typeparam>
     public class ListRequestWithContextEventArgs<TRequest, TResponse, TContext> : ListRequestEventArgs<TRequest, TResponse>
-        where TRequest : ISpecificRecord
+        where TRequest : IEtpMessageBody
         where TContext : class, new()
     {
         /// <summary>
@@ -320,7 +352,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TResponse1">The first type of response content to send in the response messages.</typeparam>
     /// <typeparam name="TResponse2">The second type of response content to send in the response messages.</typeparam>
     public class DualListRequestEventArgs<TRequest, TResponse1, TResponse2> : RequestEventArgsBase<TRequest>
-        where TRequest : ISpecificRecord
+        where TRequest : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DualListRequestEventArgs{TRequest, TResponse1, TResponse2}"/> class.
@@ -371,7 +403,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TResponse2">The second type of response content to send in the response messages.</typeparam>
     /// <typeparam name="TContext">Type type of additional context provided with the response.</typeparam>
     public class DualListRequestWithContextEventArgs<TRequest, TResponse1, TResponse2, TContext> : RequestEventArgsBase<TRequest>
-        where TRequest : ISpecificRecord
+        where TRequest : IEtpMessageBody
         where TContext : class, new()
     {
         /// <summary>
@@ -426,7 +458,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TResponse1">The first type of response content to send in the response messages.</typeparam>
     /// <typeparam name="TResponse2">The second type of response content to send in the response messages.</typeparam>
     public class ListAndSingleRequestEventArgs<TRequest, TResponse1, TResponse2> : RequestEventArgsBase<TRequest>
-        where TRequest : ISpecificRecord
+        where TRequest : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ListAndSingleRequestEventArgs{TRequest, TResponse1, TResponse2}"/> class.
@@ -464,6 +496,56 @@ namespace Energistics.Etp.Common
     }
 
     /// <summary>
+    /// Provides information about a request message that has been received and that a list of response and a second, single response and optionally collects information for the response.
+    /// Set <see cref="SendResponse"/> to <c>true</c> if the DevKit should send the responses to the request.
+    /// Set <see cref="SendResponse"/> to <c>false</c> if your code has already sent any necessary responses to the request.
+    /// Set the <see cref="Response2"/> and add response content to the <see cref="Responses2"/> list that should be sent in the response messages.
+    /// Set <see cref="Response1Extension"/> and <see cref="Response2Extension"/> to provide a message header extensions that will be used for the responses to this message.
+    /// Set <see cref="Error"/> to provide a terminating protocol exception in response to the message.
+    /// Set <see cref="ErrorExtension"/> to provide a message header extension that will be used for the terminating protocol exception.
+    /// </summary>
+    /// <typeparam name="TRequest">The type of the request message body.</typeparam>
+    /// <typeparam name="TResponse1">The first type of response content to send in the response messages.</typeparam>
+    /// <typeparam name="TResponse2">The second type of response content to send in the response messages.</typeparam>
+    public class SingleAndListRequestEventArgs<TRequest, TResponse1, TResponse2> : RequestEventArgsBase<TRequest>
+        where TRequest : IEtpMessageBody
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SingleAndListRequestEventArgs{TRequest, TResponse1, TResponse2}"/> class.
+        /// </summary>
+        /// <param name="request">The request message.</param>
+        public SingleAndListRequestEventArgs(EtpMessage<TRequest> request)
+            : base(request)
+        {
+        }
+
+        /// <summary>
+        /// Gets or sets the responses.
+        /// </summary>
+        public TResponse1 Response1 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the message header extension to use in the response, if any.
+        /// </summary>
+        public IMessageHeaderExtension Response1Extension { get; set; }
+
+        /// <summary>
+        /// Gets or sets the responses.
+        /// </summary>
+        public List<TResponse2> Responses2 { get; set; } = new List<TResponse2>();
+
+        /// <summary>
+        /// Gets or sets the message header extension to use in the response, if any.
+        /// </summary>
+        public IMessageHeaderExtension Response2Extension { get; set; }
+
+        /// <summary>
+        /// Whether or not the response is multi-part.
+        /// </summary>
+        public override bool IsResponseMultiPart => true;
+    }
+
+    /// <summary>
     /// Provides information about a map request message that has been received and that produces a map response and optionally collects information for the response.
     /// Set <see cref="SendResponse"/> to <c>true</c> if the DevKit should send the responses to the request.
     /// Set <see cref="SendResponse"/> to <c>false</c> if your code has already sent any necessary responses to the request.
@@ -477,7 +559,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TRequest">The type of the request message body.</typeparam>
     /// <typeparam name="TResponse">The type of the response content to the message.</typeparam>
     public class MapRequestEventArgs<TRequest, TResponse> : RequestEventArgsBase<TRequest>
-        where TRequest : ISpecificRecord
+        where TRequest : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MapRequestEventArgs{TRequest, TResponse}"/> class.
@@ -519,7 +601,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TResponse">The type of the response content to the message.</typeparam>
     /// <typeparam name="TContext">Type type of additional context provided with the map response.</typeparam>
     public class MapRequestWithContextEventArgs<TRequest, TResponse, TContext> : MapRequestEventArgs<TRequest, TResponse>
-        where TRequest : ISpecificRecord
+        where TRequest : IEtpMessageBody
         where TContext : class, new()
     {
         /// <summary>
@@ -552,8 +634,8 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TData">Type type of the request data message body.</typeparam>
     /// <typeparam name="TResponse">The type of the response content to the message.</typeparam>
     public class MapRequestWithDataEventArgs<TRequest, TData, TResponse> : MapRequestEventArgs<TRequest, TResponse>
-        where TRequest : ISpecificRecord
-        where TData : ISpecificRecord
+        where TRequest : IEtpMessageBody
+        where TData : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MapRequestWithDataEventArgs{TRequest, TData, TResponse}"/> class.
@@ -587,7 +669,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TResponse1">The type of the first response content to the message.</typeparam>
     /// <typeparam name="TResponse2">The type of the second response content to the message.</typeparam>
     public class MapAndListRequestEventArgs<TRequest, TResponse1, TResponse2> : RequestEventArgsBase<TRequest>
-        where TRequest : ISpecificRecord
+        where TRequest : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MapAndListRequestEventArgs{TRequest, TResponse1, TResponse2}"/> class.

@@ -17,7 +17,6 @@
 //-----------------------------------------------------------------------
 
 using System;
-using Avro.Specific;
 
 namespace Energistics.Etp.Common
 {
@@ -27,7 +26,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TSubscription">The subscription type.</typeparam>
     /// <typeparam name="TNotification">The type of the notification message body.</typeparam>
     public class NotificationEventArgs<TSubscription, TNotification> : EventArgs
-        where TNotification : ISpecificRecord
+        where TNotification : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="NotificationEventArgs{T, TSubscription}"/> class.
@@ -60,8 +59,8 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TNotification">The type of the notification message body.</typeparam>
     /// <typeparam name="TData">Type type of the notification data message body.</typeparam>
     public class NotificationWithDataEventArgs<TSubscription, TNotification, TData> : NotificationEventArgs<TSubscription, TNotification>
-        where TNotification : ISpecificRecord
-        where TData : ISpecificRecord
+        where TNotification : IEtpMessageBody
+        where TData : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="NotificationEventArgs{T, TSubscription}"/> class.

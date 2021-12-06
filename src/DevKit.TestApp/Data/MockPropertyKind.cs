@@ -18,6 +18,7 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using System;
 using System.Collections.Generic;
 
 namespace Energistics.Etp.Data
@@ -37,9 +38,22 @@ namespace Energistics.Etp.Data
         public override HashSet<EtpDataObjectType> SupportedSecondaryTargetTypes => SecondaryTargetTypes;
 
 
+        public MockPropertyKind Parent { get; private set; }
+
         public MockPropertyKind()
         {
             DataObjectType = Type;
+        }
+
+        public void SetParent(MockPropertyKind parent, DateTime updateTime)
+        {
+            if (Parent != null)
+                RemoveParent(parent, updateTime, true);
+
+            Parent = parent;
+
+            if (Parent != null)
+                AddParent(parent, updateTime, true);
         }
 
         public string IsAbstract { get; set; }

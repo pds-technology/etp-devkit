@@ -54,7 +54,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// <param name="countObjects">if set to <c>true</c>, request object counts.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<GetResources> GetResources(ContextInfo context, ContextScopeKind scope, long? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, bool includeEdges = false, bool countObjects = false, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<GetResources> GetResources(ContextInfo context, ContextScopeKind scope, DateTime? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, bool includeEdges = false, bool countObjects = false, IMessageHeaderExtension extension = null)
         {
             var body = new GetResources
             {
@@ -82,11 +82,11 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// <param name="dataObjectTypes">if not <c>null</c> or empty, requests only deleted resources for objects of types found in the list.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<GetDeletedResources> GetDeletedResources(string dataspaceUri, long? deleteTimeFilter = null, IList<string> dataObjectTypes = null, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<GetDeletedResources> GetDeletedResources(string dataspaceUri, DateTime? deleteTimeFilter = null, IList<string> dataObjectTypes = null, IMessageHeaderExtension extension = null)
         {
             var body = new GetDeletedResources
             {
-                DataspaceUri = dataspaceUri,
+                DataspaceUri = dataspaceUri ?? string.Empty,
                 DeleteTimeFilter = deleteTimeFilter,
                 DataObjectTypes = dataObjectTypes ?? new List<string>(),
             };

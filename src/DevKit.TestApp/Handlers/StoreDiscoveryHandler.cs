@@ -92,7 +92,7 @@ namespace Energistics.Etp.Handlers
                 // Work around for cross-ML ETP 1.1 URIs:
                 var dataType = MockStore.TryGetCorrectedDataObjectType(uri);
                 resources = Store.GetObjects(EtpVersion.v11, new MockGraphContext(uri.Parent, dataType))
-                    .Select(o => o.Resource11);
+                    .Select(o => o.Resource11(true));
             }
             else if (uri.IsDataRootUri || uri.IsObjectUri) // List types of data objects available
             {
@@ -140,9 +140,9 @@ namespace Energistics.Etp.Handlers
                 args.FinalError = handler.ErrorInfo().InvalidUri(uri);
             else if (uri.IsDataRootUri || uri.IsObjectUri) // List data objects
             {
-                resources = Store.GetObjects(EtpVersion.v12, new MockGraphContext(args.Request.Body), activeStatusFilter, args.Request.Body.StoreLastWriteFilter?.ToUtcDateTime())
+                resources = Store.GetObjects(EtpVersion.v12, new MockGraphContext(args.Request.Body), activeStatusFilter, args.Request.Body.StoreLastWriteFilter)
                     .Where(o => handler.Session.SessionSupportedDataObjects.IsSupported(o.DataObjectType))
-                    .Select(o => o.Resource12);
+                    .Select(o => o.Resource12(true));
             }
             else
                 args.FinalError = handler.ErrorInfo().InvalidUri(uri);
@@ -168,7 +168,7 @@ namespace Energistics.Etp.Handlers
                 args.FinalError = handler.ErrorInfo().InvalidUri(uri);
             else
             {
-                resources = Store.GetDeletedObjects(EtpVersion.v12, uri, objectTypes: args.Request.Body.DataObjectTypes.ToDataObjectTypes(), deleteTimeFilter: args.Request.Body.DeleteTimeFilter?.ToUtcDateTime())
+                resources = Store.GetDeletedObjects(EtpVersion.v12, uri, objectTypes: args.Request.Body.DataObjectTypes.ToDataObjectTypes(), deleteTimeFilter: args.Request.Body.DeleteTimeFilter)
                     .Where(o => handler.Session.SessionSupportedDataObjects.IsSupported(o.DataObjectType))
                     .Select(@do => @do.DeletedResource12);
             }

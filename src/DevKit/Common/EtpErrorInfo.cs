@@ -158,8 +158,8 @@ namespace Energistics.Etp.Common
         /// <param name="argument">The argument name.</param>
         /// <param name="value">The argument value.</param>
         /// <returns>The initialized <see cref="IErrorInfo"/> instance.</returns>
-        public static IErrorInfo InvalidArgument(this IErrorInfo errorInfo, string argument, IUuidGuidSource value)
-            => errorInfo.InvalidArgument(argument, (value?.IsUuidValidGuid ?? false) ? value?.DisplayUuid : value?.RawUuid);
+        public static IErrorInfo InvalidArgument(this IErrorInfo errorInfo, string argument, IUuidSource value)
+            => errorInfo.InvalidArgument(argument, value?.Uuid);
 
         /// <summary>
         /// Initializes a <see cref="IErrorInfo"/> instance for an invalid argument.
@@ -168,7 +168,7 @@ namespace Energistics.Etp.Common
         /// <param name="argument">The argument name.</param>
         /// <param name="value">The argument value.</param>
         /// <returns>The initialized <see cref="IErrorInfo"/> instance.</returns>
-        public static IErrorInfo InvalidArgument(this IErrorInfo errorInfo, string argument, IRequestUuidGuidSource value) => errorInfo.InvalidArgument(argument, value?.RequestUuidGuid);
+        public static IErrorInfo InvalidArgument(this IErrorInfo errorInfo, string argument, IRequestUuidSource value) => errorInfo.InvalidArgument(argument, value?.RequestUuid);
 
         /// <summary>
         /// Initializes a <see cref="IErrorInfo"/> instance for permission denied.
@@ -259,7 +259,7 @@ namespace Energistics.Etp.Common
         /// <param name="errorInfo">The <see cref="IErrorInfo"/> instance to update.</param>
         /// <param name="value">The argument value.</param>
         /// <returns>The initialized <see cref="IErrorInfo"/> instance.</returns>
-        public static IErrorInfo NotFound(this IErrorInfo errorInfo, IUuidGuidSource value) => errorInfo.NotFound(value?.DisplayUuid);
+        public static IErrorInfo NotFound(this IErrorInfo errorInfo, IUuidSource value) => errorInfo.NotFound(value?.Uuid);
 
         /// <summary>
         /// Initializes a <see cref="IErrorInfo"/> instance for object not found.
@@ -267,7 +267,7 @@ namespace Energistics.Etp.Common
         /// <param name="errorInfo">The <see cref="IErrorInfo"/> instance to update.</param>
         /// <param name="value">The argument value.</param>
         /// <returns>The initialized <see cref="IErrorInfo"/> instance.</returns>
-        public static IErrorInfo NotFound(this IErrorInfo errorInfo, IRequestUuidGuidSource value) => errorInfo.NotFound(value?.RequestUuidGuid);
+        public static IErrorInfo NotFound(this IErrorInfo errorInfo, IRequestUuidSource value) => errorInfo.NotFound(value?.RequestUuid);
 
         /// <summary>
         /// Initializes a <see cref="IErrorInfo"/> instance for object not found.
@@ -289,7 +289,7 @@ namespace Energistics.Etp.Common
         /// <param name="argument">The argument name.</param>
         /// <param name="value">The argument value.</param>
         /// <returns>The initialized <see cref="IErrorInfo"/> instance.</returns>
-        public static IErrorInfo NotFound(this IErrorInfo errorInfo, string argument, IUuidGuidSource value) => errorInfo.NotFound(argument, value?.DisplayUuid);
+        public static IErrorInfo NotFound(this IErrorInfo errorInfo, string argument, IUuidSource value) => errorInfo.NotFound(argument, value?.Uuid);
 
         /// <summary>
         /// Initializes a <see cref="IErrorInfo"/> instance for object not found.
@@ -298,9 +298,9 @@ namespace Energistics.Etp.Common
         /// <param name="argument">The argument name.</param>
         /// <param name="value">The argument value.</param>
         /// <returns>The initialized <see cref="IErrorInfo"/> instance.</returns>
-        public static IErrorInfo NotFound(this IErrorInfo errorInfo, string argument, IRequestUuidGuidSource value)
+        public static IErrorInfo NotFound(this IErrorInfo errorInfo, string argument, IRequestUuidSource value)
         {
-            return errorInfo.NotFound(argument, value?.RequestUuidGuid);
+            return errorInfo.NotFound(argument, value?.RequestUuid);
         }
         
         /// <summary>
@@ -427,17 +427,6 @@ namespace Energistics.Etp.Common
         /// <param name="errorInfo">The <see cref="IErrorInfo"/> instance to update.</param>
         /// <param name="requestUuid">The rejected request UUID.</param>
         /// <returns>The initialized <see cref="IErrorInfo"/> instance.</returns>
-        public static IErrorInfo RequestUuidRejected(this IErrorInfo errorInfo, IUuid requestUuid)
-        {
-            return errorInfo.RequestUuidRejected(requestUuid?.ToGuid() ?? default(Guid));
-        }
-
-        /// <summary>
-        /// Initializes a <see cref="IErrorInfo"/> instance for request UUID rejected.
-        /// </summary>
-        /// <param name="errorInfo">The <see cref="IErrorInfo"/> instance to update.</param>
-        /// <param name="requestUuid">The rejected request UUID.</param>
-        /// <returns>The initialized <see cref="IErrorInfo"/> instance.</returns>
         public static IErrorInfo RequestUuidRejected(this IErrorInfo errorInfo, Guid requestUuid)
         {
             return errorInfo.Set(EtpErrorCodes.RequestUuidRejected,
@@ -450,10 +439,10 @@ namespace Energistics.Etp.Common
         /// <param name="errorInfo">The <see cref="IErrorInfo"/> instance to update.</param>
         /// <param name="requestUuid">The rejected request UUID.</param>
         /// <returns>The initialized <see cref="IErrorInfo"/> instance.</returns>
-        public static IErrorInfo RequestUuidRejected(this IErrorInfo errorInfo, IUuidGuidSource requestUuid)
+        public static IErrorInfo RequestUuidRejected(this IErrorInfo errorInfo, IUuidSource requestUuid)
         {
             return errorInfo.Set(EtpErrorCodes.RequestUuidRejected,
-                                 $"Request UUID rejected: {requestUuid?.DisplayUuid}");
+                                 $"Request UUID rejected: {requestUuid?.Uuid}");
         }
 
 
@@ -463,9 +452,9 @@ namespace Energistics.Etp.Common
         /// <param name="errorInfo">The <see cref="IErrorInfo"/> instance to update.</param>
         /// <param name="requestUuid">The rejected request UUID.</param>
         /// <returns>The initialized <see cref="IErrorInfo"/> instance.</returns>
-        public static IErrorInfo RequestUuidRejected(this IErrorInfo errorInfo, IRequestUuidGuidSource requestUuid)
+        public static IErrorInfo RequestUuidRejected(this IErrorInfo errorInfo, IRequestUuidSource requestUuid)
         {
-            return errorInfo.RequestUuidRejected(requestUuid?.RequestUuidGuid);
+            return errorInfo.RequestUuidRejected(requestUuid?.RequestUuid ?? default(Guid));
         }
 
         /// <summary>

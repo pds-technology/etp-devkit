@@ -125,7 +125,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         {
             var body = new GetDeletedResourcesResponse
             {
-                DeletedResources = deletedResources,
+                DeletedResources = deletedResources ?? new List<DeletedResource>(),
             };
 
             return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);

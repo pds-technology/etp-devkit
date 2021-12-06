@@ -175,7 +175,7 @@ namespace Energistics.Etp.v12.Protocol.Dataspace
         /// <summary>
         /// Handles the response to an PutDataspaces message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{PutDataspaces, string, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{PutDataspaces, string}"/> instance containing the event data.</param>
         protected virtual void HandlePutDataspaces(MapRequestEventArgs<PutDataspaces, string> args)
         {
         }
@@ -193,7 +193,7 @@ namespace Energistics.Etp.v12.Protocol.Dataspace
         /// <summary>
         /// Handles the response to an DeleteDataspaces message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{DeleteDataspaces, string, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{DeleteDataspaces, string}"/> instance containing the event data.</param>
         protected virtual void HandleDeleteDataspaces(MapRequestEventArgs<DeleteDataspaces, string> args)
         {
         }

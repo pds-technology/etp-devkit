@@ -28,7 +28,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
     /// Defines the interface that must be implemented by the producer role of the ChannelDataFrame protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.ChannelDataFrame, Roles.Producer, Roles.Consumer)]
+    [ProtocolRole((int)Protocols.ChannelDataFrame, Common.Roles.Producer, Common.Roles.Consumer)]
     public interface IChannelDataFrameProducer : IProtocolHandler
     {
         /// <summary>

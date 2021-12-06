@@ -125,7 +125,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         {
             var body = new UnsubscribeNotifications
             {
-                RequestUuid = requestUuid.ToUuid<Uuid>(),
+                RequestUuid = requestUuid,
             };
 
             var message = SendRequest(body, extension: extension);

@@ -58,7 +58,7 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
         {
             var body = new WMSL_GetVersionResponse()
             {
-                Result = result,
+                Result = result ?? string.Empty,
             };
 
             return SendResponse(body, correlatedHeader);
@@ -82,8 +82,8 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
             var body = new WMSL_GetCapResponse()
             {
                 Result = result,
-                CapabilitiesOut = capabilitiesOut,
-                SuppMsgOut = suppMsgOut,
+                CapabilitiesOut = capabilitiesOut ?? string.Empty,
+                SuppMsgOut = suppMsgOut ?? string.Empty,
             };
 
             return SendResponse(body, correlatedHeader);
@@ -104,7 +104,7 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
         {
             var body = new WMSL_GetBaseMsgResponse()
             {
-                Result = result,
+                Result = result ?? string.Empty,
             };
 
             return SendResponse(body, correlatedHeader);
@@ -128,8 +128,8 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
             var body = new WMSL_GetFromStoreResponse()
             {
                 Result = result,
-                XMLout = xmlOut,
-                SuppMsgOut = suppMsgOut,
+                XMLout = xmlOut ?? string.Empty,
+                SuppMsgOut = suppMsgOut ?? string.Empty,
             };
 
             return SendResponse(body, correlatedHeader);
@@ -152,7 +152,7 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
             var body = new WMSL_AddToStoreResponse()
             {
                 Result = result,
-                SuppMsgOut = suppMsgOut,
+                SuppMsgOut = suppMsgOut ?? string.Empty,
             };
 
             return SendResponse(body, correlatedHeader);
@@ -175,7 +175,7 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
             var body = new WMSL_UpdateInStoreResponse()
             {
                 Result = result,
-                SuppMsgOut = suppMsgOut,
+                SuppMsgOut = suppMsgOut ?? string.Empty,
             };
 
             return SendResponse(body, correlatedHeader);
@@ -198,7 +198,7 @@ namespace Energistics.Etp.v11.Protocol.WitsmlSoap
             var body = new WMSL_DeleteFromStoreResponse()
             {
                 Result = result,
-                SuppMsgOut = suppMsgOut,
+                SuppMsgOut = suppMsgOut ?? string.Empty,
             };
 
             return SendResponse(body, correlatedHeader);

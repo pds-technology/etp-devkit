@@ -108,7 +108,7 @@ namespace Energistics.Etp.Handlers
 
         private void RandomlyUpdateDataObjects()
         {
-            foreach (var @object in Dataspace.Objects)
+            foreach (var @object in Dataspace.Objects.Values)
             {
                 if (Random.NextDouble() > 0.75 && !(@object is MockPropertyKind))
                 {
@@ -127,17 +127,20 @@ namespace Energistics.Etp.Handlers
             if (Random.NextDouble() > 0.9)
             {
                 if (Dataspace.TimeChannel03.IsDeleted)
+                {
                     Store.RestoreObject(Dataspace.TimeChannel03);
+                    Store.JoinObject(Dataspace.TimeChannelSet01, Dataspace.TimeChannel03);
+                }
                 else
                     Store.DeleteObject(Dataspace.TimeChannel03);
             }
 
             if (Random.NextDouble() > 0.9)
             {
-                if (Dataspace.TimeChannel04.Container == null)
-                    Store.JoinObject(Dataspace.TimeChannel04, Dataspace.TimeChannelSet01);
+                if (Dataspace.TimeChannel04.Containers.Count == 0)
+                    Store.JoinObject(Dataspace.TimeChannelSet01, Dataspace.TimeChannel04);
                 else
-                    Store.UnjoinObject(Dataspace.TimeChannel04);
+                    Store.UnjoinObject(Dataspace.TimeChannelSet01, Dataspace.TimeChannel04);
             }
         }
 
@@ -183,7 +186,8 @@ namespace Energistics.Etp.Handlers
             var subscriptionInfo = new MockSubscriptionInfo(request);
             var callbacks = CreateStoreNotificationCallbacks(handler);
 
-            if (!Store.SubscribeObjectNotifications(EtpVersion.v11, request.StartTime.ToUtcDateTime(), false, handler.Session.SessionId, subscriptionInfo, callbacks))
+            var startTime = request.StartTime;
+            if (!Store.SubscribeObjectNotifications(EtpVersion.v11, startTime < Store.StoreLastWrite, startTime, false, handler.Session.SessionId, subscriptionInfo, callbacks))
                 args.FinalError = handler.ErrorInfo().RequestUuidRejected(args.Request.Body.Request);
         }
 
@@ -199,7 +203,7 @@ namespace Energistics.Etp.Handlers
         {
             var handler = (v11.Protocol.StoreNotification.IStoreNotificationStore)sender;
 
-            if (!Store.UnsubscribeObjectNotifications(args.Request.Body.RequestUuidGuid.UuidGuid))
+            if (!Store.UnsubscribeObjectNotifications(args.Request.Body.RequestUuid))
                 args.FinalError = handler.ErrorInfo().NotFound(args.Request.Body);
         }
 
@@ -245,7 +249,7 @@ namespace Energistics.Etp.Handlers
                 var callbacks = CreateStoreNotificationCallbacks(handler);
                 var uuid = Guid.NewGuid();
                 var subscriptionInfo = new MockSubscriptionInfo(EtpVersion.v12, Dataspace.Wellbore05, uuid);
-                if (Store.SubscribeObjectNotifications(EtpVersion.v12, Store.StoreLastWrite, true, handler.Session.SessionId, subscriptionInfo, callbacks))
+                if (Store.SubscribeObjectNotifications(EtpVersion.v12, false, Store.StoreLastWrite, true, handler.Session.SessionId, subscriptionInfo, callbacks))
                     handler.UnsolicitedStoreNotifications(new List<v12.Datatypes.Object.SubscriptionInfo> { subscriptionInfo.SubsriptionInfo12 });
             });
         }
@@ -266,7 +270,7 @@ namespace Energistics.Etp.Handlers
             {
                 var callbacks = CreateStoreNotificationCallbacks(handler);
                 var subscriptionInfo = new MockSubscriptionInfo(kvp.Value);
-                if (Store.SubscribeObjectNotifications(EtpVersion.v12, kvp.Value.StartTime.ToUtcDateTime(), true, handler.Session.SessionId, subscriptionInfo, callbacks))
+                if (Store.SubscribeObjectNotifications(EtpVersion.v12, false, Store.StoreLastWrite, true, handler.Session.SessionId, subscriptionInfo, callbacks))
                     args.ResponseMap[kvp.Key] = string.Empty;
                 else
                     args.ErrorMap[kvp.Key] = handler.ErrorInfo().RequestUuidRejected(kvp.Value);
@@ -285,8 +289,8 @@ namespace Energistics.Etp.Handlers
         {
             var handler = (v12.Protocol.StoreNotification.IStoreNotificationStore)sender;
 
-            if (!Store.UnsubscribeObjectNotifications(args.Request.Body.RequestUuidGuid.UuidGuid))
-                args.Response = args.Request.Body.RequestUuidGuid.UuidGuid;
+            if (!Store.UnsubscribeObjectNotifications(args.Request.Body.RequestUuid))
+                args.Response = args.Request.Body.RequestUuid;
             else
                 args.FinalError = handler.ErrorInfo().NotFound(args.Request.Body);
         }
@@ -295,6 +299,7 @@ namespace Energistics.Etp.Handlers
         {
             return new MockObjectCallbacks
             {
+                JoinedSubscription = null,
                 Created = (subscriptionUuid, @object, includeData) =>
                 {
                     handler.ChangeNotification(subscriptionUuid, @object.ObjectChange11(includeData, v11.Datatypes.Object.ObjectChangeTypes.Upsert));
@@ -310,6 +315,7 @@ namespace Energistics.Etp.Handlers
                 {
                     handler.DeleteNotification(subscriptionUuid, @object.ObjectChange11(false, v11.Datatypes.Object.ObjectChangeTypes.Delete));
                 },
+                UnjoinedSubscription = null,
                 SubscriptionEnded = null,
             };
         }
@@ -318,6 +324,10 @@ namespace Energistics.Etp.Handlers
         {
             return new MockObjectCallbacks
             {
+                JoinedSubscription = (subscriptionUuid, @object, includeData) =>
+                {
+                    handler.ObjectChanged(subscriptionUuid, @object.ObjectChange12(includeData, v12.Datatypes.Object.ObjectChangeKind.joinedSubscription));
+                },
                 Created = (subscriptionUuid, @object, includeData) =>
                 {
                     handler.ObjectChanged(subscriptionUuid, @object.ObjectChange12(includeData, v12.Datatypes.Object.ObjectChangeKind.insert));
@@ -336,15 +346,19 @@ namespace Energistics.Etp.Handlers
                 },
                 ActiveStatusChanged = (subscriptionUuid, @object, isActive) =>
                 {
-                    handler.ObjectActiveStatusChanged(subscriptionUuid, isActive ? v12.Datatypes.Object.ActiveStatusKind.Active : v12.Datatypes.Object.ActiveStatusKind.Inactive, @object.StoreLastWrite.ToEtpTimestamp(), @object.Resource12);
+                    handler.ObjectActiveStatusChanged(subscriptionUuid, isActive ? v12.Datatypes.Object.ActiveStatusKind.Active : v12.Datatypes.Object.ActiveStatusKind.Inactive, @object.StoreLastWrite, @object.Resource12(false));
                 },
                 Deleted = (subscriptionUuid, @object) =>
                 {
-                    handler.ObjectDeleted(subscriptionUuid, @object.Uri(EtpVersion.v12), @object.StoreLastWrite.ToEtpTimestamp());
+                    handler.ObjectDeleted(subscriptionUuid, @object.Uri(EtpVersion.v12), @object.StoreLastWrite);
                 },
-                SubscriptionEnded = (subscriptionUuid) =>
+                UnjoinedSubscription = (subscriptionUuid, @object, includeData) =>
                 {
-                    handler.NotificationSubscriptionEnded(subscriptionUuid);
+                    handler.ObjectChanged(subscriptionUuid, @object.ObjectChange12(includeData, v12.Datatypes.Object.ObjectChangeKind.unjoinedSubscription));
+                },
+                SubscriptionEnded = (subscriptionUuid, reason) =>
+                {
+                    handler.NotificationSubscriptionEnded(subscriptionUuid, reason);
                 },
             };
         }

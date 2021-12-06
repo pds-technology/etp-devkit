@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
+using Energistics.Avro.Encoding.Converter;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes.Object;
@@ -45,7 +46,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
                     ContentType = witsml20.ContentType,
                     ResourceType = ResourceTypes.UriProtocol.ToString(),
                     CustomData = new Dictionary<string, string>(),
-                    LastChanged = 0,
+                    LastChanged = AvroConverter.UtcMinDateTime,
                     ChannelSubscribable = false,
                     ObjectNotifiable = false,
                 });
@@ -62,7 +63,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
                     ContentType = witsml20well.ContentType,
                     ResourceType = ResourceTypes.Folder.ToString(),
                     CustomData = new Dictionary<string, string>(),
-                    LastChanged = 0,
+                    LastChanged = AvroConverter.UtcMinDateTime,
                     ChannelSubscribable = false,
                     ObjectNotifiable = false,
                 });

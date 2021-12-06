@@ -21,7 +21,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
 using log4net;
@@ -378,7 +377,7 @@ namespace Energistics.Etp.Common
         /// <param name="message">The message.</param>
         /// <param name="eventHandler">The event handler for the event associated with the message.</param>
         protected void HandleMessage<TBody>(EtpMessage<TBody> message, EventHandler<MessageEventArgs<TBody>> eventHandler)
-            where TBody : ISpecificRecord
+            where TBody : IEtpMessageBody
         {
             var args = new MessageEventArgs<TBody>(message);
             eventHandler?.Invoke(this, args);
@@ -403,7 +402,7 @@ namespace Energistics.Etp.Common
         /// <param name="methodHandler">The class method for the event associated with the request.</param>
         /// <param name="eventHandler">The event handler for the event associated with the message.</param>
         protected void HandleFireAndForgetMessage<TBody>(EtpMessage<TBody> message, EventHandler<FireAndForgetEventArgs<TBody>> eventHandler, Action<FireAndForgetEventArgs<TBody>> methodHandler)
-            where TBody : ISpecificRecord
+            where TBody : IEtpMessageBody
         {
             var args = new FireAndForgetEventArgs<TBody>(message);
             eventHandler?.Invoke(this, args);
@@ -421,7 +420,7 @@ namespace Energistics.Etp.Common
         /// <param name="args">Optional arguments to use with the request handling.</param>
         /// <param name="responseMethod">The method to use to send a positive response.</param>
         protected void HandleRequestMessage<TRequest, TArgs>(EtpMessage<TRequest> request, EventHandler<TArgs> eventHandler, Action<TArgs> methodHandler, TArgs args = null, Action<TArgs> responseMethod = null)
-            where TRequest : ISpecificRecord
+            where TRequest : IEtpMessageBody
             where TArgs : RequestEventArgsBase<TRequest>
         {
             args = args ?? (TArgs)Activator.CreateInstance(typeof(TArgs), request);
@@ -442,6 +441,9 @@ namespace Energistics.Etp.Common
             if (args.HasFinalError)
                 ProtocolException(args.FinalError, correlatedHeader: args.Request.Header, isFinalPart: true, extension: args.FinalErrorExtension);
 
+            if (EtpVersion == EtpVersion.v11 && !args.HasNonErrorResponse && !args.HasNonErrorResponse && !args.HasFinalError)
+                Acknowledge(request.Header); // Special case for ETP v1.1
+
             args.PostResponseAction?.Invoke();
         }
 
@@ -456,8 +458,8 @@ namespace Energistics.Etp.Common
         /// <param name="methodHandler">The class method for the event associated with the request.</param>
         /// <param name="args">Optional arguments to use with the request handling.</param>
         protected void HandleCancellationMessage<TRequest, TCancellation>(EtpMessage<TRequest> request, EtpMessage<TCancellation> cancellation, EventHandler<CancellationRequestEventArgs<TRequest, TCancellation>> eventHandler, Action<CancellationRequestEventArgs<TRequest, TCancellation>> methodHandler, CancellationRequestEventArgs<TRequest, TCancellation> args = null)
-            where TRequest : ISpecificRecord
-            where TCancellation : ISpecificRecord
+            where TRequest : IEtpMessageBody
+            where TCancellation : IEtpMessageBody
         {
             args = args ?? new CancellationRequestEventArgs<TRequest, TCancellation>(request, cancellation);
             eventHandler?.Invoke(this, args);
@@ -484,8 +486,8 @@ namespace Energistics.Etp.Common
         /// <param name="eventHandler">The event handler for the event associated with the request.</param>
         /// <param name="methodHandler">The class method for the event associated with the request.</param>
         protected void HandleResponseMessage<TRequest, TResponse, TArgs>(EtpMessage<TRequest> request, EtpMessage<TResponse> response, EventHandler<TArgs> eventHandler, Action<TArgs> methodHandler)
-            where TRequest : ISpecificRecord
-            where TResponse : ISpecificRecord
+            where TRequest : IEtpMessageBody
+            where TResponse : IEtpMessageBody
             where TArgs : ResponseEventArgsBase<TRequest>
         {
             var args = (TArgs)Activator.CreateInstance(typeof(TArgs), request, response);
@@ -504,7 +506,7 @@ namespace Energistics.Etp.Common
         /// <param name="eventHandler">The event handler for the event associated with the request.</param>
         /// <param name="methodHandler">The class method for the event associated with the request.</param>
         protected void HandleNotificationMessage<TSubscription, TNotification, TArgs>(EtpSubscription<TSubscription> subscription, EtpMessage<TNotification> notification, EventHandler<TArgs> eventHandler, Action<TArgs> methodHandler, TArgs args = null)
-            where TNotification : ISpecificRecord
+            where TNotification : IEtpMessageBody
             where TArgs : NotificationEventArgs<TSubscription, TNotification>
         {
             args = args ?? (TArgs)Activator.CreateInstance(typeof(TArgs), subscription, notification);
@@ -540,7 +542,7 @@ namespace Energistics.Etp.Common
         /// <param name="messageType">The type of the message.</param>
         /// <param name="messageHandler">The protocol message handler.</param>
         /// <remarks>If more than one handler is registered for the same protocol message, the last registered handler will be used.</remarks>
-        public void RegisterMessageHandler<T>(object protocol, object messageType, Action<EtpMessage<T>> messageHandler) where T : ISpecificRecord
+        public void RegisterMessageHandler<T>(object protocol, object messageType, Action<EtpMessage<T>> messageHandler) where T : IEtpMessageBody
         {
             var messageKey = EtpExtensions.CreateMessageKey(Convert.ToInt32(protocol), Convert.ToInt32(messageType));
 
@@ -552,7 +554,7 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <typeparam name="T">The message body type.</typeparam>
         /// <returns>The created header.</returns>
-        protected virtual IMessageHeader CreateMessageHeader<T>() where T : ISpecificRecord
+        protected virtual IMessageHeader CreateMessageHeader<T>() where T : IEtpMessageBody
         {
             var messageTypeNumber = Session.Adapter.TryGetMessageTypeNumber(typeof(T));
             if (messageTypeNumber == -1)
@@ -573,7 +575,7 @@ namespace Energistics.Etp.Common
         /// <param name="isLongLived">Whether this request is long lived or not.  A long lived request lives beyond the end of any FinalPart flag.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public EtpMessage<T> SendRequest<T>(T body, IMessageHeaderExtension extension = null, bool isMultiPart = false, IMessageHeader correlatedHeader = null, bool isFinalPart = true, bool isLongLived = false, Action<EtpMessage<T>> onBeforeSend = null) where T : ISpecificRecord
+        public EtpMessage<T> SendRequest<T>(T body, IMessageHeaderExtension extension = null, bool isMultiPart = false, IMessageHeader correlatedHeader = null, bool isFinalPart = true, bool isLongLived = false, Action<EtpMessage<T>> onBeforeSend = null) where T : IEtpMessageBody
         {
             long messageId = 0;
 
@@ -606,7 +608,7 @@ namespace Energistics.Etp.Common
         /// <param name="isNoData">Whether or not this message should have the no data flag set.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public EtpMessage<T> SendNotification<T>(T body, IMessageHeaderExtension extension = null, bool isMultiPart = false, IMessageHeader correlatedHeader = null, bool isFinalPart = true, bool isNoData = false, Action<EtpMessage<T>> onBeforeSend = null) where T : ISpecificRecord
+        public EtpMessage<T> SendNotification<T>(T body, IMessageHeaderExtension extension = null, bool isMultiPart = false, IMessageHeader correlatedHeader = null, bool isFinalPart = true, bool isNoData = false, Action<EtpMessage<T>> onBeforeSend = null) where T : IEtpMessageBody
         {
             return SendMessage(body, correlatedHeader, extension, isMultiPart, isFinalPart, isNoData, onBeforeSend);
         }
@@ -621,7 +623,7 @@ namespace Energistics.Etp.Common
         /// <param name="isNoData">Whether or not this message should have the no data flag set.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public EtpMessage<T> SendData<T>(T body, IMessageHeaderExtension extension = null, bool isMultiPart = false, bool isNoData = false, Action<EtpMessage<T>> onBeforeSend = null) where T : ISpecificRecord
+        public EtpMessage<T> SendData<T>(T body, IMessageHeaderExtension extension = null, bool isMultiPart = false, bool isNoData = false, Action<EtpMessage<T>> onBeforeSend = null) where T : IEtpMessageBody
         {
             return SendMessage(body, null, extension, isMultiPart, false, isNoData, onBeforeSend);
         }
@@ -638,7 +640,7 @@ namespace Energistics.Etp.Common
         /// <param name="isNoData">Whether or not this message should have the no data flag set.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public EtpMessage<T> SendResponse<T>(T body, IMessageHeader correlatedHeader, IMessageHeaderExtension extension = null, bool isMultiPart = false, bool isFinalPart = true, bool isNoData = false, Action<EtpMessage<T>> onBeforeSend = null) where T : ISpecificRecord
+        public EtpMessage<T> SendResponse<T>(T body, IMessageHeader correlatedHeader, IMessageHeaderExtension extension = null, bool isMultiPart = false, bool isFinalPart = true, bool isNoData = false, Action<EtpMessage<T>> onBeforeSend = null) where T : IEtpMessageBody
         {
             return SendMessage(body, correlatedHeader, extension, isMultiPart, isFinalPart, isNoData, onBeforeSend);
         }
@@ -655,7 +657,7 @@ namespace Energistics.Etp.Common
         /// <param name="isNoData">Whether or not this message should have the no data flag set.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        private EtpMessage<T> SendMessage<T>(T body, IMessageHeader correlatedHeader, IMessageHeaderExtension extension, bool isMultiPart, bool isFinalPart, bool isNoData, Action<EtpMessage<T>> onBeforeSend) where T : ISpecificRecord
+        private EtpMessage<T> SendMessage<T>(T body, IMessageHeader correlatedHeader, IMessageHeaderExtension extension, bool isMultiPart, bool isFinalPart, bool isNoData, Action<EtpMessage<T>> onBeforeSend) where T : IEtpMessageBody
         {
             var header = CreateMessageHeader<T>();
             header.PrepareHeader(correlatedHeader, isMultiPart, isFinalPart);
@@ -684,7 +686,7 @@ namespace Energistics.Etp.Common
         /// <typeparam name="T">The correlated message body type.</typeparam>
         /// <param name="message">The message.</param>
         /// <returns>The correlated message if found; <c>null</c> otherwise.</returns>
-        public EtpMessage<T> TryGetCorrelatedMessage<T>(EtpMessage message) where T : ISpecificRecord
+        public EtpMessage<T> TryGetCorrelatedMessage<T>(EtpMessage message) where T : IEtpMessageBody
         {
             var correlatedMessage = TryGetCorrelatedMessage(message);
             if (correlatedMessage is EtpMessage<T>)
@@ -735,9 +737,9 @@ namespace Energistics.Etp.Common
         /// <param name="argumentName">The request's UUID argument name.</param>
         /// <param name="request">The request message.</param>
         /// <returns><c>null</c> if the request could be registered; an <see cref="IErrorInfo"/> instance otherwise.</returns>
-        public IErrorInfo TryRegisterRequest(IRequestUuidGuidSource requestUuid, string argumentName, EtpMessage request)
+        public IErrorInfo TryRegisterRequest(IRequestUuidSource requestUuid, string argumentName, EtpMessage request)
         {
-            return TryRegisterRequest(requestUuid?.RequestUuidGuid, argumentName, request);
+            return TryRegisterRequest(requestUuid.RequestUuid, argumentName, request);
         }
 
         /// <summary>
@@ -747,15 +749,9 @@ namespace Energistics.Etp.Common
         /// <param name="argumentName">The request's UUID argument name.</param>
         /// <param name="request">The request message.</param>
         /// <returns><c>null</c> if the request could be registered; an <see cref="IErrorInfo"/> instance otherwise.</returns>
-        public IErrorInfo TryRegisterRequest(IUuidGuidSource requestUuid, string argumentName, EtpMessage request)
+        public IErrorInfo TryRegisterRequest(Guid requestUuid, string argumentName, EtpMessage request)
         {
-            if (requestUuid == null || !requestUuid.IsUuidValidGuid)
-            {
-                Logger.Debug($"[{Session.SessionKey}] Invalid Request Uuid: Name: {request.MessageName}; Header: {EtpExtensions.Serialize(request.Header)}; Uuid: '{requestUuid.RawUuid}'");
-                return ErrorInfo().InvalidArgument(argumentName, requestUuid);
-            }
-
-            if (RegisteredRequestsByUuid.TryAdd(requestUuid.UuidGuid, request))
+            if (RegisteredRequestsByUuid.TryAdd(requestUuid, request))
                 return null;
             else
             {
@@ -773,9 +769,9 @@ namespace Energistics.Etp.Common
         /// <param name="cancellation">The cancellation request message.</param>
         /// <param name="request">The original request.</param>
         /// <returns><c>null</c> if the original request was found; an <see cref="IErrorInfo"/> instance otherwise.</returns>
-        public IErrorInfo TryGetRequest<T>(IRequestUuidGuidSource requestUuid, string argumentName, EtpMessage cancellation, out EtpMessage<T> request) where T : ISpecificRecord
+        public IErrorInfo TryGetRequest<T>(IRequestUuidSource requestUuid, string argumentName, EtpMessage cancellation, out EtpMessage<T> request) where T : IEtpMessageBody
         {
-            return TryGetRequest(requestUuid?.RequestUuidGuid, argumentName, cancellation, out request);
+            return TryGetRequest(requestUuid.RequestUuid, argumentName, cancellation, out request);
         }
 
         /// <summary>
@@ -787,31 +783,24 @@ namespace Energistics.Etp.Common
         /// <param name="cancellation">The cancellation request message.</param>
         /// <param name="request">The original request.</param>
         /// <returns><c>null</c> if the original request was found; an <see cref="IErrorInfo"/> instance otherwise.</returns>
-        public IErrorInfo TryGetRequest<T>(IUuidGuidSource requestUuid, string argumentName, EtpMessage cancellation, out EtpMessage<T> request) where T : ISpecificRecord
+        public IErrorInfo TryGetRequest<T>(Guid requestUuid, string argumentName, EtpMessage cancellation, out EtpMessage<T> request) where T : IEtpMessageBody
         {
-            if (requestUuid == null || !requestUuid.IsUuidValidGuid)
-            {
-                request = null;
-                Logger.Debug($"[{Session.SessionKey}] Invalid Request Uuid: Name: {cancellation.MessageName}; Header: {EtpExtensions.Serialize(cancellation.Header)}; Uuid: '{requestUuid.RawUuid}'");
-                return ErrorInfo().InvalidArgument(argumentName, requestUuid);
-            }
-
             EtpMessage r;
-            if (RegisteredRequestsByUuid.TryGetValue(requestUuid.UuidGuid, out r))
+            if (RegisteredRequestsByUuid.TryGetValue(requestUuid, out r))
             {
                 request = r as EtpMessage<T>;
                 if (request != null)
                     return null;
                 else
                 {
-                    Logger.Debug($"[{Session.SessionKey}] Unexpected Request Type for Uuid: Name: {cancellation.MessageName}; Header: {EtpExtensions.Serialize(cancellation.Header)}; Uuid: '{requestUuid.DisplayUuid}'; Expected Type: {typeof(T).Name}; Request Name: {request.MessageName}; Request Header:  {EtpExtensions.Serialize(request.Header)}");
+                    Logger.Debug($"[{Session.SessionKey}] Unexpected Request Type for Uuid: Name: {cancellation.MessageName}; Header: {EtpExtensions.Serialize(cancellation.Header)}; Uuid: '{requestUuid}'; Expected Type: {typeof(T).Name}; Request Name: {request.MessageName}; Request Header:  {EtpExtensions.Serialize(request.Header)}");
                     return ErrorInfo().InvalidState();
                 }
             }
             else
             {
                 request = null;
-                Logger.Debug($"[{Session.SessionKey}] Request Uuid Not Found: Name: {cancellation.MessageName}; Header: {EtpExtensions.Serialize(cancellation.Header)}; Uuid: '{requestUuid.DisplayUuid}'");
+                Logger.Debug($"[{Session.SessionKey}] Request Uuid Not Found: Name: {cancellation.MessageName}; Header: {EtpExtensions.Serialize(cancellation.Header)}; Uuid: '{requestUuid}'");
                 return ErrorInfo().NotFound(argumentName, requestUuid);
             }
         }
@@ -839,8 +828,8 @@ namespace Energistics.Etp.Common
         /// <param name="subscriptions">The subscription dictionary.</param>
         /// <returns><c>null</c> if the subscription could be registered; a dictionary of <see cref="IErrorInfo"/> error instances otherwise.</returns>
         public Dictionary<string, IErrorInfo> TryRegisterSubscriptions<TMessage, TSubscription>(EtpMessage<TMessage> message, IDictionary<string, TSubscription> subscriptions, string argumentName)
-            where TSubscription : IRequestUuidGuidSource
-            where TMessage : ISpecificRecord
+            where TSubscription : IRequestUuidSource
+            where TMessage : IEtpMessageBody
         {
             Dictionary<string, IErrorInfo> errors = null;
             foreach (var kvp in subscriptions)
@@ -873,10 +862,10 @@ namespace Energistics.Etp.Common
         /// <param name="message">The subscription message.</param>
         /// <param name="subscription">The subscription.</param>
         /// <returns><c>null</c> if the subscription could be registered; an <see cref="IErrorInfo"/> instance otherwise.</returns>
-        public IErrorInfo TryRegisterSubscription<TMessage, TSubscription>(IRequestUuidGuidSource requestUuid, string argumentName, EtpMessage<TMessage> message, TSubscription subscription)
-            where TMessage : ISpecificRecord
+        public IErrorInfo TryRegisterSubscription<TMessage, TSubscription>(IRequestUuidSource requestUuid, string argumentName, EtpMessage<TMessage> message, TSubscription subscription)
+            where TMessage : IEtpMessageBody
         {
-            return TryRegisterSubscription(requestUuid?.RequestUuidGuid, argumentName, message, subscription);
+            return TryRegisterSubscription(requestUuid.RequestUuid, argumentName, message, subscription);
         }
 
         /// <summary>
@@ -888,16 +877,10 @@ namespace Energistics.Etp.Common
         /// <param name="message">The subscription message.</param>
         /// <param name="subscription">The subscription.</param>
         /// <returns><c>null</c> if the subscription could be registered; an <see cref="IErrorInfo"/> instance otherwise.</returns>
-        public IErrorInfo TryRegisterSubscription<TMessage, TSubscription>(IUuidGuidSource requestUuid, string argumentName, EtpMessage<TMessage> message, TSubscription subscription)
-            where TMessage : ISpecificRecord
+        public IErrorInfo TryRegisterSubscription<TMessage, TSubscription>(Guid requestUuid, string argumentName, EtpMessage<TMessage> message, TSubscription subscription)
+            where TMessage : IEtpMessageBody
         {
-            if (requestUuid == null || !requestUuid.IsUuidValidGuid)
-            {
-                Logger.Debug($"[{Session.SessionKey}] Invalid Subscription Uuid: Name: {message.MessageName}; Header: {EtpExtensions.Serialize(message.Header)}; Uuid: '{requestUuid?.RawUuid}'");
-                return ErrorInfo().InvalidArgument(argumentName, requestUuid);
-            }
-
-            var sub = new EtpSubscription<TMessage, TSubscription>(requestUuid.UuidGuid, message, subscription);
+            var sub = new EtpSubscription<TMessage, TSubscription>(requestUuid, message, subscription);
             if (RegisteredSubscriptions.TryAdd(sub.Uuid, sub))
             {
                 RegisteredSubscriptionsByCorrelationId[message.Header.MessageId] = sub;
@@ -916,44 +899,33 @@ namespace Energistics.Etp.Common
         /// <typeparam name="TSubscription">The subscription type.</typeparam>
         /// <param name="requestUuid">The subscription request UUID.</param>
         /// <returns>The original subscription.</returns>
+        public EtpSubscription<TSubscription> TryGetSubscription<TSubscription>(IRequestUuidSource requestUuid)
+        {
+            return TryGetSubscription<TSubscription>(requestUuid.RequestUuid);
+        }
+
+        /// <summary>
+        /// Gets the original subscription as a strongly typed message by the subscription's request UUID.
+        /// </summary>
+        /// <typeparam name="TSubscription">The subscription type.</typeparam>
+        /// <param name="requestUuid">The subscription request UUID.</param>
+        /// <returns>The original subscription.</returns>
         public EtpSubscription<TSubscription> TryGetSubscription<TSubscription>(Guid requestUuid)
         {
-            return TryGetSubscription<TSubscription>(new GuidGuidSource(requestUuid));
-        }
-
-        /// <summary>
-        /// Gets the original subscription as a strongly typed message by the subscription's request UUID.
-        /// </summary>
-        /// <typeparam name="TSubscription">The subscription type.</typeparam>
-        /// <param name="requestUuid">The subscription request UUID.</param>
-        /// <returns>The original subscription.</returns>
-        public EtpSubscription<TSubscription> TryGetSubscription<TSubscription>(IRequestUuidGuidSource requestUuid)
-        {
-            return TryGetSubscription<TSubscription>(requestUuid?.RequestUuidGuid);
-        }
-
-        /// <summary>
-        /// Gets the original subscription as a strongly typed message by the subscription's request UUID.
-        /// </summary>
-        /// <typeparam name="TSubscription">The subscription type.</typeparam>
-        /// <param name="requestUuid">The subscription request UUID.</param>
-        /// <returns>The original subscription.</returns>
-        public EtpSubscription<TSubscription> TryGetSubscription<TSubscription>(IUuidGuidSource requestUuid)
-        {
             EtpSubscription subscription;
-            if (requestUuid != null && RegisteredSubscriptions.TryGetValue(requestUuid.UuidGuid, out subscription))
+            if (RegisteredSubscriptions.TryGetValue(requestUuid, out subscription))
             {
                 if (subscription is EtpSubscription<TSubscription>)
                     return subscription as EtpSubscription<TSubscription>;
                 else
                 {
-                    Logger.Debug($"[{Session.SessionKey}] Unexpected Request Type for Uuid: Name: {subscription.MessageName}; Header: {EtpExtensions.Serialize(subscription.Header)}; Uuid: '{requestUuid.DisplayUuid}'; Expected Subscription Type: {typeof(TSubscription).Name}");
+                    Logger.Debug($"[{Session.SessionKey}] Unexpected Request Type for Uuid: Name: {subscription.MessageName}; Header: {EtpExtensions.Serialize(subscription.Header)}; Uuid: '{requestUuid}'; Expected Subscription Type: {typeof(TSubscription).Name}");
                     return null;
                 }
             }
             else
             {
-                Logger.Debug($"[{Session.SessionKey}] Request Uuid Not Found: '{requestUuid?.DisplayUuid}'");
+                Logger.Debug($"[{Session.SessionKey}] Request Uuid Not Found: '{requestUuid}'");
                 return null;
             }
         }
@@ -978,9 +950,9 @@ namespace Energistics.Etp.Common
         /// <param name="argumentName">The subscription's UUID argument name.</param>
         /// <param name="unsubscribeRequest">The unsubscription message.</param>
         /// <returns><c>null</c> if the subscription could be unregistered; an <see cref="IErrorInfo"/> instance otherwise.</returns>
-        public IErrorInfo TryUnregisterSubscription(IRequestUuidGuidSource requestUuid, string argumentName, EtpMessage unsubscribeRequest)
+        public IErrorInfo TryUnregisterSubscription(IRequestUuidSource requestUuid, string argumentName, EtpMessage unsubscribeRequest)
         {
-            return TryUnregisterSubscription(requestUuid?.RequestUuidGuid, argumentName, unsubscribeRequest);
+            return TryUnregisterSubscription(requestUuid.RequestUuid, argumentName, unsubscribeRequest);
         }
 
         /// <summary>
@@ -990,21 +962,15 @@ namespace Energistics.Etp.Common
         /// <param name="argumentName">The subscription's UUID argument name.</param>
         /// <param name="unsubscribeRequest">The unsubscription message.</param>
         /// <returns><c>null</c> if the subscription could be unregistered; an <see cref="IErrorInfo"/> instance otherwise.</returns>
-        public IErrorInfo TryUnregisterSubscription(IUuidGuidSource requestUuid, string argumentName, EtpMessage unsubscribeRequest)
+        public IErrorInfo TryUnregisterSubscription(Guid requestUuid, string argumentName, EtpMessage unsubscribeRequest)
         {
-            if (requestUuid == null || !requestUuid.IsUuidValidGuid)
-            {
-                Logger.Debug($"[{Session.SessionKey}] Invalid Subscription Uuid: Name: {unsubscribeRequest.MessageName}; Header: {EtpExtensions.Serialize(unsubscribeRequest.Header)}; Uuid: '{requestUuid?.RawUuid}'");
-                return ErrorInfo().InvalidArgument(argumentName, requestUuid);
-            }
-
             if (TryUnregisterSubscription(requestUuid))
             {
                 return null;
             }
             else
             {
-                Logger.Debug($"[{Session.SessionKey}] Subscription Uuid Not Found: Name: {unsubscribeRequest.MessageName}; Header: {EtpExtensions.Serialize(unsubscribeRequest.Header)}; Uuid: '{requestUuid.DisplayUuid}'");
+                Logger.Debug($"[{Session.SessionKey}] Subscription Uuid Not Found: Name: {unsubscribeRequest.MessageName}; Header: {EtpExtensions.Serialize(unsubscribeRequest.Header)}; Uuid: '{requestUuid}'");
                 return ErrorInfo().NotFound(argumentName, requestUuid);
             }
         }
@@ -1014,9 +980,9 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="requestUuid">The subscription's UUID.</param>
         /// <returns><c>null</c> if the subscription could be unregistered; false otherwise.</returns>
-        public bool TryUnregisterSubscription(IRequestUuidGuidSource requestUuid)
+        public bool TryUnregisterSubscription(IRequestUuidSource requestUuid)
         {
-            return TryUnregisterSubscription(requestUuid?.RequestUuidGuid);
+            return TryUnregisterSubscription(requestUuid.RequestUuid);
         }
 
         /// <summary>
@@ -1024,10 +990,10 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="requestUuid">The subscription's UUID.</param>
         /// <returns><c>null</c> if the subscription could be unregistered; false otherwise.</returns>
-        public bool TryUnregisterSubscription(IUuidGuidSource requestUuid)
+        public bool TryUnregisterSubscription(Guid requestUuid)
         {
             EtpSubscription subscription;
-            if (requestUuid != null && RegisteredSubscriptions.TryRemove(requestUuid.UuidGuid, out subscription))
+            if (RegisteredSubscriptions.TryRemove(requestUuid, out subscription))
             {
                 RegisteredSubscriptionsByCorrelationId.TryRemove(subscription.Header.MessageId, out _);
                 return true;

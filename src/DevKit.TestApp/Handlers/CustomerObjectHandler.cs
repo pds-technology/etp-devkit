@@ -106,9 +106,9 @@ namespace Energistics.Etp.Handlers
                     {
                         IncludeObjectData = true,
                         ObjectTypes = new List<string>(),
-                        StartTime = DateTime.UtcNow.ToEtpTimestamp(),
+                        StartTime = DateTime.UtcNow,
                         Uri = uri,
-                        Uuid = StoreNotificationSubscriptionGuid.ToString(),
+                        Uuid = StoreNotificationSubscriptionGuid,
                     });
                 else if (version == EtpVersion.v12)
                     Session.Handler<v12.Protocol.StoreNotification.IStoreNotificationCustomer>().SubscribeNotifications(new List<v12.Datatypes.Object.SubscriptionInfo>
@@ -127,8 +127,7 @@ namespace Energistics.Etp.Handlers
                                     },
                                     Scope = v12.Datatypes.Object.ContextScopeKind.sourcesOrSelf,
                                     IncludeObjectData = true,
-                                    RequestUuid = StoreNotificationSubscriptionGuid.ToUuid<v12.Datatypes.Uuid>(),
-                                    StartTime = 0L,
+                                    RequestUuid = StoreNotificationSubscriptionGuid,
                                 }
                             });
             }
@@ -160,7 +159,7 @@ namespace Energistics.Etp.Handlers
             if (args.Notification.Body.Change.DataObject != null)
                 args.Notification.Body.Change.DataObject.Data = null;
 
-            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body));
             if (!string.IsNullOrEmpty(@string))
                 Console.WriteLine(@string);
         }
@@ -169,7 +168,7 @@ namespace Energistics.Etp.Handlers
         {
             if (args.Notification == null) return;
 
-            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body));
         }
 
         private void OnGetDataObjectsResponse(object sender, DualResponseEventArgs<v12.Protocol.Store.GetDataObjects, v12.Protocol.Store.GetDataObjectsResponse, v12.Protocol.Store.Chunk> args)
@@ -180,19 +179,19 @@ namespace Energistics.Etp.Handlers
                 {
                     var @string = dataObject.GetString();
                     dataObject.Data = null;
-                    Console.WriteLine(EtpExtensions.Serialize(dataObject, true));
+                    Console.WriteLine(EtpExtensions.Serialize(dataObject));
                     if (!string.IsNullOrEmpty(@string))
                         Console.WriteLine(@string);
                 }
             }
             if (args.Response2 != null)
-                Console.WriteLine($"Chunk received for {args.Response2.Body.BlobIdGuid.UuidGuid} with {args.Response2.Body.Data?.Length ?? 0} bytes.");
+                Console.WriteLine($"Chunk received for {args.Response2.Body.BlobId} with {args.Response2.Body.Data?.Length ?? 0} bytes.");
         }
 
 
         private void OnUnsolicitedStoreNotifications(object sender, FireAndForgetEventArgs<v12.Protocol.StoreNotification.UnsolicitedStoreNotifications> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body));
         }
 
         private void OnObjectChanged(object sender, NotificationEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.ObjectChanged> args)
@@ -203,7 +202,7 @@ namespace Energistics.Etp.Handlers
             if (args.Notification.Body.Change.DataObject != null)
                 args.Notification.Body.Change.DataObject.Data = null;
 
-            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body));
             if (!string.IsNullOrEmpty(@string))
                 Console.WriteLine(@string);
         }
@@ -212,42 +211,42 @@ namespace Energistics.Etp.Handlers
         {
             if (args.Data == null) return;
 
-            Console.WriteLine($"Chunk received for {args.Data.Body.BlobIdGuid.UuidGuid} with {args.Data.Body.Data?.Length ?? 0} bytes.");
+            Console.WriteLine($"Chunk received for {args.Data.Body.BlobId} with {args.Data.Body.Data?.Length ?? 0} bytes.");
         }
 
         private void OnObjectActiveStatusChanged(object sender, NotificationEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.ObjectActiveStatusChanged> args)
         {
             if (args.Notification == null) return;
 
-            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body));
         }
 
         private void OnObjectAccessRevoked(object sender, NotificationEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.ObjectAccessRevoked> args)
         {
             if (args.Notification == null) return;
 
-            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body));
         }
 
         private void OnObjectDeleted(object sender, NotificationEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.ObjectDeleted> args)
         {
             if (args.Notification == null) return;
 
-            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body));
         }
 
         private void OnNotificationSubscriptionEnded(object sender, NotificationEventArgs<v12.Datatypes.Object.SubscriptionInfo, v12.Protocol.StoreNotification.SubscriptionEnded> args)
         {
             if (args.Notification == null) return;
 
-            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Notification.Body));
         }
 
         private void OnResponseSubscriptionEnded(object sender, ResponseEventArgs<v12.Protocol.StoreNotification.UnsubscribeNotifications, v12.Protocol.StoreNotification.SubscriptionEnded> args)
         {
             if (args.Response == null) return;
 
-            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body));
         }
     }
 }

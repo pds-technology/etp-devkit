@@ -97,6 +97,27 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         event EventHandler<ResponseEventArgs<GetPartsMetadata, GetPartsMetadataResponse>> OnGetPartsMetadataResponse;
 
         /// <summary>
+        /// Sends a GetChangeAnnotations message to a store.
+        /// </summary>
+        /// <param name="uris">The URIs.</param>
+        /// <param name="latestOnly">Whether or not to only get the latest change annotation for each growing object.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetChangeAnnotations> GetChangeAnnotations(IDictionary<string, string> uris, bool latestOnly = false, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Sends a GetChangeAnnotations message to a store.
+        /// </summary>
+        /// <param name="uris">The URIs.</param>
+        /// <param name="latestOnly">Whether or not to only get the latest change annotation for each growing object.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetChangeAnnotations> GetChangeAnnotations(IList<string> uris, bool latestOnly = false, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Handles the GetChangeAnnotationsResponse event from a store.
+        /// </summary>
+        event EventHandler<ResponseEventArgs<GetChangeAnnotations, GetChangeAnnotationsResponse>> OnGetChangeAnnotationsResponse;
+
+        /// <summary>
         /// Sends a GetParts message to a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>

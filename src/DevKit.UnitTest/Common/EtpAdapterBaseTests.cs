@@ -16,7 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.Specific;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -37,10 +36,10 @@ namespace Energistics.Etp.Common
 
             // Get the message types defined in the appropriate namespace.
             var messageTypes = assembly.GetExportedTypes().Where(type =>
-                typeof(ISpecificRecord).IsAssignableFrom(type)).ToList();
+                typeof(IEtpMessageBody).IsAssignableFrom(type)).ToList();
 
-            var register11 = ((Func<bool>)etp11.IsMessageDecoderRegistered<ISpecificRecord>).Method.GetGenericMethodDefinition();
-            var register12 = ((Func<bool>)etp12.IsMessageDecoderRegistered<ISpecificRecord>).Method.GetGenericMethodDefinition();
+            var register11 = ((Func<bool>)etp11.IsMessageDecoderRegistered<IEtpMessageBody>).Method.GetGenericMethodDefinition();
+            var register12 = ((Func<bool>)etp12.IsMessageDecoderRegistered<IEtpMessageBody>).Method.GetGenericMethodDefinition();
 
             var unregistered = new List<string>();
 

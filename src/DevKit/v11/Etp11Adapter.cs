@@ -16,7 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
+using Energistics.Avro.Encoding;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
@@ -42,22 +42,12 @@ namespace Energistics.Etp.v11
 
         public override bool AreSupportedDataObjectsNegotiated => false;
 
-        public override IMessageHeader DecodeMessageHeader(Decoder decoder)
+        public override IMessageHeader DecodeMessageHeader(IAvroDecoder decoder)
         {
-            return decoder.Decode<MessageHeader>();
+            return decoder.DecodeAvroObject<MessageHeader>();
         }
 
-        public override IMessageHeader DeserializeMessageHeader(string json)
-        {
-            return EtpExtensions.Deserialize<MessageHeader>(json);
-        }
-
-        public override IMessageHeaderExtension DecodeMessageHeaderExtension(Decoder decoder)
-        {
-            return null;
-        }
-
-        public override IMessageHeaderExtension DeserializeMessageHeaderExtension(string json)
+        public override IMessageHeaderExtension DecodeMessageHeaderExtension(IAvroDecoder decoder)
         {
             return null;
         }

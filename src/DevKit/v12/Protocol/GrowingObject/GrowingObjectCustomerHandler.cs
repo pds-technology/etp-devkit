@@ -43,6 +43,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
             RegisterMessageHandler<GetGrowingDataObjectsHeaderResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetGrowingDataObjectsHeaderResponse, HandleGetGrowingDataObjectsHeaderResponse);
             RegisterMessageHandler<PutGrowingDataObjectsHeaderResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.PutGrowingDataObjectsHeaderResponse, HandlePutGrowingDataObjectsHeaderResponse);
             RegisterMessageHandler<GetPartsMetadataResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadataResponse, HandleGetPartsMetadataResponse);
+            RegisterMessageHandler<GetChangeAnnotationsResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetChangeAnnotationsResponse, HandleGetChangeAnnotationsResponse);
             RegisterMessageHandler<GetPartsResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsResponse, HandleGetPartsResponse);
             RegisterMessageHandler<GetPartsByRangeResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRangeResponse, HandleGetPartsByRangeResponse);
             RegisterMessageHandler<PutPartsResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.PutPartsResponse, HandlePutPartsResponse);
@@ -141,6 +142,36 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         public event EventHandler<ResponseEventArgs<GetPartsMetadata, GetPartsMetadataResponse>> OnGetPartsMetadataResponse;
 
         /// <summary>
+        /// Sends a GetChangeAnnotations message to a store.
+        /// </summary>
+        /// <param name="uris">The URIs.</param>
+        /// <param name="latestOnly">Whether or not to only get the latest change annotation for each growing object.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetChangeAnnotations> GetChangeAnnotations(IDictionary<string, string> uris, bool latestOnly = false, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetChangeAnnotations
+            {
+                Uris = uris ?? new Dictionary<string, string>(),
+                LatestOnly = latestOnly,
+            };
+
+            return SendRequest(body, extension: extension);
+        }
+
+        /// <summary>
+        /// Sends a GetChangeAnnotations message to a store.
+        /// </summary>
+        /// <param name="uris">The URIs.</param>
+        /// <param name="latestOnly">Whether or not to only get the latest change annotation for each growing object.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetChangeAnnotations> GetChangeAnnotations(IList<string> uris, bool latestOnly = false, IMessageHeaderExtension extension = null) => GetChangeAnnotations(uris.ToMap(), latestOnly: latestOnly, extension: extension);
+
+        /// <summary>
+        /// Handles the GetChangeAnnotationsResponse event from a store.
+        /// </summary>
+        public event EventHandler<ResponseEventArgs<GetChangeAnnotations, GetChangeAnnotationsResponse>> OnGetChangeAnnotationsResponse;
+
+        /// <summary>
         /// Sends a GetParts message to a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
@@ -152,7 +183,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         {
             var body = new GetParts
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 Format = format ?? Formats.Xml,
                 Uids = uids ?? new Dictionary<string, string>(),
             };
@@ -188,7 +219,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         {
             var body = new GetPartsByRange
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 Format = format ?? Formats.Xml,
                 IndexInterval = indexInterval,
                 IncludeOverlappingIntervals = includeOverlappingIntervals,
@@ -214,7 +245,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         {
             var body = new PutParts
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 Format = format ?? Formats.Xml,
                 Parts = parts ?? new Dictionary<string, ObjectPart>(),
             };
@@ -248,7 +279,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         {
             var body = new DeleteParts
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 Uids = uids ?? new Dictionary<string, string>(),
             };
 
@@ -285,7 +316,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         {
             var body = new ReplacePartsByRange
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 Format = format ?? Formats.Xml,
                 DeleteInterval = deleteInterval,
                 IncludeOverlappingIntervals = includeOverlappingIntervals,
@@ -315,6 +346,8 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
                 HandleResponseMessage(request as EtpMessage<PutGrowingDataObjectsHeader>, message, OnPutGrowingDataObjectsHeaderResponse, HandlePutGrowingDataObjectsHeaderResponse);
             else if (request is EtpMessage<GetPartsMetadata>)
                 HandleResponseMessage(request as EtpMessage<GetPartsMetadata>, message, OnGetPartsMetadataResponse, HandleGetPartsMetadataResponse);
+            else if (request is EtpMessage<GetChangeAnnotations>)
+                HandleResponseMessage(request as EtpMessage<GetChangeAnnotations>, message, OnGetChangeAnnotationsResponse, HandleGetChangeAnnotationsResponse);
             else if (request is EtpMessage<GetParts>)
                 HandleResponseMessage(request as EtpMessage<GetParts>, message, OnGetPartsResponse, HandleGetPartsResponse);
             else if (request is EtpMessage<GetPartsByRange>)
@@ -378,6 +411,24 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
         /// </summary>
         /// <param name="args">The <see cref="ResponseEventArgs{GetPartsMetadata, GetPartsMetadataResponse}"/> instance containing the event data.</param>
         protected virtual void HandleGetPartsMetadataResponse(ResponseEventArgs<GetPartsMetadata, GetPartsMetadataResponse> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GetChangeAnnotationsResponse message from a store.
+        /// </summary>
+        /// <param name="message">The GetChangeAnnotationsResponse message.</param>
+        protected virtual void HandleGetChangeAnnotationsResponse(EtpMessage<GetChangeAnnotationsResponse> message)
+        {
+            var request = TryGetCorrelatedMessage<GetChangeAnnotations>(message);
+            HandleResponseMessage(request, message, OnGetChangeAnnotationsResponse, HandleGetChangeAnnotationsResponse);
+        }
+
+        /// <summary>
+        /// Handles the GetChangeAnnotationsResponse message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="ResponseEventArgs{GetChangeAnnotations, GetChangeAnnotationsResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleGetChangeAnnotationsResponse(ResponseEventArgs<GetChangeAnnotations, GetChangeAnnotationsResponse> args)
         {
         }
 

@@ -298,7 +298,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// <summary>
         /// Handles the response to an GetDataArrayMetadata message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{GetDataArrayMetadata, DataArrayMetadata, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetDataArrayMetadata, DataArrayMetadata}"/> instance containing the event data.</param>
         protected virtual void HandleGetDataArrayMetadata(MapRequestEventArgs<GetDataArrayMetadata, DataArrayMetadata> args)
         {
         }
@@ -316,7 +316,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// <summary>
         /// Handles the response to an GetDataArrays message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{GetDataArrays, Datatypes.DataArrayTypes.DataArray, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetDataArrays, Datatypes.DataArrayTypes.DataArray}"/> instance containing the event data.</param>
         protected virtual void HandleGetDataArrays(MapRequestEventArgs<GetDataArrays, Datatypes.DataArrayTypes.DataArray> args)
         {
         }
@@ -334,7 +334,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// <summary>
         /// Handles the response to an GetDataSubarrays message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{GetDataSubarrays, Datatypes.DataArrayTypes.DataArray, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{GetDataSubarrays, Datatypes.DataArrayTypes.DataArray}"/> instance containing the event data.</param>
         protected virtual void HandleGetDataSubarrays(MapRequestEventArgs<GetDataSubarrays, Datatypes.DataArrayTypes.DataArray> args)
         {
         }
@@ -352,7 +352,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// <summary>
         /// Handles the response to an PutUninitializedDataArrays message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{PutUninitializedDataArrays, string, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{PutUninitializedDataArrays, string}"/> instance containing the event data.</param>
         protected virtual void HandlePutUninitializedDataArrays(MapRequestEventArgs<PutUninitializedDataArrays, string> args)
         {
         }
@@ -370,7 +370,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// <summary>
         /// Handles the response to an PutDataArrays message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{PutDataArrays, string, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{PutDataArrays, string}"/> instance containing the event data.</param>
         protected virtual void HandlePutDataArrays(MapRequestEventArgs<PutDataArrays, string> args)
         {
         }
@@ -388,7 +388,7 @@ namespace Energistics.Etp.v12.Protocol.DataArray
         /// <summary>
         /// Handles the response to an PutDataSubarrays message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="MapRequestEventArgs{PutDataSubarrays, string, ErrorInfo}"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="MapRequestEventArgs{PutDataSubarrays, string}"/> instance containing the event data.</param>
         protected virtual void HandlePutDataSubarrays(MapRequestEventArgs<PutDataSubarrays, string> args)
         {
         }

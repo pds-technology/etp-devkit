@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
 
@@ -164,6 +163,11 @@ namespace Energistics.Etp.Common
         IReadOnlyList<string> SessionSupportedFormats { get; }
 
         /// <summary>
+        /// The high water mark timestamp for the counterpart.
+        /// </summary>
+        DateTime CounterpartHighWaterMark { get; }
+
+        /// <summary>
         /// Gets or sets a delegate to process logging messages.
         /// </summary>
         /// <value>The output delegate.</value>
@@ -268,6 +272,23 @@ namespace Energistics.Etp.Common
         event EventHandler<MessageEventArgs<IProtocolException>> OnProtocolException;
 
         /// <summary>
+        /// Sends a Ping message.
+        /// </summary>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<IPing> Ping(IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Event raised when a ping response is received from the counterpart.
+        /// </summary>
+        event EventHandler<MessageEventArgs<IPing>> OnPing;
+
+        /// <summary>
+        /// Event raised when a pong response is received from the counterpart.
+        /// </summary>
+        event EventHandler<MessageEventArgs<IPong>> OnPong;
+
+        /// <summary>
         /// Sends a CloseSession message to the session's counterpart.
         /// </summary>
         /// <param name="reason">The reason.</param>
@@ -291,13 +312,18 @@ namespace Energistics.Etp.Common
         event EventHandler<MessageReceivedEventArgs> MessageReceived;
 
         /// <summary>
+        /// Event raised when the counterpart's high water mark has changed.
+        /// </summary>
+        event EventHandler<HighWaterMarkChangedEventArgs> CounterpartHighWaterMarkChanged;
+
+        /// <summary>
         /// Synchronously sends the message.
         /// </summary>
         /// <typeparam name="T">The type of the message body</typeparam>
         /// <param name="message">The message.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<T> SendMessage<T>(EtpMessage<T> message, Action<EtpMessage<T>> onBeforeSend = null) where T : ISpecificRecord;
+        EtpMessage<T> SendMessage<T>(EtpMessage<T> message, Action<EtpMessage<T>> onBeforeSend = null) where T : IEtpMessageBody;
 
         /// <summary>
         /// Asynchronously sends the message.
@@ -306,7 +332,7 @@ namespace Energistics.Etp.Common
         /// <param name="message">The message.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        Task<EtpMessage<T>> SendMessageAsync<T>(EtpMessage<T> message, Action<EtpMessage<T>> onBeforeSend = null) where T : ISpecificRecord;
+        Task<EtpMessage<T>> SendMessageAsync<T>(EtpMessage<T> message, Action<EtpMessage<T>> onBeforeSend = null) where T : IEtpMessageBody;
 
         /// <summary>
         /// Gets the registered handler for the specified protocol.

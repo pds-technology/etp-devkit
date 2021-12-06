@@ -42,7 +42,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// <param name="countObjects">if set to <c>true</c>, request object counts.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<GetResources> GetResources(ContextInfo context, ContextScopeKind scope, long? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, bool includeEdges = false, bool countObjects = false, IMessageHeaderExtension extension = null);
+        EtpMessage<GetResources> GetResources(ContextInfo context, ContextScopeKind scope, DateTime? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, bool includeEdges = false, bool countObjects = false, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the GetResourcesResponse and GetResourcesEdgesResponse events from a store.
@@ -57,7 +57,7 @@ namespace Energistics.Etp.v12.Protocol.Discovery
         /// <param name="dataObjectTypes">if not <c>null</c> or empty, requests only deleted resources for objects of types found in the list.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<GetDeletedResources> GetDeletedResources(string dataspaceUri, long? deleteTimeFilter = null, IList<string> dataObjectTypes = null, IMessageHeaderExtension extension = null);
+        EtpMessage<GetDeletedResources> GetDeletedResources(string dataspaceUri, DateTime? deleteTimeFilter = null, IList<string> dataObjectTypes = null, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the GetDeletedResourcesResponse event from a store.

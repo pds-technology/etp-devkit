@@ -42,13 +42,14 @@ namespace Energistics.Etp.v12.Protocol.Discovery
                 {
                     Uri = uri,
                     Name = "Test Well",
-                    DataObjectType = uri.DataObjectType,
                     AlternateUris = new List<string>(),
                     CustomData = new Dictionary<string, DataValue>(),
-                    LastChanged = now.ToEtpTimestamp(),
-                    StoreLastWrite = now.ToEtpTimestamp(),
+                    LastChanged = now,
+                    StoreLastWrite = now,
+                    StoreCreated = now,
                     SourceCount = 0,
                     TargetCount = 0,
+                    ActiveStatus = ActiveStatusKind.Inactive,
                 });
             }
             else

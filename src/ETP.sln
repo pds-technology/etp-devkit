@@ -1,22 +1,26 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevKit", "DevKit\DevKit.csproj", "{30DE888B-A6B7-4528-AD89-324A7F9B0F4C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevKit", "DevKit\DevKit.csproj", "{30DE888B-A6B7-4528-AD89-324A7F9B0F4C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevKit.IntegrationTest", "DevKit.IntegrationTest\DevKit.IntegrationTest.csproj", "{067456C0-086C-46A8-B37F-1405717B7BFC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevKit.IntegrationTest", "DevKit.IntegrationTest\DevKit.IntegrationTest.csproj", "{067456C0-086C-46A8-B37F-1405717B7BFC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevKit.UnitTest", "DevKit.UnitTest\DevKit.UnitTest.csproj", "{BC953158-9584-45CF-BA13-10CE67348759}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevKit.UnitTest", "DevKit.UnitTest\DevKit.UnitTest.csproj", "{BC953158-9584-45CF-BA13-10CE67348759}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevKit.TestApp", "DevKit.TestApp\DevKit.TestApp.csproj", "{6DCD4AA3-AA28-49A8-BCA9-99D534B34864}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevKit.TestApp", "DevKit.TestApp\DevKit.TestApp.csproj", "{6DCD4AA3-AA28-49A8-BCA9-99D534B34864}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETP.Messages", "..\ext\etp.net\src\ETP.Messages\ETP.Messages.csproj", "{1A788A14-70D7-4B2B-96A3-086C86D0C925}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ETP.Messages", "..\ext\etp.net\src\ETP.Messages\ETP.Messages.csproj", "{1A788A14-70D7-4B2B-96A3-086C86D0C925}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{796171A3-8841-45DF-A032-97A649F3B90D}"
 	ProjectSection(SolutionItems) = preProject
 		tools\UpdatePackageHintPaths.ps1 = tools\UpdatePackageHintPaths.ps1
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Energistics.Json", "..\ext\etp.net\src\Energistics.Json\Energistics.Json.csproj", "{82F2D9D9-377C-4BB2-A92E-01C5E1815607}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Energistics.Avro", "..\ext\etp.net\src\Energistics.Avro\Energistics.Avro.csproj", "{462B3895-C2F8-4AFB-BEAE-D7D72DB2E3B7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,8 +48,19 @@ Global
 		{1A788A14-70D7-4B2B-96A3-086C86D0C925}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A788A14-70D7-4B2B-96A3-086C86D0C925}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A788A14-70D7-4B2B-96A3-086C86D0C925}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82F2D9D9-377C-4BB2-A92E-01C5E1815607}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82F2D9D9-377C-4BB2-A92E-01C5E1815607}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82F2D9D9-377C-4BB2-A92E-01C5E1815607}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82F2D9D9-377C-4BB2-A92E-01C5E1815607}.Release|Any CPU.Build.0 = Release|Any CPU
+		{462B3895-C2F8-4AFB-BEAE-D7D72DB2E3B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{462B3895-C2F8-4AFB-BEAE-D7D72DB2E3B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{462B3895-C2F8-4AFB-BEAE-D7D72DB2E3B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{462B3895-C2F8-4AFB-BEAE-D7D72DB2E3B7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6906DB49-FADD-4904-87E4-B19046717DD5}
 	EndGlobalSection
 EndGlobal

@@ -112,7 +112,7 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
         {
             var body = new UnsubscribePartNotification
             {
-                RequestUuid = requestUuid.ToUuid<Uuid>(),
+                RequestUuid = requestUuid,
             };
 
             var message = SendRequest(body, extension: extension);

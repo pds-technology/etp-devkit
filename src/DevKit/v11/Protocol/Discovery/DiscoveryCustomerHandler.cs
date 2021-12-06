@@ -46,7 +46,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
         {
             var body = new GetResources()
             {
-                Uri = uri
+                Uri = uri ?? string.Empty,
             };
 
             return SendRequest(body);

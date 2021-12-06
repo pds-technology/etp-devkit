@@ -220,7 +220,7 @@ namespace Energistics.Etp.Handlers
                                 .Where(o => o is IMockGrowingObject)
                                 .Select(o => ((IMockGrowingObject)o).ChannelMetadataRecord11(Store.GetChannelId(sessionId, o)))
                                 .ToList();
-                            handler.ChannelMetadata(subscription.RequestUuidGuid.UuidGuid, channels);
+                            handler.ChannelMetadata(subscription.RequestUuid, channels);
                         }
                     }
                 }
@@ -631,28 +631,23 @@ namespace Energistics.Etp.Handlers
             var sessionId = GetSessionId(handler);
             return new MockGrowingObjectCallbacks
             {
-                Created = (subscriptionUuid, @object, includeData) =>
+                JoinedSubscription = (subscriptionUuid, @object, includeData) =>
                 {
                     var growingObject = @object as IMockGrowingObject;
                     handler.ChannelMetadata(subscriptionUuid, new List<v11.Datatypes.ChannelData.ChannelMetadataRecord> { growingObject.ChannelMetadataRecord11(Store.GetChannelId(sessionId, @object)) });
                 },
+                Created = null,
                 Updated = null,
-                Joined = (subscriptionUuid, @object, includeData) =>
-                {
-                    var growingObject = @object as IMockGrowingObject;
-                    handler.ChannelMetadata(subscriptionUuid, new List<v11.Datatypes.ChannelData.ChannelMetadataRecord> { growingObject.ChannelMetadataRecord11(Store.GetChannelId(sessionId, @object)) });
-                },
-                Unjoined = (subscriptionUuid, @object, includeData) =>
-                {
-                    handler.ChannelRemove(Store.GetChannelId(sessionId, @object));
-                },
+                Joined = null,
+                Unjoined = null,
                 ActiveStatusChanged = (subscriptionUuid, @object, isActive) =>
                 {
                     handler.ChannelStatusChange(Store.GetChannelId(sessionId, @object), isActive ? v11.Datatypes.ChannelData.ChannelStatuses.Active : v11.Datatypes.ChannelData.ChannelStatuses.Inactive);
                 },
-                Deleted = (subscriptionUuid, @object) =>
+                Deleted = null,
+                UnjoinedSubscription = (subscriptionUuid, @object, includeData) =>
                 {
-                    handler.ChannelRemove(Store.GetChannelId(sessionId, @object));
+                    handler.ChannelRemove(Store.GetChannelId(sessionId, @object), @object.IsDeleted ? $"{@object.DataObjectType.ObjectType} {@object.Title} deleted." : $"{@object.DataObjectType.ObjectType} {@object.Title} removed from scope.");
                 },
                 SubscriptionEnded = null,
                 DataAppended = (subscriptionUuid, dataItems) =>
@@ -667,20 +662,18 @@ namespace Energistics.Etp.Handlers
             var sessionId = GetSessionId(handler);
             return new MockGrowingObjectCallbacks
             {
-                Created = (subscriptionUuid, @object, includeData) =>
+                JoinedSubscription = (subscriptionUuid, @object, includeData) =>
                 {
                     var channel = @object as MockChannel;
                     handler.ChannelMetadata(new List<v12.Datatypes.ChannelData.ChannelMetadataRecord> { channel.ChannelMetadataRecord12(Store.GetChannelId(sessionId, @object)) });
                 },
+                Created = null,
                 Updated = null,
-                Joined = (subscriptionUuid, @object, includeData) =>
-                {
-                    var channel = @object as MockChannel;
-                    handler.ChannelMetadata(new List<v12.Datatypes.ChannelData.ChannelMetadataRecord> { channel.ChannelMetadataRecord12(Store.GetChannelId(sessionId, @object)) });
-                },
+                Joined = null,
                 Unjoined = null,
                 ActiveStatusChanged = null,
                 Deleted = null,
+                UnjoinedSubscription = null,
                 SubscriptionEnded = null,
                 DataAppended = (subscriptionUuid, dataItems) =>
                 {
@@ -694,17 +687,16 @@ namespace Energistics.Etp.Handlers
             var sessionId = GetSessionId(handler);
             return new MockGrowingObjectCallbacks
             {
+                JoinedSubscription = null,
                 Created = null,
                 Updated = null,
                 Joined = null,
-                Unjoined = (subscriptionUuid, @object, includeData) =>
-                {
-                    handler.NotificationSubscriptionsStopped(new List<long> { Store.GetChannelId(sessionId, @object) });
-                },
+                Unjoined = null,
                 ActiveStatusChanged = null,
-                Deleted = (subscriptionUuid, @object) =>
+                Deleted = null,
+                UnjoinedSubscription = (subscriptionUuid, @object, includeData) =>
                 {
-                    handler.NotificationSubscriptionsStopped(new List<long> { Store.GetChannelId(sessionId, @object) });
+                    handler.NotificationSubscriptionsStopped(new List<long> { Store.GetChannelId(sessionId, @object) }, @object.IsDeleted ? $"{@object.DataObjectType.ObjectType} {@object.Title} deleted." : $"{@object.DataObjectType.ObjectType} {@object.Title} removed from scope.");
                 },
                 SubscriptionEnded = null,
                 DataAppended = (subscriptionUuid, dataItems) =>

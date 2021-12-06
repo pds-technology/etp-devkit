@@ -183,7 +183,7 @@ namespace Energistics.Etp
                     throw new ArgumentException($"Unsupported WebSocket type: {webSocketType}", "webSocketType");
             }
         }
-#endregion
+        #endregion
 
         #region IEtpSelfHostedWebServer
 
@@ -226,7 +226,7 @@ namespace Energistics.Etp
                     throw new ArgumentException($"Unsupported WebSocket type: {webSocketType}", "webSocketType");
             }
         }
-#endregion
+        #endregion
         
         #region Miscellaneous
 
@@ -576,6 +576,46 @@ namespace Energistics.Etp
         }
 
         /// <summary>
+        /// Creates an <see cref="IPing"/> instance for the specified ETP version.
+        /// </summary>
+        /// <param name="version">The ETP version.</param>
+        /// <returns>A new <see cref="IPing"/> instance.</returns>
+        public static IPing CreatePing(EtpVersion version)
+        {
+            switch (version)
+            {
+                case EtpVersion.v11: return null;
+                case EtpVersion.v12: return new v12.Protocol.Core.Ping();
+                default:
+                    {
+                        var message = $"Unsupported ETP version: {version}.";
+                        Logger.Debug(message);
+                        throw new InvalidOperationException(message);
+                    }
+            }
+        }
+
+        /// <summary>
+        /// Creates an <see cref="IPong"/> instance for the specified ETP version.
+        /// </summary>
+        /// <param name="version">The ETP version.</param>
+        /// <returns>A new <see cref="IPong"/> instance.</returns>
+        public static IPong CreatePong(EtpVersion version)
+        {
+            switch (version)
+            {
+                case EtpVersion.v11: return null;
+                case EtpVersion.v12: return new v12.Protocol.Core.Pong();
+                default:
+                    {
+                        var message = $"Unsupported ETP version: {version}.";
+                        Logger.Debug(message);
+                        throw new InvalidOperationException(message);
+                    }
+            }
+        }
+
+        /// <summary>
         /// Creates an <see cref="ICloseSession"/> instance for the specified ETP version.
         /// </summary>
         /// <param name="version">The ETP version.</param>
@@ -754,39 +794,6 @@ namespace Energistics.Etp
         }
 
         /// <summary>
-        /// Creates an <see cref="IUuid"/> instance for the specified ETP version.
-        /// </summary>
-        /// <param name="version">The ETP version.</param>
-        /// <param name="guid">The Guid to create the UUID from.</param>
-        /// <returns>A new <see cref="IDataValue"/> instance.</returns>
-        public static IUuid CreateUuid(EtpVersion version, Guid guid)
-        {
-            switch (version)
-            {
-                case EtpVersion.v11: return guid.ToUuid<CommonUuid>();
-                case EtpVersion.v12: return guid.ToUuid<v12.Datatypes.Uuid>();
-                case EtpVersion.Unknown: return guid.ToUuid<CommonUuid>();
-                default:
-                    {
-                        var message = $"Unsupported ETP version: {version}.";
-                        Logger.Debug(message);
-                        throw new InvalidOperationException(message);
-                    }
-            }
-        }
-
-        /// <summary>
-        /// Creates an <see cref="IUuid"/> instance for the specified ETP version.
-        /// </summary>
-        /// <param name="version">The ETP version.</param>
-        /// <param name="guid">The Guid to create the UUID from.</param>
-        /// <returns>A new <see cref="IDataValue"/> instance.</returns>
-        public static IUuid CreateUuid(EtpVersion version, string guid)
-        {
-            return CreateUuid(version, Guid.Parse(guid));
-        }
-
-        /// <summary>
         /// Creates an <see cref="ISupportedProtocol"/> instance for the specified ETP version.
         /// </summary>
         /// <param name="version">The ETP version.</param>
@@ -856,7 +863,7 @@ namespace Energistics.Etp
             var supportedDataObject = CreateSupportedDataObject(version);
 
             supportedDataObject.QualifiedType = endpointDataObject.QualifiedType;
-            supportedDataObject.DataObjectCapabilities = endpointDataObject.Capabilities.ToList();
+            supportedDataObject.SetDataObjectCapabilitiesFrom(endpointDataObject.Capabilities);
 
             return supportedDataObject;
         }

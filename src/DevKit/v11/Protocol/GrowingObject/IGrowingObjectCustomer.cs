@@ -72,8 +72,6 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         /// <param name="uri">The URI of the parent object.</param>
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
         EtpMessage<GrowingObjectDeleteRange> GrowingObjectDeleteRange(string uri, object startIndex, object endIndex, string uom, string depthDatum);
 

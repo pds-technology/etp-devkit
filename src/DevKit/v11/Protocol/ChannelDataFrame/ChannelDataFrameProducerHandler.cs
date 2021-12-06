@@ -34,7 +34,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelDataFrameProducerHandler"/> class.
         /// </summary>
-        public ChannelDataFrameProducerHandler() : base((int)Protocols.ChannelDataFrame, Roles.Producer, Roles.Consumer)
+        public ChannelDataFrameProducerHandler() : base((int)Protocols.ChannelDataFrame, Common.Roles.Producer, Common.Roles.Consumer)
         {
             RegisterMessageHandler<RequestChannelData>(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.RequestChannelData, HandleRequestChannelData);
         }

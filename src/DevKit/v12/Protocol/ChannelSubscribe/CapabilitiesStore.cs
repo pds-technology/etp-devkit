@@ -42,5 +42,10 @@ namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
         /// The maximum total count of channels allowed to be concurrently open for streaming in a session.
         /// </summary>
         public long? MaxStreamingChannelsSessionCount { get; set; }
+
+        /// <summary>
+        /// Indicates whether an endpoint supports filtering requested data by secondary index values. If the filtering can be technically supported by an endpoint, this capability should be true.
+        /// </summary>
+        public bool? SupportsSecondaryIndexFiltering { get; set; }
     }
 }

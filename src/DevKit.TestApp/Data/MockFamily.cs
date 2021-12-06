@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using Energistics.Avro.Encoding.Converter;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using System.Collections.Generic;
@@ -43,7 +44,7 @@ namespace Energistics.Etp.Data
             CustomData = new Dictionary<string, string>(),
             ChannelSubscribable = true,
             ObjectNotifiable = true,
-            LastChanged = 0L,
+            LastChanged = AvroConverter.UtcMinDateTime,
         };
     }
 }

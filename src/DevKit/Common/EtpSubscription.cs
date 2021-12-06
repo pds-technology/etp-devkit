@@ -110,7 +110,7 @@ namespace Energistics.Etp.Common
     /// Represents an ETP Subscription
     /// </summary>
     public class EtpSubscription<TMessage, TSubscription> : EtpSubscription<TSubscription>
-        where TMessage : Avro.Specific.ISpecificRecord
+        where TMessage : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new <see cref="EtpSubscription{TMessage, TSubscription}"/> instance.

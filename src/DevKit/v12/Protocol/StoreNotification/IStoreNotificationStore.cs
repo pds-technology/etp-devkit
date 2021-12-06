@@ -100,7 +100,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <param name="resource">The resource on which the active status has changed.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<ObjectActiveStatusChanged> ObjectActiveStatusChanged(Guid requestUuid, ActiveStatusKind activeStatus, long changeTime, Resource resource, IMessageHeaderExtension extension = null);
+        EtpMessage<ObjectActiveStatusChanged> ObjectActiveStatusChanged(Guid requestUuid, ActiveStatusKind activeStatus, DateTime changeTime, Resource resource, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Sends an ObjectAccessRevoked message to a customer.
@@ -110,7 +110,7 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <param name="changeTime">The change time.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<ObjectAccessRevoked> ObjectAccessRevoked(Guid requestUuid, string uri, long changeTime, IMessageHeaderExtension extension = null);
+        EtpMessage<ObjectAccessRevoked> ObjectAccessRevoked(Guid requestUuid, string uri, DateTime changeTime, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Sends an ObjectDeleted message to a customer.
@@ -120,28 +120,36 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
         /// <param name="changeTime">The change time.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<ObjectDeleted> ObjectDeleted(Guid requestUuid, string uri, long changeTime, IMessageHeaderExtension extension = null);
+        EtpMessage<ObjectDeleted> ObjectDeleted(Guid requestUuid, string uri, DateTime changeTime, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the UnsubscribeNotifications event from a customer.
         /// </summary>
-        event EventHandler<RequestEventArgs<UnsubscribeNotifications, Guid>> OnUnsubscribeNotifications;
+        event EventHandler<RequestWithContextEventArgs<UnsubscribeNotifications, Guid, SubscriptionEndedReason>> OnUnsubscribeNotifications;
 
         /// <summary>
         /// Sends a SubscriptionEnded message to a customer in response to a UnsubscribeNotifications message.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="requestUuid">The reqyest UUId.</param>
+        /// <param name="reason">The human readable reason why the subscription ended.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<SubscriptionEnded> ResponseSubscriptionEnded(IMessageHeader correlatedHeader, Guid requestUuid, IMessageHeaderExtension extension = null);
+        EtpMessage<SubscriptionEnded> ResponseSubscriptionEnded(IMessageHeader correlatedHeader, Guid requestUuid, string reason, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Sends a SubscriptionEnded message to a customer as a notification.
         /// </summary>
         /// <param name="requestUuid">The reqyest UUId.</param>
+        /// <param name="reason">The human readable reason why the subscription ended.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<SubscriptionEnded> NotificationSubscriptionEnded(Guid requestUuid, IMessageHeaderExtension extension = null);
+        EtpMessage<SubscriptionEnded> NotificationSubscriptionEnded(Guid requestUuid, string reason, IMessageHeaderExtension extension = null);
+    }
+
+
+    public class SubscriptionEndedReason
+    {
+        public string Reason { get; set; } = "Customer Request";
     }
 }

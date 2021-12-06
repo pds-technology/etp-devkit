@@ -16,7 +16,6 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
 using Energistics.Etp.Common.Datatypes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -34,11 +33,11 @@ namespace Energistics.Etp.Common
         {
             var instanceDataObjects = new List<EtpSupportedDataObject>
             {
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "*"), new List<string> { "witsml" }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "*"), new EtpDataObjectCapabilities { ActiveTimeoutPeriod = int.MaxValue }),
             };
             var counterpartDataObjects = new List<EtpSupportedDataObject>
             {
-                new EtpSupportedDataObject(new EtpDataObjectType("resqml", "2.0.1", "*"), new List<string> { "resqml" }),
+                new EtpSupportedDataObject(new EtpDataObjectType("resqml", "2.0.1", "*"), new EtpDataObjectCapabilities { MaxDataObjectSize = 999999999 }),
             };
 
             var collection = EtpSupportedDataObjectCollection.GetSupportedDataObjectCollection(instanceDataObjects, counterpartDataObjects, true);
@@ -52,21 +51,21 @@ namespace Energistics.Etp.Common
         {
             var instanceDataObjects = new List<EtpSupportedDataObject>
             {
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "*"), new List<string> { "instance" }),
-                new EtpSupportedDataObject(new EtpDataObjectType("resqml", "2.0.1", "*"), new List<string> { "resqml" }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "*"), new EtpDataObjectCapabilities { ActiveTimeoutPeriod = int.MaxValue }),
+                new EtpSupportedDataObject(new EtpDataObjectType("resqml", "2.0.1", "*"), new EtpDataObjectCapabilities { MaxDataObjectSize = 999999999 }),
             };
             var counterpartDataObjects = new List<EtpSupportedDataObject>
             {
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "*"), new List<string> { "counterpart" }),
-                new EtpSupportedDataObject(new EtpDataObjectType("prodml", "2.0", "*"), new List<string> { "prodml" }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "*"), new EtpDataObjectCapabilities { SupportsPut = false }),
+                new EtpSupportedDataObject(new EtpDataObjectType("prodml", "2.0", "*"), new EtpDataObjectCapabilities { SupportsDelete = true }),
             };
 
             var collection = EtpSupportedDataObjectCollection.GetSupportedDataObjectCollection(instanceDataObjects, counterpartDataObjects, true);
 
             Assert.AreEqual(0, collection.SupportedTypes.Count());
             Assert.AreEqual(1, collection.SupportedFamilies.Count());
-            Assert.AreEqual("instance", collection.SupportedFamilies.First().Capabilities[0]);
-            Assert.AreEqual("counterpart", collection.SupportedFamilies.First().CounterpartCapabilities[0]);
+            Assert.AreEqual(int.MaxValue, collection.SupportedTypes.First().Capabilities.ActiveTimeoutPeriod);
+            Assert.AreEqual(false, collection.SupportedTypes.First().CounterpartCapabilities.SupportsPut);
         }
 
         [TestMethod]
@@ -74,20 +73,20 @@ namespace Energistics.Etp.Common
         {
             var instanceDataObjects = new List<EtpSupportedDataObject>
             {
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Well"), new List<string> { "instance" }),
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Wellbore"), new List<string> { "a" }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Well"), new EtpDataObjectCapabilities { ActiveTimeoutPeriod = int.MaxValue }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Wellbore"), new EtpDataObjectCapabilities { MaxDataObjectSize = 999999999 }),
             };
             var counterpartDataObjects = new List<EtpSupportedDataObject>
             {
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Well"), new List<string> { "counterpart" }),
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "ChannelSet"), new List<string> { "b" }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Well"), new EtpDataObjectCapabilities { SupportsPut = false }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "ChannelSet"), new EtpDataObjectCapabilities { SupportsDelete = true }),
             };
 
             var collection = EtpSupportedDataObjectCollection.GetSupportedDataObjectCollection(instanceDataObjects, counterpartDataObjects, true);
 
             Assert.AreEqual(1, collection.SupportedTypes.Count());
-            Assert.AreEqual("instance", collection.SupportedTypes.First().Capabilities[0]);
-            Assert.AreEqual("counterpart", collection.SupportedTypes.First().CounterpartCapabilities[0]);
+            Assert.AreEqual(int.MaxValue, collection.SupportedTypes.First().Capabilities.ActiveTimeoutPeriod);
+            Assert.AreEqual(false, collection.SupportedTypes.First().CounterpartCapabilities.SupportsPut);
             Assert.AreEqual(0, collection.SupportedFamilies.Count());
         }
 
@@ -96,13 +95,13 @@ namespace Energistics.Etp.Common
         {
             var instanceDataObjects = new List<EtpSupportedDataObject>
             {
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "*"), new List<string> { "instance" }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "*"), new EtpDataObjectCapabilities { ActiveTimeoutPeriod = int.MaxValue }),
             };
             var counterpartDataObjects = new List<EtpSupportedDataObject>
             {
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Well"), new List<string> { "counterpart" }),
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Wellbore"), new List<string> { "a" }),
-                new EtpSupportedDataObject(new EtpDataObjectType("prodml", "2.0", "*"), new List<string> { "prodml" }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Well"), new EtpDataObjectCapabilities { SupportsPut = false }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Wellbore"), new EtpDataObjectCapabilities { MaxDataObjectSize = 999999999 }),
+                new EtpSupportedDataObject(new EtpDataObjectType("prodml", "2.0", "*"), new EtpDataObjectCapabilities { SupportsDelete = true }),
             };
 
             var collection = EtpSupportedDataObjectCollection.GetSupportedDataObjectCollection(instanceDataObjects, counterpartDataObjects, true);
@@ -110,8 +109,8 @@ namespace Energistics.Etp.Common
             Assert.AreEqual(2, collection.SupportedTypes.Count());
             Assert.AreEqual("Well", collection.SupportedTypes.ToList()[0].QualifiedType.ObjectType);
             Assert.AreEqual("Wellbore", collection.SupportedTypes.ToList()[1].QualifiedType.ObjectType);
-            Assert.AreEqual("instance", collection.SupportedTypes.First().Capabilities[0]);
-            Assert.AreEqual("counterpart", collection.SupportedTypes.First().CounterpartCapabilities[0]);
+            Assert.AreEqual(int.MaxValue, collection.SupportedTypes.First().Capabilities.ActiveTimeoutPeriod);
+            Assert.AreEqual(false, collection.SupportedTypes.First().CounterpartCapabilities.SupportsPut);
             Assert.AreEqual(0, collection.SupportedFamilies.Count());
         }
 
@@ -120,13 +119,13 @@ namespace Energistics.Etp.Common
         {
             var instanceDataObjects = new List<EtpSupportedDataObject>
             {
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Well"), new List<string> { "instance" }),
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Wellbore"), new List<string> { "a" }),
-                new EtpSupportedDataObject(new EtpDataObjectType("prodml", "2.0", "*"), new List<string> { "prodml" }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Well"), new EtpDataObjectCapabilities { ActiveTimeoutPeriod = int.MaxValue }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Wellbore"), new EtpDataObjectCapabilities { MaxDataObjectSize = 999999999 }),
+                new EtpSupportedDataObject(new EtpDataObjectType("prodml", "2.0", "*"), new EtpDataObjectCapabilities { SupportsDelete = true }),
             };
             var counterpartDataObjects = new List<EtpSupportedDataObject>
             {
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "*"), new List<string> { "counterpart" }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "*"), new EtpDataObjectCapabilities { SupportsPut = false }),
             };
 
             var collection = EtpSupportedDataObjectCollection.GetSupportedDataObjectCollection(instanceDataObjects, counterpartDataObjects, true);
@@ -134,8 +133,8 @@ namespace Energistics.Etp.Common
             Assert.AreEqual(2, collection.SupportedTypes.Count());
             Assert.AreEqual("Well", collection.SupportedTypes.ToList()[0].QualifiedType.ObjectType);
             Assert.AreEqual("Wellbore", collection.SupportedTypes.ToList()[1].QualifiedType.ObjectType);
-            Assert.AreEqual("instance", collection.SupportedTypes.First().Capabilities[0]);
-            Assert.AreEqual("counterpart", collection.SupportedTypes.First().CounterpartCapabilities[0]);
+            Assert.AreEqual(int.MaxValue, collection.SupportedTypes.First().Capabilities.ActiveTimeoutPeriod);
+            Assert.AreEqual(false, collection.SupportedTypes.First().CounterpartCapabilities.SupportsPut);
             Assert.AreEqual(0, collection.SupportedFamilies.Count());
         }
 
@@ -147,9 +146,9 @@ namespace Energistics.Etp.Common
             };
             var counterpartDataObjects = new List<EtpSupportedDataObject>
             {
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Well"), new List<string> { "counterpart" }),
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Wellbore"), new List<string> { "a" }),
-                new EtpSupportedDataObject(new EtpDataObjectType("prodml", "2.0", "*"), new List<string> { "prodml" }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Well"), new EtpDataObjectCapabilities { SupportsPut = false }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Wellbore"), new EtpDataObjectCapabilities { MaxDataObjectSize = 999999999 }),
+                new EtpSupportedDataObject(new EtpDataObjectType("prodml", "2.0", "*"), new EtpDataObjectCapabilities { SupportsDelete = true }),
             };
 
             var collection = EtpSupportedDataObjectCollection.GetSupportedDataObjectCollection(instanceDataObjects, counterpartDataObjects, true);
@@ -163,9 +162,9 @@ namespace Energistics.Etp.Common
         {
             var instanceDataObjects = new List<EtpSupportedDataObject>
             {
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Well"), new List<string> { "instance" }),
-                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Wellbore"), new List<string> { "a" }),
-                new EtpSupportedDataObject(new EtpDataObjectType("prodml", "2.0", "*"), new List<string> { "prodml" }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Well"), new EtpDataObjectCapabilities { ActiveTimeoutPeriod = int.MaxValue }),
+                new EtpSupportedDataObject(new EtpDataObjectType("witsml", "2.0", "Wellbore"), new EtpDataObjectCapabilities { MaxDataObjectSize = 999999999 }),
+                new EtpSupportedDataObject(new EtpDataObjectType("prodml", "2.0", "*"), new EtpDataObjectCapabilities { SupportsDelete = true }),
             };
             var counterpartDataObjects = new List<EtpSupportedDataObject>
             {

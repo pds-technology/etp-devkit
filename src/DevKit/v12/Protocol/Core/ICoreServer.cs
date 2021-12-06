@@ -31,41 +31,32 @@ namespace Energistics.Etp.v12.Protocol.Core
     public interface ICoreServer : IProtocolHandler
     {
         /// <summary>
-        /// Sends a Ping message.
+        /// Sends an Authorize message to a client.
         /// </summary>
+        /// <param name="authorization">The authorization.</param>
+        /// <param name="supplementalAuthorization">The supplemental authorization.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<Ping> Ping(IMessageHeaderExtension extension = null);
+        EtpMessage<Authorize> Authorize(string authorization, IDictionary<string, string> supplementalAuthorization, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Handles the Ping event from a client.
+        /// Handles the Authorize event from a server.
         /// </summary>
-        event EventHandler<EmptyRequestEventArgs<Ping>> OnPing;
+        event EventHandler<RequestWithContextEventArgs<Authorize, bool, AuthorizeContext>> OnAuthorize;
 
         /// <summary>
-        /// Sends a Pong response message.
+        /// Sends an AuthorizeResponse response message to a client.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">Whether or not authorization was successful.</param>
+        /// <param name="challenges">Challenges that may be used when authorization was not successful.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<Pong> Pong(IMessageHeader correlatedHeader, IMessageHeaderExtension extension = null);
+        EtpMessage<AuthorizeResponse> AuthorizeResponse(IMessageHeader correlatedHeader, bool success, IList<string> challenges, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Handles the Pong event from a client.
+        /// Handles the AuthorizeResponse event from a client.
         /// </summary>
-        event EventHandler<ResponseEventArgs<Ping, Pong>> OnPong;
-
-        /// <summary>
-        /// Handles the RenewSecurityToken event from a client.
-        /// </summary>
-        event EventHandler<EmptyRequestEventArgs<RenewSecurityToken>> OnRenewSecurityToken;
-
-        /// <summary>
-        /// Sends a RenewSecurityTokenResponse response message to a client.
-        /// </summary>
-        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
-        /// <param name="extension">The message header extension.</param>
-        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<RenewSecurityTokenResponse> RenewSecurityTokenResponse(IMessageHeader correlatedHeader, IMessageHeaderExtension extension = null);
+        event EventHandler<ResponseEventArgs<Authorize, AuthorizeResponse>> OnAuthorizeResponse;
     }
 }

@@ -48,7 +48,7 @@ namespace Energistics.Etp.v11.Protocol.Store
         {
             var body = new GetObject()
             {
-                Uri = uri
+                Uri = uri ?? string.Empty,
             };
 
             return SendRequest(body, isMultiPart: true, isFinalPart: true);
@@ -63,7 +63,7 @@ namespace Energistics.Etp.v11.Protocol.Store
         {
             var body = new PutObject()
             {
-                DataObject = dataObject
+                DataObject = dataObject,
             };
 
             return SendNotification(body);
@@ -78,7 +78,7 @@ namespace Energistics.Etp.v11.Protocol.Store
         {
             var body = new DeleteObject()
             {
-                Uri = uri
+                Uri = uri ?? string.Empty,
             };
 
             return SendNotification(body);

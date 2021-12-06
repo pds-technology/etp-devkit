@@ -24,7 +24,7 @@ namespace Energistics.Etp.Common
     public interface IEndpointCapabilities : IReadOnlyCapabilities
     {
         /// <summary>
-        /// The maximum time period in seconds that a store keeps the GrowingSatus for a growing object "active" after the last new part resulting in a change to the object's end index was added to the object.
+        /// The minimum time period in seconds that a store keeps the GrowingSatus for a growing object "active" after the last new part resulting in a change to the object's end index was added to the object.
         /// </summary>
         long? ActiveTimeoutPeriod { get; }
 
@@ -44,7 +44,7 @@ namespace Energistics.Etp.Common
         long? ChangePropagationPeriod { get; }
 
         /// <summary>
-        /// The maximum time period in seconds time that a store retains the Canonical URI of a deleted data object and any change annotations for channels and growing objects. 
+        /// The minimum time period in seconds time that a store retains the Canonical URI of a deleted data object and any change annotations for channels and growing objects. 
         /// </summary>
         long? ChangeRetentionPeriod { get; }
 
@@ -92,6 +92,16 @@ namespace Energistics.Etp.Common
         /// The maximum time period in seconds allowed between a request and the standalone response message or the first message in the multipart response message. The period is measured as the time between when the request message has been successfully sent via the WebSocket and when the first or only response message has been fully received via the WebSocket. When calculating this period, any Acknowledge messages or empty placeholder responses are ignored EXCEPT where these are the only and final response(s) to the request.
         /// </summary>
         long? ResponseTimeoutPeriod { get; }
+
+        /// <summary>
+        /// The maximum time period in seconds a server will wait to receive a RequestSession message from a client after the WebSocket connection has been established.
+        /// </summary>
+        long? RequestSessionTimeoutPeriod { get; }
+
+        /// <summary>
+        /// The maximum time period in seconds a client or server will wait for a valid ETP session to be established.
+        /// </summary>
+        long? SessionEstablishmentTimeoutPeriod { get; }
 
         /// <summary>
         /// Indicates whether an endpoint supports alternate URI formats--beyond the canonical Energistics URIs, which MUST be supported--for requests.

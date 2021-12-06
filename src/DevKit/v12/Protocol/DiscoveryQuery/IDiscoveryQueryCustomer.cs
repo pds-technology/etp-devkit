@@ -39,7 +39,7 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
         /// <param name="activeStatusFilter">if not <c>null</c>, request only objects with a matching active status.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<FindResources> FindResources(ContextInfo context, ContextScopeKind scope, long? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, IMessageHeaderExtension extension = null);
+        EtpMessage<FindResources> FindResources(ContextInfo context, ContextScopeKind scope, DateTime? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the FindResourcesResponse event from a store.

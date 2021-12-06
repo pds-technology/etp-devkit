@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using Energistics.Avro.Encoding.Converter;
 using Energistics.Etp.Common.Datatypes;
 using System.Collections.Generic;
 
@@ -29,6 +30,8 @@ namespace Energistics.Etp.Data
 
         public int? ObjectCount { get; set; }
 
+        public bool IsPrimaryRelationship { get; set; }
+
         public v11.Datatypes.Object.Resource Resource11 => new v11.Datatypes.Object.Resource
         {
             Uuid = null,
@@ -40,13 +43,14 @@ namespace Energistics.Etp.Data
             CustomData = new Dictionary<string, string>(),
             ChannelSubscribable = true,
             ObjectNotifiable = true,
-            LastChanged = 0L,
+            LastChanged = AvroConverter.UtcMinDateTime,
         };
 
         public v12.Datatypes.Object.SupportedType SupportedType12 => new v12.Datatypes.Object.SupportedType
         {
             DataObjectType = DataObjectType.DataObjectType,
             ObjectCount = ObjectCount,
+            RelationshipKind = IsPrimaryRelationship ? v12.Datatypes.Object.RelationshipKind.Primary : v12.Datatypes.Object.RelationshipKind.Secondary,
         };
     }
 }

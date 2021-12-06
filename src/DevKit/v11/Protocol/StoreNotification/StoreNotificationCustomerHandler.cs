@@ -49,7 +49,7 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         {
             var body = new NotificationRequest()
             {
-                Request = request
+                Request = request,
             };
 
             var message = SendRequest(body, onBeforeSend: (m) => TryRegisterSubscription(request, nameof(request.Uuid), m, request));
@@ -84,7 +84,7 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         {
             var body = new CancelNotification()
             {
-                RequestUuid = requestUuid.ToString(),
+                RequestUuid = requestUuid,
             };
 
             var message = SendRequest(body);

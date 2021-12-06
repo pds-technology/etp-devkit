@@ -20,8 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Avro.IO;
-using Avro.Specific;
+using Energistics.Avro;
+using Energistics.Avro.Encoding;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
 
@@ -32,9 +32,8 @@ namespace Energistics.Etp.Common
     /// </summary>
     public abstract class EtpAdapterBase : IEtpAdapter
     {
-        private readonly Dictionary<long, Func<Decoder, IMessageHeader, IMessageHeaderExtension, EtpMessage>> MessageDecoders = new Dictionary<long, Func<Decoder, IMessageHeader, IMessageHeaderExtension, EtpMessage>>();
-        private readonly Dictionary<long, Func<string, IMessageHeader, IMessageHeaderExtension, EtpMessage>> MessageDeserializers = new Dictionary<long, Func<string, IMessageHeader, IMessageHeaderExtension, EtpMessage>>();
-        private readonly Dictionary<Type, Func<Decoder, IMessageHeader, IMessageHeaderExtension, EtpMessage>> MessageDecodersByType = new Dictionary<Type, Func<Decoder, IMessageHeader, IMessageHeaderExtension, EtpMessage>>();
+        private readonly Dictionary<long, Func<IAvroDecoder, IMessageHeader, IMessageHeaderExtension, EtpMessage>> MessageDecoders = new Dictionary<long, Func<IAvroDecoder, IMessageHeader, IMessageHeaderExtension, EtpMessage>>();
+        private readonly Dictionary<Type, Func<IAvroDecoder, IMessageHeader, IMessageHeaderExtension, EtpMessage>> MessageDecodersByType = new Dictionary<Type, Func<IAvroDecoder, IMessageHeader, IMessageHeaderExtension, EtpMessage>>();
 
         /// <summary>
         /// Constructs a new <see cref="EtpAdapterBase"/> instance.
@@ -66,28 +65,14 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <param name="decoder">The decoder with the binary data.</param>
         /// <returns>The decoded message header.</returns>
-        public abstract IMessageHeader DecodeMessageHeader(Decoder decoder);
-
-        /// <summary>
-        /// Deserialize the json message header.
-        /// </summary>
-        /// <param name="json">The json data.</param>
-        /// <returns>The deserialized message header.</returns>
-        public abstract IMessageHeader DeserializeMessageHeader(string json);
+        public abstract IMessageHeader DecodeMessageHeader(IAvroDecoder decoder);
 
         /// <summary>
         /// Decode the binary message header extension.
         /// </summary>
         /// <param name="decoder">The decoder with the binary data.</param>
         /// <returns>The decoded message header extension.</returns>
-        public abstract IMessageHeaderExtension DecodeMessageHeaderExtension(Decoder decoder);
-
-        /// <summary>
-        /// Deserialize the json message header extension.
-        /// </summary>
-        /// <param name="json">The json data.</param>
-        /// <returns>The deserialized message header extension.</returns>
-        public abstract IMessageHeaderExtension DeserializeMessageHeaderExtension(string json);
+        public abstract IMessageHeaderExtension DecodeMessageHeaderExtension(IAvroDecoder decoder);
 
         /// <summary>
         /// Decodes the message.
@@ -96,33 +81,15 @@ namespace Energistics.Etp.Common
         /// <param name="extension">The header extension</param>
         /// <param name="decoder">The decoder with binary message data.</param>
         /// <returns>The message if successful; <c>null</c> otherwise.</returns>
-        public EtpMessage DecodeMessage(IMessageHeader header, IMessageHeaderExtension extension, Decoder decoder)
+        public EtpMessage DecodeMessage(IMessageHeader header, IMessageHeaderExtension extension, IAvroDecoder decoder)
         {
             var messageKey = EtpExtensions.CreateMessageKey(header.Protocol, header.MessageType);
 
-            Func<Decoder, IMessageHeader, IMessageHeaderExtension, EtpMessage> messageDecoder;
+            Func<IAvroDecoder, IMessageHeader, IMessageHeaderExtension, EtpMessage> messageDecoder;
             if (!MessageDecoders.TryGetValue(messageKey, out messageDecoder))
                 return null;
 
             return messageDecoder(decoder, header, extension);
-        }
-
-        /// <summary>
-        /// Deserializes the message type from the specified protocol.
-        /// </summary>
-        /// <param name="header">The message header</param>
-        /// <param name="extension">The header extension</param>
-        /// <param name="content">The string with json message data.</param>
-        /// <returns>The message.</returns>
-        public EtpMessage DeserializeMessage(IMessageHeader header, IMessageHeaderExtension extension, string content)
-        {
-            var messageKey = EtpExtensions.CreateMessageKey(header.Protocol, header.MessageType);
-
-            Func<string, IMessageHeader, IMessageHeaderExtension, EtpMessage> messageDeserializer;
-            if (!MessageDeserializers.TryGetValue(messageKey, out messageDeserializer))
-                return null;
-
-            return messageDeserializer(content, header, extension);
         }
 
         /// <summary>
@@ -161,7 +128,7 @@ namespace Energistics.Etp.Common
         /// <param name="protocol">The message's protocol.</param>
         /// <param name="messageType">The type of the message.</param>
         /// <exception cref="ArgumentException">More than one decoder for the same protocol message is added.</exception>
-        public void RegisterMessageDecoder<T>(object protocol, object messageType) where T : ISpecificRecord
+        public void RegisterMessageDecoder<T>(object protocol, object messageType) where T : class, IEtpMessageBody, new()
         {
             var messageKey = EtpExtensions.CreateMessageKey(Convert.ToInt32(protocol), Convert.ToInt32(messageType));
             if (MessageDecoders.ContainsKey(messageKey))
@@ -177,12 +144,11 @@ namespace Energistics.Etp.Common
         /// <typeparam name="TBody">The type of the decoded message.</typeparam>
         /// <param name="protocol"></param>
         /// <param name="messageType"></param>
-        protected void RegisterMessageDecoderOverride<TInterface, TBody>(object protocol, object messageType) where TInterface : ISpecificRecord where TBody : TInterface
+        protected void RegisterMessageDecoderOverride<TInterface, TBody>(object protocol, object messageType) where TInterface : IEtpMessageBody where TBody : class, TInterface, new()
         {
             var messageKey = EtpExtensions.CreateMessageKey(Convert.ToInt32(protocol), Convert.ToInt32(messageType));
 
-            MessageDecoders[messageKey] = (d, h, x) => CreateMessage<TInterface, TBody>(h, d.Decode<TBody>(), extension: x);
-            MessageDeserializers[messageKey] = (b, h, x) => CreateMessage<TInterface, TBody>(h, EtpExtensions.Deserialize<TBody>(b), extension: x);
+            MessageDecoders[messageKey] = (d, h, x) => CreateMessage<TInterface, TBody>(h, d.DecodeAvroObject<TBody>(), extension: x);
             MessageDecodersByType[typeof(TInterface)] = MessageDecoders[messageKey];
         }
 
@@ -195,7 +161,7 @@ namespace Energistics.Etp.Common
         /// <param name="extension">The message header extension, if any.</param>
         /// <param name="body">The message body.</param>
         /// <returns>The message.</returns>
-        private static EtpMessage CreateMessage<TInterface, TBody>(IMessageHeader header, TBody body, IMessageHeaderExtension extension = null) where TInterface : ISpecificRecord where TBody : TInterface
+        private static EtpMessage CreateMessage<TInterface, TBody>(IMessageHeader header, TBody body, IMessageHeaderExtension extension = null) where TInterface : IEtpMessageBody where TBody : TInterface
         {
             return new EtpMessage<TInterface>(header, body, extension: extension);
         }
@@ -216,10 +182,11 @@ namespace Energistics.Etp.Common
         /// Checks whether a decoder is registered for the specified protocol message.
         /// </summary>
         /// <returns><c>true</c> if there is a message decoder registered; <c>false</c> otherwise.</returns>
-        public bool IsMessageDecoderRegistered<T>() where T : ISpecificRecord
+        public bool IsMessageDecoderRegistered<T>() where T : IEtpMessageBody
         {
             return MessageDecodersByType.ContainsKey(typeof(T));
         }
+
         /// <summary>
         /// Register message decoders for the standard messages that follow the pattern:
         /// Message protocol:    Energistics.Etp.[VERSION].Protocols.[PROTOCOL]
@@ -243,10 +210,10 @@ namespace Energistics.Etp.Common
             // Get the message types defined in the appropriate namespace.
             var mainMessageTypes = assembly.GetExportedTypes().Where(type =>
                 type.Namespace.StartsWith(mainMessageNamespacePrefix) &&
-                typeof(ISpecificRecord).IsAssignableFrom(type));
+                typeof(IEtpMessageBody).IsAssignableFrom(type));
             var privateMessageTypes = assembly.GetExportedTypes().Where(type =>
                 type.Namespace.StartsWith(privateMessageNamespacePrefix) &&
-                typeof(ISpecificRecord).IsAssignableFrom(type));
+                typeof(IEtpMessageBody).IsAssignableFrom(type));
 
             var messageTypes = mainMessageTypes.Concat(privateMessageTypes).ToList();
 
@@ -270,9 +237,34 @@ namespace Energistics.Etp.Common
                 object messageTypeEnumValue = Enum.Parse(messageTypeEnumType, messageType.Name);
 
                 // Call RegisterMessageDecoder with the appropriate parameters.
-                var register = ((Action<object, object>)RegisterMessageDecoder<ISpecificRecord>).Method.GetGenericMethodDefinition();
+                var register = ((Action<object, object>)RegisterMessageDecoder<DummyClass>).Method.GetGenericMethodDefinition();
                 var genericRegister = register.MakeGenericMethod(messageType);
                 genericRegister.Invoke(this, new object[] { protocolsEnumValue, messageTypeEnumValue });
+            }
+        }
+
+        private class DummyClass : IEtpMessageBody
+        {
+            string IAvroObject.AvroTypeName => throw new NotImplementedException();
+
+            bool IEtpMessageBody.CanSplit()
+            {
+                throw new NotImplementedException();
+            }
+
+            void IAvroObject.Decode(IAvroDecoder decoder)
+            {
+                throw new NotImplementedException();
+            }
+
+            void IAvroObject.Encode(IAvroEncoder encoder)
+            {
+                throw new NotImplementedException();
+            }
+
+            DateTime IEtpRecord.GetLatestChangeTimestamp()
+            {
+                throw new NotImplementedException();
             }
         }
     }

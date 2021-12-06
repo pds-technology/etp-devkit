@@ -69,7 +69,7 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         {
             var body = new ChangeNotification()
             {
-                Change = change
+                Change = change,
             };
 
             return SendNotification(body, correlatedHeader: correlatedHeader);
@@ -100,7 +100,7 @@ namespace Energistics.Etp.v11.Protocol.StoreNotification
         {
             var body = new DeleteNotification()
             {
-                Delete = change
+                Delete = change,
             };
 
             return SendNotification(body, correlatedHeader: correlatedHeader);

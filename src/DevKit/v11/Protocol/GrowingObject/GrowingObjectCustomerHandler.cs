@@ -48,8 +48,8 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         {
             var body = new GrowingObjectGet
             {
-                Uri = uri,
-                Uid = uid
+                Uri = uri ?? string.Empty,
+                Uid = uid ?? string.Empty,
             };
 
             return SendRequest(body);
@@ -68,11 +68,11 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         {
             var body = new GrowingObjectGetRange
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 StartIndex = new GrowingObjectIndex { Item = startIndex },
                 EndIndex = new GrowingObjectIndex { Item = endIndex },
-                Uom = uom,
-                DepthDatum = depthDatum
+                Uom = uom ?? string.Empty,
+                DepthDatum = depthDatum ?? string.Empty
             };
 
             return SendRequest(body);
@@ -90,10 +90,10 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         {
             var body = new GrowingObjectPut
             {
-                Uri = uri,
-                ContentType = contentType,
-                ContentEncoding = contentEncoding,
-                Data = data
+                Uri = uri ?? string.Empty,
+                ContentType = contentType ?? string.Empty,
+                ContentEncoding = contentEncoding ?? ContentEncodings.TextXml,
+                Data = data ?? new byte[0],
             };
 
             return SendRequest(body);
@@ -109,8 +109,8 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         {
             var body = new GrowingObjectDelete
             {
-                Uri = uri,
-                Uid = uid
+                Uri = uri ?? string.Empty,
+                Uid = uid ?? string.Empty,
             };
 
             return SendRequest(body);
@@ -122,18 +122,16 @@ namespace Energistics.Etp.v11.Protocol.GrowingObject
         /// <param name="uri">The URI of the parent object.</param>
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
         public virtual EtpMessage<GrowingObjectDeleteRange> GrowingObjectDeleteRange(string uri, object startIndex, object endIndex, string uom, string depthDatum)
         {
             var body = new GrowingObjectDeleteRange
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 StartIndex = new GrowingObjectIndex { Item = startIndex },
                 EndIndex = new GrowingObjectIndex { Item = endIndex },
-                Uom = uom,
-                DepthDatum = depthDatum
+                Uom = uom ?? string.Empty,
+                DepthDatum = depthDatum ?? string.Empty,
             };
 
             return SendRequest(body);

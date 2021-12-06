@@ -49,7 +49,7 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         {
             var body = new RequestChannelData
             {
-                Uri = uri,
+                Uri = uri ?? string.Empty,
                 FromIndex = fromIndex,
                 ToIndex = toIndex
             };

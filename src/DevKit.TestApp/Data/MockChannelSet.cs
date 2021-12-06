@@ -25,7 +25,7 @@ using System.Linq;
 
 namespace Energistics.Etp.Data
 {
-    public class MockChannelSet : MockWitsmlObject
+    public class MockChannelSet : MockWitsmlWellboreObject
     {
         new public static EtpDataObjectType Type { get; } = new EtpDataObjectType(MockWitsmlObject.Type, "ChannelSet");
 
@@ -44,22 +44,34 @@ namespace Energistics.Etp.Data
             DataObjectType = Type;
         }
 
-        protected override void JoinChild(MockObject child, DateTime unjoinTime)
+        protected override void UpdateDataLastWrite(DateTime lastWrite)
         {
-            base.JoinChild(child, unjoinTime);
+            base.UpdateDataLastWrite(lastWrite);
+            SetActive(true, lastWrite);
+            if (Wellbore != null)
+                Wellbore.SetActive(true, lastWrite);
+        }
+
+        protected override void JoinContainee(MockObject child, DateTime unjoinTime)
+        {
+            base.JoinContainee(child, unjoinTime);
             if (child is MockChannel)
                 Channels.Add(child as MockChannel);
         }
 
-        protected override void UnjoinChild(MockObject child, DateTime unjoinTime)
+        protected override void UnjoinContainee(MockObject child, DateTime unjoinTime)
         {
-            base.UnjoinChild(child, unjoinTime);
+            base.UnjoinContainee(child, unjoinTime);
             if (child is MockChannel)
                 Channels.Remove(child as MockChannel);
         }
 
-        public List<MockChannel> Channels { get; set; } = new List<MockChannel>();
+        private List<MockChannel> Channels { get; set; } = new List<MockChannel>();
         public bool IsTime => Channels.FirstOrDefault()?.IsTime ?? false;
+        public MockPropertyKind IndexPropertyKind => Channels.FirstOrDefault()?.IndexPropertyKind;
+        public string IndexMnemonic => Channels.FirstOrDefault()?.Mnemonic ?? string.Empty;
+        public string IndexUom => Channels.FirstOrDefault()?.IndexUom ?? string.Empty;
+
         public double? DepthStartIndex
         {
             get
@@ -116,6 +128,23 @@ namespace Energistics.Etp.Data
             }
         }
 
+        public v12.Datatypes.ChannelData.IndexMetadataRecord IndexMetadataRecord12 => new v12.Datatypes.ChannelData.IndexMetadataRecord
+        {
+            Name = IndexMnemonic ?? string.Empty,
+            Uom = IndexUom ?? string.Empty,
+            DepthDatum = IsTime ? string.Empty : "KB",
+            Direction = v12.Datatypes.ChannelData.IndexDirection.Increasing,
+            IndexKind = IsTime ? v12.Datatypes.ChannelData.ChannelIndexKind.DateTime : v12.Datatypes.ChannelData.ChannelIndexKind.MeasuredDepth,
+            IndexPropertyKindUri = IndexPropertyKind?.Uri(EtpVersion.v12) ?? string.Empty,
+            Interval = new v12.Datatypes.Object.IndexInterval
+            {
+                StartIndex = new v12.Datatypes.IndexValue { Item = IsTime ? TimeStartIndex?.ToEtpTimestamp() : DepthStartIndex },
+                EndIndex = new v12.Datatypes.IndexValue { Item = IsTime ? TimeEndIndex?.ToEtpTimestamp() : DepthEndIndex },
+                DepthDatum = IsTime ? string.Empty : "KB",
+                Uom = IndexUom ?? string.Empty,
+            }
+        };
+
         public override string Xml(EtpVersion version, string indentation = "", bool embedded = false) =>
 $@"{indentation}<ChannelSet{Namespaces(embedded)} schemaVersion=""2.0"" uuid=""{Uuid}""{DefaultNamespace(embedded)}>
 {indentation}  <Citation xmlns=""http://www.energistics.org/energyml/data/commonv2"">
@@ -141,10 +170,10 @@ $@"{indentation}<ChannelSet{Namespaces(embedded)} schemaVersion=""2.0"" uuid=""{
 {indentation}  </EndIndex>
 {indentation}  <LoggingCompanyName>ETP DevKit</LoggingCompanyName>
 {indentation}  <Wellbore>
-{indentation}    <ContentType xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Parent.ContentType}</ContentType>
-{indentation}    <Title xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Parent.Title}</Title>
-{indentation}    <Uuid xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Parent.Uuid}</Uuid>
-{indentation}    <Uri xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Parent.Uri(version)}</Uri>
+{indentation}    <ContentType xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Wellbore.ContentType}</ContentType>
+{indentation}    <Title xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Wellbore.Title}</Title>
+{indentation}    <Uuid xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Wellbore.Uuid}</Uuid>
+{indentation}    <Uri xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Wellbore.Uri(version)}</Uri>
 {indentation}  </Wellbore>
 {indentation}</ChannelSet>";
     }

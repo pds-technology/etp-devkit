@@ -284,7 +284,7 @@ namespace Energistics.Etp.Handlers
             }
             for (int i = 0; i < args.Response.Body.Channels.Count; i++)
             {
-                Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.Channels[i], true));
+                Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.Channels[i]));
                 Console.WriteLine(domainObjects[i]);
                 args.Response.Body.Channels[i].DomainObject.SetString(domainObjects[i]);
             }
@@ -292,38 +292,38 @@ namespace Energistics.Etp.Handlers
 
         private void OnStreamingChannelData(object sender, FireAndForgetEventArgs<v11.Protocol.ChannelStreaming.ChannelData> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body.Data, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body));
         }
 
         private void OnChannelRangeRequestChannelData(object sender, ResponseEventArgs<v11.Protocol.ChannelStreaming.ChannelRangeRequest, v11.Protocol.ChannelStreaming.ChannelData> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body.Data, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body));
         }
 
         private void OnChannelRemove(object sender, FireAndForgetEventArgs<v11.Protocol.ChannelStreaming.ChannelRemove> args)
         {
             ChannelMetadata.TryRemove(args.Message.Body.ChannelId, out _);
-            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body));
         }
 
         private void OnChannelStatusChange(object sender, FireAndForgetEventArgs<v11.Protocol.ChannelStreaming.ChannelStatusChange> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body));
         }
 
         private void OnChannelDataChange(object sender, FireAndForgetEventArgs<v11.Protocol.ChannelStreaming.ChannelDataChange> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body));
         }
 
         private void OnChannelMetadata(object sender, FireAndForgetEventArgs<v12.Protocol.ChannelStreaming.ChannelMetadata> args)
         {
-            Console.WriteLine(string.Join(Environment.NewLine, args.Message.Body.Channels.Select(d => EtpExtensions.Serialize(d, true))));
+            Console.WriteLine(string.Join(Environment.NewLine, args.Message.Body.Channels.Select(d => EtpExtensions.Serialize(d))));
         }
 
         private void OnChannelData(object sender, FireAndForgetEventArgs<v12.Protocol.ChannelStreaming.ChannelData> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body.Data, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body));
         }
 
         private void OnGetChannelMetadataResponse(object sender, ResponseEventArgs<v12.Protocol.ChannelSubscribe.GetChannelMetadata, v12.Protocol.ChannelSubscribe.GetChannelMetadataResponse> args)
@@ -332,37 +332,37 @@ namespace Energistics.Etp.Handlers
 
             foreach (var metadata in args.Response.Body.Metadata.Values)
                 ChannelMetadata[metadata.Id] = metadata;
-            Console.WriteLine(string.Join(Environment.NewLine, args.Response.Body.Metadata.Select(d => EtpExtensions.Serialize(d, true))));
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body));
         }
 
         private void OnChannelData(object sender, FireAndForgetEventArgs<v12.Protocol.ChannelSubscribe.ChannelData> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body.Data, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body));
         }
 
         private void OnRangeReplaced(object sender, FireAndForgetEventArgs<v12.Protocol.ChannelSubscribe.RangeReplaced> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body));
         }
 
         private void OnChannelsTruncated(object sender, FireAndForgetEventArgs<v12.Protocol.ChannelSubscribe.ChannelsTruncated> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body));
         }
 
         private void OnNotificationSubscriptionsStopped(object sender, FireAndForgetEventArgs<v12.Protocol.ChannelSubscribe.SubscriptionsStopped> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Message.Body));
         }
 
         private void OnResponseSubscriptionsStopped(object sender, ResponseEventArgs<v12.Protocol.ChannelSubscribe.UnsubscribeChannels, v12.Protocol.ChannelSubscribe.SubscriptionsStopped> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body));
         }
 
         private void OnGetRangesResponse(object sender, ResponseEventArgs<v12.Protocol.ChannelSubscribe.GetRanges, v12.Protocol.ChannelSubscribe.GetRangesResponse> args)
         {
-            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body, true));
+            Console.WriteLine(EtpExtensions.Serialize(args.Response.Body));
         }
     }
 }

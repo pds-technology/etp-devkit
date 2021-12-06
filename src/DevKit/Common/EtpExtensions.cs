@@ -24,14 +24,14 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
-using Avro.IO;
-using Avro.Specific;
+using Energistics.Avro;
+using Energistics.Avro.Encoding;
+using Energistics.Avro.Encoding.Binary;
+using Energistics.Avro.Encoding.Json;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Datatypes.Object;
 using Energistics.Etp.Common.Protocol.Core;
 using log4net;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Energistics.Etp.Common
 {
@@ -58,28 +58,6 @@ namespace Energistics.Etp.Common
 
             return (((long)protocol) << 32) + messageType;
         }
-
-        public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings()
-        {
-            ContractResolver = new EtpContractResolver(),
-            Converters = new List<JsonConverter>()
-            {
-                new ByteArrayConverter(),
-                new NullableDoubleConverter(),
-                new NullableIntConverter(),
-                new NullableLongConverter(),
-                new StringEnumConverter(),
-
-                // TODO: new Etp11.Datatypes.DataValueConverter(),
-                new v11.Datatypes.DataValueConverter(),
-                new v11.Datatypes.ChannelData.StreamingStartIndexConverter(),
-                new v11.Datatypes.Object.GrowingObjectIndexConverter(),
-
-                new v12.Datatypes.DataValueConverter(),
-                new v12.Datatypes.IndexValueConverter(),
-                // TODO: new v12.Datatypes.Object.GrowingObjectIndexConverter()
-            }
-        };
 
         /// <summary>
         /// Converts an encoding to the string value used in headers.
@@ -164,11 +142,11 @@ namespace Energistics.Etp.Common
         /// <param name="message">The message.</param>
         /// <param name="includeExtension">Whether or not to include a message header extension.</param>
         /// <returns>The encoded byte array containing the message data.</returns>
-        public static byte[] Serialize<T>(this EtpMessage<T> message, bool includeExtension = false) where T : ISpecificRecord
+        public static byte[] Serialize<T>(this EtpMessage<T> message, bool includeExtension = false) where T : IEtpMessageBody
         {
             var @objects = message.Extension != null && includeExtension
-                ? new object[] { message.Header, message.Extension, message.Body }
-                : new object[] { message.Header, message.Body };
+                ? new IEtpRecord[] { message.Header, message.Extension, message.Body }
+                : new IEtpRecord[] { message.Header, message.Body };
 
             var content = Serialize(@objects);
             return System.Text.Encoding.UTF8.GetBytes(content);
@@ -179,33 +157,34 @@ namespace Energistics.Etp.Common
         /// </summary>
         /// <typeparam name="T">The type of the message body.</typeparam>
         /// <param name="message">The message.</param>
+        /// <param name="asBinary">Whether or not to encode as binary.</param>
         /// <param name="includeExtension">Whether or not to include a message header extension.</param>
         /// <param name="compression">The compression type.</param>
         /// <returns>The encoded byte array containing the message data.</returns>
-        public static byte[] Encode<T>(this EtpMessage<T> message, bool includeExtension = false, string compression = EtpCompression.None) where T : ISpecificRecord
+        public static byte[] Encode<T>(this EtpMessage<T> message, bool asBinary = true, bool includeExtension = false, string compression = EtpCompression.None) where T : IEtpMessageBody
         {
             using (var stream = new MemoryStream())
             using (var compressionStream = message.Header.CanBeCompressed() ? EtpCompression.TryGetCompresionStream(compression, stream) : null)
             {
                 // create avro binary encoder to write to memory stream
-                var headerEncoder = new BinaryEncoder(stream);
+                var headerEncoder = asBinary ? (IAvroEncoder)new BinaryAvroEncoder(stream) : new JsonAvroEncoder(stream);
                 var bodyEncoder = headerEncoder;
 
                 if (compressionStream != null)
                 {
                     // add Compressed flag to message flags before writing header
                     message.Header.SetCompressed();
-                    bodyEncoder = new BinaryEncoder(compressionStream);
+                    bodyEncoder = asBinary ? (IAvroEncoder)new BinaryAvroEncoder(compressionStream) : new JsonAvroEncoder(compressionStream);
                 }
 
                 // serialize header
-                headerEncoder.Encode(message.Header);
+                message.Header.Encode(headerEncoder);
 
                 // serialize header extension
                 if (message.Extension != null && includeExtension)
-                    bodyEncoder.Encode(message.Extension); // Use body encoder to handle compression
+                    message.Extension.Encode(bodyEncoder); // Use body encoder to handle compression
 
-                bodyEncoder.Encode(message.Body);
+                message.Body.Encode(bodyEncoder);
 
                 if (compressionStream != null)
                     compressionStream.Close();
@@ -215,50 +194,22 @@ namespace Energistics.Etp.Common
         }
 
         /// <summary>
-        /// Encodes the record.
-        /// </summary>
-        /// <typeparam name="T">The record type.</typeparam>
-        /// <param name="encoder">The encoder to use.</param>
-        /// <param name="record">The record to encode.</param>
-        public static void Encode<T>(this Encoder encoder, T record) where T : ISpecificRecord
-        {
-            var writer = new SpecificWriter<T>(record.Schema);
-            writer.Write(record, encoder);
-        }
-
-        /// <summary>
         /// Encodes the record to a byte array.
         /// </summary>
         /// <typeparam name="T">The record type.</typeparam>
         /// <param name="record">The record to encode.</param>
         /// <returns>The encoded byte array.</returns>
-        public static byte[] EncodeToBytes<T>(this T record) where T : ISpecificRecord
+        public static byte[] EncodeToBytes<T>(this T record) where T : class, IEtpRecord, new()
         {
             using (var stream = new MemoryStream())
             {
-                var encoder = new BinaryEncoder(stream);
+                var encoder = new BinaryAvroEncoder(stream);
 
                 if (record != null)
-                    encoder.Encode(record);
+                    encoder.EncodeAvroObject<T>(record);
 
                 return stream.ToArray();
             }
-        }
-
-        /// <summary>
-        /// Decodes the message body using the specified decoder.
-        /// </summary>
-        /// <typeparam name="T">The type of the message.</typeparam>
-        /// <param name="decoder">The decoder.</param>
-        /// <returns>The decoded message body.</returns>
-        public static T Decode<T>(this Decoder decoder) where T : ISpecificRecord
-        {
-            var record = Activator.CreateInstance<T>();
-            var reader = new SpecificReader<T>(new EtpSpecificReader(record.Schema, record.Schema));
-
-            reader.Read(record, decoder);
-
-            return record;
         }
 
         /// <summary>
@@ -267,50 +218,47 @@ namespace Energistics.Etp.Common
         /// <typeparam name="T">The record type.</typeparam>
         /// <param name="bytes">The byte array to decode the record from.</param>
         /// <returns>The decoded record.</returns>
-        public static T DecodeFromBytes<T>(byte[] bytes) where T : ISpecificRecord
+        public static T DecodeFromBytes<T>(byte[] bytes) where T : class, IEtpRecord, new()
         {
             if (bytes == null)
                 return default(T);
 
             using (var stream = new MemoryStream(bytes))
+            using (var decoder = new BinaryAvroDecoder(stream))
             {
-                var decoder = new BinaryDecoder(stream);
-                return decoder.Decode<T>();
+                return decoder.DecodeAvroObject<T>();
             }
         }
 
         /// <summary>
         /// Serializes the specified object instance.
         /// </summary>
-        /// <param name="instance">The object to serialize.</param>
-        /// <param name="indent">if set to <c>true</c> the JSON output should be indented; otherwise, <c>false</c>.</param>
+        /// <param name="instances">The objects to serialize.</param>
         /// <returns>The serialized JSON string.</returns>
-        public static string Serialize(object instance, bool indent = false)
+        public static string Serialize(params IAvroRecord[] instances)
         {
-            var formatting = indent ? Formatting.Indented : Formatting.None;
-            return JsonConvert.SerializeObject(instance, formatting, JsonSettings);
-        }
-
-        /// <summary>
-        /// Deserializes the specified JSON string.
-        /// </summary>
-        /// <typeparam name="T">The type of object.</typeparam>
-        /// <param name="json">The JSON string.</param>
-        /// <returns></returns>
-        public static T Deserialize<T>(string json)
-        {
-            return JsonConvert.DeserializeObject<T>(json, JsonSettings);
-        }
-
-        /// <summary>
-        /// Deserializes the specified JSON string.
-        /// </summary>
-        /// <param name="type">The type of object.</param>
-        /// <param name="json">The JSON string.</param>
-        /// <returns></returns>
-        public static object Deserialize(Type type, string json)
-        {
-            return JsonConvert.DeserializeObject(json, type, JsonSettings);
+            using (var writer = new StringWriter())
+            {
+                using (var encoder = new JsonAvroEncoder(writer))
+                {
+                    if (instances.Length == 1)
+                        instances[0].Encode(encoder);
+                    else
+                    {
+                        encoder.EncodeArrayStart(instances.Length, instances.Length);
+                        var separator = false;
+                        foreach (var instance in instances)
+                        {
+                            if (separator)
+                                encoder.EncodeArrayItemSeparator();
+                            instance.Encode(encoder);
+                            separator = true;
+                        }
+                        encoder.EncodeArrayEnd();
+                    }
+                }
+                return writer.ToString();
+            }
         }
 
         /// <summary>

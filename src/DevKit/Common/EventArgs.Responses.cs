@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Avro.Specific;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
 
@@ -29,7 +28,7 @@ namespace Energistics.Etp.Common
     /// </summary>
     /// <typeparam name="TRequest">The type of the message body for the for the original request that the message is in response to.</typeparam>
     /// <seealso cref="System.EventArgs" />
-    public abstract class ResponseEventArgsBase<TRequest> : EventArgs where TRequest : ISpecificRecord
+    public abstract class ResponseEventArgsBase<TRequest> : EventArgs where TRequest : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ResponseEventArgsBase{TRequest}"/> class.
@@ -59,7 +58,7 @@ namespace Energistics.Etp.Common
     /// </summary>
     /// <typeparam name="TRequest">The type of the request message body.</typeparam>
     /// <seealso cref="System.EventArgs" />
-    public class VoidResponseEventArgs<TRequest> : ResponseEventArgsBase<TRequest> where TRequest : ISpecificRecord
+    public class VoidResponseEventArgs<TRequest> : ResponseEventArgsBase<TRequest> where TRequest : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ResponseEventArgs{TRequest, TResponse}"/> class.
@@ -78,7 +77,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TRequest">The type of the request message body.</typeparam>
     /// <typeparam name="TResponse">The type of the response message body.</typeparam>
     /// <seealso cref="System.EventArgs" />
-    public class ResponseEventArgs<TRequest, TResponse> : ResponseEventArgsBase<TRequest> where TRequest : ISpecificRecord where TResponse : ISpecificRecord
+    public class ResponseEventArgs<TRequest, TResponse> : ResponseEventArgsBase<TRequest> where TRequest : IEtpMessageBody where TResponse : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ResponseEventArgs{TRequest, TResponse}"/> class.
@@ -115,7 +114,7 @@ namespace Energistics.Etp.Common
     /// <typeparam name="TResponse1">The first type of the response message body.</typeparam>
     /// <typeparam name="TResponse2">The second type of the response message body.</typeparam>
     /// <seealso cref="System.EventArgs" />
-    public class DualResponseEventArgs<TRequest, TResponse1, TResponse2> : ResponseEventArgsBase<TRequest> where TResponse1 : ISpecificRecord where TResponse2 : ISpecificRecord where TRequest : ISpecificRecord
+    public class DualResponseEventArgs<TRequest, TResponse1, TResponse2> : ResponseEventArgsBase<TRequest> where TResponse1 : IEtpMessageBody where TResponse2 : IEtpMessageBody where TRequest : IEtpMessageBody
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DualResponseEventArgs{TRequest, TResponse1, TResponse2}"/> class.

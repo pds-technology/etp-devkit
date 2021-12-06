@@ -56,17 +56,31 @@ namespace Energistics.Etp.Data
 
         public DateTime StoreCreated { get; protected set; } = 0L.ToUtcDateTime();
 
-        public MockObject Parent { get; set; }
+        public bool IsActive { get; private set; }
 
-        public MockObject Container { get; set; }
+        public DateTime LastActivatedTime { get; private set; } = 0L.ToUtcDateTime();
 
-        public List<MockObject> Sources { get; set; } = new List<MockObject>();
+        public DateTime ActiveChangeTime { get; private set; } = 0L.ToUtcDateTime();
 
-        public List<MockObject> Targets { get; set; } = new List<MockObject>();
+        public DateTime LastJoinedTime { get; private set; } = 0L.ToUtcDateTime();
 
-        public List<MockObject> SecondarySources { get; set; } = new List<MockObject>();
+        public DateTime LastUnjoinedTime { get; private set; } = 0L.ToUtcDateTime();
 
-        public List<MockObject> SecondaryTargets { get; set; } = new List<MockObject>();
+        public Dictionary<Guid, MockObject> Parents { get; private set; } = new Dictionary<Guid, MockObject>();
+
+        public Dictionary<Guid, MockObject> Children { get; private set; } = new Dictionary<Guid, MockObject>();
+
+        public Dictionary<Guid, MockObject> Containers { get; private set; } = new Dictionary<Guid, MockObject>();
+
+        public Dictionary<Guid, MockObject> Containees { get; private set; } = new Dictionary<Guid, MockObject>();
+
+        public Dictionary<Guid, MockObject> PrimarySources { get; private set; } = new Dictionary<Guid, MockObject>();
+
+        public Dictionary<Guid, MockObject> PrimaryTargets { get; private set; } = new Dictionary<Guid, MockObject>();
+
+        public Dictionary<Guid, MockObject> SecondarySources { get; private set; } = new Dictionary<Guid, MockObject>();
+
+        public Dictionary<Guid, MockObject> SecondaryTargets { get; private set; } = new Dictionary<Guid, MockObject>();
 
         public abstract HashSet<EtpDataObjectType> SupportedSourceTypes { get; }
         public abstract HashSet<EtpDataObjectType> SupportedTargetTypes { get; }
@@ -80,9 +94,9 @@ namespace Energistics.Etp.Data
 
         public void ClearLinks()
         {
-            Sources.Clear();
+            PrimarySources.Clear();
             SecondarySources.Clear();
-            Targets.Clear();
+            PrimaryTargets.Clear();
             SecondaryTargets.Clear();
         }
 
@@ -90,15 +104,33 @@ namespace Energistics.Etp.Data
         {
             if (IsDeleted) return;
 
-            if (Parent != null && !Parent.IsDeleted)
+            foreach (var parent in Parents.Values)
             {
-                Targets.Add(Parent);
-                Parent.Sources.Add(this);
+                if (parent.IsDeleted)
+                    continue;
+                PrimaryTargets[parent.Uuid] = parent;
+                parent.PrimarySources[Uuid] = this;
             }
-            if (Container != null && !Container.IsDeleted)
+            foreach (var child in Children.Values)
             {
-                Targets.Add(Container);
-                Container.Sources.Add(this);
+                if (child.IsDeleted)
+                    continue;
+                PrimarySources[child.Uuid] = child;
+                child.PrimaryTargets[Uuid] = this;
+            }
+            foreach (var container in Containers.Values)
+            {
+                if (container.IsDeleted)
+                    continue;
+                PrimaryTargets[container.Uuid] = container;
+                container.PrimaryTargets[Uuid] = this;
+            }
+            foreach (var containee in Containees.Values)
+            {
+                if (containee.IsDeleted)
+                    continue;
+                PrimarySources[containee.Uuid] = containee;
+                containee.PrimarySources[Uuid] = this;
             }
         }
 
@@ -106,82 +138,182 @@ namespace Energistics.Etp.Data
         {
             LastUpdate = touchTime;
             UpdateObjectLastWrite(touchTime);
-            if (Container != null && !Container.IsDeleted)
-                Container.Touch(touchTime);
+            foreach (var container in Containers.Values)
+                container.Touch(touchTime);
         }
 
         public virtual void Create(DateTime createdTime)
         {
             StoreCreated = createdTime;
+            IsActive = false;
+            LastJoinedTime = LastUnjoinedTime = ActiveChangeTime = LastActivatedTime = StoreCreated;
             UpdateObjectLastWrite(createdTime);
             UpdateDataLastWrite(createdTime);
         }
 
-        public void Delete(DateTime deleteTime)
+        public Dictionary<Guid, MockObject> Delete(DateTime deleteTime, bool pruneContainedDataObjects = false)
         {
             if (IsDeleted)
-                return;
+                return new Dictionary<Guid, MockObject>();
+
+            var deleted = new Dictionary<Guid, MockObject>() { [Uuid] = this };
 
             IsDeleted = true;
             UpdateObjectLastWrite(deleteTime);
+            var containers = Containers.Values.ToList();
+            foreach (var container in containers)
+            {
+                UnjoinContainer(container, deleteTime);
+            }
+            var containees = Containees.Values.ToList();
+            foreach (var containee in containees)
+            {
+                UnjoinContainee(containee, deleteTime);
+                if (pruneContainedDataObjects && containee.Containers.Count == 0)
+                {
+                    var d = containee.Delete(deleteTime, pruneContainedDataObjects: pruneContainedDataObjects);
+                    foreach (var kvp in d)
+                        deleted[kvp.Key] = kvp.Value;
+                }
+            }
+
+            return deleted;
         }
 
-        public void Restore(DateTime createTime)
+        public Dictionary<Guid, MockObject> Restore(DateTime createTime)
         {
             if (!IsDeleted)
-                return;
+                return new Dictionary<Guid, MockObject>();
+
+            var restored = new Dictionary<Guid, MockObject>() { [Uuid] = this };
 
             IsDeleted = false;
             Create(createTime);
+            foreach (var containee in Containees.Values)
+            {
+                var r = containee.Restore(createTime);
+
+                foreach (var kvp in r)
+                    restored[kvp.Key] = kvp.Value;
+            }
+
+            return restored;
         }
 
-        public void Unjoin(DateTime unjoinTime)
+        public void UnjoinContainer(MockObject container, DateTime unjoinTime)
         {
-            if (Container == null)
+            if (container == null || !Containers.ContainsKey(container.Uuid))
                 return;
 
-            Container.UnjoinChild(this, unjoinTime);
-            Container = null;
+            Containers.Remove(container.Uuid);
+            container.UnjoinContainee(this, unjoinTime);
+            LastUnjoinedTime = unjoinTime;
             UpdateObjectLastWrite(unjoinTime);
         }
 
-        protected virtual void UnjoinChild(MockObject child, DateTime unjoinTime)
+        protected virtual void UnjoinContainee(MockObject containee, DateTime unjoinTime)
         {
+            if (containee == null || !Containees.ContainsKey(containee.Uuid))
+                return;
+
+            Containees.Remove(containee.Uuid);
+            containee.UnjoinContainer(this, unjoinTime);
             UpdateObjectLastWrite(unjoinTime);
         }
 
-        public void Join(MockObject container, DateTime joinTime)
+        public void JoinContainer(MockObject container, DateTime joinTime)
         {
-            if (container == null || Container != null)
+            if (container == null || Containers.ContainsKey(container.Uuid))
                 return;
 
+            Containers[container.Uuid] = container;
+            container.JoinContainee(this, joinTime);
+            LastJoinedTime = joinTime;
             UpdateObjectLastWrite(joinTime);
-            Container = container;
-            Container.JoinChild(this, joinTime);
         }
 
-        protected virtual void JoinChild(MockObject child, DateTime unjoinTime)
+        protected virtual void JoinContainee(MockObject containee, DateTime joinTime)
         {
-            UpdateObjectLastWrite(unjoinTime);
+            if (containee == null || Containees.ContainsKey(containee.Uuid))
+                return;
+
+            Containees[containee.Uuid] = containee;
+            containee.JoinContainer(this, joinTime);
+            UpdateObjectLastWrite(joinTime);
+        }
+
+        protected virtual void AddChild(MockObject child, DateTime updateTime, bool relationshipOnChild)
+        {
+            if (child == null || Children.ContainsKey(child.Uuid))
+                return;
+
+            Children[child.Uuid] = child;
+            child.AddParent(this, updateTime, relationshipOnChild);
+            if (!relationshipOnChild)
+                UpdateObjectLastWrite(updateTime);
+        }
+
+        protected virtual void AddParent(MockObject parent, DateTime updateTime, bool relationshipOnChild)
+        {
+            if (parent == null || Parents.ContainsKey(parent.Uuid))
+                return;
+
+            Parents[parent.Uuid] = parent;
+            parent.AddChild(this, updateTime, relationshipOnChild);
+            if (relationshipOnChild)
+                UpdateObjectLastWrite(updateTime);
+        }
+
+        protected virtual void RemoveChild(MockObject child, DateTime updateTime, bool relationshipOnChild)
+        {
+            if (child == null || !Children.ContainsKey(child.Uuid))
+                return;
+
+            Children.Remove(child.Uuid);
+            child.RemoveParent(this, updateTime, relationshipOnChild);
+            if (!relationshipOnChild)
+                UpdateObjectLastWrite(updateTime);
+        }
+
+        protected virtual void RemoveParent(MockObject parent, DateTime updateTime, bool relationshipOnChild)
+        {
+            if (parent == null || !Parents.ContainsKey(parent.Uuid))
+                return;
+
+            Parents.Remove(parent.Uuid);
+            parent.RemoveChild(this, updateTime, relationshipOnChild);
+            if (relationshipOnChild)
+                UpdateObjectLastWrite(updateTime);
         }
 
         protected void UpdateObjectLastWrite(DateTime lastWrite)
         {
             ObjectLastWrite = lastWrite;
-            if (Container != null && !Container.IsDeleted)
-                Container.UpdateObjectLastWrite(lastWrite);
+            foreach (var container in Containers.Values)
+                container.UpdateObjectLastWrite(lastWrite);
         }
 
-        protected void UpdateDataLastWrite(DateTime lastWrite)
+        protected virtual void UpdateDataLastWrite(DateTime lastWrite)
         {
             DataLastWrite = lastWrite;
-            if (Container != null && !Container.IsDeleted)
-                Container.UpdateDataLastWrite(lastWrite);
+            foreach (var container in Containers.Values)
+                container.UpdateDataLastWrite(lastWrite);
+        }
+
+        public void SetActive(bool active, DateTime activeChangeTime)
+        {
+            LastActivatedTime = activeChangeTime;
+            if (IsActive == active)
+                return;
+
+            IsActive = active;
+            ActiveChangeTime = activeChangeTime;
+            UpdateObjectLastWrite(activeChangeTime);
         }
 
         public IEnumerable<EtpUri> AlternateUris(EtpVersion version)
         {
-            if (Parent == null && Container == null)
+            if (Parents.Count == 0 && Containers.Count == 0)
                 return Enumerable.Empty<EtpUri>();
 
             return ConstructAlternateUris(this, version);
@@ -193,12 +325,12 @@ namespace Energistics.Etp.Data
             {
                 if (context.NavigatePrimaryEdges)
                 {
-                    foreach (var @object in Sources)
+                    foreach (var @object in PrimarySources.Values)
                         yield return @object;
                 }
                 if (context.NavigateSecondaryEdges)
                 {
-                    foreach (var @object in SecondarySources)
+                    foreach (var @object in SecondarySources.Values)
                         yield return @object;
                 }
             }
@@ -206,12 +338,12 @@ namespace Energistics.Etp.Data
             {
                 if (context.NavigatePrimaryEdges)
                 {
-                    foreach (var @object in Targets)
+                    foreach (var @object in PrimaryTargets.Values)
                         yield return @object;
                 }
                 if (context.NavigateSecondaryEdges)
                 {
-                    foreach (var @object in SecondaryTargets)
+                    foreach (var @object in SecondaryTargets.Values)
                         yield return @object;
                 }
             }
@@ -221,28 +353,23 @@ namespace Energistics.Etp.Data
         {
             if (context.IncludeSecondarySources)
             {
-                foreach (var @object in SecondarySources)
+                foreach (var @object in SecondarySources.Values)
                     yield return @object;
             }
             if (context.IncludeSecondaryTargets)
             {
-                foreach (var @object in SecondaryTargets)
+                foreach (var @object in SecondaryTargets.Values)
                     yield return @object;
             }
         }
 
-        public IEnumerable<EtpDataObjectType> SupportedSourceAndTargetTypes(MockGraphContext context)
+        public IEnumerable<EtpDataObjectType> SupportedPrimarySourceAndTargetTypes(MockGraphContext context)
         {
             if (context.IncludeSources)
             {
                 if (context.NavigatePrimaryEdges)
                 {
                     foreach (var dataObjectType in SupportedSourceTypes)
-                        yield return dataObjectType;
-                }
-                if (context.NavigateSecondaryEdges)
-                {
-                    foreach (var dataObjectType in SupportedSecondarySourceTypes)
                         yield return dataObjectType;
                 }
             }
@@ -253,6 +380,21 @@ namespace Energistics.Etp.Data
                     foreach (var dataObjectType in SupportedTargetTypes)
                         yield return dataObjectType;
                 }
+            }
+        }
+
+        public IEnumerable<EtpDataObjectType> SupportedSecondarySourceAndTargetTypes(MockGraphContext context)
+        {
+            if (context.IncludeSources)
+            {
+                if (context.NavigateSecondaryEdges)
+                {
+                    foreach (var dataObjectType in SupportedSecondarySourceTypes)
+                        yield return dataObjectType;
+                }
+            }
+            if (context.IncludeTargets)
+            {
                 if (context.NavigateSecondaryEdges)
                 {
                     foreach (var dataObjectType in SupportedSecondaryTargetTypes)
@@ -260,25 +402,29 @@ namespace Energistics.Etp.Data
                 }
             }
         }
-
         private static IEnumerable<EtpUri> ConstructAlternateUris(MockObject @object, EtpVersion version)
         {
-            // Deleted objects are included to allow some checks against scopes during object deletion.
-            if (@object.Parent == null && @object.Container == null)
+            if (@object.Parents.Count == 0 && @object.Containers.Count == 0)
             {
                 yield return @object.Uri(version);
             }
             else
             {
-                if (@object.Parent != null)
+                if (@object.Parents.Count != 0)
                 {
-                    foreach (var uri in ConstructAlternateUris(@object.Parent, version))
-                        yield return uri.Append(@object.DataObjectType, objectId: @object.Uuid.ToString());
+                    foreach (var parent in @object.Parents.Values)
+                    {
+                        foreach (var uri in ConstructAlternateUris(parent, version))
+                            yield return uri.Append(@object.DataObjectType, objectId: @object.Uuid.ToString());
+                    }
                 }
-                if (@object.Container != null)
+                if (@object.Containers.Count != 0)
                 {
-                    foreach (var uri in ConstructAlternateUris(@object.Container, version))
-                        yield return uri.Append(@object.DataObjectType, objectId: @object.Uuid.ToString());
+                    foreach (var container in @object.Containers.Values)
+                    {
+                        foreach (var uri in ConstructAlternateUris(container, version))
+                            yield return uri.Append(@object.DataObjectType, objectId: @object.Uuid.ToString());
+                    }
                 }
             }
         }
@@ -307,7 +453,6 @@ namespace Energistics.Etp.Data
 
         private IEnumerable<MockObject> WalkGraph(int depth, bool includeSelf, MockGraphContext context, Dictionary<Guid, MockObject> visited)
         {
-            // Deleted objects are included to allow some checks against scopes during object deletion.
             if (includeSelf)
             {
                 if (!visited.ContainsKey(Uuid))
@@ -334,52 +479,52 @@ namespace Energistics.Etp.Data
             }
         }
 
-        public v11.Datatypes.Object.Resource Resource11 => new v11.Datatypes.Object.Resource
+        public v11.Datatypes.Object.Resource Resource11(bool includeCounts) => new v11.Datatypes.Object.Resource
         {
-            Uuid = Uuid.ToString(),
+            Uuid = Uuid,
             Uri = Uri(EtpVersion.v11),
             Name = Title,
-            HasChildren = (SupportedSourceTypes.Count + SupportedSecondarySourceTypes.Count) > 0 ? -1 : 0,
+            HasChildren = (includeCounts && (SupportedSourceTypes.Count + SupportedSecondarySourceTypes.Count) > 0) ? -1 : 0,
             ContentType = ContentType,
             ResourceType = ResourceTypes.DataObject.ToString(),
             CustomData = new Dictionary<string, string>(),
             ChannelSubscribable = true,
             ObjectNotifiable = true,
-            LastChanged = LastUpdate.ToEtpTimestamp(),
+            LastChanged = LastUpdate,
         };
 
-        public v12.Datatypes.Object.Resource Resource12 => new v12.Datatypes.Object.Resource
+        public v12.Datatypes.Object.Resource Resource12(bool includeCounts) => new v12.Datatypes.Object.Resource
         {
             Uri = Uri(EtpVersion.v12),
             AlternateUris = AlternateUris(EtpVersion.v12).Select(uri => uri.Uri).ToList(),
             Name = Title,
-            DataObjectType = DataObjectType,
-            SourceCount = Sources.Count + SecondarySources.Count,
-            TargetCount = Targets.Count + SecondaryTargets.Count,
-            LastChanged = LastUpdate.ToEtpTimestamp(),
-            StoreLastWrite = StoreLastWrite.ToEtpTimestamp(),
+            SourceCount = includeCounts ? PrimarySources.Count + SecondarySources.Count : null,
+            TargetCount = includeCounts ? PrimaryTargets.Count + SecondaryTargets.Count : null,
+            LastChanged = LastUpdate,
+            StoreCreated = StoreCreated,
+            StoreLastWrite = StoreLastWrite,
+            ActiveStatus = IsActive ? v12.Datatypes.Object.ActiveStatusKind.Active : v12.Datatypes.Object.ActiveStatusKind.Inactive,
             CustomData = new Dictionary<string, v12.Datatypes.DataValue>(),
         };
 
         public v12.Datatypes.Object.DeletedResource DeletedResource12 => new v12.Datatypes.Object.DeletedResource
         {
             Uri = Uri(EtpVersion.v12),
-            DeletedTime = StoreLastWrite.ToEtpTimestamp(),
-            DataObjectType = DataObjectType,
+            DeletedTime = StoreLastWrite,
             CustomData = new Dictionary<string, v12.Datatypes.DataValue>(),
         };
 
         public v11.Datatypes.Object.DataObject DataObject11(bool includeData) => new v11.Datatypes.Object.DataObject
         {
             Data = includeData ? Encoding.UTF8.GetBytes(Xml(EtpVersion.v11)) : new byte[0],
-            Resource = Resource11,
+            Resource = Resource11(false),
             ContentEncoding = ContentEncodings.Empty,
         };
 
         public v12.Datatypes.Object.DataObject DataObject12(bool includeData) => new v12.Datatypes.Object.DataObject
         {
             Data = includeData ? Encoding.UTF8.GetBytes(Xml(EtpVersion.v11)) : new byte[0],
-            Resource = Resource12,
+            Resource = Resource12(false),
             Format = Formats.Xml,
             BlobId = null,
         };
@@ -387,14 +532,14 @@ namespace Energistics.Etp.Data
         public v11.Datatypes.Object.ObjectChange ObjectChange11(bool includeData, v11.Datatypes.Object.ObjectChangeTypes changeType) => new v11.Datatypes.Object.ObjectChange
         {
             ChangeType = changeType,
-            ChangeTime = StoreLastWrite.ToEtpTimestamp(),
+            ChangeTime = StoreLastWrite,
             DataObject = DataObject11(includeData),
         };
 
         public v12.Datatypes.Object.ObjectChange ObjectChange12(bool includeData, v12.Datatypes.Object.ObjectChangeKind changeKind) => new v12.Datatypes.Object.ObjectChange
         {
             ChangeKind = changeKind,
-            ChangeTime = StoreLastWrite.ToEtpTimestamp(),
+            ChangeTime = StoreLastWrite,
             DataObject = DataObject12(includeData),
         };
 

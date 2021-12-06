@@ -24,7 +24,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Energistics.Etp.Store
 {
@@ -85,28 +84,6 @@ namespace Energistics.Etp.Store
         public DateTime StoreLastWrite { get; private set; }
         private BackgroundLoop ActiveStatusLoop { get; } = new BackgroundLoop();
         private bool Locked { get; set; }
-
-        private abstract class Subscription<TContext>
-        {
-            public EtpVersion Version { get; set; }
-            public Guid Uuid { get; set; }
-            public DateTime LastStoreWriteTime { get; set; }
-            public Dictionary<Guid, MockObject> Objects { get; } = new Dictionary<Guid, MockObject>();
-            public Dictionary<Guid, MockObject> AddedObjects { get; } = new Dictionary<Guid, MockObject>();
-            public Dictionary<Guid, MockObject> RemovedObjects { get; } = new Dictionary<Guid, MockObject>();
-            public MockObjectCallbacks Callbacks { get; set; }
-            public abstract TContext GetContext(MockObject @object);
-            public virtual IEnumerable<MockObject> GetCandidateObjects() => Objects.Values.FilterByStoreLastWrite(LastStoreWriteTime);
-            public virtual Guid SubscriptionUuid(TContext context) => Uuid;
-            public virtual bool IncludeObjectData(TContext context) => true;
-            public virtual bool CanSendCreated(TContext context) => true;
-            public virtual bool CanSendUpdated(TContext context) => true;
-            public virtual bool CanSendJoined(TContext context) => true;
-            public virtual bool CanSendUnjoined(TContext context) => true;
-            public virtual bool CanSendActiveStatusChanged(TContext context) => true;
-            public virtual bool CanSendDeleted(TContext context) => true;
-        }
-
 
         public MockStore()
         {
@@ -172,7 +149,6 @@ namespace Energistics.Etp.Store
             RefreshGraph();
             RefreshObjectLookUps();
             RefreshFamilies();
-            RefreshSubscriptions();
         }
 
         private void RefreshGraph()
@@ -181,10 +157,10 @@ namespace Energistics.Etp.Store
 
             foreach (var dataspace in Dataspaces)
             {
-                foreach (var @object in dataspace.Objects)
+                foreach (var @object in dataspace.Objects.Values)
                     @object.ClearLinks();
 
-                foreach (var @object in dataspace.Objects)
+                foreach (var @object in dataspace.Objects.Values)
                     @object.Link();
             }
         }
@@ -200,7 +176,7 @@ namespace Energistics.Etp.Store
 
             foreach (var dataspace in Dataspaces)
             {
-                foreach (var @object in dataspace.Objects)
+                foreach (var @object in dataspace.Objects.Values)
                 {
                     if (@object.IsDeleted)
                         DeletedObjects[@object.Uuid] = @object;
@@ -262,15 +238,15 @@ namespace Energistics.Etp.Store
 
             Logger.Debug($"Touching {@object.Uri(EtpVersion.v12)}");
             @object.Touch(StoreLastWrite);
-            if (@object.Container != null)
+            foreach (var parent in @object.Containers.Values)
             {
-                Logger.Debug($"Updating container object {@object.Container.Uri(EtpVersion.v12)}");
-                if (@object.Container.Container != null)
-                    Logger.Debug($"Updating container object {@object.Container.Container.Uri(EtpVersion.v12)}");
+                Logger.Debug($"Updating container object {parent.Uri(EtpVersion.v12)}");
+                foreach (var grandParent in parent.Containers.Values)
+                    Logger.Debug($"Updating container object {grandParent.Uri(EtpVersion.v12)}");
             }
         }
 
-        public void DeleteObject(MockObject @object)
+        public void DeleteObject(MockObject @object, bool pruneContainedDataObjects = false)
         {
             CheckLocked();
             if (@object == null || @object.IsDeleted)
@@ -278,17 +254,19 @@ namespace Energistics.Etp.Store
 
             Logger.Debug($"Deleting {@object.Uri(EtpVersion.v12)}");
 
-            @object.Delete(StoreLastWrite);
-            if (@object.Container != null)
+            var deleted = @object.Delete(StoreLastWrite, pruneContainedDataObjects: pruneContainedDataObjects);
+            foreach (var parent in @object.Containers.Values)
             {
-                Logger.Debug($"Updating container object {@object.Container.Uri(EtpVersion.v12)}");
-                if (@object.Container.Container != null)
-                    Logger.Debug($"Updating container object {@object.Container.Container.Uri(EtpVersion.v12)}");
+                Logger.Debug($"Updating container object {parent.Uri(EtpVersion.v12)}");
+                foreach (var grandParent in parent.Containers.Values)
+                    Logger.Debug($"Updating container object {grandParent.Uri(EtpVersion.v12)}");
             }
 
-            RefreshSubscriptions();
-            @object.Dataspace.Objects.Remove(@object);
-            @object.Dataspace.DeletedObjects.Add(@object);
+            foreach (var deletedObject in deleted.Values)
+            {
+                @object.Dataspace.Objects.Remove(deletedObject.Uuid);
+                @object.Dataspace.DeletedObjects[deletedObject.Uuid] = deletedObject;
+            }
             RefreshAll();
         }
 
@@ -299,40 +277,44 @@ namespace Energistics.Etp.Store
                 return;
 
             Logger.Debug($"Restoring {@object.Uri(EtpVersion.v12)}");
-            if (@object.Container != null)
+            foreach (var parent in @object.Containers.Values)
             {
-                Logger.Debug($"Updating container object {@object.Container.Uri(EtpVersion.v12)}");
-                if (@object.Container.Container != null)
-                    Logger.Debug($"Updating container object {@object.Container.Container.Uri(EtpVersion.v12)}");
+                Logger.Debug($"Updating container object {parent.Uri(EtpVersion.v12)}");
+                foreach (var grandParent in parent.Containers.Values)
+                    Logger.Debug($"Updating container object {grandParent.Uri(EtpVersion.v12)}");
             }
 
-            @object.Restore(StoreLastWrite);
+            var restored = @object.Restore(StoreLastWrite);
 
-            @object.Dataspace.DeletedObjects.Remove(@object);
-            @object.Dataspace.Objects.Add(@object);
-            RefreshAll();
-        }
-
-        public void UnjoinObject(MockObject @object)
-        {
-            CheckLocked();
-            if (@object?.Container == null)
-                return;
-
-            Logger.Debug($"Unjoining {@object.Uri(EtpVersion.v12)} from {@object.Container.Uri(EtpVersion.v12)}");
-            @object.Unjoin(StoreLastWrite);
+            foreach (var restoredObject in restored.Values)
+            {
+                @object.Dataspace.DeletedObjects.Remove(restoredObject.Uuid);
+                @object.Dataspace.Objects[restoredObject.Uuid] = restoredObject;
+            }
 
             RefreshAll();
         }
 
-        public void JoinObject(MockObject @object, MockObject container)
+        public void UnjoinObject(MockObject container, MockObject containee)
         {
             CheckLocked();
-            if (container == null || @object.Container != null)
+            if (container == null || containee == null || !container.Containees.ContainsKey(containee.Uuid))
                 return;
 
-            Logger.Debug($"Joining {@object.Uri(EtpVersion.v12)} to {container.Uri(EtpVersion.v12)}");
-            @object.Join(container, StoreLastWrite);
+            Logger.Debug($"Unjoining {containee.Uri(EtpVersion.v12)} from {container.Uri(EtpVersion.v12)}");
+            containee.UnjoinContainer(container, StoreLastWrite);
+
+            RefreshAll();
+        }
+
+        public void JoinObject(MockObject container, MockObject containee)
+        {
+            CheckLocked();
+            if (container == null || containee == null || container.Containees.ContainsKey(containee.Uuid))
+                return;
+
+            Logger.Debug($"Joining {containee.Uri(EtpVersion.v12)} to {container.Uri(EtpVersion.v12)}");
+            containee.JoinContainer(container, StoreLastWrite);
 
             RefreshAll();
         }
@@ -363,181 +345,175 @@ namespace Energistics.Etp.Store
         {
             ExecuteWithLock(() =>
             {
-                RefreshGrowingObjectActiveStatus();
-                RefreshWellboreActiveStatus();
+                RefreshActiveObjectActiveStatus();
             });
         }
 
-        private void RefreshGrowingObjectActiveStatus()
+        private void RefreshActiveObjectActiveStatus()
         {
             foreach (var @object in Objects.Values)
             {
-                if (!(@object is IMockGrowingObject))
+                if (!(@object is IMockActiveObject))
                     continue;
 
-                var growingObject = @object as IMockGrowingObject;
-                if (growingObject.IsActive && StoreLastWrite - growingObject.AppendTime > TimeSpan.FromSeconds(3.0))
+                var growingObject = @object as IMockActiveObject;
+                if (growingObject.IsActive && StoreLastWrite - growingObject.LastActivatedTime > TimeSpan.FromSeconds(3.0))
                     growingObject.SetActive(false, StoreLastWrite);
-            }
-        }
-
-        private void RefreshWellboreActiveStatus()
-        {
-            foreach (var @object in Objects.Values)
-            {
-                if (!(@object is MockWellbore))
-                    continue;
-
-                var wellbore = @object as MockWellbore;
-                var isActive = @object.Sources.Any(s => (s is IMockGrowingObject) && ((IMockGrowingObject)s).IsActive);
-                wellbore.SetActive(isActive, StoreLastWrite);
             }
         }
 
         private void RefreshSubscriptionObjects<TContext>(Subscription<TContext> subscription, IEnumerable<MockObject> objects)
         {
-            var removedObjects = new Dictionary<Guid, MockObject>();
-            var addedObjects = new Dictionary<Guid, MockObject>();
-
-            var newObjects = new Dictionary<Guid, MockObject>();
-            // Set up initial set of objects and deleted objects based on current graph.
-            // Current graph may include data objects flagged as deleted that are in the process of being deleted.
-            // Also detect and any added objects.
+            // This method may be run multiple times before notifications are sent out.
+            subscription.Objects = new Dictionary<Guid, MockObject>();
             foreach (var @object in objects)
-            {
-                if (@object.IsDeleted)
-                    removedObjects[@object.Uuid] = @object;
-                else
-                {
-                    newObjects[@object.Uuid] = @object;
-                    if (!subscription.Objects.ContainsKey(@object.Uuid) || @object.StoreCreated > subscription.LastStoreWriteTime)
-                        addedObjects[@object.Uuid] = @object;
-                }
-            }
-
-            // Compare against previously known objects to find any unjoined or other deleted objects.
-            foreach (var @object in subscription.Objects.Values)
-            {
-                if (!newObjects.ContainsKey(@object.Uuid))
-                    removedObjects[@object.Uuid] = @object;
-            }
-
-            // Replace set of current objects.
-            subscription.Objects.Clear();
-            foreach (var kvp in newObjects)
-                subscription.Objects[kvp.Key] = kvp.Value;
-
-            // Clean up current added / removed state.
-            foreach (var uuid in subscription.AddedObjects.Keys.ToList())
-            {
-                if (!subscription.Objects.ContainsKey(uuid))
-                    subscription.AddedObjects.Remove(uuid);
-            }
-            foreach (var uuid in subscription.RemovedObjects.Keys.ToList())
-            {
-                if (subscription.Objects.ContainsKey(uuid))
-                    subscription.RemovedObjects.Remove(uuid);
-            }
-
-            // Merge in new added / removed objects.
-            foreach (var kvp in addedObjects)
-                subscription.AddedObjects[kvp.Key] = kvp.Value;
-            foreach (var kvp in removedObjects)
-                subscription.RemovedObjects[kvp.Key] = kvp.Value;
+                subscription.Objects[@object.Uuid] = @object;
         }
 
-        private void SendNotificationsForObjectsAddedToScope<TContext>(Subscription<TContext> subscription)
+        private void SendJoinedSubscriptionNotifications<TContext>(Subscription<TContext> subscription)
         {
             CheckLocked();
 
-            foreach (var @object in subscription.AddedObjects.Values)
+            if (subscription.Callbacks.JoinedSubscription == null)
+                return;
+
+            foreach (var @object in subscription.GetJoinedScopeObjects())
             {
                 var context = subscription.GetContext(@object);
-                if (@object.StoreCreated > subscription.LastStoreWriteTime)
-                {
-                    if (subscription.CanSendCreated(context))
-                        subscription.Callbacks.Created?.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
-                }
-                else
-                {
-                    if (subscription.CanSendJoined(context))
-                        subscription.Callbacks.Joined?.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
-                }
+                if (subscription.CanSendJoinedScope(context))
+                    subscription.Callbacks.JoinedSubscription.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
             }
         }
 
-        private void SendUpdatedNotificationsForObjectsInScope<TContext>(Subscription<TContext> subscription)
+        private void SendCreatedNotifications<TContext>(Subscription<TContext> subscription)
         {
             CheckLocked();
 
-            foreach (var @object in subscription.GetCandidateObjects())
-            {
-                if (subscription.AddedObjects.ContainsKey(@object.Uuid)) // Skip created / joined objects.
-                    continue;
+            if (subscription.Callbacks.Created == null)
+                return;
 
+            foreach (var @object in subscription.GetCreatedObjects())
+            {
+                var context = subscription.GetContext(@object);
+                if (subscription.CanSendCreated(context))
+                    subscription.Callbacks.Created.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
+            }
+        }
+
+        private void SendUpdatedNotifications<TContext>(Subscription<TContext> subscription)
+        {
+            CheckLocked();
+
+            if (subscription.Callbacks.Updated == null)
+                return;
+
+            foreach (var @object in subscription.GetUpdatedObjects())
+            {
                 var context = subscription.GetContext(@object);
                 if (subscription.CanSendUpdated(context))
-                    subscription.Callbacks.Updated?.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
+                    subscription.Callbacks.Updated.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
             }
         }
 
-
-        private void SendActivatedNotificationsForObjectsInScope<TContext>(Subscription<TContext> subscription)
+        private void SendJoinedAndUnjoinedNotifications<TContext>(Subscription<TContext> subscription)
         {
             CheckLocked();
 
-            foreach (var @object in subscription.GetCandidateObjects())
-            {
-                if (subscription.AddedObjects.ContainsKey(@object.Uuid)) // Skip created / joined objects.
-                    continue;
-
-                if (@object is IMockActiveObject)
-                {
-                    var context = subscription.GetContext(@object);
-                    var activeObject = @object as IMockActiveObject;
-                    if (activeObject.ActiveChangeTime > subscription.LastStoreWriteTime && subscription.CanSendActiveStatusChanged(context) && activeObject.IsActive)
-                        subscription.Callbacks.ActiveStatusChanged?.Invoke(subscription.SubscriptionUuid(context), @object, activeObject.IsActive);
-                }
-            }
-        }
-
-        private void SendDeactivatedNotificationsForObjectsInScope<TContext>(Subscription<TContext> subscription)
-        {
-            CheckLocked();
-
-            foreach (var @object in subscription.GetCandidateObjects())
-            {
-                if (subscription.AddedObjects.ContainsKey(@object.Uuid)) // Skip created / joined objects.
-                    continue;
-
-                if (@object is IMockActiveObject)
-                {
-                    var context = subscription.GetContext(@object);
-                    var activeObject = @object as IMockActiveObject;
-                    if (activeObject.ActiveChangeTime > subscription.LastStoreWriteTime && subscription.CanSendActiveStatusChanged(context) && !activeObject.IsActive)
-                        subscription.Callbacks.ActiveStatusChanged?.Invoke(subscription.SubscriptionUuid(context), @object, activeObject.IsActive);
-                }
-            }
-        }
-
-        private void SendNotificationsForObjectsRemovedFromScope<TContext>(Subscription<TContext> subscription)
-        {
-            CheckLocked();
-
-            foreach (var @object in subscription.RemovedObjects.Values)
+            foreach (var @object in subscription.GetJoinedAndUnjoinedObjects())
             {
                 var context = subscription.GetContext(@object);
-                if (@object.IsDeleted)
+
+                if (@object.LastJoinedTime > subscription.LastNotificationTime && @object.LastUnjoinedTime > subscription.LastNotificationTime)
                 {
-                    if (subscription.CanSendDeleted(context))
-                        subscription.Callbacks.Deleted?.Invoke(subscription.SubscriptionUuid(context), @object);
+                    if (@object.LastJoinedTime > @object.LastUnjoinedTime)
+                    {
+                        if (subscription.Callbacks.Joined != null && subscription.CanSendJoined(context))
+                            subscription.Callbacks.Joined.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
+                        if (subscription.Callbacks.Unjoined != null && subscription.CanSendUnjoined(context))
+                            subscription.Callbacks.Unjoined.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
+                    }
+                    else
+                    {
+                        if (subscription.Callbacks.Unjoined != null && subscription.CanSendUnjoined(context))
+                            subscription.Callbacks.Unjoined.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
+                        if (subscription.Callbacks.Joined != null && subscription.CanSendJoined(context))
+                            subscription.Callbacks.Joined.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
+                    }
                 }
-                else
+                else if (@object.LastJoinedTime > subscription.LastNotificationTime)
                 {
-                    if (subscription.CanSendUnjoined(context))
-                        subscription.Callbacks.Unjoined?.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
+                    if (subscription.Callbacks.Joined != null && subscription.CanSendJoined(context))
+                        subscription.Callbacks.Joined.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
+                }
+                else if (@object.LastUnjoinedTime > subscription.LastNotificationTime)
+                {
+                    if (subscription.Callbacks.Unjoined != null && subscription.CanSendUnjoined(context))
+                        subscription.Callbacks.Unjoined.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
                 }
             }
+        }
+
+
+        private void SendActivatedNotifications<TContext>(Subscription<TContext> subscription)
+        {
+            CheckLocked();
+
+            if (subscription.Callbacks.ActiveStatusChanged == null)
+                return;
+
+            foreach (var @object in subscription.GetActivedObjects())
+            {
+                var context = subscription.GetContext(@object);
+                if (subscription.CanSendActiveStatusChanged(context))
+                    subscription.Callbacks.ActiveStatusChanged.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
+            }
+        }
+
+        private void SendDeactivatedNotifications<TContext>(Subscription<TContext> subscription)
+        {
+            CheckLocked();
+
+            if (subscription.Callbacks.ActiveStatusChanged == null)
+                return;
+
+            foreach (var @object in subscription.GetDeactivedObjects())
+            {
+                var context = subscription.GetContext(@object);
+                if (subscription.CanSendActiveStatusChanged(context))
+                    subscription.Callbacks.ActiveStatusChanged.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
+            }
+        }
+
+        private void SendDeletedNotifications<TContext>(Subscription<TContext> subscription)
+        {
+            CheckLocked();
+
+            if (subscription.Callbacks.Deleted == null)
+                return;
+
+            foreach (var @object in subscription.GetDeletedObjects())
+            {
+                var context = subscription.GetContext(@object);
+                if (subscription.CanSendDeleted(context))
+                    subscription.Callbacks.Deleted.Invoke(subscription.SubscriptionUuid(context), @object);
+            }
+        }
+
+        private void SendUnjoinedSubscriptionNotifications<TContext>(Subscription<TContext> subscription)
+        {
+            CheckLocked();
+
+            if (subscription.Callbacks.UnjoinedSubscription == null)
+                return;
+
+            foreach (var @object in subscription.GetUnjoinedScopeObjects())
+            {
+                var context = subscription.GetContext(@object);
+                if (subscription.CanSendUnjoinedScope(context))
+                    subscription.Callbacks.UnjoinedSubscription.Invoke(subscription.SubscriptionUuid(context), @object, subscription.IncludeObjectData(context));
+            }
+
+
         }
     }
 }

@@ -49,8 +49,8 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
         {
             var body = new FindParts
             {
-                Uri = uri,
-                Format = format,
+                Uri = uri ?? string.Empty,
+                Format = format ?? Formats.Xml,
             };
 
             return SendRequest(body, extension: extension);

@@ -52,7 +52,7 @@ namespace Energistics.Etp.v12.Protocol.StoreQuery
         /// <param name="format">The format of the data (XML or JSON).</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        public virtual EtpMessage<FindDataObjects> FindDataObjects(ContextInfo context, ContextScopeKind scope, long? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, string format = Formats.Xml, IMessageHeaderExtension extension = null)
+        public virtual EtpMessage<FindDataObjects> FindDataObjects(ContextInfo context, ContextScopeKind scope, DateTime? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, string format = Formats.Xml, IMessageHeaderExtension extension = null)
         {
             var body = new FindDataObjects
             {

@@ -69,7 +69,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <summary>
         /// Handles the TruncateChannels event from a customer.
         /// </summary>
-        event EventHandler<MapRequestEventArgs<TruncateChannels, long>> OnTruncateChannels;
+        event EventHandler<MapRequestEventArgs<TruncateChannels, DateTime>> OnTruncateChannels;
 
         /// <summary>
         /// Sends a TruncateChannelsResponse message to a customer.
@@ -79,7 +79,7 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<TruncateChannelsResponse> TruncateChannelsResponse(IMessageHeader correlatedHeader, IDictionary<string, long> channelsTruncatedTime, bool isFinalPart = true, IMessageHeaderExtension extension = null);
+        EtpMessage<TruncateChannelsResponse> TruncateChannelsResponse(IMessageHeader correlatedHeader, IDictionary<string, DateTime> channelsTruncatedTime, bool isFinalPart = true, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Sends a complete multi-part set of TruncateChannelsResponse and ProtocolException messages to a customer.
@@ -93,36 +93,37 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// <param name="responseExtension">The message header extension for the OpenChannelsResponse message.</param>
         /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
         /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
-        EtpMessage<TruncateChannelsResponse> TruncateChannelsResponse(IMessageHeader correlatedHeader, IDictionary<string, long> channelsTruncatedTime, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null);
+        EtpMessage<TruncateChannelsResponse> TruncateChannelsResponse(IMessageHeader correlatedHeader, IDictionary<string, DateTime> channelsTruncatedTime, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null);
 
         /// <summary>
         /// Handles the ReplaceRange event from a customer.
         /// </summary>
-        event EventHandler<RequestEventArgs<ReplaceRange, IDictionary<string, long>>> OnReplaceRange;
+        event EventHandler<RequestEventArgs<ReplaceRange, DateTime>> OnReplaceRange;
 
         /// <summary>
         /// Sends a ReplaceRangeResponse message to a customer.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
-        /// <param name="channelChangeTime">The channel change times.</param>
+        /// <param name="channelChangeTime">The channel change time.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<ReplaceRangeResponse> ReplaceRangeResponse(IMessageHeader correlatedHeader, IDictionary<string, long> channelChangeTime, IMessageHeaderExtension extension = null);
+        EtpMessage<ReplaceRangeResponse> ReplaceRangeResponse(IMessageHeader correlatedHeader, DateTime channelChangeTime, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the CloseChannels event from a customer.
         /// </summary>
-        event EventHandler<MapRequestEventArgs<CloseChannels, long>> OnCloseChannels;
+        event EventHandler<MapRequestWithContextEventArgs<CloseChannels, long, ChannelsClosedReason>> OnCloseChannels;
 
         /// <summary>
         /// Sends a ChannelsClosed message to a customer in response to a CloseChannels message.
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="channelIds">The channel IDs.</param>
+        /// <param name="reason">The human readable reason why the channels were closed.</param>
         /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<ChannelsClosed> ResponseChannelsClosed(IMessageHeader correlatedHeader, IDictionary<string, long> channelIds, bool isFinalPart = true, IMessageHeaderExtension extension = null);
+        EtpMessage<ChannelsClosed> ResponseChannelsClosed(IMessageHeader correlatedHeader, IDictionary<string, long> channelIds, string reason, bool isFinalPart = true, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Sends a complete multi-part set of ChannelsClosed and ProtocolException messages to a customer in response to a CloseChannels message.
@@ -131,27 +132,34 @@ namespace Energistics.Etp.v12.Protocol.ChannelDataLoad
         /// </summary>
         /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
         /// <param name="channelIds">The channel IDs.</param>
+        /// <param name="reason">The human readable reason why the channels were closed.</param>
         /// <param name="errors">The errors.</param>
         /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
         /// <param name="responseExtension">The message header extension for the ChannelsClosed message.</param>
         /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
         /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
-        EtpMessage<ChannelsClosed> ResponseChannelsClosed(IMessageHeader correlatedHeader, IDictionary<string, long> channelIds, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null);
+        EtpMessage<ChannelsClosed> ResponseChannelsClosed(IMessageHeader correlatedHeader, IDictionary<string, long> channelIds, string reason, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null);
 
         /// <summary>
         /// Sends a ChannelsClosed message to a customer as a notification.
         /// </summary>
         /// <param name="channelIds">The IDs of the closed channels.</param>
+        /// <param name="reason">The human readable reason why the channels were closed.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<ChannelsClosed> NotificationChannelsClosed(IDictionary<string, long> channelIds, IMessageHeaderExtension extension = null);
+        EtpMessage<ChannelsClosed> NotificationChannelsClosed(IDictionary<string, long> channelIds, string reason, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Sends a ChannelsClosed message to a customer as a notification.
         /// </summary>
         /// <param name="channelIds">The IDs of the closed channels.</param>
+        /// <param name="reason">The human readable reason why the channels were closed.</param>
         /// <param name="extension">The message header extension.</param>
         /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
-        EtpMessage<ChannelsClosed> NotificationChannelsClosed(IList<long> channelIds, IMessageHeaderExtension extension = null);
+        EtpMessage<ChannelsClosed> NotificationChannelsClosed(IList<long> channelIds, string reason, IMessageHeaderExtension extension = null);
+    }
+    public class ChannelsClosedReason
+    {
+        public string Reason { get; set; } = "Customer Request";
     }
 }

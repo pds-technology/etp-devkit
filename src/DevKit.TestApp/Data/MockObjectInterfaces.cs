@@ -26,6 +26,8 @@ namespace Energistics.Etp.Data
     {
         bool IsActive { get; }
 
+        DateTime LastActivatedTime { get; }
+
         DateTime ActiveChangeTime { get; }
 
         void SetActive(bool active, DateTime activeChangeTime);
@@ -39,7 +41,8 @@ namespace Energistics.Etp.Data
         double DepthScaleValue { get; }
         string DataType { get; set; }
         string Uom { get; set; }
-        MockPropertyKind ChannelClass { get; set; }
+        MockPropertyKind ChannelPropertyKind { get; set; }
+        MockPropertyKind IndexPropertyKind { get; set; }
         string IndexMnemonic { get; set; }
         string IndexUom { get; set; }
         IComparable StartIndex { get; }
@@ -49,7 +52,7 @@ namespace Energistics.Etp.Data
         DateTime? TimeStartIndex { get; }
         DateTime? TimeEndIndex { get; }
         int DataCount { get; }
-        DateTime AppendTime { get; }
+        DateTime DataLastWrite { get; }
 
         int GetStartDataIndex(IComparable comparable, bool inclusive);
         int GetEndDataIndex(IComparable comparable, bool inclusive);

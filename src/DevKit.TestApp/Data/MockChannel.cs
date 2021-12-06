@@ -52,10 +52,10 @@ namespace Energistics.Etp.Data
         {
             base.Link();
 
-            if (!IsDeleted && ChannelClass != null && !ChannelClass.IsDeleted)
+            if (!IsDeleted && ChannelPropertyKind != null && !ChannelPropertyKind.IsDeleted)
             {
-                SecondaryTargets.Add(ChannelClass);
-                ChannelClass.SecondarySources.Add(this);
+                SecondaryTargets[ChannelPropertyKind.Uuid] = ChannelPropertyKind;
+                ChannelPropertyKind.SecondarySources[Uuid] = this;
             }
         }
 
@@ -66,7 +66,7 @@ namespace Energistics.Etp.Data
 
             TimeIndexes.Add(index);
             Data.Add(value);
-            SetAppendTime(appendTime);
+            UpdateDataLastWrite(appendTime);
         }
 
         public void AppendDepthData(double index, double value, DateTime appendTime)
@@ -76,36 +76,38 @@ namespace Energistics.Etp.Data
 
             DepthIndexes.Add(index);
             Data.Add(value);
-            SetAppendTime(appendTime);
+            UpdateDataLastWrite(appendTime);
         }
 
         public override bool IsTime { get; }
         public List<double> Data { get; } = new List<double>();
+
         public v12.Datatypes.ChannelData.ChannelMetadataRecord ChannelMetadataRecord12(long channelId) => new v12.Datatypes.ChannelData.ChannelMetadataRecord
         {
             Id = channelId,
             ChannelName = Mnemonic,
             Uri = Uri(EtpVersion.v12),
-            DataType = v12.Datatypes.DataValueType.typeDouble,
+            DataKind = v12.Datatypes.ChannelData.ChannelDataKind.typeDouble,
             Status = IsActive ? v12.Datatypes.Object.ActiveStatusKind.Active : v12.Datatypes.Object.ActiveStatusKind.Inactive,
             Uom = Uom,
-            MeasureClass = ChannelClass?.Uri(EtpVersion.v12),
+            ChannelClassUri = ChannelPropertyKind?.Uri(EtpVersion.v12),
             Indexes = new List<v12.Datatypes.ChannelData.IndexMetadataRecord>
             {
-                new v12.Datatypes.ChannelData.IndexMetadataRecord
-                {
-                    Name = IndexMnemonic,
-                    Direction = v12.Datatypes.ChannelData.IndexDirection.Increasing,
-                    IndexKind = IsTime ? v12.Datatypes.ChannelData.ChannelIndexKind.Time : v12.Datatypes.ChannelData.ChannelIndexKind.Depth,
-                    Interval = new v12.Datatypes.Object.IndexInterval
-                    {
-                        StartIndex = new v12.Datatypes.IndexValue { Item = IsTime ? TimeStartIndex?.ToEtpTimestamp() : DepthStartIndex },
-                        EndIndex = new v12.Datatypes.IndexValue { Item = IsTime ? TimeEndIndex?.ToEtpTimestamp() : DepthEndIndex },
-                        DepthDatum = IsTime ? string.Empty : "KB",
-                        Uom = IndexUom,
-                    }
-                }
+                IndexMetadataRecord12,
             },
+            AxisVectorLengths = new List<int>(),
+            AttributeMetadata = new List<v12.Datatypes.AttributeMetadataRecord>(),
+            Source = string.Empty,
+            CustomData = new Dictionary<string, v12.Datatypes.DataValue>(),
+        };
+        public v12.Datatypes.ChannelData.FrameChannelMetadataRecord FrameChannelMetadataRecord12 => new v12.Datatypes.ChannelData.FrameChannelMetadataRecord
+        {
+            ChannelName = Mnemonic,
+            Uri = Uri(EtpVersion.v12),
+            DataKind = v12.Datatypes.ChannelData.ChannelDataKind.typeDouble,
+            Status = IsActive ? v12.Datatypes.Object.ActiveStatusKind.Active : v12.Datatypes.Object.ActiveStatusKind.Inactive,
+            Uom = Uom,
+            ChannelPropertyKindUri = ChannelPropertyKind?.Uri(EtpVersion.v12),
             AxisVectorLengths = new List<int>(),
             AttributeMetadata = new List<v12.Datatypes.AttributeMetadataRecord>(),
             Source = string.Empty,
@@ -128,17 +130,17 @@ $@"{indentation}<Channel{Namespaces(embedded)} schemaVersion=""2.0"" uuid=""{Uui
 {indentation}  <Uom>{Uom}</Uom>
 {indentation}  <GrowingStatus>{(IsActive ? "active" : "inactive")}</GrowingStatus>
 {indentation}  <Wellbore>
-{indentation}    <ContentType xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Parent.ContentType}</ContentType>
-{indentation}    <Title xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Parent.Title}</Title>
-{indentation}    <Uuid xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Parent.Uuid}</Uuid>
-{indentation}    <Uri xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Parent.Uri(version)}</Uri>
+{indentation}    <ContentType xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Wellbore.ContentType}</ContentType>
+{indentation}    <Title xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Wellbore.Title}</Title>
+{indentation}    <Uuid xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Wellbore.Uuid}</Uuid>
+{indentation}    <Uri xmlns=""http://www.energistics.org/energyml/data/commonv2"">{Wellbore.Uri(version)}</Uri>
 {indentation}  </Wellbore>
 {indentation}  <TimeDepth>{(IsTime ? "time" : "depth")}</TimeDepth>
 {indentation}  <ChannelClass>
-{indentation}    <ContentType xmlns=""http://www.energistics.org/energyml/data/commonv2"">{ChannelClass.ContentType}</ContentType>
-{indentation}    <Title xmlns=""http://www.energistics.org/energyml/data/commonv2"">{ChannelClass.Title}</Title>
-{indentation}    <Uuid xmlns=""http://www.energistics.org/energyml/data/commonv2"">{ChannelClass.Uuid}</Uuid>
-{indentation}    <Uri xmlns=""http://www.energistics.org/energyml/data/commonv2"">{ChannelClass.Uri(version)}</Uri>
+{indentation}    <ContentType xmlns=""http://www.energistics.org/energyml/data/commonv2"">{ChannelPropertyKind.ContentType}</ContentType>
+{indentation}    <Title xmlns=""http://www.energistics.org/energyml/data/commonv2"">{ChannelPropertyKind.Title}</Title>
+{indentation}    <Uuid xmlns=""http://www.energistics.org/energyml/data/commonv2"">{ChannelPropertyKind.Uuid}</Uuid>
+{indentation}    <Uri xmlns=""http://www.energistics.org/energyml/data/commonv2"">{ChannelPropertyKind.Uri(version)}</Uri>
 {indentation}  </ChannelClass>
 {indentation}  <StartIndex xsi:type=""{(IsTime ? "TimeIndexValue" : "DepthIndexValue")}"">
 {indentation}    <{(IsTime ? "Time" : "Depth")}>{(IsTime ? TimeStartIndex?.ToString("O", CultureInfo.InvariantCulture) : DepthStartIndex?.ToString(CultureInfo.InvariantCulture))}</{(IsTime ? "Time" : "Depth")}>
