@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -27,40 +28,74 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
     /// Defines the interface that must be implemented by the producer role of the ChannelStreaming protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.ChannelStreaming, "producer", "consumer")]
-    public interface IChannelStreamingProducer : IProtocolHandler
+    [ProtocolRole((int)Protocols.ChannelStreaming, Common.Roles.Producer, Common.Roles.Consumer)]
+    public interface IChannelStreamingProducer : IProtocolHandlerWithCapabilities<ICapabilitiesProducer>
     {
         /// <summary>
-        /// Gets or sets a value indicating whether this instance is a Simple Streamer.
+        /// Gets the maximum data items.
         /// </summary>
-        /// <value>
-        /// <c>true</c> if this instance is a Simple Streamer; otherwise, <c>false</c>.
-        /// </value>
-        bool IsSimpleStreamer { get; set; }
+        /// <value>The maximum data items.</value>
+        int MaxDataItems { get; }
 
         /// <summary>
-        /// Gets or sets the default describe URI.
+        /// Gets the maximum message rate.
         /// </summary>
-        /// <value>The default describe URI.</value>
-        string DefaultDescribeUri { get; set; }
+        /// <value>The maximum message rate.</value>
+        int MaxMessageRate { get; }
+
+        /// <summary>
+        /// Handles the Start event from a consumer.
+        /// </summary>
+        event EventHandler<VoidRequestEventArgs<Start>> OnStart;
+
+        /// <summary>
+        /// Handles the ChannelDescribe event from a consumer.
+        /// </summary>
+        event EventHandler<ListRequestEventArgs<ChannelDescribe, ChannelMetadataRecord>> OnChannelDescribe;
 
         /// <summary>
         /// Sends a ChannelMetadata message to a consumer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        long ChannelMetadata(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        /// <param name="subscriptionUuid">The subscription UUID associated with the ChannelDescribe message that the message to send is correlated with.</param>
+        /// <param name="channels">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelMetadata> ChannelMetadata(Guid subscriptionUuid, IList<ChannelMetadataRecord> channels, bool isFinalPart = true);
 
         /// <summary>
-        /// Sends a ChannelData message to a consumer.
+        /// Sends a ChannelMetadata message to a consumer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        long ChannelData(IMessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart);
+        /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
+        /// <param name="channels">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelMetadata> ChannelMetadata(IMessageHeader correlatedHeader, IList<ChannelMetadataRecord> channels, bool isFinalPart = true);
+
+        /// <summary>
+        /// Handles the ChannelStreamingStart event from a consumer.
+        /// </summary>
+        event EventHandler<VoidRequestEventArgs<ChannelStreamingStart>> OnChannelStreamingStart;
+
+        /// <summary>
+        /// Handles the ChannelRangeRequest event from a consumer.
+        /// </summary>
+        event EventHandler<ListRequestEventArgs<ChannelRangeRequest, DataItem>> OnChannelRangeRequest;
+
+        /// <summary>
+        /// Sends a streaming ChannelData message to a consumer.
+        /// </summary>
+        /// <param name="data">The list of <see cref="DataItem" /> objects.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelData> StreamingChannelData(IList<DataItem> data);
+
+        /// <summary>
+        /// Sends a ChannelData message to a consumer in response to a range request.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
+        /// <param name="data">The list of <see cref="DataItem" /> objects.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelData> ChannelRangeRequestChannelData(IMessageHeader correlatedHeader, IList<DataItem> data, bool isFinalPart = true);
 
         /// <summary>
         /// Sends a ChannelDataChange message to a consumer.
@@ -69,48 +104,28 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
         /// <param name="dataItems">The data items.</param>
-        /// <returns>The message identifier.</returns>
-        long ChannelDataChange(long channelId, long startIndex, long endIndex, IList<DataItem> dataItems);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelDataChange> ChannelDataChange(long channelId, long startIndex, long endIndex, IList<DataItem> dataItems);
 
         /// <summary>
         /// Sends a ChannelStatusChange message to a consumer.
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="status">The channel status.</param>
-        /// <returns>The message identifier.</returns>
-        long ChannelStatusChange(long channelId, ChannelStatuses status);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelStatusChange> ChannelStatusChange(long channelId, ChannelStatuses status);
 
         /// <summary>
         /// Sends a ChannelRemove message to a consumer.
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="reason">The reason.</param>
-        /// <returns>The message identifier.</returns>
-        long ChannelRemove(long channelId, string reason = null);
-
-        /// <summary>
-        /// Handles the Start event from a consumer.
-        /// </summary>
-        event ProtocolEventHandler<Start> OnStart;
-
-        /// <summary>
-        /// Handles the ChannelDescribe event from a consumer.
-        /// </summary>
-        event ProtocolEventHandler<ChannelDescribe, IList<ChannelMetadataRecord>> OnChannelDescribe;
-
-        /// <summary>
-        /// Handles the ChannelStreamingStart event from a consumer.
-        /// </summary>
-        event ProtocolEventHandler<ChannelStreamingStart> OnChannelStreamingStart;
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelRemove> ChannelRemove(long channelId, string reason = null);
 
         /// <summary>
         /// Handles the ChannelStreamingStop event from a consumer.
         /// </summary>
-        event ProtocolEventHandler<ChannelStreamingStop> OnChannelStreamingStop;
-
-        /// <summary>
-        /// Handles the ChannelRangeRequest event from a consumer.
-        /// </summary>
-        event ProtocolEventHandler<ChannelRangeRequest> OnChannelRangeRequest;
+        event EventHandler<VoidRequestEventArgs<ChannelStreamingStop>> OnChannelStreamingStop;
     }
 }

@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Energistics.Etp.Common;
-
 namespace Energistics.Etp.v11.Protocol
 {
     /// <summary>
     /// Interface for ETP 1.1 protocol handlers.
     /// </summary>
-    public interface IEtp11ProtocolHandler : IProtocolHandler
+    public interface IEtp11ProtocolHandler
     {
     }
 }

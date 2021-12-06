@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using Avro.IO;
+using System;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
+using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
 {
@@ -30,101 +29,72 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.DiscoveryQuery.IDiscoveryQueryCustomer" />
-    public class DiscoveryQueryCustomerHandler : Etp12ProtocolHandler, IDiscoveryQueryCustomer
+    public class DiscoveryQueryCustomerHandler : Etp12ProtocolHandler<CapabilitiesCustomer, ICapabilitiesCustomer, CapabilitiesStore, ICapabilitiesStore>, IDiscoveryQueryCustomer
     {
-        private readonly IDictionary<long, string> _requests;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscoveryQueryCustomerHandler"/> class.
         /// </summary>
-        public DiscoveryQueryCustomerHandler() : base((int)Protocols.DiscoveryQuery, "customer", "store")
+        public DiscoveryQueryCustomerHandler() : base((int)Protocols.DiscoveryQuery, Roles.Customer, Roles.Store)
         {
-            _requests = new ConcurrentDictionary<long, string>();
+            RegisterMessageHandler<FindResourcesResponse>(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResourcesResponse, HandleFindResourcesResponse);
         }
 
         /// <summary>
         /// Sends a FindResources message to a store.
         /// </summary>
-        /// <param name="uri">The URI.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long FindResources(string uri)
+        /// <param name="context">The context information.</param>
+        /// <param name="scope">The scope.</param>
+        /// <param name="storeLastWriteFilter">An optional parameter to filter discovery on a date when an object last changed.</param>
+        /// <param name="activeStatusFilter">if not <c>null</c>, request only objects with a matching active status.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<FindResources> FindResources(ContextInfo context, ContextScopeKind scope, DateTime? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.DiscoveryQuery, MessageTypes.DiscoveryQuery.FindResources);
-
-            var findResources = new FindResources()
+            var body = new FindResources
             {
-                Uri = uri
+                Context = context,
+                Scope = scope,
+                StoreLastWriteFilter = storeLastWriteFilter,
+                ActiveStatusFilter = activeStatusFilter,
             };
-            
-            return Session.SendMessage(header, findResources,
-                h => _requests[h.MessageId] = uri // Cache requested URIs by message ID
-            );
+
+            return SendRequest(body, extension: extension);
         }
 
         /// <summary>
         /// Handles the FindResourcesResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<FindResourcesResponse, string> OnFindResourcesResponse;
+        public event EventHandler<ResponseEventArgs<FindResources, FindResourcesResponse>> OnFindResourcesResponse;
 
         /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
+        /// Handles the ProtocolException message.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
         {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.DiscoveryQuery.FindResourcesResponse:
-                    HandleFindResourcesResponse(header, decoder.Decode<FindResourcesResponse>(body));
-                    break;
+            base.HandleProtocolException(message);
 
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Handle any final cleanup related to the final message in response to a request.
-        /// </summary>
-        /// <param name="correlationId">The correlation ID of the request</param>
-        protected override void HandleFinalResponse(long correlationId)
-        {
-            _requests.Remove(correlationId);
+            var request = TryGetCorrelatedMessage(message);
+            if (request is EtpMessage<FindResources>)
+                HandleResponseMessage(request as EtpMessage<FindResources>, message, OnFindResourcesResponse, HandleFindResourcesResponse);
         }
 
         /// <summary>
         /// Handles the FindResourcesResponse message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="findResourcesResponse">The FindResourcesResponse message.</param>
-        protected virtual void HandleFindResourcesResponse(IMessageHeader header, FindResourcesResponse findResourcesResponse)
+        /// <param name="message">The FindResourcesResponse message.</param>
+        protected virtual void HandleFindResourcesResponse(EtpMessage<FindResourcesResponse> message)
         {
-            var uri = GetRequestedUri(header);
-            var args = Notify(OnFindResourcesResponse, header, findResourcesResponse, uri);
-            HandleFindResourcesResponse(args);
+            var request = TryGetCorrelatedMessage<FindResources>(message);
+            HandleResponseMessage(request, message, OnFindResourcesResponse, HandleFindResourcesResponse);
         }
 
         /// <summary>
         /// Handles the FindResourcesResponse message from a store.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{FindResourcesResponse}"/> instance containing the event data.</param>
-        protected virtual void HandleFindResourcesResponse(ProtocolEventArgs<FindResourcesResponse, string> args)
+        /// <param name="args">The <see cref="ResponseEventArgs{FindResources, FindResourcesResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleFindResourcesResponse(ResponseEventArgs<FindResources, FindResourcesResponse> args)
         {
-        }
-
-        /// <summary>
-        /// Gets the requested URI from the internal cache of message IDs.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <returns>The requested URI.</returns>
-        private string GetRequestedUri(IMessageHeader header)
-        {
-            string uri;
-            _requests.TryGetValue(header.CorrelationId, out uri);
-            return uri;
         }
     }
 }

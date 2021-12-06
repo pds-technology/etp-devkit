@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,22 +16,23 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Threading.Tasks;
-
 namespace Energistics.Etp.Common
 {
     /// <summary>
     /// Defines the properties and methods needed to manage an ETP server.
     /// </summary>
-    /// <seealso cref="System.IEtpSession" />
+    /// <seealso cref="IEtpServer" />
     public interface IEtpServer : IEtpSession
     {
         /// <summary>
-        /// Gets a value indicating whether the connection is open.
+        /// Whether or not the server is started.
         /// </summary>
-        /// <value>
-        ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
-        /// </value>
-        bool IsOpen { get; }
+        bool IsStarted { get; }
+
+        /// <summary>
+        /// Starts processing incoming messages.
+        /// </summary>
+        /// <returns><c>true</c> if the server is successfully started; <c>false</c> otherwise.</returns>
+        bool Start();
     }
 }

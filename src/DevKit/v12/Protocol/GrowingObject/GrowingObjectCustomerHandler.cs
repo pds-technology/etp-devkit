@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +16,13 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
@@ -29,247 +33,493 @@ namespace Energistics.Etp.v12.Protocol.GrowingObject
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.GrowingObject.IGrowingObjectCustomer" />
-    public class GrowingObjectCustomerHandler : Etp12ProtocolHandler, IGrowingObjectCustomer
+    public class GrowingObjectCustomerHandler : Etp12ProtocolHandler<CapabilitiesCustomer, ICapabilitiesCustomer, CapabilitiesStore, ICapabilitiesStore>, IGrowingObjectCustomer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="GrowingObjectCustomerHandler"/> class.
         /// </summary>
-        public GrowingObjectCustomerHandler() : base((int)Protocols.GrowingObject, "customer", "store")
+        public GrowingObjectCustomerHandler() : base((int)Protocols.GrowingObject, Roles.Customer, Roles.Store)
         {
+            RegisterMessageHandler<GetGrowingDataObjectsHeaderResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetGrowingDataObjectsHeaderResponse, HandleGetGrowingDataObjectsHeaderResponse);
+            RegisterMessageHandler<PutGrowingDataObjectsHeaderResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.PutGrowingDataObjectsHeaderResponse, HandlePutGrowingDataObjectsHeaderResponse);
+            RegisterMessageHandler<GetPartsMetadataResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsMetadataResponse, HandleGetPartsMetadataResponse);
+            RegisterMessageHandler<GetChangeAnnotationsResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetChangeAnnotationsResponse, HandleGetChangeAnnotationsResponse);
+            RegisterMessageHandler<GetPartsResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsResponse, HandleGetPartsResponse);
+            RegisterMessageHandler<GetPartsByRangeResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRangeResponse, HandleGetPartsByRangeResponse);
+            RegisterMessageHandler<PutPartsResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.PutPartsResponse, HandlePutPartsResponse);
+            RegisterMessageHandler<DeletePartsResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.DeletePartsResponse, HandleDeletePartsResponse);
+            RegisterMessageHandler<ReplacePartsByRangeResponse>(Protocols.GrowingObject, MessageTypes.GrowingObject.ReplacePartsByRangeResponse, HandleReplacePartsByRangeResponse);
         }
 
         /// <summary>
-        /// Gets or sets the parts metadata.
+        /// Sends a GetGrowingDataObjectsHeader message to a store.
         /// </summary>
-        protected PartsMetadata Metadata { get; set; }
-
-        /// <summary>
-        /// Gets a single list item in a growing object, by its ID.
-        /// </summary>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
-        /// <returns>The message identifier.</returns>
-        public long GetPart(string uri, string uid)
+        /// <param name="uris">The collection of growing object URIs.</param>
+        /// <param name="format">The format of the response (XML or JSON).</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetGrowingDataObjectsHeader> GetGrowingDataObjectsHeader(IDictionary<string, string> uris, string format = Formats.Xml, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPart);
-
-            var message = new GetPart
+            var body = new GetGrowingDataObjectsHeader
             {
-                Uri = uri,
-                Uid = uid
+                Uris = uris ?? new Dictionary<string, string>(),
+                Format = format ?? Formats.Xml,
             };
 
-            return Session.SendMessage(header, message);
+            return SendRequest(body, extension: extension);
         }
 
         /// <summary>
-        /// Gets all list items in a growing object within an index range.
+        /// Sends a GetGrowingDataObjectsHeader message to a store.
+        /// </summary>
+        /// <param name="uris">The collection of growing object URIs.</param>
+        /// <param name="format">The format of the response (XML or JSON).</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetGrowingDataObjectsHeader> GetGrowingDataObjectsHeader(IList<string> uris, string format = Formats.Xml, IMessageHeaderExtension extension = null) => GetGrowingDataObjectsHeader(uris.ToMap(), format: format, extension: extension);
+
+        /// <summary>
+        /// Handles the GetGrowingDataObjectsHeaderResponse event from a store.
+        /// </summary>
+        public event EventHandler<ResponseEventArgs<GetGrowingDataObjectsHeader, GetGrowingDataObjectsHeaderResponse>> OnGetGrowingDataObjectsHeaderResponse;
+
+        /// <summary>
+        /// Sends a PutGrowingDataObjectsHeader message to a store.
+        /// </summary>
+        /// <param name="dataObjects">The collection of data object headers.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutGrowingDataObjectsHeader> PutGrowingDataObjectsHeader(IDictionary<string, DataObject> dataObjects, IMessageHeaderExtension extension = null)
+        {
+            var body = new PutGrowingDataObjectsHeader
+            {
+                DataObjects = dataObjects ?? new Dictionary<string, DataObject>(),
+            };
+
+            return SendRequest(body, extension: extension);
+        }
+
+        /// <summary>
+        /// Sends a PutGrowingDataObjectsHeader message to a store.
+        /// </summary>
+        /// <param name="dataObjects">The collection of data object headers.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutGrowingDataObjectsHeader> PutGrowingDataObjectsHeader(IList<DataObject> dataObjects, IMessageHeaderExtension extension = null) => PutGrowingDataObjectsHeader(dataObjects.ToMap(), extension: extension);
+
+        /// <summary>
+        /// Handles the PutGrowingDataObjectsHeaderResponse event from a store.
+        /// </summary>
+        public event EventHandler<ResponseEventArgs<PutGrowingDataObjectsHeader, PutGrowingDataObjectsHeaderResponse>> OnPutGrowingDataObjectsHeaderResponse;
+
+        /// <summary>
+        /// Sends a GetPartsMetadata message to a store.
+        /// </summary>
+        /// <param name="uris">The collection of growing object URIs.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetPartsMetadata> GetPartsMetadata(IDictionary<string, string> uris, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetPartsMetadata
+            {
+                Uris = uris ?? new Dictionary<string, string>(),
+            };
+
+            return SendRequest(body, extension: extension);
+        }
+
+        /// <summary>
+        /// Sends a GetPartsMetadata message to a store.
+        /// </summary>
+        /// <param name="uris">The collection of growing object URIs.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetPartsMetadata> GetPartsMetadata(IList<string> uris, IMessageHeaderExtension extension = null) => GetPartsMetadata(uris.ToMap(), extension: extension);
+
+        /// <summary>
+        /// Handles the GetPartsMetadataResponse event from a store.
+        /// </summary>
+        public event EventHandler<ResponseEventArgs<GetPartsMetadata, GetPartsMetadataResponse>> OnGetPartsMetadataResponse;
+
+        /// <summary>
+        /// Sends a GetChangeAnnotations message to a store.
+        /// </summary>
+        /// <param name="uris">The URIs.</param>
+        /// <param name="latestOnly">Whether or not to only get the latest change annotation for each growing object.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetChangeAnnotations> GetChangeAnnotations(IDictionary<string, string> uris, bool latestOnly = false, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetChangeAnnotations
+            {
+                Uris = uris ?? new Dictionary<string, string>(),
+                LatestOnly = latestOnly,
+            };
+
+            return SendRequest(body, extension: extension);
+        }
+
+        /// <summary>
+        /// Sends a GetChangeAnnotations message to a store.
+        /// </summary>
+        /// <param name="uris">The URIs.</param>
+        /// <param name="latestOnly">Whether or not to only get the latest change annotation for each growing object.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetChangeAnnotations> GetChangeAnnotations(IList<string> uris, bool latestOnly = false, IMessageHeaderExtension extension = null) => GetChangeAnnotations(uris.ToMap(), latestOnly: latestOnly, extension: extension);
+
+        /// <summary>
+        /// Handles the GetChangeAnnotationsResponse event from a store.
+        /// </summary>
+        public event EventHandler<ResponseEventArgs<GetChangeAnnotations, GetChangeAnnotationsResponse>> OnGetChangeAnnotationsResponse;
+
+        /// <summary>
+        /// Sends a GetParts message to a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
+        /// <param name="uids">The UIDs of the elements within the growing object to get.</param>
+        /// <param name="format">The format of the response (XML or JSON).</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetParts> GetParts(string uri, IDictionary<string, string> uids, string format = Formats.Xml, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetParts
+            {
+                Uri = uri ?? string.Empty,
+                Format = format ?? Formats.Xml,
+                Uids = uids ?? new Dictionary<string, string>(),
+            };
+
+            return SendRequest(body, extension: extension);
+        }
+
+        /// <summary>
+        /// Sends a GetParts message to a store.
+        /// </summary>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="uids">The UIDs of the elements within the growing object to get.</param>
+        /// <param name="format">The format of the response (XML or JSON).</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetParts> GetParts(string uri, IList<string> uids, string format = Formats.Xml, IMessageHeaderExtension extension = null) => GetParts(uri, uids.ToMap(), format: format, extension: extension);
+
+        /// <summary>
+        /// Handles the GetPartsResponse event from a store.
+        /// </summary>
+        public event EventHandler<ResponseEventArgs<GetParts, GetPartsResponse>> OnGetPartsResponse;
+
+        /// <summary>
+        /// Sends a GetPartsByRange message to a store.
+        /// </summary>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="indexInterval">The index interval.</param>
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
-        /// <returns>The message identifier.</returns>
-        public long GetPartsByRange(string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals = false)
+        /// <param name="format">The format of the response (XML or JSON).</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetPartsByRange> GetPartsByRange(string uri, IndexInterval indexInterval, bool includeOverlappingIntervals = false, string format = Formats.Xml, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.GetPartsByRange);
-
-            var message = new GetPartsByRange
+            var body = new GetPartsByRange
             {
-                Uri = uri,
-                IndexInterval = new IndexInterval
-                {
-                    StartIndex = new IndexValue { Item = startIndex },
-                    EndIndex = new IndexValue { Item = endIndex },
-                    Uom = uom ?? string.Empty,
-                    DepthDatum = depthDatum ?? string.Empty
-                },
-                IncludeOverlappingIntervals = includeOverlappingIntervals
+                Uri = uri ?? string.Empty,
+                Format = format ?? Formats.Xml,
+                IndexInterval = indexInterval,
+                IncludeOverlappingIntervals = includeOverlappingIntervals,
             };
 
-            return Session.SendMessage(header, message);
+            return SendRequest(body, extension: extension);
         }
 
         /// <summary>
-        /// Adds or updates a list item in a growing object.
+        /// Handles the GetPartsByRangeResponse event from a store.
+        /// </summary>
+        public event EventHandler<ResponseEventArgs<GetPartsByRange, GetPartsByRangeResponse>> OnGetPartsByRangeResponse;
+
+        /// <summary>
+        /// Sends a PutParts message to a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
-        /// <param name="contentType">The content type string for the parent object.</param>
-        /// <param name="data">The data (list items) to be added to the growing object.</param>
-        /// <returns>The message identifier.</returns>
-        public long PutPart(string uri, string uid, string contentType, byte[] data)
+        /// <param name="parts">The UIDs and data of the parts being put.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutParts> PutParts(string uri, IDictionary<string, ObjectPart> parts, string format = Formats.Xml, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.PutPart);
-
-            var message = new PutPart
+            var body = new PutParts
             {
-                Uri = uri,
-                Uid = uid, 
-                ContentType = contentType,
-                Data = data
+                Uri = uri ?? string.Empty,
+                Format = format ?? Formats.Xml,
+                Parts = parts ?? new Dictionary<string, ObjectPart>(),
             };
 
-            return Session.SendMessage(header, message);
+            return SendRequest(body, extension: extension);
         }
 
         /// <summary>
-        /// Deletes one list item in a growing object.
+        /// Sends a PutParts message to a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
-        /// <returns>The message identifier.</returns>
-        public long DeletePart(string uri, string uid)
-        {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.DeletePart);
+        /// <param name="parts">The UIDs and data of the parts being put.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutParts> PutParts(string uri, IList<ObjectPart> parts, string format = Formats.Xml, IMessageHeaderExtension extension = null) => PutParts(uri, parts.ToMap(), format: format, extension: extension);
 
-            var message = new DeletePart
+        /// <summary>
+        /// Handles the PutPartsResponse event from a store.
+        /// </summary>
+        public event EventHandler<ResponseEventArgs<PutParts, PutPartsResponse>> OnPutPartsResponse;
+
+        /// <summary>
+        /// Sends a DeleteParts message to a store.
+        /// </summary>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="uids">The UIDs of the parts within the growing object to delete.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<DeleteParts> DeleteParts(string uri, IDictionary<string, string> uids, IMessageHeaderExtension extension = null)
+        {
+            var body = new DeleteParts
             {
-                Uri = uri,
-                Uid = uid
+                Uri = uri ?? string.Empty,
+                Uids = uids ?? new Dictionary<string, string>(),
             };
 
-            return Session.SendMessage(header, message);
+            return SendRequest(body, extension: extension);
         }
 
         /// <summary>
-        /// Deletes all list items in a range of index values.
+        /// Sends a DeleteParts message to a store.
         /// </summary>
         /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
+        /// <param name="uids">The UIDs of the parts within the growing object to delete.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<DeleteParts> DeleteParts(string uri, IList<string> uids, IMessageHeaderExtension extension = null) => DeleteParts(uri, uids.ToMap(), extension: extension);
+
+        /// <summary>
+        /// Handles the DeletePartsResponse event from a store.
+        /// </summary>
+        public event EventHandler<ResponseEventArgs<DeleteParts, DeletePartsResponse>> OnDeletePartsResponse;
+
+        /// <summary>
+        /// Sends a ReplacePartsByRange message to a store.
+        /// </summary>
+        /// <param name="uri">The URI of the parent object.</param>
+        /// <param name="deleteInterval">The index interval to delete.</param>
         /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
-        /// <returns>The message identifier.</returns>
-        public long DeletePartsByRange(string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals = false)
+        /// <param name="parts">The map of UIDs and data of the parts being put.</param>
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ReplacePartsByRange> ReplacePartsByRange(string uri, IndexInterval deleteInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, string format = Formats.Xml, bool isFinalPart = true, IMessageHeader correlatedHeader = null, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.DeletePartsByRange);
-
-            var message = new DeletePartsByRange
+            var body = new ReplacePartsByRange
             {
-                Uri = uri,
-                DeleteInterval = new IndexInterval
-                {
-                    StartIndex = new IndexValue { Item = startIndex },
-                    EndIndex = new IndexValue { Item = endIndex },
-                    Uom = uom ?? string.Empty,
-                    DepthDatum = depthDatum ?? string.Empty
-                },
-                IncludeOverlappingIntervals = includeOverlappingIntervals
+                Uri = uri ?? string.Empty,
+                Format = format ?? Formats.Xml,
+                DeleteInterval = deleteInterval,
+                IncludeOverlappingIntervals = includeOverlappingIntervals,
+                Parts = parts ?? new List<ObjectPart>(),
             };
 
-            return Session.SendMessage(header, message);
+            return SendRequest(body, extension: extension, isMultiPart: true, correlatedHeader: correlatedHeader, isFinalPart: isFinalPart);
         }
 
         /// <summary>
-        /// Replaces a list item in a growing object.
+        /// Handles the ReplacePartsByRangeResponse event from a store.
         /// </summary>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <param name="uid">The ID of the element within the list.</param>
-        /// <param name="contentType">The content type string for the parent object.</param>
-        /// <param name="data">The data (list items) to be added to the growing object.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
-        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
-        /// <returns>The message identifier.</returns>
-        public long ReplacePartsByRange(string uri, string uid, string contentType, byte[] data, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals)
+        public event EventHandler<ResponseEventArgs<ReplacePartsByRange, ReplacePartsByRangeResponse>> OnReplacePartsByRangeResponse;
+
+        /// <summary>
+        /// Handles the ProtocolException message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.ReplacePartsByRange);
+            base.HandleProtocolException(message);
 
-            var message = new ReplacePartsByRange
-            {
-                Uri = uri,
-                Uid = uid,
-                ContentType = contentType,
-                Data = data,
-                DeleteInterval = new IndexInterval
-                {
-                    StartIndex = new IndexValue { Item = startIndex },
-                    EndIndex = new IndexValue { Item = endIndex },
-                    Uom = uom,
-                    DepthDatum = depthDatum
-                },
-                IncludeOverlappingIntervals = includeOverlappingIntervals
-            };
-
-            return Session.SendMessage(header, message);
+            var request = TryGetCorrelatedMessage(message);
+            if (request is EtpMessage<GetGrowingDataObjectsHeader>)
+                HandleResponseMessage(request as EtpMessage<GetGrowingDataObjectsHeader>, message, OnGetGrowingDataObjectsHeaderResponse, HandleGetGrowingDataObjectsHeaderResponse);
+            else if (request is EtpMessage<PutGrowingDataObjectsHeader>)
+                HandleResponseMessage(request as EtpMessage<PutGrowingDataObjectsHeader>, message, OnPutGrowingDataObjectsHeaderResponse, HandlePutGrowingDataObjectsHeaderResponse);
+            else if (request is EtpMessage<GetPartsMetadata>)
+                HandleResponseMessage(request as EtpMessage<GetPartsMetadata>, message, OnGetPartsMetadataResponse, HandleGetPartsMetadataResponse);
+            else if (request is EtpMessage<GetChangeAnnotations>)
+                HandleResponseMessage(request as EtpMessage<GetChangeAnnotations>, message, OnGetChangeAnnotationsResponse, HandleGetChangeAnnotationsResponse);
+            else if (request is EtpMessage<GetParts>)
+                HandleResponseMessage(request as EtpMessage<GetParts>, message, OnGetPartsResponse, HandleGetPartsResponse);
+            else if (request is EtpMessage<GetPartsByRange>)
+                HandleResponseMessage(request as EtpMessage<GetPartsByRange>, message, OnGetPartsByRangeResponse, HandleGetPartsByRangeResponse);
+            else if (request is EtpMessage<PutParts>)
+                HandleResponseMessage(request as EtpMessage<PutParts>, message, OnPutPartsResponse, HandlePutPartsResponse);
+            else if (request is EtpMessage<DeleteParts>)
+                HandleResponseMessage(request as EtpMessage<DeleteParts>, message, OnDeletePartsResponse, HandleDeletePartsResponse);
+            else if (request is EtpMessage<ReplacePartsByRange>)
+                HandleResponseMessage(request as EtpMessage<ReplacePartsByRange>, message, OnReplacePartsByRangeResponse, HandleReplacePartsByRangeResponse);
         }
 
         /// <summary>
-        /// Gets the metadata for all list items in a growing object.
+        /// Handles the GetGrowingDataObjectsHeaderResponse message from a store.
         /// </summary>
-        /// <param name="uri">The URI of the parent object.</param>
-        /// <returns>The message identifier.</returns>
-        public long DescribeParts(string uri)
+        /// <param name="message">The GetGrowingDataObjectsHeaderResponse message.</param>
+        protected virtual void HandleGetGrowingDataObjectsHeaderResponse(EtpMessage<GetGrowingDataObjectsHeaderResponse> message)
         {
-            var header = CreateMessageHeader(Protocols.GrowingObject, MessageTypes.GrowingObject.DescribeParts);
-
-            var message = new DescribeParts
-            {
-                Uri = uri
-            };
-
-            return Session.SendMessage(header, message);
+            var request = TryGetCorrelatedMessage<GetGrowingDataObjectsHeader>(message);
+            HandleResponseMessage(request, message, OnGetGrowingDataObjectsHeaderResponse, HandleGetGrowingDataObjectsHeaderResponse);
         }
 
         /// <summary>
-        /// Handles the ObjectPart event from a store.
+        /// Handles the GetGrowingDataObjectsHeaderResponse message from a store.
         /// </summary>
-        public event ProtocolEventHandler<ObjectPart> OnObjectPart;
-
-        /// <summary>
-        /// Handles the PartsMetadata event from a store.
-        /// </summary>
-        public event ProtocolEventHandler<PartsMetadata> OnPartsMetadata;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
+        /// <param name="args">The <see cref="ResponseEventArgs{GetGrowingDataObjectsHeader, GetGrowingDataObjectsHeaderResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleGetGrowingDataObjectsHeaderResponse(ResponseEventArgs<GetGrowingDataObjectsHeader, GetGrowingDataObjectsHeaderResponse> args)
         {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.GrowingObject.ObjectPart:
-                    HandleObjectPart(header, decoder.Decode<ObjectPart>(body));
-                    break;
-
-                case (int)MessageTypes.GrowingObject.PartsMetadata:
-                    HandlePartsMetadata(header, decoder.Decode<PartsMetadata>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
         }
 
         /// <summary>
-        /// Handles the ObjectPart message from a store.
+        /// Handles the PutGrowingDataObjectsHeaderResponse message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The ObjectPart message.</param>
-        protected virtual void HandleObjectPart(IMessageHeader header, ObjectPart message)
+        /// <param name="message">The PutGrowingDataObjectsHeaderResponse message.</param>
+        protected virtual void HandlePutGrowingDataObjectsHeaderResponse(EtpMessage<PutGrowingDataObjectsHeaderResponse> message)
         {
-            Notify(OnObjectPart, header, message);
+            var request = TryGetCorrelatedMessage<PutGrowingDataObjectsHeader>(message);
+            HandleResponseMessage(request, message, OnPutGrowingDataObjectsHeaderResponse, HandlePutGrowingDataObjectsHeaderResponse);
         }
 
         /// <summary>
-        /// Handles the PartsMetadata message from a store.
+        /// Handles the PutGrowingDataObjectsHeaderResponse message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="message">The PartsMetadata message.</param>
-        protected virtual void HandlePartsMetadata(IMessageHeader header, PartsMetadata message)
+        /// <param name="args">The <see cref="ResponseEventArgs{PutGrowingDataObjectsHeader, PutGrowingDataObjectsHeaderResponse}"/> instance containing the event data.</param>
+        protected virtual void HandlePutGrowingDataObjectsHeaderResponse(ResponseEventArgs<PutGrowingDataObjectsHeader, PutGrowingDataObjectsHeaderResponse> args)
         {
-            Metadata = message;
-            Notify(OnPartsMetadata, header, message);
+        }
+
+        /// <summary>
+        /// Handles the GetPartsMetadataResponse message from a store.
+        /// </summary>
+        /// <param name="message">The GetPartsMetadataResponse message.</param>
+        protected virtual void HandleGetPartsMetadataResponse(EtpMessage<GetPartsMetadataResponse> message)
+        {
+            var request = TryGetCorrelatedMessage<GetPartsMetadata>(message);
+            HandleResponseMessage(request, message, OnGetPartsMetadataResponse, HandleGetPartsMetadataResponse);
+        }
+
+        /// <summary>
+        /// Handles the GetPartsMetadataResponse message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="ResponseEventArgs{GetPartsMetadata, GetPartsMetadataResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleGetPartsMetadataResponse(ResponseEventArgs<GetPartsMetadata, GetPartsMetadataResponse> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GetChangeAnnotationsResponse message from a store.
+        /// </summary>
+        /// <param name="message">The GetChangeAnnotationsResponse message.</param>
+        protected virtual void HandleGetChangeAnnotationsResponse(EtpMessage<GetChangeAnnotationsResponse> message)
+        {
+            var request = TryGetCorrelatedMessage<GetChangeAnnotations>(message);
+            HandleResponseMessage(request, message, OnGetChangeAnnotationsResponse, HandleGetChangeAnnotationsResponse);
+        }
+
+        /// <summary>
+        /// Handles the GetChangeAnnotationsResponse message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="ResponseEventArgs{GetChangeAnnotations, GetChangeAnnotationsResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleGetChangeAnnotationsResponse(ResponseEventArgs<GetChangeAnnotations, GetChangeAnnotationsResponse> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GetPartsResponse message from a store.
+        /// </summary>
+        /// <param name="message">The GetPartsResponse message.</param>
+        protected virtual void HandleGetPartsResponse(EtpMessage<GetPartsResponse> message)
+        {
+            var request = TryGetCorrelatedMessage<GetParts>(message);
+            HandleResponseMessage(request, message, OnGetPartsResponse, HandleGetPartsResponse);
+        }
+
+        /// <summary>
+        /// Handles the GetPartsResponse message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="ResponseEventArgs{GetParts, GetPartsResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleGetPartsResponse(ResponseEventArgs<GetParts, GetPartsResponse> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GetPartsByRangeResponse message from a store.
+        /// </summary>
+        /// <param name="message">The GetPartsByRangeResponse message.</param>
+        protected virtual void HandleGetPartsByRangeResponse(EtpMessage<GetPartsByRangeResponse> message)
+        {
+            var request = TryGetCorrelatedMessage<GetPartsByRange>(message);
+            HandleResponseMessage(request, message, OnGetPartsByRangeResponse, HandleGetPartsByRangeResponse);
+        }
+
+        /// <summary>
+        /// Handles the GetPartsByRangeResponse message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="ResponseEventArgs{GetPartsByRange, GetPartsByRangeResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleGetPartsByRangeResponse(ResponseEventArgs<GetPartsByRange, GetPartsByRangeResponse> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the PutPartsResponse message from a store.
+        /// </summary>
+        /// <param name="message">The PutPartsResponse message.</param>
+        protected virtual void HandlePutPartsResponse(EtpMessage<PutPartsResponse> message)
+        {
+            var request = TryGetCorrelatedMessage<PutParts>(message);
+            HandleResponseMessage(request, message, OnPutPartsResponse, HandlePutPartsResponse);
+        }
+
+        /// <summary>
+        /// Handles the PutPartsResponse message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="ResponseEventArgs{PutParts, PutPartsResponse}"/> instance containing the event data.</param>
+        protected virtual void HandlePutPartsResponse(ResponseEventArgs<PutParts, PutPartsResponse> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the DeletePartsResponse message from a store.
+        /// </summary>
+        /// <param name="message">The DeletePartsResponse message.</param>
+        protected virtual void HandleDeletePartsResponse(EtpMessage<DeletePartsResponse> message)
+        {
+            var request = TryGetCorrelatedMessage<DeleteParts>(message);
+            HandleResponseMessage(request, message, OnDeletePartsResponse, HandleDeletePartsResponse);
+        }
+
+        /// <summary>
+        /// Handles the DeletePartsResponse message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="ResponseEventArgs{DeleteParts, DeletePartsResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleDeletePartsResponse(ResponseEventArgs<DeleteParts, DeletePartsResponse> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the ReplacePartsByRangeResponse message from a store.
+        /// </summary>
+        /// <param name="message">The ReplacePartsByRangeResponse message.</param>
+        protected virtual void HandleReplacePartsByRangeResponse(EtpMessage<ReplacePartsByRangeResponse> message)
+        {
+            var request = TryGetCorrelatedMessage<ReplacePartsByRange>(message);
+            HandleResponseMessage(request, message, OnReplacePartsByRangeResponse, HandleReplacePartsByRangeResponse);
+        }
+
+        /// <summary>
+        /// Handles the ReplacePartsByRangeResponse message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="ResponseEventArgs{ReplacePartsByRange, ReplacePartsByRangeResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleReplacePartsByRangeResponse(ResponseEventArgs<ReplacePartsByRange, ReplacePartsByRangeResponse> args)
+        {
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 
 using Energistics.Etp.Common;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.WebSockets;
 
@@ -31,60 +30,39 @@ namespace Energistics.Etp.Native
     public class EtpServer : EtpSessionNativeBase, IEtpServer
     {
         /// <summary>
-        /// Initializes the <see cref="EtpServer"/> class.
-        /// </summary>
-        static EtpServer()
-        {
-            Clients = new ConcurrentDictionary<string, EtpServer>();
-        }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="EtpServer"/> class.
         /// </summary>
         /// <param name="webSocket">The web socket.</param>
-        /// <param name="application">The server application name.</param>
-        /// <param name="version">The server application version.</param>
+        /// <param name="etpVersion">The ETP version for the session.</param>
+        /// <param name="encoding">The ETP encoding for the session.</param>
+        /// <param name="info">The server's information.</param>
+        /// <param name="parameters">The server's parameters.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
-        public EtpServer(WebSocket webSocket, string application, string version, IDictionary<string, string> headers)
-            : base(EtpWebSocketValidation.GetEtpVersion(webSocket.SubProtocol), webSocket, application, version, headers, false)
+        public EtpServer(WebSocket webSocket, EtpVersion etpVersion, EtpEncoding encoding, EtpEndpointInfo info, EtpEndpointParameters parameters = null, IDictionary<string, string> headers = null)
+            : base(etpVersion, encoding, webSocket, info, parameters, headers, false, Guid.NewGuid().ToString())
         {
-            var etpVersion = EtpWebSocketValidation.GetEtpVersion(Socket.SubProtocol);
-
-            SessionId = Guid.NewGuid().ToString();
         }
 
         /// <summary>
-        /// Gets the collection of active clients.
+        /// Whether or not the server is started.
         /// </summary>
-        /// <value>The clients.</value>
-        public static ConcurrentDictionary<string, EtpServer> Clients { get; }
+        public bool IsStarted { get; private set; }
 
         /// <summary>
-        /// Called to let derived classes register details of a new connection.
+        /// Starts processing incoming messages.
         /// </summary>
-        protected override void RegisterNewConnection()
+        /// <returns><c>true</c> if the server is successfully started; <c>false</c> otherwise.</returns>
+        public bool Start()
         {
-            Logger.Debug(Log("[{0}] Socket session connected.", SessionId));
+            Logger.Verbose($"[{SessionKey}] Starting server.");
 
-            // keep track of connected clients
-            Clients.AddOrUpdate(SessionId, this, (id, client) => this);
-        }
+            if (IsStarted)
+                throw new InvalidOperationException("Already started");
 
-        /// <summary>
-        /// Called to let derived classes cleanup after a connection has ended.
-        /// </summary>
-        protected override void CleanupAfterConnection()
-        {
-            EtpServer item;
-
-            // remove client after connection ends
-            if (Clients.TryRemove(SessionId, out item))
-            {
-                if (item != this)
-                {
-                    Clients.AddOrUpdate(item.SessionId, item, (id, client) => item);
-                }
-            }
+            IsStarted = true;
+            RaiseSocketOpened();
+            StartReceiveLoop();
+            return true;
         }
     }
 }

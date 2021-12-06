@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -27,35 +28,41 @@ namespace Energistics.Etp.v12.Protocol.ChannelStreaming
     /// Defines the interface that must be implemented by the producer role of the ChannelStreaming protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.ChannelStreaming, "producer", "consumer")]
+    [ProtocolRole((int)Protocols.ChannelStreaming, Roles.Producer, Roles.Consumer)]
     public interface IChannelStreamingProducer : IProtocolHandler
     {
         /// <summary>
+        /// Handles the StartStreaming event from a consumer.
+        /// </summary>
+        event EventHandler<VoidRequestEventArgs<StartStreaming>> OnStartStreaming;
+
+        /// <summary>
         /// Sends a ChannelMetadata message to a consumer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="channelMetadataRecords">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        long ChannelMetadata(IMessageHeader request, IList<ChannelMetadataRecord> channelMetadataRecords, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart);
+        /// <param name="channels">The list of <see cref="ChannelMetadataRecord" /> objects.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelMetadata> ChannelMetadata(IList<ChannelMetadataRecord> channels, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Sends a ChannelData message to a consumer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="dataItems">The list of <see cref="DataItem" /> objects.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        long ChannelData(IMessageHeader request, IList<DataItem> dataItems, MessageFlags messageFlag = MessageFlags.MultiPart);
+        /// <param name="data">The list of <see cref="DataItem" /> objects.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<ChannelData> ChannelData(IList<DataItem> data, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Handles the StartStreaming event from a consumer.
+        /// Sends a TruncateChannels message to a consumer.
         /// </summary>
-        event ProtocolEventHandler<StartStreaming> OnStartStreaming;
+        /// <param name="channels">The list of <see cref="TruncateInfo" /> objects.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<TruncateChannels> TruncateChannels(IList<TruncateInfo> channels, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the StopStreaming event from a consumer.
         /// </summary>
-        event ProtocolEventHandler<StopStreaming> OnStopStreaming;
+        event EventHandler<VoidRequestEventArgs<StopStreaming>> OnStopStreaming;
     }
 }

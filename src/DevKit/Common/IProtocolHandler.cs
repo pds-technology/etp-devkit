@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Avro.IO;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
 
@@ -28,88 +26,122 @@ namespace Energistics.Etp.Common
     /// <summary>
     /// Defines properties and methods that can be used to handle ETP messages.
     /// </summary>
-    public interface IProtocolHandler : IDisposable
+    public interface IProtocolHandler : IDisposable, ISessionProtocol
     {
         /// <summary>
-        /// The ETP version supported by this handler.
+        /// Creates a deep copy of this instance.
         /// </summary>
-        EtpVersion SupportedVersion { get; }
+        /// <returns>A deep copy of this instance.</returns>
+        IProtocolHandler Clone();
 
         /// <summary>
         /// Gets or sets the ETP session.
         /// </summary>
         /// <value>The session.</value>
-        IEtpSession Session { get; set; }
+        IEtpSession Session { get; }
 
         /// <summary>
-        /// Gets the protocol.
+        /// Sets the protocol handler's session.
         /// </summary>
-        /// <value>The protocol.</value>
-        int Protocol { get; }
+        /// <param name="session">The ETP session.</param>
+        void SetSession(IEtpSession session);
 
         /// <summary>
-        /// Gets the role.
+        /// Sets the capabilities for the handler's counterpart.
         /// </summary>
-        /// <value>The role.</value>
-        string Role { get; }
+        /// <param name="counterpartCapabilities">The counterpart's protocol capabilities.</param>
+        void SetCounterpartCapabilities(IProtocolCapabilities counterpartCapabilities);
 
         /// <summary>
-        /// Gets the requested role.
+        /// Start the protocol handler when the session has been opened.
         /// </summary>
-        /// <value>The requested role.</value>
-        string RequestedRole { get; }
+        void StartHandling();
 
         /// <summary>
-        /// Gets the capabilities supported by the protocol handler.
+        /// Event raised when the handler is started.
         /// </summary>
-        /// <returns>A collection of protocol capabilities.</returns>
-        IDictionary<string, IDataValue> GetCapabilities();
+        event EventHandler<EventArgs> OnStarted;
 
         /// <summary>
-        /// Called when the ETP session is opened.
+        /// Stop the protocol handler when the ETP session has been closed.
         /// </summary>
-        /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols);
+        void StopHandling();
 
         /// <summary>
-        /// Called when the ETP session is opened.
+        /// Event raised when the handler is started.
         /// </summary>
-        void OnSessionClosed();
+        event EventHandler<EventArgs> OnStopped;
 
         /// <summary>
-        /// Sends an Acknowledge message with the specified correlation identifier and message flag.
+        /// Sends an Acknowledge message in response to the message associated with the correlation header.
         /// </summary>
-        /// <param name="correlationId">The correlation identifier.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        long Acknowledge(long correlationId, MessageFlags messageFlag = MessageFlags.None);
+        /// <param name="correlatedHeader">The message header the acknowledge message is correlated with.</param>
+        /// <param name="isNoData">Whether or not the acknowledge message should have the NoData flag set.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<IAcknowledge> Acknowledge(IMessageHeader correlatedHeader, bool isNoData = false, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Sends a ProtocolException message with the specified error code, message and correlation identifier.
+        /// Constructs a new <see cref="IErrorInfo"/> instance compatible with the session.
         /// </summary>
-        /// <param name="errorCode">The error code.</param>
-        /// <param name="errorMessage">The error message.</param>
-        /// <param name="correlationId">The correlation identifier.</param>
-        /// <returns>The message identifier.</returns>
-        long ProtocolException(int errorCode, string errorMessage, long correlationId = 0);
+        /// <returns>The constructed error info.</returns>
+        IErrorInfo ErrorInfo();
 
         /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
+        /// Sends a ProtocolException message with the specified exception details.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        void HandleMessage(IMessageHeader header, Decoder decoder, string body);
+        /// <param name="error">The error in the protocol exception.</param>
+        /// <param name="correlatedHeader">The message header the protocol exception is correlated with, if any.</param>
+        /// <param name="isFinalPart">Whether or not the protocol exception is the final part in a multi-part message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<IProtocolException> ProtocolException(IErrorInfo error, IMessageHeader correlatedHeader = null, bool isFinalPart = false, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Sends a ProtocolException message(s) with the specified exception details.
+        /// </summary>
+        /// <param name="errors">The errors in the protocol exception.</param>
+        /// <param name="correlatedHeader">The message header the protocol exception is correlated with, if any.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        EtpMessage<IProtocolException> ProtocolException(IDictionary<string, IErrorInfo> errors, IMessageHeader correlatedHeader = null, bool setFinalPart = true, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Sends a ProtocolException message with the specified exception details.
+        /// </summary>
+        /// <param name="exception">The ETP exception.</param>
+        /// <param name="isFinalPart">Whether or not the protocol exception is the final part in a multi-part message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<IProtocolException> ProtocolException(EtpException exception, bool isFinalPart = false, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Returns whether this handler can handle a message with the specified message body type.
+        /// </summary>
+        /// <param name="messageBodyType">The message body type</param>
+        /// <returns><c>true</c> if this handler can handle messages with the specified message body type; <c>false</c> otherwise.</returns>
+        bool CanHandleMessage(Type messageBodyType);
+
+        /// <summary>
+        /// Handles the message based on the message type contained in the specified <see cref="IMessageHeader" />.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        void HandleMessage(EtpMessage message);
 
         /// <summary>
         /// Occurs when an Acknowledge message is received for the current protocol.
         /// </summary>
-        event ProtocolEventHandler<IAcknowledge> OnAcknowledge;
+        event EventHandler<MessageEventArgs<IAcknowledge>> OnAcknowledge;
 
         /// <summary>
         /// Occurs when a ProtocolException message is received for the current protocol.
         /// </summary>
-        event ProtocolEventHandler<IProtocolException> OnProtocolException;
+        event EventHandler<MessageEventArgs<IProtocolException>> OnProtocolException;
+
+        /// <summary>
+        /// Occurs when no response has been received in a timely fashion to a previously sent request message.
+        /// </summary>
+        event EventHandler<MessageEventArgs> OnRequestTimedOut;
     }
 }

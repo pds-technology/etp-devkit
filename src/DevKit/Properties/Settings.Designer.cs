@@ -12,7 +12,7 @@ namespace Energistics.Etp.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.8.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.8.1.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -25,82 +25,306 @@ namespace Energistics.Etp.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("energistics-tp")]
-        public string EtpSubProtocolName {
+        [global::System.Configuration.DefaultSettingValueAttribute("100000")]
+        public long DefaultMaxResponseCount {
             get {
-                return ((string)(this["EtpSubProtocolName"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("etp-encoding")]
-        public string EtpEncodingHeader {
-            get {
-                return ((string)(this["EtpEncodingHeader"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("binary")]
-        public string EtpEncodingBinary {
-            get {
-                return ((string)(this["EtpEncodingBinary"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("JSON")]
-        public string EtpEncodingJson {
-            get {
-                return ((string)(this["EtpEncodingJson"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("GetVersion")]
-        public string GetVersionHeader {
-            get {
-                return ((string)(this["GetVersionHeader"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("GetVersions")]
-        public string GetVersionsHeader {
-            get {
-                return ((string)(this["GetVersionsHeader"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("50000")]
-        public int DefaultMaxDataItems {
-            get {
-                return ((int)(this["DefaultMaxDataItems"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10000")]
-        public int DefaultMaxResponseCount {
-            get {
-                return ((int)(this["DefaultMaxResponseCount"]));
+                return ((long)(this["DefaultMaxResponseCount"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Native")]
-        public Energistics.Etp.Common.Datatypes.WebSocketType DefaultWebSocketType {
+        public global::Energistics.Etp.Common.Datatypes.WebSocketType DefaultWebSocketType {
             get {
-                return ((Energistics.Etp.Common.Datatypes.WebSocketType)(this["DefaultWebSocketType"]));
+                return ((global::Energistics.Etp.Common.Datatypes.WebSocketType)(this["DefaultWebSocketType"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10485760")]
+        public long DefaultMaxDataObjectSize {
+            get {
+                return ((long)(this["DefaultMaxDataObjectSize"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1048576")]
+        public long DefaultMaxPartSize {
+            get {
+                return ((long)(this["DefaultMaxPartSize"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DefaultSupportsAlternateRequestUris {
+            get {
+                return ((bool)(this["DefaultSupportsAlternateRequestUris"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("4194304")]
+        public long DefaultMaxWebSocketFramePayloadSize {
+            get {
+                return ((long)(this["DefaultMaxWebSocketFramePayloadSize"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("105906176")]
+        public long DefaultMaxWebSocketMessagePayloadSize {
+            get {
+                return ((long)(this["DefaultMaxWebSocketMessagePayloadSize"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("100")]
+        public long DefaultMaxIndexCount {
+            get {
+                return ((long)(this["DefaultMaxIndexCount"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
+        public long DefaultChangePropagationPeriod {
+            get {
+                return ((long)(this["DefaultChangePropagationPeriod"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10485760")]
+        public long DefaultMaxDataArraySize {
+            get {
+                return ((long)(this["DefaultMaxDataArraySize"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("60")]
+        public long DefaultFrameChangeDetectionPeriod {
+            get {
+                return ((long)(this["DefaultFrameChangeDetectionPeriod"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Binary")]
+        public global::Energistics.Etp.Common.EtpEncoding DefaultEncoding {
+            get {
+                return ((global::Energistics.Etp.Common.EtpEncoding)(this["DefaultEncoding"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("300")]
+        public long DefaultResponseTimeoutPeriod {
+            get {
+                return ((long)(this["DefaultResponseTimeoutPeriod"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DefaultSupportsMessageHeaderExtension {
+            get {
+                return ((bool)(this["DefaultSupportsMessageHeaderExtension"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3600")]
+        public long DefaultActiveTimeoutPeriod {
+            get {
+                return ((long)(this["DefaultActiveTimeoutPeriod"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("86400")]
+        public long DefaultChangeRetentionPeriod {
+            get {
+                return ((long)(this["DefaultChangeRetentionPeriod"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1000")]
+        public long DefaultMaxConcurrentMultipart {
+            get {
+                return ((long)(this["DefaultMaxConcurrentMultipart"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10000")]
+        public long DefaultMaxContainedDataObjectCount {
+            get {
+                return ((long)(this["DefaultMaxContainedDataObjectCount"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1000000")]
+        public long DefaultMaxFrameResponseRowCount {
+            get {
+                return ((long)(this["DefaultMaxFrameResponseRowCount"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10000")]
+        public long DefaultMaxRangeChannelCount {
+            get {
+                return ((long)(this["DefaultMaxRangeChannelCount"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1000000000")]
+        public long DefaultMaxRangeDataItemCount {
+            get {
+                return ((long)(this["DefaultMaxRangeDataItemCount"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10000")]
+        public long DefaultMaxSessionGlobalCount {
+            get {
+                return ((long)(this["DefaultMaxSessionGlobalCount"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10000")]
+        public long DefaultMaxSessionClientCount {
+            get {
+                return ((long)(this["DefaultMaxSessionClientCount"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1000000")]
+        public long DefaultMaxStreamingChannelsSessionCount {
+            get {
+                return ((long)(this["DefaultMaxStreamingChannelsSessionCount"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10000")]
+        public long DefaultMaxSubscriptionSessionCount {
+            get {
+                return ((long)(this["DefaultMaxSubscriptionSessionCount"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public long DefaultMaxTransactionCount {
+            get {
+                return ((long)(this["DefaultMaxTransactionCount"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public long DefaultMultipartMessageTimeoutPeriod {
+            get {
+                return ((long)(this["DefaultMultipartMessageTimeoutPeriod"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DefaultOrphanedChildrenPrunedOnDelete {
+            get {
+                return ((bool)(this["DefaultOrphanedChildrenPrunedOnDelete"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool DefaultSupportsGet {
+            get {
+                return ((bool)(this["DefaultSupportsGet"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool DefaultSupportsPut {
+            get {
+                return ((bool)(this["DefaultSupportsPut"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool DefaultSupportsDelete {
+            get {
+                return ((bool)(this["DefaultSupportsDelete"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("600")]
+        public long DefaultTransactionTimeoutPeriod {
+            get {
+                return ((long)(this["DefaultTransactionTimeoutPeriod"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Specialized.StringCollection DefaultAuthorizationDetails {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["DefaultAuthorizationDetails"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DefaultSimpleStreamer {
+            get {
+                return ((bool)(this["DefaultSimpleStreamer"]));
             }
         }
     }

@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,12 +20,17 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Energistics.Avro.Encoding.Json;
 using Energistics.Etp.Common;
+using Energistics.Etp.Common.Datatypes;
+using log4net;
+using Nito.AsyncEx;
 
 namespace Energistics.Etp.Native
 {
@@ -33,27 +38,44 @@ namespace Energistics.Etp.Native
     /// A self-hosted HTTP Listener ETP websocket server.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.EtpWebServerBase" />
-    public class EtpSelfHostedWebServer : EtpWebServerBase, IEtpSelfHostedWebServer
+    public class EtpSelfHostedWebServer : IEtpSelfHostedWebServer
     {
-        private int _port;
         private HttpListener _httpListener = new HttpListener();
         private Task _listenerTask;
         private CancellationTokenSource _source;
-        private ConcurrentDictionary<string, EtpServer> _servers = new ConcurrentDictionary<string, EtpServer>();
-        private ConcurrentDictionary<string, Task> _serverTasks = new ConcurrentDictionary<string, Task>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpSocketServer"/> class.
         /// </summary>
         /// <param name="port">The port.</param>
-        /// <param name="application">The server application name.</param>
-        /// <param name="version">The server application version.</param>
-        public EtpSelfHostedWebServer(int port, string application, string version)
-            : base(application, version)
+        /// <param name="endpointInfo">The web server's endpoint information.</param>
+        /// <param name="endpointParameters">The web server's endpoint parameters.</param>
+        /// <param name="details">The web server's details.</param>
+        public EtpSelfHostedWebServer(int port, EtpEndpointInfo endpointInfo, EtpEndpointParameters endpointParameters = null, EtpWebServerDetails details = null)
         {
-            _port = port;
+            Logger = LogManager.GetLogger(GetType());
+
+            Details = details ?? new EtpWebServerDetails();
+            ServerManager = new EtpServerManager(Details, endpointInfo, endpointParameters);
+
             Uri = new Uri($"http://localhost:{port}");
         }
+
+        /// <summary>
+        /// Gets the logger used by this instance.
+        /// </summary>
+        /// <value>The logger instance.</value>
+        public ILog Logger { get; }
+
+        /// <summary>
+        /// Gets the server manager for this instance.
+        /// </summary>
+        public IEtpServerManager ServerManager { get; }
+
+        /// <summary>
+        /// Gets the server's parameters.
+        /// </summary>
+        public EtpWebServerDetails Details { get; }
 
         /// <summary>
         /// The root URL for the server.
@@ -80,7 +102,7 @@ namespace Energistics.Etp.Native
         /// </summary>
         public void Start()
         {
-            StartAsync().Wait();
+            AsyncContext.Run(() => StartAsync());
         }
 
         /// <summary>
@@ -91,12 +113,24 @@ namespace Energistics.Etp.Native
             Logger.Trace($"Starting");
             if (!IsRunning)
             {
-                _httpListener.Prefixes.Add(Uri.ToString());
-                _httpListener.Prefixes.Add($"http://127.0.0.1:{Uri.Port}/");
-                _httpListener.Prefixes.Add($"http://{Dns.GetHostName()}:{Uri.Port}/");
-                _httpListener.Start();
+                try
+                {
+                    _httpListener.Prefixes.Add($"http://+:{Uri.Port}/");
+                    _httpListener.Start();
+                }
+                catch (HttpListenerException) // Will happen when not run as administrator...
+                {
+                    Logger.Debug($"Could not listen on all addresses for port {Uri.Port}.  Falling back to listening on loopback addresses.  Run as administrator to listen on all addresses.");
+                    _httpListener = new HttpListener();
+                    _httpListener.Prefixes.Add(Uri.ToString());
+                    _httpListener.Prefixes.Add($"http://127.0.0.1:{Uri.Port}/");
+                    _httpListener.Start();
+                }
                 _source = new CancellationTokenSource();
-                _listenerTask = Task.Run(async () => await HandleListener(_source.Token), _source.Token);
+                _listenerTask = Task.Factory.StartNew(
+                    async () => await HandleListener(_source.Token).ConfigureAwait(false), _source.Token,
+                    TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning,
+                    TaskScheduler.Default).Unwrap();
             }
             Logger.Verbose($"Started");
 
@@ -108,7 +142,7 @@ namespace Energistics.Etp.Native
         /// </summary>
         public void Stop()
         {
-            StopAsync().Wait();
+            AsyncContext.Run(() => StopAsync());
         }
 
         /// <summary>
@@ -121,16 +155,12 @@ namespace Energistics.Etp.Native
             {
                 _source.Cancel();
 
-                await CleanUpServers();
+                await ServerManager.StopAllAsync("Stopping server").ConfigureAwait(false);
 
                 _httpListener.Stop();
-                try
-                {
-                    await _listenerTask;
-                }
-                catch (OperationCanceledException)
-                {
-                }
+
+                try { await _listenerTask.ConfigureAwait(false); }
+                catch (OperationCanceledException) { }
 
                 _source.Dispose();
                 _source = null;
@@ -139,39 +169,7 @@ namespace Energistics.Etp.Native
             Logger.Verbose($"Stopped");
         }
 
-        private async Task CleanUpServers()
-        {
-            var keys = _servers.Keys.ToArray();
-            var tasks = new List<Task>();
-            var servers = new List<EtpServer>();
-
-            // Wait for receiving to stop...
-            foreach (var key in keys)
-            {
-                Task task;
-                if (_serverTasks.TryRemove(key, out task))
-                    tasks.Add(task);
-            }
-            try { await Task.WhenAll(tasks); } catch (OperationCanceledException) { }
-
-            // Close sockets...
-            tasks.Clear();
-            foreach (var key in keys)
-            {
-                EtpServer server;
-                if (_servers.TryRemove(key, out server))
-                {
-                    tasks.Add(server.CloseAsync("Shutting down"));
-                    servers.Add(server);
-                }
-            }
-            try { await Task.WhenAll(tasks); } catch (OperationCanceledException) { }
-
-            foreach (var server in servers)
-                server.Dispose();
-        }
-
-        private static IDictionary<string, string> GetWebSocketHeaders(NameValueCollection headers, NameValueCollection queryString)
+        private static IDictionary<string, string> GetCombinedHeaders(NameValueCollection headers, NameValueCollection queryString)
         {
             var combined = new Dictionary<string, string>();
 
@@ -186,17 +184,7 @@ namespace Energistics.Etp.Native
             return combined;
         }
 
-        private void CleanUpServer(EtpServer server)
-        {
-            EtpServer s;
-            _servers.TryRemove(server.SessionId, out s);
-            Task t;
-            _serverTasks.TryRemove(server.SessionId, out t);
-
-            server.Dispose();
-        }
-
-        private void CleanUpContext(HttpListenerContext context)
+        private static void CleanUpContext(HttpListenerContext context)
         {
             context.Request.InputStream.Close();
             context.Response.Close();
@@ -204,26 +192,99 @@ namespace Energistics.Etp.Native
 
         private async Task HandleListener(CancellationToken token)
         {
+            while (!token.IsCancellationRequested)
+            {
+                await HandleListenerCore(token);
+            }
+        }
+
+        private static bool IsServerCapabilitiesRequest(HttpListenerRequest request)
+        {
+            if (request.HttpMethod == "GET" && request.Url.AbsolutePath == "/.well-known/etp-server-capabilities")
+                return true;
+
+            return false;
+        }
+
+        private void HandleServerCapabilitiesRequest(HttpListenerResponse response, IDictionary<string, string> headers)
+        {
+            if (headers.ContainsKey(EtpHeaders.GetVersions) && string.Equals(headers[EtpHeaders.GetVersions], "true", StringComparison.OrdinalIgnoreCase))
+            {
+                response.ContentType = "application/json";
+                using (var writer = new StringWriter())
+                {
+                    using (var encoder = new JsonAvroEncoder(writer))
+                    {
+                        encoder.EncodeArrayStart(Details.SupportedVersions.Count, Details.SupportedVersions.Count);
+                        var separator = false;
+                        for (int i = 0; i < Details.SupportedVersions.Count; i++)
+                        {
+                            if (separator)
+                                encoder.EncodeArrayItemSeparator();
+                            encoder.EncodeString(Details.SupportedVersions[i].ToString());
+                        }
+                        encoder.EncodeArrayEnd();
+                    }
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(writer.ToString());
+                    response.ContentLength64 = bytes.Length;
+                    response.OutputStream.Write(bytes, 0, bytes.Length);
+                }
+            }
+            else
+            {
+                var version = EtpVersion.v11;
+                if (headers.ContainsKey(EtpHeaders.GetVersion) && string.Equals(headers[EtpHeaders.GetVersion], EtpSubProtocols.v12, StringComparison.OrdinalIgnoreCase))
+                    version = EtpVersion.v12;
+
+                var serverCapabilities = ServerManager.ServerCapabilities(version);
+                using (var writer = new StringWriter())
+                {
+                    using (var encoder = new JsonAvroEncoder(writer))
+                    {
+                        serverCapabilities.Encode(encoder);
+                    }
+
+                    response.ContentType = "application/json";
+                    var @string = writer.ToString();
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(@string);
+                    response.ContentLength64 = bytes.Length;
+                    response.OutputStream.Write(bytes, 0, bytes.Length);
+                }
+            }
+        }
+
+        private async Task HandleListenerCore(CancellationToken token)
+        {
             try
             {
-                // TODO: Handle server cap URL
-                HttpListenerContext context = await _httpListener.GetContextAsync();
+                HttpListenerContext context = await _httpListener.GetContextAsync().ConfigureAwait(false);
                 if (token.IsCancellationRequested)
                 {
                     CleanUpContext(context);
                     return;
                 }
 
-                var headers = GetWebSocketHeaders(context.Request.Headers, context.Request.QueryString);
+                var headers = GetCombinedHeaders(context.Request.Headers, context.Request.QueryString);
+                if (IsServerCapabilitiesRequest(context.Request))
+                {
+                    Logger.Info($"Handling ServerCapabilities request from {context.Request.RemoteEndPoint}.");
+                    HandleServerCapabilitiesRequest(context.Response, headers);
+                    CleanUpContext(context);
+                    return;
+                }
+
                 if (!context.Request.IsWebSocketRequest)
                 {
                     CleanUpContext(context);
                     return;
                 }
 
+                Logger.Info($"Handling WebSocket request from {context.Request.RemoteEndPoint}.");
+
                 if (!EtpWebSocketValidation.IsWebSocketRequestUpgrading(headers))
                 {
                     context.Response.StatusCode = (int)HttpStatusCode.UpgradeRequired;
+                    Logger.Debug($"Invalid web socket request");
                     context.Response.StatusDescription = "Invalid web socket request";
                     CleanUpContext(context);
                     return;
@@ -234,19 +295,30 @@ namespace Energistics.Etp.Native
                 {
                     context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                     context.Response.StatusDescription = "Invalid web socket request";
+                    Logger.Debug($"Invalid web socket request");
                     CleanUpContext(context);
                     return;
                 }
 
-                if (!EtpWebSocketValidation.IsEtpEncodingValid(headers))
+                var encoding = EtpWebSocketValidation.GetEtpEncoding(headers);
+                if (encoding == null)
                 {
                     context.Response.StatusCode = (int)HttpStatusCode.PreconditionFailed;
+                    Logger.Debug($"Error getting ETP encoding.");
                     context.Response.StatusDescription = "Invalid etp-encoding header";
                     CleanUpContext(context);
                     return;
                 }
+                if (!Details.IsEncodingSupported(encoding.Value))
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.PreconditionFailed;
+                    Logger.Debug($"Encoding not supported: {encoding.Value}");
+                    context.Response.StatusDescription = "Unsupported etp-encoding";
+                    CleanUpContext(context);
+                    return;
+                }
 
-                HttpListenerWebSocketContext webSocketContext = await context.AcceptWebSocketAsync(preferredProtocol);
+                HttpListenerWebSocketContext webSocketContext = await context.AcceptWebSocketAsync(preferredProtocol).ConfigureAwait(false);
                 if (token.IsCancellationRequested)
                 {
                     webSocketContext.WebSocket.Dispose();
@@ -254,36 +326,44 @@ namespace Energistics.Etp.Native
                     return;
                 }
 
-                var server = new EtpServer(webSocketContext.WebSocket, ApplicationName, ApplicationVersion, headers);
-
-                server.SupportedObjects = SupportedObjects;
-                RegisterAll(server);
-
-                _servers[server.SessionId] = server;
-                _serverTasks[server.SessionId] = Task.Run(async () =>
+                var version = EtpWebSocketValidation.GetEtpVersion(preferredProtocol);
+                if (!Details.IsVersionSupported(version))
                 {
-                    try
-                    {
-                        InvokeSessionConnected(server);
-                        await server.HandleConnection(token);
-                    }
-                    finally
-                    {
-                        InvokeSessionClosed(server);
-                        CleanUpServer(server);
-                        webSocketContext.WebSocket.Dispose();
-                        CleanUpContext(context);
-                    }
-                }, token);
+                    context.Response.StatusCode = (int)HttpStatusCode.PreconditionFailed;
+                    Logger.Debug($"Sub protocol not supported: {preferredProtocol}");
+                    context.Response.StatusDescription = "Sub protocol not supported";
+                    CleanUpContext(context);
+                    return;
+                }
+
+                var ws = new EtpServerWebSocket { WebSocket = webSocketContext.WebSocket };
+                var server = ServerManager.CreateServer(ws, version, encoding.Value, headers);
+                server.Start();
             }
             catch (Exception ex)
             {
                 if (!ex.ExceptionMeansConnectionTerminated())
                 {
-                    Log("Error: Exception caught when handling a websocket connection: {0}", ex.Message);
+                    ServerManager.Log("Error: Exception caught when handling a websocket connection: {0}", ex.Message);
                     Logger.DebugFormat("Exception caught when handling a websocket connection: {0}", ex);
                     throw;
                 }
+            }
+        }
+
+        #region IDisposable Support
+
+        private bool _disposedValue; // To detect redundant calls
+
+        /// <summary>
+        /// Checks whether the current instance has been disposed.
+        /// </summary>
+        /// <exception cref="System.ObjectDisposedException"></exception>
+        protected virtual void CheckDisposed()
+        {
+            if (_disposedValue)
+            {
+                throw new ObjectDisposedException(GetType().Name);
             }
         }
 
@@ -291,17 +371,36 @@ namespace Energistics.Etp.Native
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-        protected override void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
+            if (disposing && !_disposedValue)
             {
-                StopAsync().Wait();
+                Logger.Trace($"Disposing {GetType().Name}");
+                AsyncContext.Run(() => StopAsync());
                 _httpListener?.Close();
                 _httpListener = null;
             }
 
-            base.Dispose(disposing);
+            _disposedValue = true;
         }
 
+        // NOTE: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        // ~EtpBase() {
+        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+        //   Dispose(false);
+        // }
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // NOTE: uncomment the following line if the finalizer is overridden above.
+             GC.SuppressFinalize(this);
+        }
+
+        #endregion
     }
 }

@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ namespace Energistics.Etp.Common.Datatypes
 
             Assert.IsNotNull(attrib);
             Assert.AreEqual((int)v11.Protocols.Core, attrib.Protocol);
-            Assert.AreEqual("client", attrib.Role);
-            Assert.AreEqual("server", attrib.RequestedRole);
+            Assert.AreEqual(Roles.Client, attrib.Role);
+            Assert.AreEqual(Roles.Server, attrib.CounterpartRole);
         }
     }
 }

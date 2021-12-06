@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using System;
 
 namespace Energistics.Etp.v11.Protocol.Discovery
 {
@@ -25,19 +26,19 @@ namespace Energistics.Etp.v11.Protocol.Discovery
     /// Describes the interface that must be implemented by the customer role of the Discovery protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Discovery, "customer", "store")]
-    public interface IDiscoveryCustomer : IProtocolHandler
+    [ProtocolRole((int)Protocols.Discovery, Roles.Customer, Roles.Store)]
+    public interface IDiscoveryCustomer : IProtocolHandlerWithCounterpartCapabilities<ICapabilitiesStore>
     {
         /// <summary>
         /// Sends a GetResources message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        /// <returns>The message identifier.</returns>
-        long GetResources(string uri);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<GetResources> GetResources(string uri);
 
         /// <summary>
         /// Handles the GetResourcesResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<GetResourcesResponse, string> OnGetResourcesResponse;
+        event EventHandler<ResponseEventArgs<GetResources, GetResourcesResponse>> OnGetResourcesResponse;
     }
 }

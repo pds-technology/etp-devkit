@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes.ChannelData;
@@ -34,87 +34,84 @@ namespace Energistics.Etp.v11.Protocol.ChannelDataFrame
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelDataFrameProducerHandler"/> class.
         /// </summary>
-        public ChannelDataFrameProducerHandler() : base((int)Protocols.ChannelDataFrame, "producer", "consumer")
+        public ChannelDataFrameProducerHandler() : base((int)Protocols.ChannelDataFrame, Common.Roles.Producer, Common.Roles.Consumer)
         {
+            RegisterMessageHandler<RequestChannelData>(Protocols.ChannelDataFrame, MessageTypes.ChannelDataFrame.RequestChannelData, HandleRequestChannelData);
         }
 
         /// <summary>
         /// Sends a ChannelMetadata message to a consumer.
         /// </summary>
+        /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
         /// <param name="channelMetadata">The channel metadata.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long ChannelMetadata(ChannelMetadata channelMetadata)
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ChannelMetadata> ChannelMetadata(IMessageHeader correlatedHeader, IList<ChannelMetadataRecord> channelMetadata)
         {
-            var header = CreateMessageHeader((int)Protocols.ChannelDataFrame, (int)MessageTypes.ChannelDataFrame.ChannelMetadata);
-
-            return Session.SendMessage(header, channelMetadata);
-        }
-
-        /// <summary>
-        /// Sends a ChannelDataFrameSet message to a customer.
-        /// </summary>
-        /// <param name="channelIds">The channel ids.</param>
-        /// <param name="dataFrames">The data frames.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long ChannelDataFrameSet(IList<long> channelIds, IList<DataFrame> dataFrames)
-        {
-            var header = CreateMessageHeader((int)Protocols.ChannelDataFrame, (int)MessageTypes.ChannelDataFrame.ChannelDataFrameSet);
-
-            var channelDataFrameSet = new ChannelDataFrameSet()
+            var body = new ChannelMetadata
             {
-                Channels = channelIds,
-                Data = dataFrames
+                Channels = channelMetadata ?? new List<ChannelMetadataRecord>(),
             };
 
-            return Session.SendMessage(header, channelDataFrameSet);
+            return SendResponse(body, correlatedHeader, isMultiPart: true, isNoData: channelMetadata?.Count == 0);
         }
 
         /// <summary>
-        /// Handles the RequestChannelData event from a customer.
+        /// Sends a ChannelDataFrameSet message to a consumer.
         /// </summary>
-        public event ProtocolEventHandler<RequestChannelData, ChannelMetadata> OnRequestChannelData;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
+        /// <param name="correlatedHeader">The message header that the message to send is correlated with.</param>
+        /// <param name="frameSet">The channel data frame set.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ChannelDataFrameSet> ChannelDataFrameSet(IMessageHeader correlatedHeader, ChannelDataFrameSet frameSet, bool isFinalPart = true)
         {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.ChannelDataFrame.RequestChannelData:
-                    HandleRequestChannelData(header, decoder.Decode<RequestChannelData>(body));
-                    break;
+            var body = frameSet;
 
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
+            return SendResponse(body, correlatedHeader, isMultiPart: true, isFinalPart: isFinalPart, isNoData: frameSet?.Data?.Count == 0);
         }
 
         /// <summary>
-        /// Handles the RequestChannelData message from a customer.
+        /// Sends a complete multi-part set of ChannelMetadata and ChannelDataFrameSet messages to a consumer.
+        /// If there are no frame sets in the list, an empty ChannelDataFrameSet message is sent.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="requestChannelData">The RequestChannelData message.</param>
-        protected virtual void HandleRequestChannelData(IMessageHeader header, RequestChannelData requestChannelData)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="channelMetadata">The list of channel metadata.</param>
+        /// <param name="frameSet">The frame set.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last ChannelDataFrameSet message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ChannelMetadata> RequestChannelDataResponse(IMessageHeader correlatedHeader, IList<ChannelMetadataRecord> channelMetadata, ChannelDataFrameSet frameSet, bool setFinalPart = true)
         {
-            var args = Notify(OnRequestChannelData, header, requestChannelData, new ChannelMetadata());
-            HandleRequestChannelData(args);
+            var message = ChannelMetadata(correlatedHeader, channelMetadata ?? new List<ChannelMetadataRecord>());
 
-            if (!args.Cancel)
+            if (frameSet != null)
             {
-                ChannelMetadata(args.Context);
+                var ret = ChannelDataFrameSet(correlatedHeader, frameSet, isFinalPart: setFinalPart);
+                if (ret == null)
+                    return null;
             }
+
+            return message;
         }
 
         /// <summary>
-        /// Handles the RequestChannelData message from a customer.
+        /// Handles the RequestChannelData event from a consumer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{RequestChannelData, ChannelMetadata}"/> instance containing the event data.</param>
-        protected virtual void HandleRequestChannelData(ProtocolEventArgs<RequestChannelData, ChannelMetadata> args)
+        public event EventHandler<ListAndSingleRequestEventArgs<RequestChannelData, ChannelMetadataRecord, ChannelDataFrameSet>> OnRequestChannelData;
+
+        /// <summary>
+        /// Handles the RequestChannelData message from a consumer.
+        /// </summary>
+        /// <param name="message">The RequestChannelData message.</param>
+        protected virtual void HandleRequestChannelData(EtpMessage<RequestChannelData> message)
+        {
+            HandleRequestMessage(message, OnRequestChannelData, HandleRequestChannelData,
+                responseMethod: (args) => RequestChannelDataResponse(args.Request?.Header, args.Responses1, args.Response2, setFinalPart: !args.HasErrors));
+        }
+
+        /// <summary>
+        /// Handles the RequestChannelData message from a consumer.
+        /// </summary>
+        /// <param name="args">The <see cref="ListAndSingleRequestEventArgs{RequestChannelData, ChannelMetadataRecord, ChannelDataFrameSet}"/> instance containing the event data.</param>
+        protected virtual void HandleRequestChannelData(ListAndSingleRequestEventArgs<RequestChannelData, ChannelMetadataRecord, ChannelDataFrameSet> args)
         {
         }
     }

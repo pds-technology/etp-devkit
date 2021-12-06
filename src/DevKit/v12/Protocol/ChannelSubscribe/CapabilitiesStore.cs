@@ -1,0 +1,51 @@
+﻿//----------------------------------------------------------------------- 
+// ETP DevKit, 1.2
+//
+// Copyright 2019 Energistics
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//-----------------------------------------------------------------------
+
+namespace Energistics.Etp.v12.Protocol.ChannelSubscribe
+{
+    /// <summary>
+    /// Provides common functionality for ChannelSubscribe store capabilities.
+    /// </summary>
+    public class CapabilitiesStore : Etp12ProtocolCapabilities, ICapabilitiesStore
+    {
+        /// <summary>
+        /// The maximum indexCount value allowed for StreamingStartIndex.
+        /// </summary>
+        public long? MaxIndexCount { get; set; }
+
+        /// <summary>
+        /// The maximum count of channels allowed in a single range request.
+        /// </summary>
+        public long? MaxRangeChannelCount { get; set; }
+
+        /// <summary>
+        /// The maximum total count of DataItem records allowed in a complete multipart range message.
+        /// </summary>
+        public long? MaxRangeDataItemCount { get; set; }
+
+        /// <summary>
+        /// The maximum total count of channels allowed to be concurrently open for streaming in a session.
+        /// </summary>
+        public long? MaxStreamingChannelsSessionCount { get; set; }
+
+        /// <summary>
+        /// Indicates whether an endpoint supports filtering requested data by secondary index values. If the filtering can be technically supported by an endpoint, this capability should be true.
+        /// </summary>
+        public bool? SupportsSecondaryIndexFiltering { get; set; }
+    }
+}

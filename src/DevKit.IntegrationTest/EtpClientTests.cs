@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,64 +20,36 @@ using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Properties;
 using Energistics.Etp.Security;
-using Energistics.Etp.v11.Protocol.ChannelStreaming;
-using Energistics.Etp.v11.Protocol.Discovery;
-using Energistics.Etp.v11.Protocol.Store;
-using Energistics.Etp.WebSocket4Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Energistics.Etp
 {
     [TestClass]
-    public class EtpClientTests
+    public class EtpClientTests : IntegrationTestBase
     {
         private const string AppName = "EtpClientTests";
         private const string AppVersion = "1.0";
 
         [TestMethod]
-        public async Task EtpClient_Opens_WebSocket_Connection()
-        {
-            // Create a Basic authorization header dictionary
-            var auth = Authorization.Basic(TestSettings.Username, TestSettings.Password);
-
-            // Initialize an EtpClient with a valid Uri, app name and version, and auth header
-            using (var client = EtpFactory.CreateClient(TestSettings.ServerUrl, AppName, AppVersion, TestSettings.EtpSubProtocol, auth))
-            {
-                // Register protocol handlers to be used in later tests
-                client.Register<IChannelStreamingConsumer, ChannelStreamingConsumerHandler>();
-                client.Register<IDiscoveryCustomer, DiscoveryCustomerHandler>();
-                client.Register<IStoreCustomer, StoreCustomerHandler>();
-
-                // Open the connection (uses an async extension method)
-                await client.OpenAsyncWithTimeout();
-
-                // Assert the current state of the connection
-                Assert.IsTrue(client.IsOpen);
-
-                // Explicit Close not needed as the WebSocket connection will be closed
-                // automatically after leaving the scope of the using statement
-                //client.Close("reason");
-            }
-        }
-
-        [TestMethod]
         public async Task EtpClient_Connects_Using_Json_Encoding()
         {
-            // Create a Basic authorization header dictionary
-            var headers = Authorization.Basic(TestSettings.Username, TestSettings.Password);
+            _server = CreateServer(TestSettings.WebSocketType);
+            _server.Start();
 
-            // Specify preference for JSON encoding
-            headers[EtpSettings.EtpEncodingHeader] = Settings.Default.EtpEncodingJson;
+            // Create a Basic authorization header dictionary
+            var authorization = Authorization.Basic(TestSettings.Username, TestSettings.Password);
 
             // Initialize an EtpClient with a valid Uri, app name and version, and headers
-            using (var client = EtpFactory.CreateClient(TestSettings.ServerUrl, AppName, AppVersion, TestSettings.EtpSubProtocol, headers))
+            using (_client = CreateClient(TestSettings.WebSocketType, TestSettings.EtpVersion, _server.Uri.ToWebSocketUri().ToString(), authorization: authorization, etpEncoding: EtpEncoding.Json))
             {
                 // Open the connection (uses an async extension method)
-                await client.OpenAsyncWithTimeout();
+                await _client.OpenAsyncWithTimeout().ConfigureAwait(false);
 
                 // Assert the current state of the connection
-                Assert.IsTrue(client.IsOpen);
+                Assert.IsTrue(_client.IsWebSocketOpen);
             }
+
+            _server.Dispose();
         }
     }
 }

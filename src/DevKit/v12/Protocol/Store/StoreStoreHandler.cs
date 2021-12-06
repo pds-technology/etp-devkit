@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
+using System;
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.Store
@@ -28,122 +30,284 @@ namespace Energistics.Etp.v12.Protocol.Store
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.Store.IStoreStore" />
-    public class StoreStoreHandler : Etp12ProtocolHandler, IStoreStore
+    public class StoreStoreHandler : Etp12ProtocolHandler<CapabilitiesStore, ICapabilitiesStore, CapabilitiesCustomer, ICapabilitiesCustomer>, IStoreStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreStoreHandler"/> class.
         /// </summary>
-        public StoreStoreHandler() : base((int)Protocols.Store, "store", "customer")
+        public StoreStoreHandler() : base((int)Protocols.Store, Roles.Store, Roles.Customer)
         {
+            RegisterMessageHandler<GetDataObjects>(Protocols.Store, MessageTypes.Store.GetDataObjects, HandleGetDataObjects);
+            RegisterMessageHandler<PutDataObjects>(Protocols.Store, MessageTypes.Store.PutDataObjects, HandlePutDataObjects);
+            RegisterMessageHandler<Chunk>(Protocols.Store, MessageTypes.Store.Chunk, HandleChunk);
+            RegisterMessageHandler<DeleteDataObjects>(Protocols.Store, MessageTypes.Store.DeleteDataObjects, HandleDeleteDataObjects);
         }
 
         /// <summary>
-        /// Sends an Object message to a customer.
+        /// Handles the GetDataObjects event from a customer.
         /// </summary>
-        /// <param name="dataObject">The data object.</param>
-        /// <param name="correlationId">The correlation identifier.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long Object(DataObject dataObject, long correlationId, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
-        {
-            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.Object, correlationId, messageFlag);
+        public event EventHandler<MapAndListRequestEventArgs<GetDataObjects, DataObject, Chunk>> OnGetDataObjects;
 
-            var @object = new Object()
+        /// <summary>
+        /// Sends a GetDataObjectsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="dataObjects">The data objects.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetDataObjectsResponse> GetDataObjectsResponse(IMessageHeader correlatedHeader, IDictionary<string, DataObject> dataObjects, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetDataObjectsResponse
             {
-                DataObject = dataObject
+                DataObjects = dataObjects ?? new Dictionary<string, DataObject>(),
             };
 
-            return Session.SendMessage(header, @object);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
         }
 
         /// <summary>
-        /// Handles the GetObject event from a customer.
+        /// Sends a Chunk message to a customer as part of a multi-part GetDataObjectsResponse message.
         /// </summary>
-        public event ProtocolEventHandler<GetObject, DataObject> OnGetObject;
-
-        /// <summary>
-        /// Handles the PutObject event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<PutObject> OnPutObject;
-
-        /// <summary>
-        /// Handles the DeleteObject event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<DeleteObject> OnDeleteObject;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="blobId">The blob ID.</param>
+        /// <param name="data">The chunk data.</param>
+        /// <param name="final">Whether or not this is the final chunk for the blob ID.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<Chunk> GetDataObjectsResponseChunk(IMessageHeader correlatedHeader, Guid blobId, byte[] data, bool final, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            switch (header.MessageType)
+            var body = new Chunk
             {
-                case (int)MessageTypes.Store.GetObject:
-                    HandleGetObject(header, decoder.Decode<GetObject>(body));
-                    break;
+                BlobId = blobId,
+                Data = data ?? new byte[0],
+                Final = final,
+            };
 
-                case (int)MessageTypes.Store.PutObject:
-                    HandlePutObject(header, decoder.Decode<PutObject>(body));
-                    break;
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
 
-                case (int)MessageTypes.Store.DeleteObject:
-                    HandleDeleteObject(header, decoder.Decode<DeleteObject>(body));
-                    break;
+        /// <summary>
+        /// Sends a multi-part set of GetDataObjectsResponse and Chunk messages to a customer.
+        /// If there are no data objects, an empty GetDataObjectsResponse message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="dataObjects">The data objects.</param>
+        /// <param name="chunks">The chunks.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetDataObjectsResponse message.</param>
+        /// <param name="chunkExtensions">The message header extensions for the Chunk messages.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetDataObjectsResponse> GetDataObjectsResponse(IMessageHeader correlatedHeader, IDictionary<string, DataObject> dataObjects, IList<Chunk> chunks = null, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IList<IMessageHeaderExtension> chunkExtensions = null)
+        {
+            var message = GetDataObjectsResponse(correlatedHeader, dataObjects, isFinalPart: ((chunks == null || chunks.Count == 0) && setFinalPart), extension: responseExtension);
+            if (message == null)
+                return null;
 
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
+            if (chunks?.Count > 0)
+            {
+                for (int i = 0; i < chunks.Count; i++)
+                {
+                    var ret = GetDataObjectsResponseChunk(correlatedHeader, chunks[i].BlobId, chunks[i].Data, chunks[i].Final, isFinalPart: (i == chunks.Count - 1 && setFinalPart), extension: i < chunkExtensions?.Count ? chunkExtensions[i] : null);
+                    if (ret == null)
+                        return null;
+                }
             }
+
+            return message;
         }
 
         /// <summary>
-        /// Handles the GetObject message from a customer.
+        /// Sends a complete multi-part set of GetDataObjectsResponse, Chunk and ProtocolException messages to a customer.
+        /// If there are no data objects, an empty GetDataObjectsResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="getObject">The GetObject message.</param>
-        protected virtual void HandleGetObject(IMessageHeader header, GetObject getObject)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="dataObjects">The data objects.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="chunks">The chunks.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the GetDataObjectsResponse message.</param>
+        /// <param name="chunkExtensions">The message header extensions for the Chunk messages.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetDataObjectsResponse> GetDataObjectsResponse(IMessageHeader correlatedHeader, IDictionary<string, DataObject> dataObjects, IDictionary<string, IErrorInfo> errors, IList<Chunk> chunks = null, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IList<IMessageHeaderExtension> chunkExtensions = null, IMessageHeaderExtension exceptionExtension = null)
         {
-            var args = Notify(OnGetObject, header, getObject, new DataObject());
-            HandleGetObject(args);
+            var message = GetDataObjectsResponse(correlatedHeader, dataObjects, chunks, setFinalPart: ((errors == null || errors.Count == 0) && setFinalPart), responseExtension: responseExtension, chunkExtensions: chunkExtensions);
+            if (message == null)
+                return null;
 
-            if (args.Cancel)
-                return;
+            if (errors?.Count > 0)
+            {
+                var ret = ProtocolException(errors, correlatedHeader: correlatedHeader, setFinalPart: setFinalPart, extension: exceptionExtension);
+                if (ret == null)
+                    return null;
+            }
 
-            if (args.Context.Data == null || args.Context.Data.Length == 0)
-                Object(args.Context, header.MessageId, MessageFlags.NoData);
-            else
-                Object(args.Context, header.MessageId);
+            return message;
         }
 
         /// <summary>
-        /// Handles the GetObject message from a customer.
+        /// Handles the PutDataObjects event from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{GetObject, DataObject}"/> instance containing the event data.</param>
-        protected virtual void HandleGetObject(ProtocolEventArgs<GetObject, DataObject> args)
+        public event EventHandler<MapRequestEventArgs<PutDataObjects, PutResponse>> OnPutDataObjects;
+
+        /// <summary>
+        /// Handles the Chunk event from a customer as part of a PutDataObjects multi-part message.
+        /// </summary>
+        public event EventHandler<MapRequestWithDataEventArgs<PutDataObjects, Chunk, PutResponse>> OnPutDataObjectsChunk;
+
+        /// <summary>
+        /// Sends a PutDataObjectsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutDataObjectsResponse> PutDataObjectsResponse(IMessageHeader correlatedHeader, IDictionary<string, PutResponse> success, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new PutDataObjectsResponse
+            {
+                Success = success ?? new Dictionary<string, PutResponse>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of PutDataObjectsResponse and ProtocolException messages to a customer.
+        /// If there are no successes, an empty PutDataObjectsResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the PutDataObjectsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutDataObjectsResponse> PutDataObjectsResponse(IMessageHeader correlatedHeader, IDictionary<string, PutResponse> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(PutDataObjectsResponse, correlatedHeader, success, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
+
+        /// <summary>
+        /// Handles the DeleteDataObjects event from a customer.
+        /// </summary>
+        public event EventHandler<MapRequestEventArgs<DeleteDataObjects, ArrayOfString>> OnDeleteDataObjects;
+
+        /// <summary>
+        /// Sends a DeleteDataObjectsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="deletedUris">The deleted URIs.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<DeleteDataObjectsResponse> DeleteDataObjectsResponse(IMessageHeader correlatedHeader, IDictionary<string, ArrayOfString> deletedUris, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new DeleteDataObjectsResponse
+            {
+                DeletedUris = deletedUris ?? new Dictionary<string, ArrayOfString>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of DeleteDataObjectsResponse and ProtocolException messages to a customer.
+        /// If there are no deleted URIs, an empty DeleteDataObjectsResponse message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="deletedUris">The deleted URIs.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the DeleteDataObjectsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<DeleteDataObjectsResponse> DeleteDataObjectsResponse(IMessageHeader correlatedHeader, IDictionary<string, ArrayOfString> deletedUris, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(DeleteDataObjectsResponse, correlatedHeader, deletedUris, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
+
+        /// <summary>
+        /// Handles the GetDataObjects message from a customer.
+        /// </summary>
+        /// <param name="message">The GetDataObjects message.</param>
+        protected virtual void HandleGetDataObjects(EtpMessage<GetDataObjects> message)
+        {
+            HandleRequestMessage(message, OnGetDataObjects, HandleGetDataObjects,
+                responseMethod: (args) => GetDataObjectsResponse(args.Request?.Header, args.Response1Map, args.Responses2, setFinalPart: !args.HasErrors, responseExtension: args.Response1MapExtension, chunkExtensions: args.Response2Extensions));
+        }
+
+        /// <summary>
+        /// Handles the GetDataObjects message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapAndListRequestEventArgs{GetDataObjects, DataObject, Chunk}"/> instance containing the event data.</param>
+        protected virtual void HandleGetDataObjects(MapAndListRequestEventArgs<GetDataObjects, DataObject, Chunk> args)
         {
         }
 
         /// <summary>
-        /// Handles the PutObject message from a customer.
+        /// Handles the PutDataObjects message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="putObject">The PutObject message.</param>
-        protected virtual void HandlePutObject(IMessageHeader header, PutObject putObject)
+        /// <param name="message">The PutDataObjects message.</param>
+        protected virtual void HandlePutDataObjects(EtpMessage<PutDataObjects> message)
         {
-            Notify(OnPutObject, header, putObject);
+            if (!message.Header.IsFinalPart())
+                TryRegisterMessage(message);
+
+            HandleRequestMessage(message, OnPutDataObjects, HandlePutDataObjects,
+                responseMethod: (args) => PutDataObjectsResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
         }
 
         /// <summary>
-        /// Handles the DeleteObject message from a customer.
+        /// Handles the PutDataObjects message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="deleteObject">The DeleteObject message.</param>
-        protected virtual void HandleDeleteObject(IMessageHeader header, DeleteObject deleteObject)
+        /// <param name="args">The <see cref="MapRequestEventArgs{PutDataObjects, PutResponse}"/> instance containing the event data.</param>
+        protected virtual void HandlePutDataObjects(MapRequestEventArgs<PutDataObjects, PutResponse> args)
         {
-            Notify(OnDeleteObject, header, deleteObject);
+        }
+
+        /// <summary>
+        /// Handles the Chunk message from a customer.
+        /// </summary>
+        /// <param name="message">The Chunk message.</param>
+        protected virtual void HandleChunk(EtpMessage<Chunk> message)
+        {
+            var request = TryGetCorrelatedMessage<PutDataObjects>(message);
+            HandleRequestMessage(request, OnPutDataObjectsChunk, HandlePutDataObjectsChunk,
+                args: new MapRequestWithDataEventArgs<PutDataObjects, Chunk, PutResponse>(request, message),
+                responseMethod: (args) => PutDataObjectsResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the Chunk message from a customer when sent as part of a PutDataObjects message.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestWithDataEventArgs{PutDataObjects, Chunk, PutResponse}"/> instance containing the event data.</param>
+        protected virtual void HandlePutDataObjectsChunk(MapRequestWithDataEventArgs<PutDataObjects, Chunk, PutResponse> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the DeleteDataObjects message from a customer.
+        /// </summary>
+        /// <param name="message">The DeleteDataObjects message.</param>
+        protected virtual void HandleDeleteDataObjects(EtpMessage<DeleteDataObjects> message)
+        {
+            HandleRequestMessage(message, OnDeleteDataObjects, HandleDeleteDataObjects,
+                responseMethod: (args) => DeleteDataObjectsResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the DeleteDataObjects message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{DeleteDataObjects, ArrayOfString}"/> instance containing the event data.</param>
+        protected virtual void HandleDeleteDataObjects(MapRequestEventArgs<DeleteDataObjects, ArrayOfString> args)
+        {
         }
     }
 }

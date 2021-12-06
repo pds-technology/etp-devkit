@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.IntegrationTest;
 
@@ -54,7 +55,7 @@ namespace Energistics
         /// <summary>
         /// The default ETP version
         /// </summary>
-        public static string EtpVersion = Settings.Default.EtpVersion;
+        public static EtpVersion EtpVersion = Settings.Default.EtpVersion;
 
         /// <summary>
         /// The default ETP sub protocol
@@ -69,7 +70,7 @@ namespace Energistics
         /// <summary>
         /// The websocket type.
         /// </summary>
-        public static WebSocketType WebSocketType = Etp.Properties.Settings.Default.DefaultWebSocketType;
+        public static WebSocketType WebSocketType = EtpSettings.DefaultWebSocketType;
 
         /// <summary>
         /// The username for the proxy.
@@ -96,7 +97,7 @@ namespace Energistics
             ProxyUsername = Settings.Default.ProxyUsername;
             ProxyPassword = Settings.Default.ProxyPassword;
 
-            WebSocketType = Etp.Properties.Settings.Default.DefaultWebSocketType;
+            WebSocketType = EtpSettings.DefaultWebSocketType;
         }
     }
 }

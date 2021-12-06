@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
+using System;
+using System.Collections.Generic;
 
 namespace Energistics.Etp.v12.Protocol.StoreNotification
 {
@@ -28,105 +30,265 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.StoreNotification.IStoreNotificationStore" />
-    public class StoreNotificationStoreHandler : Etp12ProtocolHandler, IStoreNotificationStore
+    public class StoreNotificationStoreHandler : Etp12ProtocolHandler<CapabilitiesStore, ICapabilitiesStore, CapabilitiesCustomer, ICapabilitiesCustomer>, IStoreNotificationStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreNotificationStoreHandler"/> class.
         /// </summary>
-        public StoreNotificationStoreHandler() : base((int)Protocols.StoreNotification, "store", "customer")
+        public StoreNotificationStoreHandler() : base((int)Protocols.StoreNotification, Roles.Store, Roles.Customer)
         {
+            RegisterMessageHandler<SubscribeNotifications>(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotifications, HandleSubscribeNotifications);
+            RegisterMessageHandler<UnsubscribeNotifications>(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsubscribeNotifications, HandleUnsubscribeNotifications);
         }
 
         /// <summary>
-        /// Sends a ChangeNotification message to a customer.
+        /// Handles the SubscribeNotifications event from a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="change">The object change.</param>
-        /// <returns>The message identifier.</returns>
-        public long ChangeNotification(IMessageHeader request, ObjectChange change)
-        {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.ChangeNotification, request.MessageId);
+        public event EventHandler<MapRequestEventArgs<SubscribeNotifications, string>> OnSubscribeNotifications;
 
-            var notification = new ChangeNotification()
+        /// <summary>
+        /// Sends a SubscribeNotificationsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final  of a multi- message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscribeNotificationsResponse> SubscribeNotificationsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new SubscribeNotificationsResponse
             {
-                Change = change
+                Success = success ?? new Dictionary<string, string>(),
             };
 
-            return Session.SendMessage(header, notification);
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
         }
 
         /// <summary>
-        /// Sends a NotificationRequestDeleteNotification message to a customer.
+        /// Sends a complete multi- set of SubscribeNotificationsResponse and ProtocolException messages to a customer.
+        /// If there are no successes, an empty SubscribeNotificationsRecord message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final  flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the SubscribeNotificationsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscribeNotificationsResponse> SubscribeNotificationsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null)
+        {
+            return SendMapResponse(SubscribeNotificationsResponse, correlatedHeader, success, errors, setFinalPart: setFinalPart, responseExtension: responseExtension, exceptionExtension: exceptionExtension);
+        }
+
+        /// <summary>
+        /// Sends an UnsolicitedStoreNotifications message to a customer.
+        /// </summary>
+        /// <param name="subscriptions">The unsolicited subscriptions.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<UnsolicitedStoreNotifications> UnsolicitedStoreNotifications(IList<SubscriptionInfo> subscriptions, IMessageHeaderExtension extension = null)
+        {
+            var body = new UnsolicitedStoreNotifications
+            {
+                Subscriptions = subscriptions ?? new List<SubscriptionInfo>(),
+            };
+
+
+            var message = SendNotification(body, extension: extension, onBeforeSend: (m) => TryRegisterSubscriptions(m, subscriptions.ToMap(), nameof(SubscriptionInfo.RequestUuid)));
+            if (message == null)
+            {
+                foreach (var subscription in body.Subscriptions)
+                    TryUnregisterSubscription(subscription);
+            }
+
+            return message;
+        }
+
+        /// <summary>
+        /// Sends an ObjectChanged message to a customer.
+        /// </summary>
+        /// <param name="requestUuid">The request UUID.</param>
+        /// <param name="change">The object change.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ObjectChanged> ObjectChanged(Guid requestUuid, ObjectChange change, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new ObjectChanged
+            {
+                RequestUuid = requestUuid,
+                Change = change,
+            };
+
+            return SendNotification(body, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a Chunk message to a customer as part of a multi-part ObjectChanged message.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="blobId">The blob ID.</param>
+        /// <param name="data">The chunk data.</param>
+        /// <param name="final">Whether or not this is the final chunk for the blob ID.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<Chunk> ObjectChangedChunk(IMessageHeader correlatedHeader, Guid blobId, byte[] data, bool final, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new Chunk
+            {
+                BlobId = blobId,
+                Data = data ?? new byte[0],
+                Final = final,
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends an ObjectActiveStatusChanged message to a customer.
+        /// </summary>
+        /// <param name="requestUuid">The request UUID.</param>
+        /// <param name="activeStatus">The active status.</param>
+        /// <param name="changeTime">The change time.</param>
+        /// <param name="resource">The resource on which the active status has changed.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ObjectActiveStatusChanged> ObjectActiveStatusChanged(Guid requestUuid, ActiveStatusKind activeStatus, DateTime changeTime, Resource resource, IMessageHeaderExtension extension = null)
+        {
+            var body = new ObjectActiveStatusChanged
+            {
+                RequestUuid = requestUuid,
+                ActiveStatus = activeStatus,
+                Resource = resource,
+                ChangeTime = changeTime,
+            };
+
+            return SendNotification(body, extension: extension);
+        }
+
+        /// <summary>
+        /// Sends an ObjectAccessRevoked message to a customer.
+        /// </summary>
+        /// <param name="requestUuid">The request UUID.</param>
         /// <param name="uri">The URI.</param>
         /// <param name="changeTime">The change time.</param>
-        /// <returns>The message identifier.</returns>
-        public long DeleteNotification(IMessageHeader request, string uri, long changeTime)
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ObjectAccessRevoked> ObjectAccessRevoked(Guid requestUuid, string uri, DateTime changeTime, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.DeleteNotification, request.MessageId);
-
-            var notification = new DeleteNotification()
+            var body = new ObjectAccessRevoked
             {
-                Uri = uri,
-                ChangeTime = changeTime
+                RequestUuid = requestUuid,
+                ChangeTime = changeTime,
             };
 
-            return Session.SendMessage(header, notification);
+            return SendNotification(body, extension: extension);
         }
 
         /// <summary>
-        /// Handles the NotificationRequest event from a customer.
+        /// Sends an ObjectDeleted message to a customer.
         /// </summary>
-        public event ProtocolEventHandler<NotificationRequest> OnNotificationRequest;
-
-        /// <summary>
-        /// Handles the CancelNotification event from a customer.
-        /// </summary>
-        public event ProtocolEventHandler<CancelNotification> OnCancelNotification;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
+        /// <param name="requestUuid">The request UUID.</param>
+        /// <param name="uri">The URI.</param>
+        /// <param name="changeTime">The change time.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ObjectDeleted> ObjectDeleted(Guid requestUuid, string uri, DateTime changeTime, IMessageHeaderExtension extension = null)
         {
-            switch (header.MessageType)
+            var body = new ObjectDeleted
             {
-                case (int)MessageTypes.StoreNotification.NotificationRequest:
-                    HandleNotificationRequest(header, decoder.Decode<NotificationRequest>(body));
-                    break;
+                RequestUuid = requestUuid,
+                Uri = uri ?? string.Empty,
+                ChangeTime = changeTime,
+            };
 
-                case (int)MessageTypes.StoreNotification.CancelNotification:
-                    HandleCancelNotification(header, decoder.Decode<CancelNotification>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
+            return SendNotification(body, extension: extension);
         }
 
         /// <summary>
-        /// Handles the NotificationRequest message from a customer.
+        /// Handles the UnsubscribeNotifications event from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="request">The NotificationRequest message.</param>
-        protected virtual void HandleNotificationRequest(IMessageHeader header, NotificationRequest request)
+        public event EventHandler<RequestWithContextEventArgs<UnsubscribeNotifications, Guid, SubscriptionEndedReason>> OnUnsubscribeNotifications;
+
+        /// <summary>
+        /// Sends a SubscriptionEnded message to a customer in response to a UnsubscribeNotifications message.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="requestUuid">The reqyest UUId.</param>
+        /// <param name="reason">The human readable reason why the subscription ended.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscriptionEnded> ResponseSubscriptionEnded(IMessageHeader correlatedHeader, Guid requestUuid, string reason, IMessageHeaderExtension extension = null)
         {
-            Notify(OnNotificationRequest, header, request);
+            var body = new SubscriptionEnded
+            {
+                RequestUuid = requestUuid,
+                Reason = reason ?? string.Empty,
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension);
         }
 
         /// <summary>
-        /// Handles the CancelNotification message from a customer.
+        /// Sends a SubscriptionEnded message to a customer as a notification.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="request">The CancelNotification message.</param>
-        protected virtual void HandleCancelNotification(IMessageHeader header, CancelNotification request)
+        /// <param name="requestUuid">The reqyest UUId.</param>
+        /// <param name="reason">The human readable reason why the subscription ended.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscriptionEnded> NotificationSubscriptionEnded(Guid requestUuid, string reason, IMessageHeaderExtension extension = null)
         {
-            Notify(OnCancelNotification, header, request);
+            var body = new SubscriptionEnded
+            {
+                RequestUuid = requestUuid,
+                Reason = reason ?? string.Empty,
+            };
+
+            return SendNotification(body, extension: extension);
+        }
+
+        /// <summary>
+        /// Handles the SubscribeNotifications message from a customer.
+        /// </summary>
+        /// <param name="message">The SubscribeNotifications message.</param>
+        protected virtual void HandleSubscribeNotifications(EtpMessage<SubscribeNotifications> message)
+        {
+            var errors = TryRegisterSubscriptions(message, message.Body.Request, nameof(message.Body.Request));
+
+            HandleRequestMessage(message, OnSubscribeNotifications, HandleSubscribeNotifications,
+                args: new MapRequestEventArgs<SubscribeNotifications, string>(message) { ErrorMap = errors },
+                responseMethod: (args) => SubscribeNotificationsResponse(args.Request?.Header, args.ResponseMap, isFinalPart: !args.HasErrors, extension: args.ResponseMapExtension));
+        }
+
+        /// <summary>
+        /// Handles the response to an SubscribeNotifications message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="MapRequestEventArgs{SubscribeNotifications, string}"/> instance containing the event data.</param>
+        protected virtual void HandleSubscribeNotifications(MapRequestEventArgs<SubscribeNotifications, string> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the UnsubscribeNotification message from a customer.
+        /// </summary>
+        /// <param name="message">The UnsubscribeNotification message.</param>
+        protected virtual void HandleUnsubscribeNotifications(EtpMessage<UnsubscribeNotifications> message)
+        {
+            var error = TryUnregisterSubscription(message.Body, nameof(message.Body.RequestUuid), message);
+
+            HandleRequestMessage(message, OnUnsubscribeNotifications, HandleUnsubscribeNotifications,
+                args: new RequestWithContextEventArgs<UnsubscribeNotifications, Guid, SubscriptionEndedReason>(message) { FinalError = error },
+                responseMethod: (args) => { if (!args.HasErrors) { ResponseSubscriptionEnded(args.Request?.Header, args.Response, args.Context.Reason, extension: args.ResponseExtension); } });
+        }
+
+        /// <summary>
+        /// Handles the response to a UnsubscribeNotification message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="RequestWithContextEventArgs{UnsubscribeNotification, Guid, SubscriptionEndedReason}"/> instance containing the event data.</param>
+        protected virtual void HandleUnsubscribeNotifications(RequestWithContextEventArgs<UnsubscribeNotifications, Guid, SubscriptionEndedReason> args)
+        {
         }
     }
 }

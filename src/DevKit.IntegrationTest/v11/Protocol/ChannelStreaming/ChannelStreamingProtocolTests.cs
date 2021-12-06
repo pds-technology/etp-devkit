@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
@@ -30,10 +31,10 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         [TestInitialize]
         public void TestSetUp()
         {
-            SetUp(TestSettings.WebSocketType, EtpSettings.Etp11SubProtocol);
+            SetUp(TestSettings.WebSocketType, EtpVersion.v11);
 
             // Register protocol handler
-            _server.Register<IChannelStreamingProducer, ChannelStreamingProducer11MockHandler>();
+            _server.ServerManager.Register(new ChannelStreamingProducer11MockHandler());
 
             _server.Start();
         }
@@ -45,23 +46,23 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         }
 
         [TestMethod]
-        public async Task IChannelStreamingConsumer_Start_Connected_To_Simple_Producer()
+        public async Task IChannelStreamingConsumer_v11_Start_Connected_To_Simple_Producer()
         {
-            _client.Register<IChannelStreamingConsumer, ChannelStreamingConsumer11MockHandler>();
+            _client.Register(new ChannelStreamingConsumer11MockHandler());
             var handler = _client.Handler<IChannelStreamingConsumer>() as ChannelStreamingConsumer11MockHandler;
 
             // Register event handlers
-            var onChannelMetadata = HandleAsync<ChannelMetadata>(x => handler.OnChannelMetadata += x);
-            var onChannelData = HandleAsync<ChannelData>(x => handler.OnChannelData += x);
-            var onOpenSession = HandleAsync<OpenSession>(x => handler.OnOpenSession += x);
+            var onChannelMetadata = HandleAsync<FireAndForgetEventArgs<ChannelMetadata>>(x => handler.OnSimpleStreamerChannelMetadata += x);
+            var onChannelData = HandleAsync<FireAndForgetEventArgs<ChannelData>>(x => handler.OnStreamingChannelData += x);
+            var onStarted = HandleAsync<EventArgs>(x => handler.OnStarted += x);
 
             // Wait for Open connection
             var isOpen = await _client.OpenAsyncWithTimeout();
             Assert.IsTrue(isOpen);
 
             // Wait for OpenSession to check if the producer is a simple streamer
-            await onOpenSession.WaitAsync();
-            Assert.IsTrue(handler.ProducerIsSimpleStreamer);
+            await onStarted.WaitAsync();
+            Assert.IsTrue(handler.CounterpartCapabilities.SimpleStreamer ?? false);
 
             // Send Start message
             handler.Start();
@@ -70,15 +71,15 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
             var argsMetadata = await onChannelMetadata.WaitAsync();
 
             Assert.IsNotNull(argsMetadata);
-            Assert.IsNotNull(argsMetadata.Message.Channels);
-            Assert.IsTrue(argsMetadata.Message.Channels.Any());
+            Assert.IsNotNull(argsMetadata.Message.Body.Channels);
+            Assert.IsTrue(argsMetadata.Message.Body.Channels.Any());
 
             // Wait for ChannelData message
             var argsData = await onChannelData.WaitAsync();
 
             Assert.IsNotNull(argsData);
-            Assert.IsNotNull(argsData.Message.Data);
-            Assert.IsTrue(argsData.Message.Data.Any());
+            Assert.IsNotNull(argsData.Message.Body.Data);
+            Assert.IsTrue(argsData.Message.Body.Data.Any());
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using Energistics.Etp.Common;
+using Nito.AsyncEx;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Energistics.Etp.Common;
-using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.Properties;
 
 namespace Energistics.Etp.Native
 {
@@ -35,43 +34,24 @@ namespace Energistics.Etp.Native
     /// <seealso cref="Energistics.Etp.Common.EtpSession" />
     public class EtpClient : EtpSessionNativeBase, IEtpClient
     {
-        private static readonly IDictionary<string, string> EmptyHeaders = new Dictionary<string, string>();
-        private static readonly IDictionary<string, string> BinaryHeaders = new Dictionary<string, string>()
-        {
-            { Settings.Default.EtpEncodingHeader, Settings.Default.EtpEncodingBinary }
-        };
-
-        private string _supportedCompression;
-        private Task _connectionHandlingTask;
-
-        private CancellationTokenSource _source;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EtpClient" /> class.
-        /// </summary>
-        /// <param name="uri">The ETP server URI.</param>
-        /// <param name="application">The client application name.</param>
-        /// <param name="version">The client application version.</param>
-        /// <param name="etpSubProtocol">The ETP sub protocol.</param>
-        public EtpClient(string uri, string application, string version, string etpSubProtocol) : this(uri, application, version, etpSubProtocol, EmptyHeaders)
-        {
-        }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpClient"/> class.
         /// </summary>
         /// <param name="uri">The ETP server URI.</param>
-        /// <param name="application">The client application name.</param>
-        /// <param name="version">The client application version.</param>
-        /// <param name="etpSubProtocol">The ETP sub protocol.</param>
+        /// <param name="etpVersion">The ETP version for the session.</param>
+        /// <param name="encoding">The ETP encoding for the session.</param>
+        /// <param name="info">The client's information.</param>
+        /// <param name="parameters">The client's parameters.</param>
+        /// <param name="authorization">The client's authorization details.</param>
         /// <param name="headers">The WebSocket headers.</param>
-        public EtpClient(string uri, string application, string version, string etpSubProtocol, IDictionary<string, string> headers)
-            : base(EtpWebSocketValidation.GetEtpVersion(etpSubProtocol), new ClientWebSocket(), application, version, headers, true)
+        public EtpClient(string uri, EtpVersion etpVersion, EtpEncoding encoding, EtpEndpointInfo info, EtpEndpointParameters parameters = null, Security.Authorization authorization = null, IDictionary<string, string> headers = null)
+            : base(etpVersion, encoding, new ClientWebSocket(), info, parameters, headers, true, null)
         {
-            var headerItems = Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList();
+            Headers.SetAuthorization(authorization);
 
-            ClientSocket.Options.AddSubProtocol(etpSubProtocol);
-            foreach (var item in headerItems)
+            ClientSocket.Options.AddSubProtocol(EtpFactory.GetSubProtocol(EtpVersion));
+
+            foreach (var item in Headers)
                 ClientSocket.Options.SetRequestHeader(item.Key, item.Value);
 
             Uri = new Uri(uri);
@@ -83,7 +63,7 @@ namespace Energistics.Etp.Native
         /// <summary>
         /// The client websocket.
         /// </summary>
-        private ClientWebSocket ClientSocket { get { return Socket as ClientWebSocket; } }
+        private ClientWebSocket ClientSocket => Socket as ClientWebSocket;
 
         /// <summary>
         /// The URI.
@@ -91,29 +71,59 @@ namespace Energistics.Etp.Native
         private Uri Uri { get; set; }
 
         /// <summary>
+        /// Gets a value indicating whether the underlying websocket is actively being kept alive by sending WebSocket ping messages.
+        /// </summary>
+        public bool IsWebSocketKeptAlive => ClientSocket.Options.KeepAliveInterval != TimeSpan.Zero;
+
+        /// <summary>
+        /// Gets a value indicating the frequency at which WebSocket ping messages are being sent to keep the underlying WebSocket alive.
+        /// </summary>
+        public TimeSpan WebSocketKeepAliveInterval => ClientSocket.Options.KeepAliveInterval;
+
+        /// <summary>
         /// Opens the WebSocket connection.
         /// </summary>
-        public void Open()
+        /// <returns><c>true</c> if the socket was successfully opened; <c>false</c> otherwise.</returns>
+        public bool Open()
         {
-            OpenAsync().Wait();
+            return AsyncContext.Run(() => OpenAsync());
         }
 
         /// <summary>
         /// Asynchronously opens the WebSocket connection.
         /// </summary>
+        /// <returns><c>true</c> if the socket was successfully opened; <c>false</c> otherwise.</returns>
         public async Task<bool> OpenAsync()
         {
-            if (IsOpen)
+            if (IsWebSocketOpen)
                 return true;
 
             Logger.Trace(Log("Opening web socket connection..."));
 
-            _source = new CancellationTokenSource();
-            var token = _source.Token;
+            var token = ReceiveLoopToken;
 
             try
             {
-                await ClientSocket.ConnectAsync(Uri, token);
+                //////////////////////////////////////////////////////////////////////
+                // Work around to avoid websocket connections timing out
+                // based on https://stackoverflow.com/questions/40502921
+
+                var prevIdleTime = ServicePointManager.MaxServicePointIdleTime;
+                ServicePointManager.MaxServicePointIdleTime = Timeout.Infinite;
+
+                // End work around
+                //////////////////////////////////////////////////////////////////////
+
+                await ClientSocket.ConnectAsync(Uri, token).ConfigureAwait(CaptureAsyncContext);
+
+                //////////////////////////////////////////////////////////////////////
+                // Work around based on https://stackoverflow.com/questions/40502921
+
+                ServicePointManager.MaxServicePointIdleTime = prevIdleTime;
+
+                // End work around
+                //////////////////////////////////////////////////////////////////////
+
                 Logger.Verbose($"Connected to {Uri}");
             }
             catch (OperationCanceledException)
@@ -122,45 +132,20 @@ namespace Energistics.Etp.Native
                 return false;
             }
 
-            if (!IsOpen)
+            if (!IsWebSocketOpen)
                 return false;
 
             if (token.IsCancellationRequested)
                 return false;
 
-            _connectionHandlingTask = Task.Run(async () => await HandleConnection(token), token);
+            RaiseSocketOpened();
 
             Logger.Trace(Log("Requesting session..."));
-            Adapter.RequestSession(this, ApplicationName, ApplicationVersion, _supportedCompression);
+            await RequestSessionAsync().ConfigureAwait(CaptureAsyncContext);
+
+            StartReceiveLoop();
 
             return true;
-        }
-
-        /// <summary>
-        /// Asynchronously closes the WebSocket connection for the specified reason.
-        /// </summary>
-        /// <param name="reason">The reason.</param>
-        protected override async Task CloseAsyncCore(string reason)
-        {
-            _source?.Cancel();
-
-            try
-            {
-                if (_connectionHandlingTask != null)
-                    await _connectionHandlingTask;
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            finally
-            {
-                _connectionHandlingTask = null;
-                _source?.Dispose();
-                _source = null;
-            }
-
-            if (IsOpen)
-                await base.CloseAsyncCore(reason);
         }
 
         /// <summary>
@@ -170,9 +155,12 @@ namespace Energistics.Etp.Native
         /// <param name="port">The port number.</param>
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
-        public void SetProxy(string host, int port, string username = null, string password = null)
+        /// <param name="useDefaultCredentials">Whether or not to use default credentials.</param>
+        public void SetProxy(string host, int port, string username = null, string password = null, bool useDefaultCredentials = false)
         {
             if (Socket == null) return;
+            if (IsWebSocketOpen)
+                throw new InvalidOperationException("Proxy must be set before the WebSocket connection is opened.");
 
             var endPoint = new DnsEndPoint(host, port);
             var proxy = new WebProxy(endPoint.Host, endPoint.Port);
@@ -182,47 +170,45 @@ namespace Energistics.Etp.Native
                 proxy.Credentials = new NetworkCredential(username, password);
             }
 
-            // TODO: Handle using default credentials
+            proxy.UseDefaultCredentials = useDefaultCredentials;
 
             ClientSocket.Options.Proxy = proxy;
         }
 
         /// <summary>
-        /// Sets the supported compression type, e.g. gzip.
+        /// Sets security options.
         /// </summary>
-        /// <param name="supportedCompression">The supported compression.</param>
-        public void SetSupportedCompression(string supportedCompression)
+        /// <param name="enabledSslProtocols">The enabled SSL and TLS protocols.</param>
+        /// <param name="acceptInvalidCertificates">Whether or not to accept invalid certificates.</param>
+        /// <param name="clientCertificate">The client certificate to use.</param>
+        public void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates, X509Certificate2 clientCertificate = null)
         {
-            _supportedCompression = supportedCompression;
+            if (IsWebSocketOpen)
+                throw new InvalidOperationException("Security options must be set before the WebSocket connection is opened.");
+
+            if (clientCertificate != null)
+                ClientSocket.Options.ClientCertificates.Add(clientCertificate);
+
+            ServicePointManager.SecurityProtocol = enabledSslProtocols;
+
+            if (acceptInvalidCertificates)
+                ServicePointManager.ServerCertificateValidationCallback +=
+                    (sender, certificate, chain, sslPolicyErrors) => true;
+            else
+                ServicePointManager.ServerCertificateValidationCallback = null;
         }
 
         /// <summary>
-        /// Called to let derived classes cleanup after a connection has ended.
+        /// Sets the interval at which the underlying websocket will be actively kept alive by sending WebSocket ping messages.
+        /// A value of 0 will disable sending ping messages.
         /// </summary>
-        protected override void CleanupAfterConnection()
+        /// <param name="keepAliveInterval">The time interval to wait between sending WebSocket ping messages.</param>
+        public void SetWebSocketKeepAliveInterval(TimeSpan keepAliveInterval)
         {
-            Logger.Trace(Log("[{0}] Socket closed.", SessionId));
-            SessionId = null;
-        }
+            if (IsWebSocketOpen)
+                throw new InvalidOperationException("WebSocket keep alive interval must be set before the WebSocket connection is opened.");
 
-        /// <summary>
-        /// Called when the ETP session is opened.
-        /// </summary>
-        /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        public override void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols)
-        {
-            Logger.Trace(Log("[{0}] Socket opened.", SessionId));
-
-            base.OnSessionOpened(requestedProtocols, supportedProtocols);
-        }
-
-        /// <summary>
-        /// Handles the unsupported protocols.
-        /// </summary>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        protected override void HandleUnsupportedProtocols(IList<ISupportedProtocol> supportedProtocols)
-        {
+            ClientSocket.Options.KeepAliveInterval = keepAliveInterval;
         }
 
         /// <summary>
@@ -233,9 +219,13 @@ namespace Energistics.Etp.Native
         {
             if (disposing)
             {
-                Close("Shutting down");
+                Logger.Verbose($"[{SessionKey}] Disposing EtpClient for {GetType().Name}");
+
+                CloseWebSocket("Shutting down");
 
                 Socket?.Dispose();
+
+                Logger.Verbose($"[{SessionKey}] Disposed EtpClient for {GetType().Name}");
             }
 
             base.Dispose(disposing);

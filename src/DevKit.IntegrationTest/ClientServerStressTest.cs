@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using log4net;
@@ -32,23 +34,23 @@ namespace Energistics.Etp
 
         private readonly ILog Logger = log4net.LogManager.GetLogger(typeof(ClientServerStressTest));
 
-        private const int nativeIterations = 1000;
+        private readonly int nativeIterations = EtpFactory.IsNativeSupported ? 1000 : 10;
         private const int webSocket4NetIterations = 10;
 
         protected void SetUp(WebSocketType webSocketType)
         {
-            SetUp(webSocketType, EtpSettings.Etp11SubProtocol);
+            SetUp(webSocketType, EtpVersion.v11);
         }
 
         protected void SetupStart(WebSocketType webSocketType)
         {
-            SetUp(webSocketType, EtpSettings.Etp11SubProtocol);
+            SetUp(webSocketType, EtpVersion.v11);
             _server.Start();
         }
 
         protected void SetupStartOpen(WebSocketType webSocketType)
         {
-            SetUp(webSocketType, EtpSettings.Etp11SubProtocol);
+            SetUp(webSocketType, EtpVersion.v11);
             _server.Start();
             _client.Open();
         }
@@ -61,7 +63,7 @@ namespace Energistics.Etp
 
         protected void CloseStopCleanUp()
         {
-            _client?.Close("Closing");
+            _client?.CloseWebSocket("Closing");
             _server?.Stop();
             CleanUp();
         }
@@ -69,7 +71,7 @@ namespace Energistics.Etp
         protected void StopCloseCleanUp()
         {
             _server?.Stop();
-            _client?.Close("Closing");
+            _client?.CloseWebSocket("Closing");
             CleanUp();
         }
 
@@ -78,7 +80,7 @@ namespace Energistics.Etp
             _server?.Dispose();
             _server = null;
 
-            _client?.Close("Closing");
+            _client?.CloseWebSocket("Closing");
             CleanUp();
         }
 
@@ -189,7 +191,7 @@ namespace Energistics.Etp
         }
 
         [TestMethod]
-        public void ClientServerStressTest_SetupStartOpen_CoseStopCleanup_Native()
+        public void ClientServerStressTest_SetupStartOpen_CloseStopCleanup_Native()
         {
             RunStressTest(WebSocketType.Native,
                 SetupStartOpen, CloseStopCleanUp);

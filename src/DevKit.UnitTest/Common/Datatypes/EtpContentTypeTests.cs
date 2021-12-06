@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
             Assert.AreEqual("1.4.1.1", contentType.Version);
-            Assert.AreEqual("xml", contentType.Format);
+            Assert.AreEqual(Formats.Xml, contentType.Format);
 
             var converted = "application/x-witsml+json;version=1.4.1.1;type=well";
             contentType = contentType.AsJson();
@@ -151,8 +151,29 @@ namespace Energistics.Etp.Common.Datatypes
             Assert.IsTrue(contentType.IsValid);
             Assert.AreEqual("well", contentType.ObjectType);
             Assert.AreEqual("1.4.1.1", contentType.Version);
-            Assert.AreEqual("xml", contentType.Format);
+            Assert.AreEqual(Formats.Xml, contentType.Format);
             Assert.AreEqual(converted, contentType.ToString());
+        }
+
+        [TestMethod]
+        public void EtpContentType_Can_Be_Converted_To_DataObjectType()
+        {
+            var contentType = new EtpContentType("application/x-witsml+xml;version=1.4.1.1;type=well");
+
+            Assert.IsTrue(contentType.IsValid);
+            Assert.AreEqual("well", contentType.ObjectType);
+            Assert.AreEqual("1.4.1.1", contentType.Version);
+            Assert.AreEqual(Formats.Xml, contentType.Format);
+
+            var converted = "witsml14.well";
+            var dataType = contentType.ToDataObjectType();
+
+            Assert.IsTrue(dataType.IsValid);
+            Assert.AreEqual("well", dataType.ObjectType);
+            Assert.AreEqual("1.4.1.1", dataType.Version);
+            Assert.AreEqual(converted, dataType.ToString());
+
+
         }
     }
 }

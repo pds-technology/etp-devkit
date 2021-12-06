@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@
 //-----------------------------------------------------------------------
 
 using System;
-using Avro.IO;
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
+using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.StoreNotification
@@ -29,101 +31,303 @@ namespace Energistics.Etp.v12.Protocol.StoreNotification
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.StoreNotification.IStoreNotificationCustomer" />
-    public class StoreNotificationCustomerHandler : Etp12ProtocolHandler, IStoreNotificationCustomer
+    public class StoreNotificationCustomerHandler : Etp12ProtocolHandler<CapabilitiesCustomer, ICapabilitiesCustomer, CapabilitiesStore, ICapabilitiesStore>, IStoreNotificationCustomer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreNotificationCustomerHandler"/> class.
         /// </summary>
-        public StoreNotificationCustomerHandler() : base((int)Protocols.StoreNotification, "customer", "store")
+        public StoreNotificationCustomerHandler() : base((int)Protocols.StoreNotification, Roles.Customer, Roles.Store)
         {
+            RegisterMessageHandler<SubscribeNotificationsResponse>(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscribeNotificationsResponse, HandleSubscribeNotificationsResponse);
+            RegisterMessageHandler<UnsolicitedStoreNotifications>(Protocols.StoreNotification, MessageTypes.StoreNotification.UnsolicitedStoreNotifications, HandleUnsolicitedStoreNotifications);
+            RegisterMessageHandler<ObjectChanged>(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectChanged, HandleObjectChanged);
+            RegisterMessageHandler<Chunk>(Protocols.StoreNotification, MessageTypes.StoreNotification.Chunk, HandleChunk);
+            RegisterMessageHandler<ObjectActiveStatusChanged>(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectActiveStatusChanged, HandleObjectActiveStatusChanged);
+            RegisterMessageHandler<ObjectAccessRevoked>(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectAccessRevoked, HandleObjectAccessRevoked);
+            RegisterMessageHandler<ObjectDeleted>(Protocols.StoreNotification, MessageTypes.StoreNotification.ObjectDeleted, HandleObjectDeleted);
+            RegisterMessageHandler<SubscriptionEnded>(Protocols.StoreNotification, MessageTypes.StoreNotification.SubscriptionEnded, HandleSubscriptionEnded);
         }
 
         /// <summary>
-        /// Sends a NotificationRequest message to a store.
+        /// Sends a SubscribeNotifications message to a store.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <returns>The message identifier.</returns>
-        public long NotificationRequest(NotificationRequestRecord request)
+        /// <param name="request">The subscription requests.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscribeNotifications> SubscribeNotifications(IDictionary<string, SubscriptionInfo> request, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.NotificationRequest);
-
-            var notificationRequest = new NotificationRequest()
+            var body = new SubscribeNotifications
             {
-                Request = request
+                Request = request ?? new Dictionary<string, SubscriptionInfo>(),
             };
 
-            return Session.SendMessage(header, notificationRequest);
+            var message = SendRequest(body, extension: extension, onBeforeSend: (m) => TryRegisterSubscriptions(m, request, nameof(SubscriptionInfo.RequestUuid)));
+
+            if (message == null)
+            {
+                foreach (var kvp in request)
+                    TryUnregisterSubscription(kvp.Value);
+            }
+
+            return message;
         }
 
         /// <summary>
-        /// Sends a CancelNotification message to a store.
+        /// Sends a SubscribeNotifications message to a store.
         /// </summary>
-        /// <param name="requestUuid">The request UUID.</param>
-        /// <returns>The message identifier.</returns>
-        public long CancelNotification(Guid requestUuid)
-        {
-            var header = CreateMessageHeader(Protocols.StoreNotification, MessageTypes.StoreNotification.CancelNotification);
+        /// <param name="request">The subscription requests.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<SubscribeNotifications> SubscribeNotifications(IList<SubscriptionInfo> request, IMessageHeaderExtension extension = null) => SubscribeNotifications(request.ToMap(), extension: extension);
 
-            var cancelNotification = new CancelNotification()
+        /// <summary>
+        /// Handles the SubscribeNotificationsResponse event from a store.
+        /// </summary>
+        public event EventHandler<ResponseEventArgs<SubscribeNotifications, SubscribeNotificationsResponse>> OnSubscribeNotificationsResponse;
+
+        /// <summary>
+        /// Handles the UnsolicitedStoreNotifications event from a store.
+        /// </summary>
+        public event EventHandler<FireAndForgetEventArgs<UnsolicitedStoreNotifications>> OnUnsolicitedStoreNotifications;
+
+        /// <summary>
+        /// Handles the ObjectChanged event from a store.
+        /// </summary>
+        public event EventHandler<NotificationEventArgs<SubscriptionInfo, ObjectChanged>> OnObjectChanged;
+
+        /// <summary>
+        /// Handles the Chunk event from a store when sent as part of an ObjectChanged message.
+        /// </summary>
+        public event EventHandler<NotificationWithDataEventArgs<SubscriptionInfo, ObjectChanged, Chunk>> OnObjectChangedChunk;
+
+        /// <summary>
+        /// Handles the ObjectActiveStatusChanged event from a store.
+        /// </summary>
+        public event EventHandler<NotificationEventArgs<SubscriptionInfo, ObjectActiveStatusChanged>> OnObjectActiveStatusChanged;
+
+        /// <summary>
+        /// Handles the ObjectAccessRevoked event from a store.
+        /// </summary>
+        public event EventHandler<NotificationEventArgs<SubscriptionInfo, ObjectAccessRevoked>> OnObjectAccessRevoked;
+
+        /// <summary>
+        /// Handles the ObjectDeleted event from a store.
+        /// </summary>
+        public event EventHandler<NotificationEventArgs<SubscriptionInfo, ObjectDeleted>> OnObjectDeleted;
+
+        /// <summary>
+        /// Sends a UnsubscribeNotifications message to a store.
+        /// </summary>
+        /// <param name="requestUuid">The request identifier.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<UnsubscribeNotifications> UnsubscribeNotifications(Guid requestUuid, IMessageHeaderExtension extension = null)
+        {
+            var body = new UnsubscribeNotifications
             {
-                RequestUuid = requestUuid.ToUuid()
+                RequestUuid = requestUuid,
             };
 
-            return Session.SendMessage(header, cancelNotification);
+            var message = SendRequest(body, extension: extension);
+
+            if (message != null)
+                TryUnregisterSubscription(body, nameof(body.RequestUuid), message);
+
+            return message;
         }
 
         /// <summary>
-        /// Handles the ChangeNotification event from a store.
+        /// Handles the SubscriptionEnded event from a store when sent in response to a UnsubscribeNotifications.
         /// </summary>
-        public event ProtocolEventHandler<ChangeNotification> OnChangeNotification;
+        public event EventHandler<ResponseEventArgs<UnsubscribeNotifications, SubscriptionEnded>> OnResponseSubscriptionEnded;
 
         /// <summary>
-        /// Handles the DeleteNotification event from a store.
+        /// Handles the SubscriptionEnded event from a store when not sent in response to a request.
         /// </summary>
-        public event ProtocolEventHandler<DeleteNotification> OnDeleteNotification;
+        public event EventHandler<NotificationEventArgs<SubscriptionInfo, SubscriptionEnded>> OnNotificationSubscriptionEnded;
 
         /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
+        /// Handles the ProtocolException message.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
         {
-            switch (header.MessageType)
+            base.HandleProtocolException(message);
+
+            var request = TryGetCorrelatedMessage(message);
+            if (request is EtpMessage<SubscribeNotifications>)
+                HandleResponseMessage(request as EtpMessage<SubscribeNotifications>, message, OnSubscribeNotificationsResponse, HandleSubscribeNotificationsResponse);
+            else if (request is EtpMessage<UnsubscribeNotifications>)
+                HandleResponseMessage(request as EtpMessage<UnsubscribeNotifications>, message, OnResponseSubscriptionEnded, HandleResponseSubscriptionEnded);
+        }
+
+        /// <summary>
+        /// Handles the SubscribeNotificationsResponse message from a store.
+        /// </summary>
+        /// <param name="message">The SubscribeNotificationsResponse message.</param>
+        protected virtual void HandleSubscribeNotificationsResponse(EtpMessage<SubscribeNotificationsResponse> message)
+        {
+            var request = TryGetCorrelatedMessage<SubscribeNotifications>(message);
+            HandleResponseMessage(request, message, OnSubscribeNotificationsResponse, HandleSubscribeNotificationsResponse);
+        }
+
+        /// <summary>
+        /// Handles the SubscribeNotificationsResponse message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="ResponseEventArgs{SubscribeNotifications, SubscribeNotificationsResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleSubscribeNotificationsResponse(ResponseEventArgs<SubscribeNotifications, SubscribeNotificationsResponse> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the UnsolicitedStoreNotifications message from a store.
+        /// </summary>
+        /// <param name="message">The UnsolicitedStoreNotifications message.</param>
+        protected virtual void HandleUnsolicitedStoreNotifications(EtpMessage<UnsolicitedStoreNotifications> message)
+        {
+            if (message.Body.Subscriptions?.Count > 0)
             {
-                case (int)MessageTypes.StoreNotification.ChangeNotification:
-                    HandleChangeNotification(header, decoder.Decode<ChangeNotification>(body));
-                    break;
+                foreach (var subscription in message.Body.Subscriptions)
+                    TryRegisterSubscription(subscription, nameof(subscription.RequestUuid), message, subscription);
+            }
+            HandleFireAndForgetMessage(message, OnUnsolicitedStoreNotifications, HandleUnsolicitedStoreNotifications);
+        }
 
-                case (int)MessageTypes.StoreNotification.DeleteNotification:
-                    HandleDeleteNotification(header, decoder.Decode<DeleteNotification>(body));
-                    break;
+        /// <summary>
+        /// Handles the UnsolicitedStoreNotifications message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="FireAndForgetEventArgs{UnsolicitedStoreNotifications}"/> instance containing the event data.</param>
+        protected virtual void HandleUnsolicitedStoreNotifications(FireAndForgetEventArgs<UnsolicitedStoreNotifications> args)
+        {
+        }
 
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
+        /// <summary>
+        /// Handles the ObjectChanged message from a store.
+        /// </summary>
+        /// <param name="message">The ObjectChanged message.</param>
+        protected virtual void HandleObjectChanged(EtpMessage<ObjectChanged> message)
+        {
+            var subscription = TryGetSubscription<SubscriptionInfo>(message.Body);
+            if (!message.Header.IsFinalPart())
+                TryRegisterMessage(message);
+
+            HandleNotificationMessage(subscription, message, OnObjectChanged, HandleObjectChanged);
+        }
+
+        /// <summary>
+        /// Handles the ObjectChanged message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="NotificationEventArgs{SubscriptionInfo, ObjectChanged}"/> instance containing the event data.</param>
+        protected virtual void HandleObjectChanged(NotificationEventArgs<SubscriptionInfo, ObjectChanged> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the Chunk message from a store.
+        /// </summary>
+        /// <param name="message">The Chunk message.</param>
+        protected virtual void HandleChunk(EtpMessage<Chunk> message)
+        {
+            var notification = TryGetCorrelatedMessage<ObjectChanged>(message);
+            var subscription = notification == null ? null : TryGetSubscription<SubscriptionInfo>(notification.Body);
+            HandleNotificationMessage(subscription, notification, OnObjectChangedChunk, HandleObjectChangedChunk,
+                args: new NotificationWithDataEventArgs<SubscriptionInfo, ObjectChanged, Chunk>(subscription, notification, message));
+        }
+
+        /// <summary>
+        /// Handles the Chunk message from a store when sent as part of an ObjectChanged message.
+        /// </summary>
+        /// <param name="args">The <see cref="NotificationWithDataEventArgs{SubscriptionInfo, ObjectChanged, Chunk}"/> instance containing the event data.</param>
+        protected virtual void HandleObjectChangedChunk(NotificationWithDataEventArgs<SubscriptionInfo, ObjectChanged, Chunk> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the ObjectActiveStatusChanged message from a store.
+        /// </summary>
+        /// <param name="message">The ObjectActiveStatusChanged message.</param>
+        protected virtual void HandleObjectActiveStatusChanged(EtpMessage<ObjectActiveStatusChanged> message)
+        {
+            var subscription = TryGetSubscription<SubscriptionInfo>(message.Body);
+            HandleNotificationMessage(subscription, message, OnObjectActiveStatusChanged, HandleObjectActiveStatusChanged);
+        }
+
+        /// <summary>
+        /// Handles the ObjectActiveStatusChanged message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="NotificationEventArgs{SubscriptionInfo, ObjectActiveStatusChanged}"/> instance containing the event data.</param>
+        protected virtual void HandleObjectActiveStatusChanged(NotificationEventArgs<SubscriptionInfo, ObjectActiveStatusChanged> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the ObjectAccessRevoked message from a store.
+        /// </summary>
+        /// <param name="message">The ObjectAccessRevoked message.</param>
+        protected virtual void HandleObjectAccessRevoked(EtpMessage<ObjectAccessRevoked> message)
+        {
+            var subscription = TryGetSubscription<SubscriptionInfo>(message.Body);
+            HandleNotificationMessage(subscription, message, OnObjectAccessRevoked, HandleObjectAccessRevoked);
+        }
+
+        /// <summary>
+        /// Handles the ObjectAccessRevoked message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="NotificationEventArgs{SubscriptionInfo, ObjectAccessRevoked}"/> instance containing the event data.</param>
+        protected virtual void HandleObjectAccessRevoked(NotificationEventArgs<SubscriptionInfo, ObjectAccessRevoked> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the ObjectDeleted message from a store.
+        /// </summary>
+        /// <param name="message">The ObjectDeleted message.</param>
+        protected virtual void HandleObjectDeleted(EtpMessage<ObjectDeleted> message)
+        {
+            var subscription = TryGetSubscription<SubscriptionInfo>(message.Body);
+            HandleNotificationMessage(subscription, message, OnObjectDeleted, HandleObjectDeleted);
+        }
+
+        /// <summary>
+        /// Handles the ObjectDeleted message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="NotificationEventArgs{SubscriptionInfo, ObjectDeleted}"/> instance containing the event data.</param>
+        protected virtual void HandleObjectDeleted(NotificationEventArgs<SubscriptionInfo, ObjectDeleted> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the SubscriptionEnded message from a store.
+        /// </summary>
+        /// <param name="message">The SubscriptionEnded message.</param>
+        protected virtual void HandleSubscriptionEnded(EtpMessage<SubscriptionEnded> message)
+        {
+            if (message.Header.CorrelationId == 0)
+            {
+                var subscription = TryGetSubscription<SubscriptionInfo>(message.Body);
+                HandleNotificationMessage(subscription, message, OnNotificationSubscriptionEnded, HandleNotificationSubscriptionEnded);
+            }
+            else
+            {
+                var request = TryGetCorrelatedMessage<UnsubscribeNotifications>(message);
+                HandleResponseMessage(request, message, OnResponseSubscriptionEnded, HandleResponseSubscriptionEnded);
             }
         }
 
         /// <summary>
-        /// Handles the ChangeNotification message from a store.
+        /// Handles the SubscriptionEnded message from a store when sent as a notification.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="notification">The ChangeNotification message.</param>
-        protected virtual void HandleChangeNotification(IMessageHeader header, ChangeNotification notification)
+        /// <param name="args">The <see cref="NotificationEventArgs{SubscriptionInfo, SubscriptionEnded}"/> instance containing the event data.</param>
+        protected virtual void HandleNotificationSubscriptionEnded(NotificationEventArgs<SubscriptionInfo, SubscriptionEnded> args)
         {
-            Notify(OnChangeNotification, header, notification);
         }
 
         /// <summary>
-        /// Handles the DeleteNotification message from a store.
+        /// Handles the SubscriptionEnded message from a store when sent in response to a UnsubscribeNotification message.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="notification">The DeleteNotification message.</param>
-        protected virtual void HandleDeleteNotification(IMessageHeader header, DeleteNotification notification)
+        /// <param name="args">The <see cref="ResponseEventArgs{UnsubscribeNotifications, SubscriptionEnded}"/> instance containing the event data.</param>
+        protected virtual void HandleResponseSubscriptionEnded(ResponseEventArgs<UnsubscribeNotifications, SubscriptionEnded> args)
         {
-            Notify(OnDeleteNotification, header, notification);
         }
     }
 }

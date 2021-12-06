@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using System;
 
 namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
 {
@@ -25,19 +26,21 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectQuery
     /// Describes the interface that must be implemented by the customer role of the GrowingObjectQuery protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.GrowingObjectQuery, "customer", "store")]
-    public interface IGrowingObjectQueryCustomer : IProtocolHandler
+    [ProtocolRole((int)Protocols.GrowingObjectQuery, Roles.Customer, Roles.Store)]
+    public interface IGrowingObjectQueryCustomer : IProtocolHandler<ICapabilitiesCustomer, ICapabilitiesStore>
     {
         /// <summary>
         /// Sends a FindParts message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        /// <returns>The message identifier.</returns>
-        long FindParts(string uri);
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<FindParts> FindParts(string uri, string format = Formats.Xml, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the FindPartsResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<FindPartsResponse, string> OnFindPartsResponse;
+        event EventHandler<ResponseEventArgs<FindParts, FindPartsResponse>> OnFindPartsResponse;
     }
 }

@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 namespace Energistics.Etp.Common
@@ -23,9 +26,19 @@ namespace Energistics.Etp.Common
     /// <summary>
     /// Defines the properties and methods needed to manage an ETP client.
     /// </summary>
-    /// <seealso cref="System.IEtpSession" />
+    /// <seealso cref="IEtpSession" />
     public interface IEtpClient : IEtpSession
     {
+        /// <summary>
+        /// Gets a value indicating whether the underlying websocket is actively being kept alive by sending WebSocket ping messages.
+        /// </summary>
+        bool IsWebSocketKeptAlive { get; }
+
+        /// <summary>
+        /// Gets a value indicating the frequency at which WebSocket ping messages are being sent to keep the underlying WebSocket alive.
+        /// </summary>
+        TimeSpan WebSocketKeepAliveInterval { get; }
+
         /// <summary>
         /// Sets the proxy server host name and port number.
         /// </summary>
@@ -33,24 +46,34 @@ namespace Energistics.Etp.Common
         /// <param name="port">The port number.</param>
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
-        void SetProxy(string host, int port, string username = null, string password = null);
+        /// <param name="useDefaultCredentials">Whether or not to use default credentials.</param>
+        void SetProxy(string host, int port, string username = null, string password = null, bool useDefaultCredentials = false);
 
         /// <summary>
-        /// Gets a value indicating whether the connection is open.
+        /// Sets security options.
         /// </summary>
-        /// <value>
-        ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
-        /// </value>
-        bool IsOpen { get; }
+        /// <param name="enabledSslProtocols">The enabled SSL and TLS protocols.</param>
+        /// <param name="acceptInvalidCertificates">Whether or not to accept invalid certificates.</param>
+        /// <param name="clientCertificate">The client certificate to use.</param>
+        void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates, X509Certificate2 clientCertificate = null);
+
+        /// <summary>
+        /// Sets the interval at which the underlying websocket will be actively kept alive by sending WebSocket ping messages.
+        /// A value of 0 will disable sending ping messages.
+        /// </summary>
+        /// <param name="keepAliveInterval">The time interval to wait between sending WebSocket ping messages.</param>
+        void SetWebSocketKeepAliveInterval(TimeSpan keepAliveInterval);
 
         /// <summary>
         /// Opens the WebSocket connection.
         /// </summary>
-        void Open();
+        /// <returns><c>true</c> if the socket was successfully opened; <c>false</c> otherwise.</returns>
+        bool Open();
 
         /// <summary>
-        /// Asynchronously pens the WebSocket connection.
+        /// Asynchronously opens the WebSocket connection.
         /// </summary>
+        /// <returns><c>true</c> if the socket was successfully opened; <c>false</c> otherwise.</returns>
         Task<bool> OpenAsync();
     }
 }

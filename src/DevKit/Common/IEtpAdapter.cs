@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,38 +16,38 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
+using Energistics.Avro.Encoding;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.Common.Protocol.Core;
+using System;
 
 namespace Energistics.Etp.Common
 {
     public interface IEtpAdapter
     {
-        EtpVersion SupportedVersion { get; }
+        EtpVersion EtpVersion { get; }
 
-        void RegisterCore(IEtpSession session);
+        bool IsProtocolExceptionMultiPart { get; }
 
-        void RequestSession(IEtpSession session, string applicationName, string applicationVersion, string requestedCompression);
+        bool AreSupportedDataObjectsNegotiated { get; }
 
-        ISupportedProtocol GetSupportedProtocol(IProtocolHandler handler, string role);
+        IMessageHeader DecodeMessageHeader(IAvroDecoder decoder);
 
-        IMessageHeader CreateMessageHeader();
+        IMessageHeaderExtension DecodeMessageHeaderExtension(IAvroDecoder decoder);
 
-        IMessageHeader DecodeMessageHeader(Decoder decoder, string body);
+        void RegisterMessageDecoder<T>(object protocol, object messageType) where T : class, IEtpMessageBody, new();
 
-        IMessageHeader DeserializeMessageHeader(string body);
+        bool IsMessageDecoderRegistered(object protocol, object messageType);
 
-        IAcknowledge CreateAcknowledge();
+        bool IsMessageDecoderRegistered<T>() where T : IEtpMessageBody;
 
-        IAcknowledge DecodeAcknowledge(Decoder decoder, string body);
+        EtpMessage DecodeMessage(IMessageHeader header, IMessageHeaderExtension extension, IAvroDecoder decoder);
 
-        IAcknowledge DeserializeAcknowledge(string body);
+        IProtocolHandler CreateDefaultCoreHandler(bool clientHandler);
 
-        IProtocolException CreateProtocolException();
+        bool IsValidMessageType(int protocol, int messageType);
 
-        IProtocolException DecodeProtocolException(Decoder decoder, string body);
+        int TryGetProtocolNumber(Type messageBodyType);
 
-        IProtocolException DeserializeProtocolException(string body);
+        int TryGetMessageTypeNumber(Type messageBodyType);
     }
 }

@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Collections.Generic;
-using Energistics.Etp.Common;
-using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.v11.Protocol.Core;
+using System;
 
 namespace Energistics.Etp.v11.Protocol.ChannelStreaming
 {
@@ -27,19 +24,6 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
     {
         public ChannelStreamingConsumer11MockHandler()
         {
-        }
-
-        public bool ProducerIsSimpleStreamer { get; private set; }
-
-        public event ProtocolEventHandler<OpenSession> OnOpenSession;
-
-        public override void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols)
-        {
-            base.OnSessionOpened(requestedProtocols, supportedProtocols);
-
-            ProducerIsSimpleStreamer = supportedProtocols.IsSimpleStreamer();
-
-            OnOpenSession?.Invoke(this, new ProtocolEventArgs<OpenSession>(null, null));
         }
     }
 }

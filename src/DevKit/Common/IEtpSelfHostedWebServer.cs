@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using Energistics.Etp.Common.Datatypes;
 using System;
 using System.Threading.Tasks;
 
@@ -24,9 +25,19 @@ namespace Energistics.Etp.Common
     /// <summary>
     /// Defines the properties and methods needed to manage a self-hosted ETP web server.
     /// </summary>
-    /// <seealso cref="System.IEtpWebServer" />
-    public interface IEtpSelfHostedWebServer : IEtpWebServer
+    /// <seealso cref="IEtpServerManager" />
+    public interface IEtpSelfHostedWebServer : IDisposable
     {
+        /// <summary>
+        /// Gets the server manager for this instance.
+        /// </summary>
+        IEtpServerManager ServerManager { get; }
+
+        /// <summary>
+        /// Gets the server's details.
+        /// </summary>
+        EtpWebServerDetails Details { get; }
+
         /// <summary>
         /// The root URI for the server.
         /// </summary>

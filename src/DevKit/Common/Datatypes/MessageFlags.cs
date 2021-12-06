@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -59,6 +59,11 @@ namespace Energistics.Etp.Common.Datatypes
         /// <summary>
         /// An Acknowledge message is requested by the sender.
         /// </summary>
-        Acknowledge = 0x10
+        Acknowledge = 0x10,
+
+        /// <summary>
+        /// The message has a header extension.
+        /// </summary>
+        HasHeaderExtension = 0x20,
     }
 }

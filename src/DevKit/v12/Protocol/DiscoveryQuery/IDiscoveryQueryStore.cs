@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -27,34 +28,31 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
     /// Describes the interface that must be implemented by the store role of the DiscoveryQuery protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.DiscoveryQuery, "store", "customer")]
-    public interface IDiscoveryQueryStore : IProtocolHandler
+    [ProtocolRole((int)Protocols.DiscoveryQuery, Roles.Store, Roles.Customer)]
+    public interface IDiscoveryQueryStore : IProtocolHandler<ICapabilitiesStore, ICapabilitiesCustomer>
     {
-        /// <summary>
-        /// Sends a FindResourcesResponse message to a customer.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
-        /// <param name="sortOrder">The sort order.</param>
-        /// <returns>The message identifier.</returns>
-        long FindResourcesResponse(IMessageHeader request, IList<Resource> resources, string sortOrder);
-
         /// <summary>
         /// Handles the FindResources event from a customer.
         /// </summary>
-        event ProtocolEventHandler<FindResources, ResourceResponse> OnFindResources;
+        event EventHandler<ListRequestWithContextEventArgs<FindResources, Resource, ResponseContext>> OnFindResources;
+
+        /// <summary>
+        /// Sends a FindResourcesResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="dataObjects">The list of <see cref="Resource"/> objects.</param>
+        /// <param name="serverSortOrder">The server sort order.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<FindResourcesResponse> FindResourcesResponse(IMessageHeader correlatedHeader, IList<Resource> dataObjects, string serverSortOrder, bool isFinalPart = true, IMessageHeaderExtension extension = null);
     }
 
     /// <summary>
-    /// Encapsulates the results of a discovery query.
+    /// Encapsulates the context of a discovery query response.
     /// </summary>
-    public class ResourceResponse
+    public class ResponseContext
     {
-        /// <summary>
-        /// Gets the collection of resources.
-        /// </summary>
-        public IList<Resource> Resources { get; } = new List<Resource>();
-
         /// <summary>
         /// Gets or sets the server sort order.
         /// </summary>

@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ namespace Energistics.Etp
             Assert.IsTrue(capServer.SupportedProtocols.Any());
         }
 
+        [Ignore]
         [TestMethod]
         public void JsonClient_GetServerCapabilities_Using_Json_Web_Token()
         {

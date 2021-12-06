@@ -1,7 +1,9 @@
-﻿//----------------------------------------------------------------------- 
+﻿#if !(NETCOREAPP || NETSTANDARD)
+
+//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,10 +19,13 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
+using log4net;
+using Nito.AsyncEx;
 using SuperSocket.SocketBase;
 using SuperSocket.SocketBase.Config;
 using SuperWebSocket;
@@ -32,22 +37,26 @@ namespace Energistics.Etp.WebSocket4Net
     /// A wrapper for the SuperWebSocket library providing a base ETP server implementation.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.EtpWebServerBase" />
-    public class EtpSelfHostedWebServer : EtpWebServerBase, IEtpSelfHostedWebServer
+    public class EtpSelfHostedWebServer : IEtpSelfHostedWebServer
     {
-        private static readonly object EtpSessionKey = typeof(IEtpSession);
-        private readonly object _sync = new object();
+        private ConcurrentDictionary<string, EtpServerWebSocket> _webSockets = new ConcurrentDictionary<string, EtpServerWebSocket>();
         private WebSocketServer _server;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EtpSocketServer"/> class.
+        /// Initializes a new instance of the <see cref="EtpSelfHostedWebServer"/> class.
         /// </summary>
         /// <param name="port">The port.</param>
-        /// <param name="application">The server application name.</param>
-        /// <param name="version">The server application version.</param>
-        public EtpSelfHostedWebServer(int port, string application, string version)
-            : base(application, version)
+        /// <param name="endpointInfo">The web server's endpoint information.</param>
+        /// <param name="endpointParameters">The web server's endpoint parameters.</param>
+        /// <param name="details">The web server's details.</param>
+        public EtpSelfHostedWebServer(int port, EtpEndpointInfo endpointInfo, EtpEndpointParameters endpointParameters = null, EtpWebServerDetails details = null)
         {
-            _server = new WebSocketServer(EtpSettings.EtpSubProtocols.Select(p => new BasicSubProtocol(p)));
+            Logger = LogManager.GetLogger(GetType());
+
+            Details = details ?? new EtpWebServerDetails();
+            ServerManager = new EtpServerManager(Details, endpointInfo, endpointParameters);
+
+            _server = new WebSocketServer(Details.SupportedVersions.Select(v => new BasicSubProtocol(EtpFactory.GetSubProtocol(v))));
 
             _server.Setup(new ServerConfig
             {
@@ -57,7 +66,6 @@ namespace Energistics.Etp.WebSocket4Net
             });
 
             _server.NewSessionConnected += OnNewSessionConnected;
-            //_server.NewMessageReceived += OnNewMessageReceived;
             _server.NewDataReceived += OnNewDataReceived;
             _server.SessionClosed += OnSessionClosed;
 
@@ -65,9 +73,25 @@ namespace Energistics.Etp.WebSocket4Net
         }
 
         /// <summary>
+        /// Gets the logger used by this instance.
+        /// </summary>
+        /// <value>The logger instance.</value>
+        public ILog Logger { get; }
+
+        /// <summary>
+        /// Gets the server manager for this instance.
+        /// </summary>
+        public IEtpServerManager ServerManager { get; }
+
+        /// <summary>
+        /// Gets the server's parameters.
+        /// </summary>
+        public EtpWebServerDetails Details { get; }
+
+        /// <summary>
         /// The root URL for the server.
         /// </summary>
-        public Uri Uri { get; private set; }
+        public Uri Uri { get; }
 
         /// <summary>
         /// Gets a value indicating whether the WebSocket server is running.
@@ -89,7 +113,7 @@ namespace Energistics.Etp.WebSocket4Net
         /// </summary>
         public void Start()
         {
-            StartAsync().Wait();
+            AsyncContext.Run(() => StartAsync());
         }
 
         /// <summary>
@@ -112,45 +136,22 @@ namespace Energistics.Etp.WebSocket4Net
         /// </summary>
         public void Stop()
         {
-            StopAsync().Wait();
+            AsyncContext.Run(() => StopAsync());
         }
 
         /// <summary>
         /// Asynchronously stops the web server.
         /// </summary>
-        public Task StopAsync()
+        public async Task StopAsync()
         {
             Logger.Trace($"Stopping");
             if (IsRunning)
             {
-                CloseSessions();
+                _webSockets.Clear();
+                await ServerManager.StopAllAsync("Stopping server").ConfigureAwait(false);
                 _server.Stop();
             }
             Logger.Verbose($"Stopped");
-
-            return Task.FromResult(true);
-        }
-
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
-        /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && _server != null)
-            {
-                // Unregister event handlers
-                _server.NewSessionConnected -= OnNewSessionConnected;
-                //_server.NewMessageReceived -= OnNewMessageReceived;
-                _server.NewDataReceived -= OnNewDataReceived;
-                _server.SessionClosed -= OnSessionClosed;
-
-                Stop();
-                _server.Dispose();
-            }
-
-            _server = null;
-            base.Dispose(disposing);
         }
 
         /// <summary>
@@ -159,22 +160,38 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="session">The session.</param>
         private void OnNewSessionConnected(WebSocketSession session)
         {
-            Logger.Debug(Log("[{0}] Socket session connected.", session.SessionID));
+            Logger.Info($"Handling WebSocket request from {session.RemoteEndPoint}.");
 
-            lock (_sync)
+            var ws = new EtpServerWebSocket { WebSocketSession = session };
+            _webSockets[session.SessionID] = ws;
+
+            var headers = new Dictionary<string, string>();
+            foreach (var item in session.Items)
+                headers[item.Key.ToString()] = item.Value.ToString();
+
+            var version = EtpWebSocketValidation.GetEtpVersion(session.SubProtocol.Name);
+            var encoding = EtpWebSocketValidation.GetEtpEncoding(headers);
+            if (!Details.IsVersionSupported(version))
             {
-                var headers = new Dictionary<string, string>();
-                foreach (var item in session.Items)
-                    headers[item.Key.ToString()] = item.Value.ToString();
-
-                var server = new EtpServer(session, ApplicationName, ApplicationVersion, headers);
-                server.SupportedObjects = SupportedObjects;
-
-                RegisterAll(server);
-
-                session.Items[EtpSessionKey] = server;
-                InvokeSessionConnected(server);
+                Logger.Debug($"Sub protocol not supported: {session.SubProtocol.Name}");
+                session.Close(CloseReason.ApplicationError);
+                return;
             }
+            if (encoding == null)
+            {
+                Logger.Debug($"Error getting ETP encoding.");
+                session.Close(CloseReason.ApplicationError);
+                return;
+            }
+            if (!Details.IsEncodingSupported(encoding.Value))
+            {
+                Logger.Debug($"Encoding not supported: {encoding.Value}");
+                session.Close(CloseReason.ApplicationError);
+                return;
+            }
+
+            var server = ServerManager.CreateServer(ws, version, encoding.Value, headers);
+            server.Start();
         }
 
         /// <summary>
@@ -184,30 +201,11 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="value">The value.</param>
         private void OnSessionClosed(WebSocketSession session, CloseReason value)
         {
-            Logger.Debug(Log("[{0}] Socket session closed.", session.SessionID));
-
-            lock (_sync)
+            EtpServerWebSocket ws;
+            if (_webSockets.TryRemove(session.SessionID, out ws))
             {
-                var etpSession = GetEtpSession(session);
-
-                if (etpSession != null)
-                {
-                    session.Items.Remove(EtpSessionKey);
-                    InvokeSessionClosed(etpSession);
-                    etpSession.Dispose();
-                }
+                ws.Closed();
             }
-        }
-
-        /// <summary>
-        /// Called when a new message is received.
-        /// </summary>
-        /// <param name="session">The session.</param>
-        /// <param name="message">The message.</param>
-        private void OnNewMessageReceived(WebSocketSession session, string message)
-        {
-            var etpSession = GetEtpSession(session);
-            etpSession?.OnMessageReceived(message);
         }
 
         /// <summary>
@@ -217,53 +215,70 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="data">The data.</param>
         private void OnNewDataReceived(WebSocketSession session, byte[] data)
         {
-            var etpSession = GetEtpSession(session);
-            etpSession?.OnDataReceived(data);
+            EtpServerWebSocket ws;
+            if (_webSockets.TryGetValue(session.SessionID, out ws))
+            {
+                ws.DataReceived(new ArraySegment<byte>(data));
+            }
         }
 
+        #region IDisposable Support
+
+        private bool _disposedValue; // To detect redundant calls
+
         /// <summary>
-        /// Closes all connected WebSocket sessions.
+        /// Checks whether the current instance has been disposed.
         /// </summary>
-        private void CloseSessions()
+        /// <exception cref="System.ObjectDisposedException"></exception>
+        protected virtual void CheckDisposed()
         {
-            CheckDisposed();
-            const string reason = "Server stopping";
-
-            lock (_sync)
+            if (_disposedValue)
             {
-                foreach (var session in _server.GetAllSessions())
-                {
-                    var etpSession = GetEtpSession(session);
-                    session.Items.Remove(EtpSessionKey);
-
-                    if (etpSession == null) continue;
-
-                    InvokeSessionClosed(etpSession);
-                    etpSession.Close(reason);
-                    etpSession.Dispose();
-                }
+                throw new ObjectDisposedException(GetType().Name);
             }
         }
 
         /// <summary>
-        /// Gets the ETP session associated with the specified WebSocket session.
+        /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
-        /// <param name="session">The WebSocket session.</param>
-        /// <returns>The <see cref="IEtpSession"/> associated with the WebSocket session.</returns>
-        private IEtpSession GetEtpSession(WebSocketSession session)
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
         {
-            IEtpSession etpSession = null;
-            object item;
-
-            lock (_sync)
+            if (disposing && !_disposedValue && _server != null)
             {
-                if (session.Items.TryGetValue(EtpSessionKey, out item))
-                {
-                    etpSession = item as IEtpSession;
-                }
+                Logger.Trace($"Disposing {GetType().Name}");
+
+                // Unregister event handlers
+                _server.NewSessionConnected -= OnNewSessionConnected;
+                _server.NewDataReceived -= OnNewDataReceived;
+                _server.SessionClosed -= OnSessionClosed;
+
+                Stop();
+                _server.Dispose();
             }
 
-            return etpSession;
+            _disposedValue = true;
         }
+
+        // NOTE: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        // ~EtpBase() {
+        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+        //   Dispose(false);
+        // }
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // NOTE: uncomment the following line if the finalizer is overridden above.
+            // GC.SuppressFinalize(this);
+        }
+
+        #endregion
     }
 }
+
+#endif

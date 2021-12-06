@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ namespace Energistics.Etp.v11.Protocol.Discovery
         [TestInitialize]
         public void TestSetUp()
         {
-            SetUp(TestSettings.WebSocketType, EtpSettings.Etp11SubProtocol);
+            SetUp(TestSettings.WebSocketType, EtpVersion.v11);
 
             // Register protocol handler
-            _server.Register<IDiscoveryStore, DiscoveryStore11MockHandler>();
+            _server.ServerManager.Register(new DiscoveryStore11MockHandler());
 
             _server.Start();
         }
@@ -44,7 +44,7 @@ namespace Energistics.Etp.v11.Protocol.Discovery
         }
 
         [TestMethod]
-        public async Task IDiscoveryCustomer_GetResource_Request_Default_Uri()
+        public async Task IDiscoveryCustomer_v11_GetResource_Request_Default_Uri()
         {
             var handler = _client.Handler<IDiscoveryCustomer>();
 
@@ -53,25 +53,25 @@ namespace Energistics.Etp.v11.Protocol.Discovery
             Assert.IsTrue(isOpen);
 
             // Register event handler for root URI
-            var onGetRootResourcesResponse = HandleAsync<GetResourcesResponse, string>(
+            var onGetRootResourcesResponse = HandleAsync<ResponseEventArgs<GetResources, GetResourcesResponse>>(
                 x => handler.OnGetResourcesResponse += x);
 
             // Send GetResources message for root URI
-            handler.GetResources(EtpUri.RootUri);
+            handler.GetResources(EtpUri.RootUri11);
 
             // Wait for GetResourcesResponse for top level resources
             var argsRoot = await onGetRootResourcesResponse.WaitAsync();
 
             Assert.IsNotNull(argsRoot);
-            Assert.IsNotNull(argsRoot.Message.Resource);
-            Assert.IsNotNull(argsRoot.Message.Resource.Uri);
+            Assert.IsNotNull(argsRoot.Response.Body.Resource);
+            Assert.IsNotNull(argsRoot.Response.Body.Resource.Uri);
 
             // Register event handler for child resources
-            var onGetChildResourcesResponse = HandleAsync<GetResourcesResponse, string>(
+            var onGetChildResourcesResponse = HandleAsync<ResponseEventArgs<GetResources, GetResourcesResponse>>(
                 x => handler.OnGetResourcesResponse += x);
 
             // Send GetResources message for child resources
-            var resource = argsRoot.Message.Resource;
+            var resource = argsRoot.Response.Body.Resource;
             handler.GetResources(resource.Uri);
 
             // Wait for GetResourcesResponse for child resources
@@ -79,14 +79,14 @@ namespace Energistics.Etp.v11.Protocol.Discovery
 
             Assert.IsNotNull(argsChild);
 
-            if (argsChild.Header.IsNoData())
+            if (argsChild.Response.Header.IsNoData())
             {
-                Assert.IsNull(argsChild.Message.Resource);
+                Assert.IsNull(argsChild.Response.Body.Resource);
             }
             else
             {
-                Assert.IsNotNull(argsChild.Message.Resource);
-                Assert.AreNotEqual(resource.Uri, argsChild.Message.Resource.Uri);
+                Assert.IsNotNull(argsChild.Response.Body.Resource);
+                Assert.AreNotEqual(resource.Uri, argsChild.Response.Body.Resource.Uri);
             }
         }
     }

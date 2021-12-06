@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes.Object;
+using System;
 
 namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
 {
@@ -25,19 +27,23 @@ namespace Energistics.Etp.v12.Protocol.DiscoveryQuery
     /// Describes the interface that must be implemented by the customer role of the DiscoveryQuery protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.DiscoveryQuery, "customer", "store")]
-    public interface IDiscoveryQueryCustomer : IProtocolHandler
+    [ProtocolRole((int)Protocols.DiscoveryQuery, Roles.Customer, Roles.Store)]
+    public interface IDiscoveryQueryCustomer : IProtocolHandler<ICapabilitiesCustomer, ICapabilitiesStore>
     {
         /// <summary>
         /// Sends a FindResources message to a store.
         /// </summary>
-        /// <param name="uri">The URI.</param>
-        /// <returns>The message identifier.</returns>
-        long FindResources(string uri);
+        /// <param name="context">The context information.</param>
+        /// <param name="scope">The scope.</param>
+        /// <param name="storeLastWriteFilter">An optional parameter to filter discovery on a date when an object last changed.</param>
+        /// <param name="activeStatusFilter">if not <c>null</c>, request only objects with a matching active status.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<FindResources> FindResources(ContextInfo context, ContextScopeKind scope, DateTime? storeLastWriteFilter = null, ActiveStatusKind? activeStatusFilter = null, IMessageHeaderExtension extension = null);
 
         /// <summary>
         /// Handles the FindResourcesResponse event from a store.
         /// </summary>
-        event ProtocolEventHandler<FindResourcesResponse, string> OnFindResourcesResponse;
+        event EventHandler<ResponseEventArgs<FindResources, FindResourcesResponse>> OnFindResourcesResponse;
     }
 }

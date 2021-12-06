@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
 using Energistics.Etp.v11.Datatypes.Object;
+using System;
 
 namespace Energistics.Etp.v11.Protocol.Store
 {
@@ -33,95 +34,120 @@ namespace Energistics.Etp.v11.Protocol.Store
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreCustomerHandler"/> class.
         /// </summary>
-        public StoreCustomerHandler() : base((int)Protocols.Store, "customer", "store")
+        public StoreCustomerHandler() : base((int)Protocols.Store, Roles.Customer, Roles.Store)
         {
+            RegisterMessageHandler<Object>(Protocols.Store, MessageTypes.Store.Object, HandleObject);
         }
 
         /// <summary>
         /// Sends a GetObject message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        /// <param name="messageFlag">The message flag.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long GetObject(string uri, MessageFlags messageFlag = MessageFlags.MultiPartAndFinalPart)
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetObject> GetObject(string uri)
         {
-            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.GetObject, messageFlags: messageFlag);
-
-            var getObject = new GetObject()
+            var body = new GetObject()
             {
-                Uri = uri
+                Uri = uri ?? string.Empty,
             };
 
-            return Session.SendMessage(header, getObject);
+            return SendRequest(body, isMultiPart: true, isFinalPart: true);
         }
 
         /// <summary>
         /// Sends a PutObject message to a store.
         /// </summary>
         /// <param name="dataObject">The data object.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long PutObject(DataObject dataObject)
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<PutObject> PutObject(DataObject dataObject)
         {
-            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.PutObject);
-
-            var putObject = new PutObject()
+            var body = new PutObject()
             {
-                DataObject = dataObject
+                DataObject = dataObject,
             };
 
-            return Session.SendMessage(header, putObject);
+            return SendNotification(body);
         }
 
         /// <summary>
         /// Sends a DeleteObject message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long DeleteObject(string uri)
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<DeleteObject> DeleteObject(string uri)
         {
-            var header = CreateMessageHeader(Protocols.Store, MessageTypes.Store.DeleteObject);
-
-            var deleteObject = new DeleteObject()
+            var body = new DeleteObject()
             {
-                Uri = uri
+                Uri = uri ?? string.Empty,
             };
 
-            return Session.SendMessage(header, deleteObject);
+            return SendNotification(body);
         }
 
         /// <summary>
         /// Handles the Object event from a store.
         /// </summary>
-        public event ProtocolEventHandler<Object> OnObject;
+        public event EventHandler<ResponseEventArgs<GetObject, Object>> OnObject;
 
         /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
+        /// Event raised when there is an exception received in response to a PutObject message.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
-        {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.Store.Object:
-                    HandleObject(header, decoder.Decode<Object>(body));
-                    break;
+        public event EventHandler<VoidResponseEventArgs<PutObject>> OnPutObjectException;
 
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
+        /// <summary>
+        /// Event raised when there is an exception received in response to a DeleteObject message.
+        /// </summary>
+        public event EventHandler<VoidResponseEventArgs<DeleteObject>> OnDeleteObjectException;
+
+        /// <summary>
+        /// Handles the ProtocolException message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
+        {
+            base.HandleProtocolException(message);
+
+            var request = TryGetCorrelatedMessage(message);
+            if (request is EtpMessage<GetObject>)
+                HandleResponseMessage(request as EtpMessage<GetObject>, message, OnObject, HandleObject);
+            else if (request is EtpMessage<PutObject>)
+                HandleResponseMessage(request as EtpMessage<PutObject>, message, OnPutObjectException, HandlePutObjectException);
+            else if (request is EtpMessage<DeleteObject>)
+                HandleResponseMessage(request as EtpMessage<DeleteObject>, message, OnDeleteObjectException, HandleDeleteObjectException);
         }
 
         /// <summary>
         /// Handles the Object message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="object">The Object message.</param>
-        protected virtual void HandleObject(IMessageHeader header, Object @object)
+        /// <param name="message">The Object message.</param>
+        protected virtual void HandleObject(EtpMessage<Object> message)
         {
-            Notify(OnObject, header, @object);
+            var request = TryGetCorrelatedMessage<GetObject>(message);
+            HandleResponseMessage(request, message, OnObject, HandleObject);
+        }
+
+        /// <summary>
+        /// Handles the Object message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="ResponseEventArgs{GetObject, Object}"/> instance containing the event data.</param>
+        protected virtual void HandleObject(ResponseEventArgs<GetObject, Object> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles exceptions to the PutObject message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="VoidResponseEventArgs{PutObject}"/> instance containing the event data.</param>
+        protected virtual void HandlePutObjectException(VoidResponseEventArgs<PutObject> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles exceptions to the DeleteObject message from a store.
+        /// </summary>
+        /// <param name="args">The <see cref="VoidResponseEventArgs{DeleteObject}"/> instance containing the event data.</param>
+        protected virtual void HandleDeleteObjectException(VoidResponseEventArgs<DeleteObject> args)
+        {
         }
     }
 }

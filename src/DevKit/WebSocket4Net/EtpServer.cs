@@ -1,7 +1,9 @@
-﻿//----------------------------------------------------------------------- 
+﻿#if !(NETCOREAPP || NETSTANDARD)
+
+//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +18,12 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
+using SuperSocket.SocketBase;
 using SuperWebSocket;
 
 namespace Energistics.Etp.WebSocket4Net
@@ -30,34 +35,72 @@ namespace Energistics.Etp.WebSocket4Net
     public class EtpServer : EtpSession, IEtpServer
     {
         private WebSocketSession _session;
+        private EtpServerWebSocket _webSocket;
 
         /// <summary>
-        /// Gets a value indicating whether the connection is open.
+        /// Gets a value indicating whether the underlying websocket connection is open.
         /// </summary>
         /// <value>
-        ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
+        ///   <c>true</c> if the underlying websocket is open; otherwise, <c>false</c>.
         /// </value>
-        public override bool IsOpen => (_session?.Connected ?? false) && (!_session?.InClosing ?? false);
+        public override bool IsWebSocketOpen => (_session?.Connected ?? false) && (!_session?.InClosing ?? false);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpServer"/> class.
         /// </summary>
-        /// <param name="session">The web socket session.</param>
-        /// <param name="application">The serve application name.</param>
-        /// <param name="version">The server application version.</param>
+        /// <param name="webSocket">The web socket.</param>
+        /// <param name="etpVersion">The ETP version for the session.</param>
+        /// <param name="encoding">The ETP encoding for the session.</param>
+        /// <param name="info">The server's information.</param>
+        /// <param name="parameters">The server's parameters.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
-        public EtpServer(WebSocketSession session, string application, string version, IDictionary<string, string> headers)
-            : base(EtpWebSocketValidation.GetEtpVersion(session.SubProtocol.Name), application, version, headers, false)
+        public EtpServer(EtpServerWebSocket webSocket, EtpVersion etpVersion, EtpEncoding encoding, EtpEndpointInfo info, EtpEndpointParameters parameters = null, IDictionary<string, string> headers = null)
+            : base(etpVersion, encoding, info, parameters, headers, false, webSocket.WebSocketSession.SessionID, false)
         {
-            SessionId = session.SessionID;
-            _session = session;
+            _webSocket = webSocket;
+            _session = _webSocket.WebSocketSession;
+            _session.SocketSession.Closed += OnSocketSessionClosed;
+        }
+
+
+        /// <summary>
+        /// Whether or not the server is started.
+        /// </summary>
+        public bool IsStarted { get; private set; }
+
+        /// <summary>
+        /// Starts processing incoming messages.
+        /// </summary>
+        /// <returns><c>true</c> if the server is successfully started; <c>false</c> otherwise.</returns>
+        public bool Start()
+        {
+            Logger.Verbose($"[{SessionKey}] Starting server.");
+            if (IsStarted)
+                throw new InvalidOperationException("Already started");
+
+            IsStarted = true;
+            RaiseSocketOpened();
+            _webSocket.RegisterClosedCallback(RaiseSocketClosed);
+            _webSocket.RegisterDataReceivedCallback(Decode);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Handler for the event indicating the socket has been closed.
+        /// </summary>
+        /// <param name="socketSession">The socket session that has closed.</param>
+        /// <param name="closeReason"></param>
+        protected void OnSocketSessionClosed(ISocketSession socketSession, CloseReason closeReason)
+        {
+            RaiseSocketClosed();
         }
 
         /// <summary>
         /// Asynchronously closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        protected override Task CloseAsyncCore(string reason)
+        protected override Task CloseWebSocketAsyncCore(string reason)
         {
             CheckDisposed();
             _session.CloseWithHandshake(reason);
@@ -68,23 +111,18 @@ namespace Energistics.Etp.WebSocket4Net
         /// Sends the specified data.
         /// </summary>
         /// <param name="data">The data.</param>
-        /// <param name="offset">The offset.</param>
-        /// <param name="length">The length.</param>
-        protected override Task SendAsync(byte[] data, int offset, int length)
+        protected override Task<bool> SendAsync(ArraySegment<byte> data)
         {
             CheckDisposed();
-            _session.Send(data, offset, length);
-            return Task.FromResult(true);
-        }
-
-        /// <summary>
-        /// Sends the specified messages.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        protected override Task SendAsync(string message)
-        {
-            CheckDisposed();
-            _session.Send(message);
+            try
+            {
+                _session.Send(data);
+            }
+            catch (Exception ex)
+            {
+                RaiseSocketError(ex);
+                throw;
+            }
             return Task.FromResult(true);
         }
 
@@ -96,8 +134,12 @@ namespace Energistics.Etp.WebSocket4Net
         {
             if (disposing)
             {
-                Close("Shutting down");
+                Logger.Verbose($"[{SessionKey}] Disposing EtpServer for {GetType().Name}");
+
+                CloseWebSocket("Shutting down");
                 _session?.Close();
+
+                Logger.Verbose($"[{SessionKey}] Disposed EtpServer for {GetType().Name}");
             }
 
             base.Dispose(disposing);
@@ -106,3 +148,5 @@ namespace Energistics.Etp.WebSocket4Net
         }
     }
 }
+
+#endif

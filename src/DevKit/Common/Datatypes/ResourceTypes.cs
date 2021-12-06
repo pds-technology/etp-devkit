@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ namespace Energistics.Etp.Common.Datatypes
     public enum ResourceTypes
     {
         /// <summary>
-        /// The URI protocol resource type.
+        /// The data object resource type.
         /// </summary>
-        UriProtocol,
+        DataObject,
 
         /// <summary>
         /// The folder resource type.
@@ -34,8 +34,13 @@ namespace Energistics.Etp.Common.Datatypes
         Folder,
 
         /// <summary>
-        /// The data object resource type.
+        /// The URI protocol resource type.
         /// </summary>
-        DataObject
+        UriProtocol,
+
+        /// <summary>
+        /// The data space resource type.
+        /// </summary>
+        Dataspace
     }
 }

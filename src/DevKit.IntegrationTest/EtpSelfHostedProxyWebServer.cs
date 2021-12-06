@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using log4net;
-using StreamExtended.Network;
+using Nito.AsyncEx;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
 using Titanium.Web.Proxy.Models;
@@ -61,13 +61,13 @@ namespace Energistics.Etp
 
         public void Start()
         {
-            StartAsync().Wait();
+            AsyncContext.Run(() => StartAsync());
         }
 
         public async Task StartAsync()
         {
             _proxyServer.Start();
-            await _proxiedServer.StartAsync();
+            await _proxiedServer.StartAsync().ConfigureAwait(false);
         }
 
         private Task<bool> HandleBasicAuthentication(SessionEventArgsBase session, string username, string password)
@@ -83,66 +83,24 @@ namespace Energistics.Etp
 
         public void Stop()
         {
-            StopAsync().Wait();
+            AsyncContext.Run(() => StopAsync());
         }
 
         public async Task StopAsync()
         {
             _proxyServer.Stop();
-            await _proxiedServer.StopAsync();
+            await _proxiedServer.StopAsync().ConfigureAwait(false);
         }
 
         #region Redirects to Proxied Server
 
-        public Uri Uri { get { return _proxiedServer.Uri; } }
+        public Uri Uri => _proxiedServer.Uri;
 
-        public bool IsRunning { get { return _proxiedServer.IsRunning; } }
+        public bool IsRunning => _proxiedServer.IsRunning;
 
-        public ILog Logger { get { return _proxiedServer.Logger; } }
+        public IEtpServerManager ServerManager => _proxiedServer.ServerManager;
 
-        public string ApplicationName { get { return _proxiedServer.ApplicationName; } }
-
-        public string ApplicationVersion { get { return _proxiedServer.ApplicationVersion; } }
-
-        public string SupportedCompression { get { return _proxiedServer.SupportedCompression; } set { _proxiedServer.SupportedCompression = value; } }
-        public IList<string> SupportedObjects { get { return _proxiedServer.SupportedObjects; } set { _proxiedServer.SupportedObjects = value; } }
-        public IList<string> SupportedEncodings { get { return _proxiedServer.SupportedEncodings; } set { _proxiedServer.SupportedEncodings = value; } }
-        public Action<string> Output { get { return _proxiedServer.Output; } set { _proxiedServer.Output = value; } }
-
-        public event EventHandler<IEtpSession> SessionConnected {  add { _proxiedServer.SessionConnected += value; } remove { _proxiedServer.SessionConnected -= value; } }
-        public event EventHandler<IEtpSession> SessionClosed { add { _proxiedServer.SessionClosed += value; } remove { _proxiedServer.SessionClosed -= value; } }
-
-        public IList<ISupportedProtocol> GetSupportedProtocols(EtpVersion version)
-        {
-            return _proxiedServer.GetSupportedProtocols(version);
-        }
-
-        public string Log(string message)
-        {
-            return _proxiedServer.Log(message);
-        }
-
-        public string Log(string message, params object[] args)
-        {
-            return _proxiedServer.Log(message, args);
-        }
-
-        public void Register<TContract, THandler>()
-            where TContract : IProtocolHandler
-            where THandler : TContract
-        {
-            _proxiedServer.Register<TContract, THandler>();
-        }
-
-        public void Register<TContract>(Func<TContract> factory) where TContract : IProtocolHandler
-        {
-            _proxiedServer.Register<TContract>(factory);
-        }
-
-        public IEtpAdapter ResolveEtpAdapter(EtpVersion version)
-        {
-            return _proxiedServer.ResolveEtpAdapter(version);
-        }
+        public EtpWebServerDetails Details => _proxiedServer.Details;
 
         public void Dispose()
         {

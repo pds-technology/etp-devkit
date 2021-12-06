@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.v12.Datatypes;
+using Energistics.Etp.Common.Protocol.Core;
 
 namespace Energistics.Etp.v12.Protocol.Core
 {
@@ -35,164 +34,106 @@ namespace Energistics.Etp.v12.Protocol.Core
         /// <summary>
         /// Initializes a new instance of the <see cref="CoreClientHandler"/> class.
         /// </summary>
-        public CoreClientHandler() : base((int)Protocols.Core, "client", "server")
+        public CoreClientHandler() : base((int)Protocols.Core, Roles.Client, Roles.Server)
         {
-            RequestedProtocols = new List<ISupportedProtocol>(0);
-            SupportedProtocols = new List<ISupportedProtocol>(0);
-            ServerObjects = new List<string>(0);
+            RegisterMessageHandler<Authorize>(Protocols.Core, MessageTypes.Core.Authorize, HandleAuthorize);
+            RegisterMessageHandler<AuthorizeResponse>(Protocols.Core, MessageTypes.Core.AuthorizeResponse, HandleAuthorizeResponse);
         }
 
         /// <summary>
-        /// Gets the list of requested protocols.
+        /// Sends an Authorize message to a server.
         /// </summary>
-        /// <value>The server protocols.</value>
-        public IList<ISupportedProtocol> RequestedProtocols { get; private set; }
-
-        /// <summary>
-        /// Gets the list of supported protocols.
-        /// </summary>
-        /// <value>The supported protocols.</value>
-        public IList<ISupportedProtocol> SupportedProtocols { get; private set; }
-
-        /// <summary>
-        /// Gets the list of supported server objects.
-        /// </summary>
-        /// <value>The server objects.</value>
-        public IList<string> ServerObjects { get; private set; }
-
-        /// <summary>
-        /// Gets the requested compression type.
-        /// </summary>
-        public string RequestedCompression { get; private set; }
-
-        /// <summary>
-        /// Sends a RequestSession message to a server.
-        /// </summary>
-        /// <param name="applicationName">The application name.</param>
-        /// <param name="applicationVersion">The application version.</param>
-        /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <param name="requestedCompression">The requested compression.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long RequestSession(string applicationName, string applicationVersion, IList<ISupportedProtocol> requestedProtocols, string requestedCompression)
+        /// <param name="authorization">The authorization.</param>
+        /// <param name="supplementalAuthorization">The supplemental authorization.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<Authorize> Authorize(string authorization, IDictionary<string, string> supplementalAuthorization, IMessageHeaderExtension extension = null)
         {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.RequestSession);
-
-            var requestSession = new RequestSession
+            var body = new Authorize
             {
-                ApplicationName = applicationName,
-                ApplicationVersion = applicationVersion,
-                RequestedProtocols = requestedProtocols.Cast<SupportedProtocol>().ToList(),
-                SupportedObjects = new List<string>(),
-                SupportedCompression = requestedCompression ?? string.Empty
+                Authorization = authorization,
+                SupplementalAuthorization = supplementalAuthorization ?? new Dictionary<string, string>(),
             };
 
-            RequestedProtocols = requestedProtocols;
-            RequestedCompression = requestedCompression;
-
-            return Session.SendMessage(header, requestSession);
+            return SendRequest(body, extension: extension);
         }
 
         /// <summary>
-        /// Sends a CloseSession message to a server.
+        /// Handles the Authorize event from a server.
         /// </summary>
-        /// <param name="reason">The reason.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long CloseSession(string reason = null)
-        {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.CloseSession);
+        public event EventHandler<RequestWithContextEventArgs<Authorize, bool, AuthorizeContext>> OnAuthorize;
 
-            var closeSession = new CloseSession
+        /// <summary>
+        /// Sends an AuthorizeResponse response message to a server.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">Whether or not authorization was successful.</param>
+        /// <param name="challenges">Challenges that may be used when authorization was not successful.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<AuthorizeResponse> AuthorizeResponse(IMessageHeader correlatedHeader, bool success, IList<string> challenges, IMessageHeaderExtension extension = null)
+        {
+            var body = new AuthorizeResponse
             {
-                Reason = reason ?? "Session closed"
+                Success = success,
+                Challenges = challenges ?? new List<string>(),
             };
 
-            var messageId = Session.SendMessage(header, closeSession);
-
-            if (messageId == header.MessageId)
-            {
-                Notify(OnCloseSession, header, closeSession);
-                Session.OnSessionClosed();
-            }
-
-            return messageId;
+            return SendResponse(body, correlatedHeader, extension: extension);
         }
 
         /// <summary>
-        /// Renews the security token.
+        /// Handles the AuthorizeResponse event from a server.
         /// </summary>
-        /// <param name="token">The token.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long RenewSecurityToken(string token)
+        public event EventHandler<ResponseEventArgs<Authorize, AuthorizeResponse>> OnAuthorizeResponse;
+
+        /// <summary>
+        /// Handles the ProtocolException message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
         {
-            var header = CreateMessageHeader(Protocols.Core, MessageTypes.Core.RenewSecurityToken);
+            base.HandleProtocolException(message);
 
-            var renewSecurityToken = new RenewSecurityToken
-            {
-                Token = token
-            };
-
-            return Session.SendMessage(header, renewSecurityToken);
+            var request = TryGetCorrelatedMessage(message);
+            if (request is EtpMessage<Authorize>)
+                HandleResponseMessage(request as EtpMessage<Authorize>, message, OnAuthorizeResponse, HandleAuthorizeResponse);
         }
 
         /// <summary>
-        /// Handles the OpenSession event from a server.
+        /// Handles the Authorize message from a client.
         /// </summary>
-        public event ProtocolEventHandler<OpenSession> OnOpenSession;
-
-        /// <summary>
-        /// Handles the CloseSession event from a server.
-        /// </summary>
-        public event ProtocolEventHandler<CloseSession> OnCloseSession;
-
-        /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
+        /// <param name="message">The Authorize message.</param>
+        protected virtual void HandleAuthorize(EtpMessage<Authorize> message)
         {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.Core.OpenSession:
-                    HandleOpenSession(header, decoder.Decode<OpenSession>(body));
-                    break;
-
-                case (int)MessageTypes.Core.CloseSession:
-                    HandleCloseSession(header, decoder.Decode<CloseSession>(body));
-                    break;
-
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
+            HandleRequestMessage(message, OnAuthorize, HandleAuthorize,
+                responseMethod: (args) => AuthorizeResponse(args.Request?.Header, args.Response, args.Context.Challenges, extension: args.ResponseExtension));
         }
 
         /// <summary>
-        /// Handles the OpenSession message from the server.
+        /// Handles the Authorize message from a client.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="openSession">The OpenSession message.</param>
-        protected virtual void HandleOpenSession(IMessageHeader header, OpenSession openSession)
+        /// <param name="args">The <see cref="RequestWithContextEventArgs{Authorize, bool, AuthorizeContext}"/> instance containing the event data.</param>
+        protected virtual void HandleAuthorize(RequestWithContextEventArgs<Authorize, bool, AuthorizeContext> args)
         {
-            SupportedProtocols = openSession.SupportedProtocols.Cast<ISupportedProtocol>().ToList();
-            ServerObjects = openSession.SupportedObjects;
-            Session.SessionId = openSession.SessionId;
-            Session.SupportedCompression = openSession.SupportedCompression;
-            Notify(OnOpenSession, header, openSession);
-            Session.OnSessionOpened(RequestedProtocols, SupportedProtocols);
         }
 
         /// <summary>
-        /// Handles the CloseSession message from the server.
+        /// Handles the AuthorizeResponse message from a server.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="closeSession">The CloseSession message.</param>
-        protected virtual void HandleCloseSession(IMessageHeader header, CloseSession closeSession)
+        /// <param name="message">The AuthorizeResponse message.</param>
+        protected virtual void HandleAuthorizeResponse(EtpMessage<AuthorizeResponse> message)
         {
-            Notify(OnCloseSession, header, closeSession);
-            Session.OnSessionClosed();
-            Session.Close(closeSession.Reason);
+            var request = TryGetCorrelatedMessage<Authorize>(message);
+            HandleResponseMessage(request, message, OnAuthorizeResponse, HandleAuthorizeResponse);
+        }
+
+        /// <summary>
+        /// Handles the AuthorizeResponse message from a server.
+        /// </summary>
+        /// <param name="args">The <see cref="ResponseEventArgs{Authorize, AuthorizeResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleAuthorizeResponse(ResponseEventArgs<Authorize, AuthorizeResponse> args)
+        {
         }
     }
 }

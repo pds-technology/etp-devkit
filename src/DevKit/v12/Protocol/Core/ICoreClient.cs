@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -26,41 +27,41 @@ namespace Energistics.Etp.v12.Protocol.Core
     /// Represents the interface that must be implemented from the client side of Protocol 0.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Core, "client", "server")]
+    [ProtocolRole((int)Protocols.Core, Roles.Client, Roles.Server)]
     public interface ICoreClient : IProtocolHandler
     {
         /// <summary>
-        /// Sends a RequestSession message to a server.
+        /// Sends an Authorize message to a server.
         /// </summary>
-        /// <param name="applicationName">The application name.</param>
-        /// <param name="applicationVersion">The application version.</param>
-        /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <param name="requestedCompression">The requested compression.</param>
-        /// <returns>The message identifier.</returns>
-        long RequestSession(string applicationName, string applicationVersion, IList<ISupportedProtocol> requestedProtocols, string requestedCompression);
+        /// <param name="authorization">The authorization.</param>
+        /// <param name="supplementalAuthorization">The supplemental authorization.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<Authorize> Authorize(string authorization, IDictionary<string, string> supplementalAuthorization, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Sends a CloseSession message to a server.
+        /// Handles the Authorize event from a server.
         /// </summary>
-        /// <param name="reason">The reason.</param>
-        /// <returns>The message identifier.</returns>
-        long CloseSession(string reason = null);
+        event EventHandler<RequestWithContextEventArgs<Authorize, bool, AuthorizeContext>> OnAuthorize;
 
         /// <summary>
-        /// Renews the security token.
+        /// Sends an AuthorizeResponse response message to a server.
         /// </summary>
-        /// <param name="token">The token.</param>
-        /// <returns>The message identifier.</returns>
-        long RenewSecurityToken(string token);
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">Whether or not authorization was successful.</param>
+        /// <param name="challenges">Challenges that may be used when authorization was not successful.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<AuthorizeResponse> AuthorizeResponse(IMessageHeader correlatedHeader, bool success, IList<string> challenges, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Handles the OpenSession event from a server.
+        /// Handles the AuthorizeResponse event from a server.
         /// </summary>
-        event ProtocolEventHandler<OpenSession> OnOpenSession;
+        event EventHandler<ResponseEventArgs<Authorize, AuthorizeResponse>> OnAuthorizeResponse;
+    }
 
-        /// <summary>
-        /// Handles the CloseSession event from a server.
-        /// </summary>
-        event ProtocolEventHandler<CloseSession> OnCloseSession;
+    public class AuthorizeContext
+    {
+        public IList<string> Challenges { get; set; } = new List<string>();
     }
 }

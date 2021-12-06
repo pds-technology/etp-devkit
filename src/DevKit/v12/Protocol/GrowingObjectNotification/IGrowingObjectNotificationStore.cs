@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@
 
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
+using System;
+using System.Collections.Generic;
 
 namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
 {
@@ -26,71 +29,112 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
     /// Defines the interface that must be implemented by the store role of the growing object notification protocol.
     /// </summary>
     /// <seealso cref="IProtocolHandler" />
-    [ProtocolRole((int)Protocols.GrowingObjectNotification, "store", "customer")]
-    public interface IGrowingObjectNotificationStore : IProtocolHandler
+    [ProtocolRole((int)Protocols.GrowingObjectNotification, Roles.Store, Roles.Customer)]
+    public interface IGrowingObjectNotificationStore : IProtocolHandlerWithCapabilities<ICapabilitiesStore>
     {
         /// <summary>
-        /// Sends a PartChangeNotification message to a customer.
+        /// Handles the SubscribePartNotifications event from a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="uri">The URI.</param>
-        /// <param name="uid">The UID.</param>
-        /// <param name="contentType">The content type.</param>
-        /// <param name="data">The data.</param>
+        event EventHandler<MapRequestEventArgs<SubscribePartNotifications, string>> OnSubscribePartNotifications;
+
+        /// <summary>
+        /// Sends a SubscribePartNotificationsResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<SubscribePartNotificationsResponse> SubscribePartNotificationsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, bool isFinalPart = true, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Sends a complete multi-part set of SubscribePartNotificationsResponse and ProtocolException messages to a customer.
+        /// If there are no successes, an empty SubscribePartNotificationsRecord message is sent.
+        /// If there are no errors, no ProtocolException message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">The successes.</param>
+        /// <param name="errors">The errors.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="responseExtension">The message header extension for the SubscribePartNotificationsResponse message.</param>
+        /// <param name="exceptionExtension">The message header extension for the ProtocolException message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        EtpMessage<SubscribePartNotificationsResponse> SubscribePartNotificationsResponse(IMessageHeader correlatedHeader, IDictionary<string, string> success, IDictionary<string, IErrorInfo> errors, bool setFinalPart = true, IMessageHeaderExtension responseExtension = null, IMessageHeaderExtension exceptionExtension = null);
+
+        /// <summary>
+        /// Sends an UnsolicitedPartNotifications message to a customer.
+        /// </summary>
+        /// <param name="subscriptions">The unsolicited subscriptions.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<UnsolicitedPartNotifications> UnsolicitedPartNotifications(IList<SubscriptionInfo> subscriptions, IMessageHeaderExtension exceptionExtension = null);
+
+        /// <summary>
+        /// Sends a PartsChanged message to a customer.
+        /// </summary>
+        /// <param name="requestUuid">The request UUID.</param>
+        /// <param name="uri">The URI of the growing object.</param>
+        /// <param name="parts">The changed parts.</param>
         /// <param name="changeKind">The change kind.</param>
         /// <param name="changeTime">The change time.</param>
-        /// <returns>The message identifier.</returns>
-        long PartChangeNotification(IMessageHeader request, string uri, string uid, string contentType, byte[] data, ObjectChangeKind changeKind, long changeTime);
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PartsChanged> PartsChanged(Guid requestUuid, string uri, IList<ObjectPart> parts, ObjectChangeKind changeKind, DateTime changeTime, string format = Formats.Xml, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Sends a PartDeleteNotification message to a customer.
+        /// Sends a PartsDeleted message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="uri">The URI.</param>
-        /// <param name="uid">The UID.</param>
+        /// <param name="requestUuid">The request UUID.</param>
+        /// <param name="uri">The URI of the growing object.</param>
+        /// <param name="uids">The UIDs of the deleted parts.</param>
         /// <param name="changeTime">The change time.</param>
-        /// <returns>The message identifier.</returns>
-        long PartDeleteNotification(IMessageHeader request, string uri, string uid, long changeTime);
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PartsDeleted> PartsDeleted(Guid requestUuid, string uri, IList<string> uids, DateTime changeTime, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Sends a DeletePartsByRangeNotification message to a customer.
+        /// Sends a PartsReplacedByRange message to a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
+        /// <param name="requestUuid">The request UUID.</param>
         /// <param name="uri">The URI.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
-        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
+        /// <param name="deletedInterval">The index interval for the deleted range.</param>
+        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals were included; otherwise, <c>false</c>.</param>
+        /// <param name="parts">The map of UIDs and data of the parts that were put.</param>
         /// <param name="changeTime">The change time.</param>
-        /// <returns>The message identifier.</returns>
-        long DeletePartsByRangeNotification(IMessageHeader request, string uri, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime);
+        /// <param name="format">The format of the data (XML or JSON).</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PartsReplacedByRange> PartsReplacedByRange(Guid requestUuid, string uri, IndexInterval deletedInterval, bool includeOverlappingIntervals, IList<ObjectPart> parts, DateTime changeTime, string format = Formats.Xml, bool isFinalPart = true, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Sends a ReplacePartsByRangeNotification message to a customer.
+        /// Handles the UnsubscribePartNotification event from a customer.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="uri">The URI.</param>
-        /// <param name="uid">The uid.</param>
-        /// <param name="contentType">The content type.</param>
-        /// <param name="data">The data.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="endIndex">The end index.</param>
-        /// <param name="uom">The unit of measure.</param>
-        /// <param name="depthDatum">The depth datum.</param>
-        /// <param name="includeOverlappingIntervals"><c>true</c> if overlapping intervals should be included; otherwise, <c>false</c>.</param>
-        /// <param name="changeTime">The change time.</param>
-        /// <returns>The message identifier.</returns>
-        long ReplacePartsByRangeNotification(IMessageHeader request, string uri, string uid, string contentType, byte[] data, object startIndex, object endIndex, string uom, string depthDatum, bool includeOverlappingIntervals, long changeTime);
+        event EventHandler<RequestWithContextEventArgs<UnsubscribePartNotification, Guid, PartSubscriptionEndedReason>> OnUnsubscribePartNotification;
 
         /// <summary>
-        /// Handles the RequestPartNotification event from a customer.
+        /// Sends a PartSubscriptionEnded message to a customer in response to a UnsubscribePartNotification message.
         /// </summary>
-        event ProtocolEventHandler<RequestPartNotification> OnRequestPartNotification;
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="requestUuid">The reqyest UUId.</param>
+        /// <param name="reason">The human readable reason why the part subscription ended.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PartSubscriptionEnded> ResponsePartSubscriptionEnded(IMessageHeader correlatedHeader, Guid requestUuid, string reason, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Handles the CancelPartNotification event from a customer.
+        /// Sends a PartSubscriptionEnded message to a customer as a notification.
         /// </summary>
-        event ProtocolEventHandler<CancelPartNotification> OnCancelPartNotification;
+        /// <param name="requestUuid">The reqyest UUId.</param>
+        /// <param name="reason">The human readable reason why the part subscription ended.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<PartSubscriptionEnded> NotificationPartSubscriptionEnded(Guid requestUuid, string reason, IMessageHeaderExtension extension = null);
+    }
+
+    public class PartSubscriptionEndedReason
+    {
+        public string Reason { get; set; } = "Customer Request";
     }
 }

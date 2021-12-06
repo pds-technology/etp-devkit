@@ -1,257 +1,89 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{30DE888B-A6B7-4528-AD89-324A7F9B0F4C}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Energistics.Etp</RootNamespace>
     <AssemblyName>ETP.DevKit</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
+    <TargetFrameworks>net5.0;netstandard2.0;net48;net452</TargetFrameworks>
+    <AppConfig Condition=" '$(TargetFramework)' == 'net452' ">app.net452.config</AppConfig>
+    <AssemblyTitle>ETP.DevKit</AssemblyTitle>
+    <Company>Energistics</Company>
+    <Product>ETP DevKit</Product>
+    <Description>
+      The ETP DevKit is a .NET library providing a common foundation and the basic infrastructure needed to communicate via the Energistics Transfer Protocol (ETP). The library is written in C# using the .NET Framework version 4.5.2. It is designed to simplify and standardize ETP client and server development by integrating the necessary dependencies and abstracting away the lower level details of communicating via ETP. It builds on the ETP Messages library, which provides .NET definitions for the ETP messages and associated data structures.
+
+      The ETP DevKit provides a definition and base implementation of each interface described in the ETP Specification. Each interface implementation has been developed as a protocol handler that can be used out of the box or extended to provide additional functionality. This abstracts away the low level details of sending and receiving messages between clients and servers. Customized processing of messages can be achieved either by registering handlers for the various interface events or by deriving from the library’s protocol handlers and overriding the virtual message handling methods.
+
+      The aim of the ETP DevKit is to reduce the time it takes to develop and evaluate the latest version of the standards utilizing the Energistics Transfer Protocol and to provide a shared and tested framework for establishing and facilitating communication between applications needing to exchange data.
+
+      The ETP DevKit was developed by Petrotechnical Data Systems (PDS) and contributed to Energistics. It is provided as an open source project under the Apache License, Version 2.0. Further development will be guided by Energistics and the user community.
+    </Description>
+    <Copyright>Copyright © 2019</Copyright>
+    <Version>1.2.0-dev30</Version>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <Authors>Energistics</Authors>
+    <PackageIconUrl>https://bitbucket.org/account/energistics/avatar/</PackageIconUrl>
+    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</PackageLicenseUrl>
+    <PackageProjectUrl>https://bitbucket.org/energistics/etp-devkit</PackageProjectUrl>
+    <PreBuildEvent />
+    <PreBuildEvent />
+    <PreBuildEvent />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="Avro, Version=0.9.0.0, Culture=neutral, PublicKeyToken=b1248d7eeb9d0814, processorArchitecture=MSIL">
-      <HintPath>..\packages\Apache.Avro.1.7.7.2\lib\Avro.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="ETP.Messages, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ETP.1.6.0-dev16\lib\net40\ETP.Messages.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
-      <HintPath>..\packages\log4net.2.0.5\lib\net45-full\log4net.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="SuperSocket.ClientEngine, Version=0.10.0.0, Culture=neutral, PublicKeyToken=ee9af13f57f00acc, processorArchitecture=MSIL">
-      <HintPath>..\packages\SuperSocket.ClientEngine.Core.0.10.0\lib\net45\SuperSocket.ClientEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="SuperSocket.Common, Version=1.6.0.4, Culture=neutral, PublicKeyToken=6c80000676988ebb, processorArchitecture=MSIL">
-      <HintPath>..\packages\SuperWebSocket.0.9.0.2\lib\net40\SuperSocket.Common.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="SuperSocket.SocketBase, Version=1.6.0.4, Culture=neutral, PublicKeyToken=6c80000676988ebb, processorArchitecture=MSIL">
-      <HintPath>..\packages\SuperWebSocket.0.9.0.2\lib\net40\SuperSocket.SocketBase.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="SuperSocket.SocketEngine, Version=1.6.0.4, Culture=neutral, PublicKeyToken=6c80000676988ebb, processorArchitecture=MSIL">
-      <HintPath>..\packages\SuperWebSocket.0.9.0.2\lib\net40\SuperSocket.SocketEngine.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="SuperWebSocket, Version=0.9.0.0, Culture=neutral, PublicKeyToken=7ba53b9a7cef5d1c, processorArchitecture=MSIL">
-      <HintPath>..\packages\SuperWebSocket.0.9.0.2\lib\net40\SuperWebSocket.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Net" />
-    <Reference Include="System.Net.Http" />
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent />
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+  </PropertyGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net452' ">
+    <PackageReference Include="log4net" Version="2.0.12" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Nito.AsyncEx" Version="5.1.0" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="WebSocket4Net" Version="0.15.2" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' Or '$(TargetFramework)' == 'net48' ">
+    <PackageReference Include="SuperSocket.ClientEngine.Core" Version="0.10.0" />
+    <PackageReference Include="SuperWebSocket" Version="0.9.0.2" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net5.0' ">
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="5.0.2" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+    <PackageReference Include="log4net" Version="2.0.10" />
+    <PackageReference Include="Microsoft.Bcl.Build" Version="1.0.21" />
+	  <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+	  <PackageReference Include="Nito.AsyncEx" Version="4.0.1" />
+    <PackageReference Include="System.Net.Http" Version="4.3.2" />
+    <PackageReference Include="WebSocket4Net" Version="0.15.2" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
     <Reference Include="System.Web" />
-    <Reference Include="System.Xml" />
-    <Reference Include="WebSocket4Net, Version=0.15.2.11, Culture=neutral, PublicKeyToken=eb4e154b696bf72a, processorArchitecture=MSIL">
-      <HintPath>..\packages\WebSocket4Net.0.15.2\lib\net45\WebSocket4Net.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Common\Datatypes\EtpVersion.cs" />
-    <Compile Include="Common\Datatypes\WebSocketType.cs" />
-    <Compile Include="Common\EtpWebServerBase.cs" />
-    <Compile Include="Common\EtpBase.cs" />
-    <Compile Include="Common\EtpWebSocketValidation.cs" />
-    <Compile Include="Common\EtpErrorMessages.cs" />
-    <Compile Include="Common\EtpMessageHeaderExtensions.cs" />
-    <Compile Include="Common\EtpExtensions.cs" />
-    <Compile Include="Common\EtpProtocolHandler.cs" />
-    <Compile Include="Common\EtpSession.cs" />
-    <Compile Include="Common\EtpSettings.cs" />
-    <Compile Include="Common\Datatypes\ByteArrayConverter.cs" />
-    <Compile Include="Common\EtpSpecificReader.cs" />
-    <Compile Include="Common\IEtpAdapter.cs" />
-    <Compile Include="Common\IEtpServer.cs" />
-    <Compile Include="Common\IEtpClient.cs" />
-    <Compile Include="Common\IEtpSelfHostedWebServer.cs" />
-    <Compile Include="Common\IEtpWebServer.cs" />
-    <Compile Include="EtpSocketServer.cs" />
-    <Compile Include="EtpServerHandler.cs" />
-    <Compile Include="EtpServer.cs" />
-    <Compile Include="EtpClient.cs" />
-    <Compile Include="EtpFactory.cs" />
-    <Compile Include="Log4NetExtensions.cs" />
-    <Compile Include="Native\EtpClient.cs" />
-    <Compile Include="Native\EtpSessionNativeBase.cs" />
-    <Compile Include="Native\EtpSelfHostedWebServer.cs" />
-    <Compile Include="v11\Protocol\IEtp11ProtocolHandler.cs" />
-    <Compile Include="v11\Protocol\Etp11ProtocolHandler.cs" />
-    <Compile Include="v12\Protocol\Etp12ProtocolHandler.cs" />
-    <Compile Include="v12\Protocol\IEtp12ProtocolHandler.cs" />
-    <Compile Include="WebSocket4Net\HttpConnectProxy.cs" />
-    <Compile Include="v11\Datatypes\ChannelData\StreamingStartIndexConverter.cs" />
-    <Compile Include="Common\Datatypes\NullableAttributeConverter.cs" />
-    <Compile Include="v11\Datatypes\DataValueConverter.cs" />
-    <Compile Include="Common\Datatypes\EtpContentType.cs" />
-    <Compile Include="Common\Datatypes\EtpUri.cs" />
-    <Compile Include="Common\IEtpSession.cs" />
-    <Compile Include="Common\ProtocolEventArgs.cs" />
-    <Compile Include="Common\ProtocolEventHandler.cs" />
-    <Compile Include="v11\Datatypes\Object\GrowingObjectIndexConverter.cs" />
-    <Compile Include="Common\Datatypes\PrimitiveConverters.cs" />
-    <Compile Include="EtpErrorCodes.cs" />
-    <Compile Include="WebSocket4Net\EtpServer.cs" />
-    <Compile Include="Native\EtpServer.cs" />
-    <Compile Include="JsonClient.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
+    <ProjectReference Include="..\..\ext\etp.net\src\ETP.Messages\ETP.Messages.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="v11\Etp11Adapter.cs" />
-    <Compile Include="v11\Protocol\ChannelDataFrame\ChannelDataFrameConsumerHandler.cs" />
-    <Compile Include="v11\Protocol\ChannelDataFrame\ChannelDataFrameProducerHandler.cs" />
-    <Compile Include="v11\Protocol\ChannelDataFrame\IChannelDataFrameConsumer.cs" />
-    <Compile Include="v11\Protocol\ChannelDataFrame\IChannelDataFrameProducer.cs" />
-    <Compile Include="v11\Protocol\ChannelStreaming\ChannelStreamingConsumerHandler.cs" />
-    <Compile Include="v11\Protocol\ChannelStreaming\ChannelStreamingProducerHandler.cs" />
-    <Compile Include="v11\Protocol\ChannelStreaming\IChannelStreamingConsumer.cs" />
-    <Compile Include="v11\Protocol\ChannelStreaming\IChannelStreamingProducer.cs" />
-    <Compile Include="v11\Protocol\Core\CoreClientHandler.cs" />
-    <Compile Include="v11\Protocol\Core\CoreServerHandler.cs" />
-    <Compile Include="v11\Protocol\Core\ICoreClient.cs" />
-    <Compile Include="Common\IProtocolHandler.cs" />
-    <Compile Include="v11\Protocol\Core\ICoreServer.cs" />
-    <Compile Include="v11\Protocol\DataArray\DataArrayCustomerHandler.cs" />
-    <Compile Include="v11\Protocol\DataArray\DataArrayStoreHandler.cs" />
-    <Compile Include="v11\Protocol\DataArray\IDataArrayStore.cs" />
-    <Compile Include="v11\Protocol\DataArray\IDataArrayCustomer.cs" />
-    <Compile Include="v11\Protocol\Discovery\DiscoveryCustomerHandler.cs" />
-    <Compile Include="v11\Protocol\Discovery\DiscoveryStoreHandler.cs" />
-    <Compile Include="v11\Protocol\Discovery\IDiscoveryCustomer.cs" />
-    <Compile Include="v11\Protocol\Discovery\IDiscoveryStore.cs" />
-    <Compile Include="Common\EtpContractResolver.cs" />
-    <Compile Include="Common\Datatypes\ResourceTypes.cs" />
-    <Compile Include="v11\Protocol\GrowingObject\GrowingObjectCustomerHandler.cs" />
-    <Compile Include="v11\Protocol\GrowingObject\GrowingObjectStoreHandler.cs" />
-    <Compile Include="v11\Protocol\GrowingObject\IGrowingObjectStore.cs" />
-    <Compile Include="v11\Protocol\GrowingObject\IGrowingObjectCustomer.cs" />
-    <Compile Include="Common\Datatypes\MessageFlags.cs" />
-    <Compile Include="Common\Datatypes\ProtocolRoleAttribute.cs" />
-    <Compile Include="v11\Protocol\StoreNotification\IStoreNotificationCustomer.cs" />
-    <Compile Include="v11\Protocol\StoreNotification\IStoreNotificationStore.cs" />
-    <Compile Include="v11\Protocol\StoreNotification\StoreNotificationCustomerHandler.cs" />
-    <Compile Include="v11\Protocol\StoreNotification\StoreNotificationStoreHandler.cs" />
-    <Compile Include="v11\Protocol\Store\IStoreCustomer.cs" />
-    <Compile Include="v11\Protocol\Store\IStoreStore.cs" />
-    <Compile Include="WebSocket4Net\EtpClient.cs" />
-    <Compile Include="WebSocket4Net\EtpSelfHostedWebServer.cs" />
-    <Compile Include="v11\Protocol\Store\StoreCustomerHandler.cs" />
-    <Compile Include="v11\Protocol\Store\StoreStoreHandler.cs" />
-    <Compile Include="Security\Authorization.cs" />
-    <Compile Include="v12\Datatypes\IndexValueConverter.cs" />
-    <Compile Include="v12\Protocol\ChannelDataFrame\ChannelDataFrameConsumerHandler.cs" />
-    <Compile Include="v12\Protocol\ChannelDataFrame\ChannelDataFrameProducerHandler.cs" />
-    <Compile Include="v12\Protocol\ChannelDataFrame\IChannelDataFrameConsumer.cs" />
-    <Compile Include="v12\Protocol\ChannelDataFrame\IChannelDataFrameProducer.cs" />
-    <Compile Include="v12\Protocol\ChannelDataLoad\ChannelDataLoadConsumerHandler.cs" />
-    <Compile Include="v12\Protocol\ChannelDataLoad\ChannelDataLoadProducerHandler.cs" />
-    <Compile Include="v12\Protocol\ChannelDataLoad\IChannelDataLoadConsumer.cs" />
-    <Compile Include="v12\Protocol\ChannelDataLoad\IChannelDataLoadProducer.cs" />
-    <Compile Include="v12\Protocol\ChannelStreaming\ChannelStreamingConsumerHandler.cs" />
-    <Compile Include="v12\Protocol\ChannelStreaming\ChannelStreamingProducerHandler.cs" />
-    <Compile Include="v12\Protocol\ChannelStreaming\IChannelStreamingConsumer.cs" />
-    <Compile Include="v12\Protocol\ChannelStreaming\IChannelStreamingProducer.cs" />
-    <Compile Include="v12\Protocol\ChannelSubscribe\ChannelSubscribeConsumerHandler.cs" />
-    <Compile Include="v12\Protocol\ChannelSubscribe\ChannelSubscribeProducerHandler.cs" />
-    <Compile Include="v12\Protocol\ChannelSubscribe\IChannelSubscribeConsumer.cs" />
-    <Compile Include="v12\Protocol\ChannelSubscribe\IChannelSubscribeProducer.cs" />
-    <Compile Include="v12\Protocol\Core\CoreClientHandler.cs" />
-    <Compile Include="v12\Protocol\Core\CoreServerHandler.cs" />
-    <Compile Include="v12\Protocol\Core\ICoreClient.cs" />
-    <Compile Include="v12\Protocol\Core\ICoreServer.cs" />
-    <Compile Include="v12\Etp12Adapter.cs" />
-    <Compile Include="v12\Protocol\GrowingObjectQuery\IGrowingObjectQueryCustomer.cs" />
-    <Compile Include="v12\Protocol\GrowingObjectQuery\IGrowingObjectQueryStore.cs" />
-    <Compile Include="v12\Protocol\GrowingObjectQuery\GrowingObjectQueryCustomerHandler.cs" />
-    <Compile Include="v12\Protocol\GrowingObjectQuery\GrowingObjectQueryStoreHandler.cs" />
-    <Compile Include="v12\Protocol\GrowingObject\GrowingObjectCustomerHandler.cs" />
-    <Compile Include="v12\Protocol\GrowingObject\GrowingObjectStoreHandler.cs" />
-    <Compile Include="v12\Protocol\GrowingObject\IGrowingObjectCustomer.cs" />
-    <Compile Include="v12\Protocol\GrowingObject\IGrowingObjectStore.cs" />
-    <Compile Include="v12\Protocol\GrowingObjectNotification\IGrowingObjectNotificationCustomer.cs" />
-    <Compile Include="v12\Protocol\GrowingObjectNotification\IGrowingObjectNotificationStore.cs" />
-    <Compile Include="v12\Protocol\GrowingObjectNotification\GrowingObjectNotificationCustomerHandler.cs" />
-    <Compile Include="v12\Protocol\GrowingObjectNotification\GrowingObjectNotificationStoreHandler.cs" />
-    <Compile Include="v12\Protocol\StoreQuery\StoreQueryCustomerHandler.cs" />
-    <Compile Include="v12\Protocol\StoreQuery\StoreQueryStoreHandler.cs" />
-    <Compile Include="v12\Protocol\StoreQuery\IStoreQueryCustomer.cs" />
-    <Compile Include="v12\Protocol\StoreQuery\IStoreQueryStore.cs" />
-    <Compile Include="v12\Protocol\DiscoveryQuery\DiscoveryQueryCustomerHandler.cs" />
-    <Compile Include="v12\Protocol\DiscoveryQuery\DiscoveryQueryStoreHandler.cs" />
-    <Compile Include="v12\Protocol\DiscoveryQuery\IDiscoveryQueryCustomer.cs" />
-    <Compile Include="v12\Protocol\DiscoveryQuery\IDiscoveryQueryStore.cs" />
-    <Compile Include="v12\Protocol\Discovery\DiscoveryCustomerHandler.cs" />
-    <Compile Include="v12\Protocol\Discovery\DiscoveryStoreHandler.cs" />
-    <Compile Include="v12\Protocol\Discovery\IDiscoveryCustomer.cs" />
-    <Compile Include="v12\Protocol\Discovery\IDiscoveryStore.cs" />
-    <Compile Include="v12\Protocol\StoreNotification\IStoreNotificationCustomer.cs" />
-    <Compile Include="v12\Protocol\StoreNotification\IStoreNotificationStore.cs" />
-    <Compile Include="v12\Protocol\StoreNotification\StoreNotificationCustomerHandler.cs" />
-    <Compile Include="v12\Protocol\StoreNotification\StoreNotificationStoreHandler.cs" />
-    <Compile Include="v12\Protocol\Store\IStoreCustomer.cs" />
-    <Compile Include="v12\Protocol\Store\IStoreStore.cs" />
-    <Compile Include="v12\Protocol\Store\StoreCustomerHandler.cs" />
-    <Compile Include="v12\Protocol\Store\StoreStoreHandler.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="DevKit.nuspec" />
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Properties\Settings.settings">
+    <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+  <ItemGroup>
+    <Folder Include="WebSocket4Net\" />
+  </ItemGroup>
 </Project>

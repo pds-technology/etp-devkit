@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@
 //-----------------------------------------------------------------------
 
 using Energistics.Etp.Common;
+using Energistics.Etp.v12.Datatypes;
 
 namespace Energistics.Etp.v12.Protocol
 {
     /// <summary>
     /// Interface for ETP 1.2 protocol handlers.
     /// </summary>
-    public interface IEtp12ProtocolHandler : IProtocolHandler
+    public interface IEtp12ProtocolHandler
     {
     }
 }

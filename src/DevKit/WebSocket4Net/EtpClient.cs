@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,12 +20,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Properties;
+using Nito.AsyncEx;
 using SuperSocket.ClientEngine;
-using WebSocket4Net;
+using W4N = WebSocket4Net;
 
 namespace Energistics.Etp.WebSocket4Net
 {
@@ -35,68 +38,64 @@ namespace Energistics.Etp.WebSocket4Net
     /// <seealso cref="Energistics.Etp.Common.EtpSession" />
     public class EtpClient : EtpSession, IEtpClient
     {
-        private static readonly IDictionary<string, string> EmptyHeaders = new Dictionary<string, string>();
-        private static readonly IDictionary<string, string> BinaryHeaders = new Dictionary<string, string>()
-        {
-            { Settings.Default.EtpEncodingHeader, Settings.Default.EtpEncodingBinary }
-        };
-
-        private WebSocket _socket;
-        private string _supportedCompression;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EtpClient" /> class.
-        /// </summary>
-        /// <param name="uri">The ETP server URI.</param>
-        /// <param name="application">The client application name.</param>
-        /// <param name="version">The client application version.</param>
-        /// <param name="etpSubProtocol">The ETP sub protocol.</param>
-        public EtpClient(string uri, string application, string version, string etpSubProtocol) : this(uri, application, version, etpSubProtocol, EmptyHeaders)
-        {
-        }
+        private W4N.WebSocket _socket;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpClient"/> class.
         /// </summary>
         /// <param name="uri">The ETP server URI.</param>
-        /// <param name="application">The client application name.</param>
-        /// <param name="version">The client application version.</param>
-        /// <param name="etpSubProtocol">The ETP sub protocol.</param>
+        /// <param name="etpVersion">The ETP version for the session.</param>
+        /// <param name="encoding">The ETP encoding for the session.</param>
+        /// <param name="info">The client's information.</param>
+        /// <param name="parameters">The client's parameters.</param>
+        /// <param name="authorization">The client's authorization details.</param>
         /// <param name="headers">The WebSocket headers.</param>
-        public EtpClient(string uri, string application, string version, string etpSubProtocol, IDictionary<string, string> headers)
-            : base(EtpWebSocketValidation.GetEtpVersion(etpSubProtocol), application, version, headers, true)
+        public EtpClient(string uri, EtpVersion etpVersion, EtpEncoding encoding, EtpEndpointInfo info, EtpEndpointParameters parameters, Security.Authorization authorization = null, IDictionary<string, string> headers = null)
+            : base(etpVersion, encoding, info, parameters, headers, true, null, false)
         {
-            var headerItems = Headers.Union(BinaryHeaders.Where(x => !Headers.ContainsKey(x.Key))).ToList();
+            Headers.SetAuthorization(authorization);
 
-            _socket = new WebSocket(uri,
-                subProtocol: etpSubProtocol,
+            _socket = new W4N.WebSocket(uri,
+                subProtocol: EtpFactory.GetSubProtocol(EtpVersion),
                 cookies: null,
-                customHeaderItems: headerItems,
-                userAgent: application);
+                customHeaderItems: Headers.ToList(),
+                userAgent: info.ApplicationName);
         }
 
         /// <summary>
-        /// Gets a value indicating whether the connection is open.
+        /// Gets a value indicating whether the underlying websocket is actively being kept alive by sending WebSocket ping messages.
+        /// </summary>
+        public bool IsWebSocketKeptAlive => _socket.EnableAutoSendPing;
+
+        /// <summary>
+        /// Gets a value indicating the frequency at which WebSocket ping messages are being sent to keep the underlying WebSocket alive.
+        /// </summary>
+        public TimeSpan WebSocketKeepAliveInterval => TimeSpan.FromSeconds(_socket.AutoSendPingInterval);
+
+        /// <summary>
+        /// Gets a value indicating whether the underlying websocket connection is open.
         /// </summary>
         /// <value>
-        ///   <c>true</c> if the connection is open; otherwise, <c>false</c>.
+        ///   <c>true</c> if the underlying websocket is open; otherwise, <c>false</c>.
         /// </value>
-        public override bool IsOpen => (_socket?.State ?? WebSocketState.None) == WebSocketState.Open;
+        public override bool IsWebSocketOpen => (_socket?.State ?? W4N.WebSocketState.None) == W4N.WebSocketState.Open;
 
         /// <summary>
         /// Opens the WebSocket connection.
         /// </summary>
-        public void Open()
+        /// <returns><c>true</c> if the socket was successfully opened; <c>false</c> otherwise.</returns>
+        public bool Open()
         {
-            OpenAsync().Wait();
+            return AsyncContext.Run(() => OpenAsync());
         }
 
         /// <summary>
         /// Asynchronously opens the WebSocket connection.
         /// </summary>
+        /// <returns><c>true</c> if the socket was successfully opened; <c>false</c> otherwise.</returns>
         public async Task<bool> OpenAsync()
         {
-            if (IsOpen) return true;
+            if (IsWebSocketOpen) return true;
 
             Logger.Trace(Log("Opening web socket connection..."));
 
@@ -121,7 +120,6 @@ namespace Energistics.Etp.WebSocket4Net
                 if (!handled)
                 {
                     handled = true;
-
                     clearHandlers();
 
                     SubscribeToSocketEvents();
@@ -138,6 +136,8 @@ namespace Energistics.Etp.WebSocket4Net
                     handled = true;
                     clearHandlers();
 
+                    RaiseSocketClosed();
+
                     task.Start();
                 }
             };
@@ -146,11 +146,11 @@ namespace Energistics.Etp.WebSocket4Net
                 if (!handled)
                 {
                     handled = true;
-
                     clearHandlers();
-                    handled = true;
 
                     ex = e.Exception;
+                    RaiseSocketError(ex);
+
                     task.Start();
                 }
             };
@@ -160,7 +160,7 @@ namespace Energistics.Etp.WebSocket4Net
             _socket.Error += errorHandler;
             _socket.Open();
 
-            return await task;
+            return await task.ConfigureAwait(CaptureAsyncContext);
         }
 
         /// <summary>
@@ -189,9 +189,9 @@ namespace Energistics.Etp.WebSocket4Net
         /// Asynchronously closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        protected override async Task CloseAsyncCore(string reason)
+        protected override async Task CloseWebSocketAsyncCore(string reason)
         {
-            if (!IsOpen) return;
+            if (!IsWebSocketOpen) return;
 
             Logger.Trace(Log("Closing web socket connection: {0}", reason));
 
@@ -247,31 +247,8 @@ namespace Energistics.Etp.WebSocket4Net
 
             _socket.Close(reason);
 
-            await task;
+            await task.ConfigureAwait(CaptureAsyncContext);
         }
-
-        /// <summary>
-        /// Occurs when the WebSocket is opened.
-        /// </summary>
-        public event EventHandler SocketOpened
-        {
-            add { _socket.Opened += value; }
-            remove { _socket.Opened -= value; }
-        }
-
-        /// <summary>
-        /// Occurs when the WebSocket is closed.
-        /// </summary>
-        public event EventHandler SocketClosed
-        {
-            add { _socket.Closed += value; }
-            remove { _socket.Closed -= value; }
-        }
-
-        /// <summary>
-        /// Occurs when the WebSocket has an error.
-        /// </summary>
-        public event EventHandler<Exception> SocketError;
 
         /// <summary>
         /// Sets the proxy server host name and port number.
@@ -280,57 +257,72 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="port">The port number.</param>
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
-        public void SetProxy(string host, int port, string username = null, string password = null)
+        /// <param name="useDefaultCredentials">Whether or not to use default credentials.</param>
+        public void SetProxy(string host, int port, string username = null, string password = null, bool useDefaultCredentials = false)
         {
             if (_socket == null) return;
+            if (IsWebSocketOpen)
+                throw new InvalidOperationException("Proxy must be set before the WebSocket connection is opened.");
+
             var endPoint = new DnsEndPoint(host, port);
-            var headers = Security.Authorization.Basic(username, password);
-            _socket.Proxy = new Energistics.Etp.WebSocket4Net.HttpConnectProxy(endPoint, headers[Security.Authorization.Header]);
+            if (useDefaultCredentials)
+                throw new NotSupportedException("Default Credentials not supported with WebSocket4Net");
+            var authorization = Security.Authorization.Basic(username, password);
+            _socket.Proxy = new HttpConnectProxy(endPoint, authorization.Value);
         }
 
         /// <summary>
-        /// Sets the supported compression type, e.g. gzip.
+        /// Sets security options.
         /// </summary>
-        /// <param name="supportedCompression">The supported compression.</param>
-        public void SetSupportedCompression(string supportedCompression)
+        /// <param name="enabledSslProtocols">The enabled SSL and TLS protocols.</param>
+        /// <param name="acceptInvalidCertificates">Whether or not to accept invalid certificates.</param>
+        /// <param name="clientCertificate">The client certificate to use.</param>
+        public void SetSecurityOptions(SecurityProtocolType enabledSslProtocols, bool acceptInvalidCertificates, X509Certificate2 clientCertificate = null)
         {
-            _supportedCompression = supportedCompression;
+            if (IsWebSocketOpen)
+                throw new InvalidOperationException("Security options must be set before the WebSocket connection is opened.");
+
+            _socket.Security.EnabledSslProtocols = (SslProtocols)enabledSslProtocols;
+            _socket.Security.AllowCertificateChainErrors = acceptInvalidCertificates;
+            _socket.Security.AllowNameMismatchCertificate = acceptInvalidCertificates;
+            _socket.Security.AllowUnstrustedCertificate = acceptInvalidCertificates;
+            if (clientCertificate != null)
+                _socket.Security.Certificates.Add(clientCertificate);
+        }
+
+        /// <summary>
+        /// Sets the interval at which the underlying websocket will be actively kept alive by sending WebSocket ping messages.
+        /// A value of 0 will disable sending ping messages.
+        /// </summary>
+        /// <param name="keepAliveInterval">The time interval to wait between sending WebSocket ping messages.</param>
+        public void SetWebSocketKeepAliveInterval(TimeSpan keepAliveInterval)
+        {
+            if (IsWebSocketOpen)
+                throw new InvalidOperationException("WebSocket keep alive interval must be set before the WebSocket connection is opened.");
+
+            if (keepAliveInterval == TimeSpan.Zero)
+            {
+                _socket.EnableAutoSendPing = false;
+                _socket.AutoSendPingInterval = 0;
+            }
+            else
+            {
+                _socket.EnableAutoSendPing = true;
+                _socket.AutoSendPingInterval = Math.Max(1, (int)keepAliveInterval.TotalSeconds);
+            }
         }
 
         /// <summary>
         /// Sends the specified data.
         /// </summary>
         /// <param name="data">The data.</param>
-        /// <param name="offset">The offset.</param>
-        /// <param name="length">The length.</param>
-        protected override Task SendAsync(byte[] data, int offset, int length)
+        protected override Task<bool> SendAsync(ArraySegment<byte> data)
         {
             CheckDisposed();
             // Queues message internally.  No way to know when it has actually been sent.
-            _socket.Send(data, offset, length);
+            _socket.Send(data.Array, data.Offset, data.Count);
 
             return Task.FromResult(true);
-        }
-
-        /// <summary>
-        /// Sends the specified messages.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        protected override Task SendAsync(string message)
-        {
-            CheckDisposed();
-            // Queues message internally.  No way to know when it has actually been sent.
-            _socket.Send(message);
-
-            return Task.FromResult(true);
-        }
-
-        /// <summary>
-        /// Handles the unsupported protocols.
-        /// </summary>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        protected override void HandleUnsupportedProtocols(IList<ISupportedProtocol> supportedProtocols)
-        {
         }
 
         /// <summary>
@@ -341,9 +333,13 @@ namespace Energistics.Etp.WebSocket4Net
         {
             if (disposing)
             {
+                Logger.Verbose($"[{SessionKey}] Disposing EtpClient for {GetType().Name}");
+
                 UnsubscribeFromSocketEvents();
-                Close("Shutting down");
+                CloseWebSocket("Shutting down");
                 _socket?.Dispose();
+
+                Logger.Verbose($"[{SessionKey}] Disposed EtpClient for {GetType().Name}");
             }
 
             base.Dispose(disposing);
@@ -354,13 +350,12 @@ namespace Energistics.Etp.WebSocket4Net
         /// <summary>
         /// Called when the WebSocket is opened.
         /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private void OnWebSocketOpened()
         {
-            Logger.Trace(Log("[{0}] Socket opened.", SessionId));
+            Logger.Trace(Log("[{0}] Socket opened.", SessionKey));
 
-            Adapter.RequestSession(this, ApplicationName, ApplicationVersion, _supportedCompression);
+            RaiseSocketOpened();
+            AsyncContext.Run(() => RequestSessionAsync());
         }
 
         /// <summary>
@@ -370,8 +365,9 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private void OnWebSocketClosed(object sender, EventArgs e)
         {
-            Logger.Trace(Log("[{0}] Socket closed.", SessionId));
-            SessionId = null;
+            Logger.Trace(Log("[{0}] Socket closed.", SessionKey));
+
+            RaiseSocketClosed();
         }
 
         /// <summary>
@@ -379,9 +375,9 @@ namespace Energistics.Etp.WebSocket4Net
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="DataReceivedEventArgs"/> instance containing the event data.</param>
-        private void OnWebSocketDataReceived(object sender, DataReceivedEventArgs e)
+        private void OnWebSocketDataReceived(object sender, W4N.DataReceivedEventArgs e)
         {
-            OnDataReceived(e.Data);
+            Decode(new ArraySegment<byte>(e.Data));
         }
 
         /// <summary>
@@ -389,9 +385,9 @@ namespace Energistics.Etp.WebSocket4Net
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="MessageReceivedEventArgs"/> instance containing the event data.</param>
-        private void OnWebSocketMessageReceived(object sender, MessageReceivedEventArgs e)
+        private void OnWebSocketMessageReceived(object sender, W4N.MessageReceivedEventArgs e)
         {
-            OnMessageReceived(e.Message);
+            DecodeJson(e.Message);
         }
 
         /// <summary>
@@ -401,8 +397,8 @@ namespace Energistics.Etp.WebSocket4Net
         /// <param name="e">The <see cref="ErrorEventArgs"/> instance containing the event data.</param>
         private void OnWebSocketError(object sender, ErrorEventArgs e)
         {
-            Logger.Debug(Log("[{0}] Socket error: {1}", SessionId, e.Exception.Message), e.Exception);
-            SocketError?.Invoke(this, e.Exception);
+            Logger.Debug(Log("[{0}] Socket error: {1}", SessionKey, e.Exception.Message), e.Exception);
+            RaiseSocketError(e.Exception);
         }
     }
 }

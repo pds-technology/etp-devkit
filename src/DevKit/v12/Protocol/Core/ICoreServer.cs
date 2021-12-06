@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
@@ -26,37 +27,36 @@ namespace Energistics.Etp.v12.Protocol.Core
     /// Represents the server end of the interface that must be implemented for Protocol 0.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Core, "server", "client")]
+    [ProtocolRole((int)Protocols.Core, Roles.Server, Roles.Client)]
     public interface ICoreServer : IProtocolHandler
     {
         /// <summary>
-        /// Sends an OpenSession message to a client.
+        /// Sends an Authorize message to a client.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        /// <returns>The message identifier.</returns>
-        long OpenSession(IMessageHeader request, IList<ISupportedProtocol> supportedProtocols);
+        /// <param name="authorization">The authorization.</param>
+        /// <param name="supplementalAuthorization">The supplemental authorization.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<Authorize> Authorize(string authorization, IDictionary<string, string> supplementalAuthorization, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Sends a CloseSession message to a client.
+        /// Handles the Authorize event from a server.
         /// </summary>
-        /// <param name="reason">The reason.</param>
-        /// <returns>The message identifier.</returns>
-        long CloseSession(string reason = null);
+        event EventHandler<RequestWithContextEventArgs<Authorize, bool, AuthorizeContext>> OnAuthorize;
 
         /// <summary>
-        /// Handles the RequestSession event from a client.
+        /// Sends an AuthorizeResponse response message to a client.
         /// </summary>
-        event ProtocolEventHandler<RequestSession> OnRequestSession;
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="success">Whether or not authorization was successful.</param>
+        /// <param name="challenges">Challenges that may be used when authorization was not successful.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<AuthorizeResponse> AuthorizeResponse(IMessageHeader correlatedHeader, bool success, IList<string> challenges, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Handles the CloseSession event from a client.
+        /// Handles the AuthorizeResponse event from a client.
         /// </summary>
-        event ProtocolEventHandler<CloseSession> OnCloseSession;
-
-        /// <summary>
-        /// Handles the RenewSecurityToken event from a client.
-        /// </summary>
-        event ProtocolEventHandler<RenewSecurityToken> OnRenewSecurityToken;
+        event EventHandler<ResponseEventArgs<Authorize, AuthorizeResponse>> OnAuthorizeResponse;
     }
 }

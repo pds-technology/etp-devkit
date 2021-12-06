@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ namespace Energistics.Etp
         /// <param name="message">The message object to log.</param>
         public static void Notice(this ILog logger, object message)
         {
-            logger.Logger.Log(typeof(LogImpl), Level.Notice, message, null);
+            logger.Logger.Log(typeof(Log4NetExtensions), Level.Notice, message, null);
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace Energistics.Etp
         /// <param name="exception">The exception to log, including its stack trace.</param>
         public static void Notice(this ILog logger, object message, Exception exception)
         {
-            logger.Logger.Log(typeof(LogImpl), Level.Notice, message, exception);
+            logger.Logger.Log(typeof(Log4NetExtensions), Level.Notice, message, exception);
         }
 
         /// <summary>
@@ -73,7 +73,7 @@ namespace Energistics.Etp
         {
             if (logger.IsNoticeEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Notice, new SystemStringFormat(CultureInfo.InvariantCulture, format, args), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Notice, new SystemStringFormat(CultureInfo.InvariantCulture, format, args), null);
             }
         }
 
@@ -87,7 +87,7 @@ namespace Energistics.Etp
         {
             if (logger.IsNoticeEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Notice, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0 }), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Notice, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0 }), null);
             }
         }
 
@@ -102,7 +102,7 @@ namespace Energistics.Etp
         {
             if (logger.IsNoticeEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Notice, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0, arg1 }), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Notice, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0, arg1 }), null);
             }
         }
 
@@ -118,7 +118,7 @@ namespace Energistics.Etp
         {
             if (logger.IsNoticeEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Notice, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0, arg1, arg2 }), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Notice, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0, arg1, arg2 }), null);
             }
         }
 
@@ -133,7 +133,7 @@ namespace Energistics.Etp
         {
             if (logger.IsNoticeEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Notice, new SystemStringFormat(provider, format, args), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Notice, new SystemStringFormat(provider, format, args), null);
             }
         }
 
@@ -158,7 +158,7 @@ namespace Energistics.Etp
         /// <param name="message">The message object to log.</param>
         public static void Trace(this ILog logger, object message)
         {
-            logger.Logger.Log(typeof(LogImpl), Level.Trace, message, null);
+            logger.Logger.Log(typeof(Log4NetExtensions), Level.Trace, message, null);
         }
 
         /// <summary>
@@ -169,7 +169,7 @@ namespace Energistics.Etp
         /// <param name="exception">The exception to log, including its stack trace.</param>
         public static void Trace(this ILog logger, object message, Exception exception)
         {
-            logger.Logger.Log(typeof(LogImpl), Level.Trace, message, exception);
+            logger.Logger.Log(typeof(Log4NetExtensions), Level.Trace, message, exception);
         }
 
         /// <summary>
@@ -182,7 +182,7 @@ namespace Energistics.Etp
         {
             if (logger.IsTraceEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Trace, new SystemStringFormat(CultureInfo.InvariantCulture, format, args), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Trace, new SystemStringFormat(CultureInfo.InvariantCulture, format, args), null);
             }
         }
 
@@ -196,7 +196,7 @@ namespace Energistics.Etp
         {
             if (logger.IsTraceEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Trace, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0 }), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Trace, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0 }), null);
             }
         }
 
@@ -211,7 +211,7 @@ namespace Energistics.Etp
         {
             if (logger.IsTraceEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Trace, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0, arg1 }), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Trace, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0, arg1 }), null);
             }
         }
 
@@ -227,7 +227,7 @@ namespace Energistics.Etp
         {
             if (logger.IsTraceEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Trace, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0, arg1, arg2 }), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Trace, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0, arg1, arg2 }), null);
             }
         }
 
@@ -242,7 +242,7 @@ namespace Energistics.Etp
         {
             if (logger.IsTraceEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Trace, new SystemStringFormat(provider, format, args), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Trace, new SystemStringFormat(provider, format, args), null);
             }
         }
 
@@ -267,7 +267,7 @@ namespace Energistics.Etp
         /// <param name="message">The message object to log.</param>
         public static void Verbose(this ILog logger, object message)
         {
-            logger.Logger.Log(typeof(LogImpl), Level.Verbose, message, null);
+            logger.Logger.Log(typeof(Log4NetExtensions), Level.Verbose, message, null);
         }
 
         /// <summary>
@@ -278,7 +278,7 @@ namespace Energistics.Etp
         /// <param name="exception">The exception to log, including its stack trace.</param>
         public static void Verbose(this ILog logger, object message, Exception exception)
         {
-            logger.Logger.Log(typeof(LogImpl), Level.Verbose, message, exception);
+            logger.Logger.Log(typeof(Log4NetExtensions), Level.Verbose, message, exception);
         }
 
         /// <summary>
@@ -291,7 +291,7 @@ namespace Energistics.Etp
         {
             if (logger.IsVerboseEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Verbose, new SystemStringFormat(CultureInfo.InvariantCulture, format, args), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Verbose, new SystemStringFormat(CultureInfo.InvariantCulture, format, args), null);
             }
         }
 
@@ -305,7 +305,7 @@ namespace Energistics.Etp
         {
             if (logger.IsVerboseEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Verbose, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0 }), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Verbose, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0 }), null);
             }
         }
 
@@ -320,7 +320,7 @@ namespace Energistics.Etp
         {
             if (logger.IsVerboseEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Verbose, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0, arg1 }), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Verbose, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0, arg1 }), null);
             }
         }
 
@@ -336,7 +336,7 @@ namespace Energistics.Etp
         {
             if (logger.IsVerboseEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Verbose, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0, arg1, arg2 }), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Verbose, new SystemStringFormat(CultureInfo.InvariantCulture, format, new object[] { arg0, arg1, arg2 }), null);
             }
         }
 
@@ -351,7 +351,7 @@ namespace Energistics.Etp
         {
             if (logger.IsVerboseEnabled())
             {
-                logger.Logger.Log(typeof(LogImpl), Level.Verbose, new SystemStringFormat(provider, format, args), null);
+                logger.Logger.Log(typeof(Log4NetExtensions), Level.Verbose, new SystemStringFormat(provider, format, args), null);
             }
         }
 

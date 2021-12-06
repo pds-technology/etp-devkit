@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
+using Energistics.Avro.Encoding.Converter;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v11.Datatypes.Object;
@@ -30,13 +31,13 @@ namespace Energistics.Etp.v11.Protocol.Discovery
 
         }
 
-        protected override void HandleGetResources(ProtocolEventArgs<GetResources, IList<Resource>> args)
+        protected override void HandleGetResources(ListRequestEventArgs<GetResources, Resource> args)
         {
             var witsml20 = new EtpUri("eml://witsml20");
 
-            if (args.Message.Uri == EtpUri.RootUri)
+            if (args.Request.Body.Uri == EtpUri.RootUri11)
             {
-                args.Context.Add(new Resource
+                args.Responses.Add(new Resource
                 {
                     Uuid = null,
                     Uri = witsml20,
@@ -45,15 +46,15 @@ namespace Energistics.Etp.v11.Protocol.Discovery
                     ContentType = witsml20.ContentType,
                     ResourceType = ResourceTypes.UriProtocol.ToString(),
                     CustomData = new Dictionary<string, string>(),
-                    LastChanged = 0,
+                    LastChanged = AvroConverter.UtcMinDateTime,
                     ChannelSubscribable = false,
                     ObjectNotifiable = false,
                 });
             }
-            else if (args.Message.Uri == witsml20)
+            else if (args.Request.Body.Uri == witsml20)
             {
                 var witsml20well = new EtpUri("eml://witsml20/well");
-                args.Context.Add(new Resource
+                args.Responses.Add(new Resource
                 {
                     Uuid = null,
                     Uri = witsml20well,
@@ -62,14 +63,14 @@ namespace Energistics.Etp.v11.Protocol.Discovery
                     ContentType = witsml20well.ContentType,
                     ResourceType = ResourceTypes.Folder.ToString(),
                     CustomData = new Dictionary<string, string>(),
-                    LastChanged = 0,
+                    LastChanged = AvroConverter.UtcMinDateTime,
                     ChannelSubscribable = false,
                     ObjectNotifiable = false,
                 });
             }
             else
             {
-                args.Cancel = true;
+                args.FinalError = ErrorInfo().NotSupported();
             }
         }
     }

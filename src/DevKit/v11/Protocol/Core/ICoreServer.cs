@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
+using System;
 
 namespace Energistics.Etp.v11.Protocol.Core
 {
@@ -26,37 +26,12 @@ namespace Energistics.Etp.v11.Protocol.Core
     /// Represents the server end of the interface that must be implemented for Protocol 0.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.Core, "server", "client")]
+    [ProtocolRole((int)Protocols.Core, Roles.Server, Roles.Client)]
     public interface ICoreServer : IProtocolHandler
     {
         /// <summary>
-        /// Sends an OpenSession message to a client.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        /// <returns>The message identifier.</returns>
-        long OpenSession(IMessageHeader request, IList<ISupportedProtocol> supportedProtocols);
-
-        /// <summary>
-        /// Sends a CloseSession message to a client.
-        /// </summary>
-        /// <param name="reason">The reason.</param>
-        /// <returns>The message identifier.</returns>
-        long CloseSession(string reason = null);
-
-        /// <summary>
-        /// Handles the RequestSession event from a client.
-        /// </summary>
-        event ProtocolEventHandler<RequestSession> OnRequestSession;
-
-        /// <summary>
-        /// Handles the CloseSession event from a client.
-        /// </summary>
-        event ProtocolEventHandler<CloseSession> OnCloseSession;
-
-        /// <summary>
         /// Handles the RenewSecurityToken event from a client.
         /// </summary>
-        event ProtocolEventHandler<RenewSecurityToken> OnRenewSecurityToken;
+        event EventHandler<VoidRequestEventArgs<RenewSecurityToken>> OnRenewSecurityToken;
     }
 }

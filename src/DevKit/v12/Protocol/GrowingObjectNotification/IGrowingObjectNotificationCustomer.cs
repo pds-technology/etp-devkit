@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
@@ -27,41 +28,65 @@ namespace Energistics.Etp.v12.Protocol.GrowingObjectNotification
     /// Defines the interface that must be implemented by the customer role of the growing object notification protocol.
     /// </summary>
     /// <seealso cref="Energistics.Etp.Common.IProtocolHandler" />
-    [ProtocolRole((int)Protocols.GrowingObjectNotification, "customer", "store")]
-    public interface IGrowingObjectNotificationCustomer : IProtocolHandler
+    [ProtocolRole((int)Protocols.GrowingObjectNotification, Roles.Customer, Roles.Store)]
+    public interface IGrowingObjectNotificationCustomer : IProtocolHandlerWithCounterpartCapabilities<ICapabilitiesStore>
     {
         /// <summary>
-        /// Sends a NotificationRequest message to a store.
+        /// Sends a SubscribePartNotifications message to a store.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <returns>The message identifier.</returns>
-        long RequestPartNotification(NotificationRequestRecord request);
+        /// <param name="request">The subscription request.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<SubscribePartNotifications> SubscribePartNotifications(IDictionary<string, SubscriptionInfo> request, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Sends a CancelNotification message to a store.
+        /// Sends a SubscribePartNotifications message to a store.
+        /// </summary>
+        /// <param name="request">The subscription request.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<SubscribePartNotifications> SubscribePartNotifications(IList<SubscriptionInfo> request, IMessageHeaderExtension extension = null);
+
+        /// <summary>
+        /// Handles the SubscribePartNotificationsResponse event from a store.
+        /// </summary>
+        event EventHandler<ResponseEventArgs<SubscribePartNotifications, SubscribePartNotificationsResponse>> OnSubscribePartNotificationsResponse;
+
+        /// <summary>
+        /// Handles the UnsolicitedPartNotifications event from a store.
+        /// </summary>
+        event EventHandler<FireAndForgetEventArgs<UnsolicitedPartNotifications>> OnUnsolicitedPartNotifications;
+
+        /// <summary>
+        /// Handles the PartsChanged event from a store.
+        /// </summary>
+        event EventHandler<NotificationEventArgs<SubscriptionInfo, PartsChanged>> OnPartsChanged;
+
+        /// <summary>
+        /// Handles the PartsDeleted event from a store.
+        /// </summary>
+        event EventHandler<NotificationEventArgs<SubscriptionInfo, PartsDeleted>> OnPartsDeleted;
+
+        /// <summary>
+        /// Handles the PartsReplacedByRange event from a store.
+        /// </summary>
+        event EventHandler<NotificationEventArgs<SubscriptionInfo, PartsReplacedByRange>> OnPartsReplacedByRange;
+
+        /// <summary>
+        /// Sends an UnsubscribePartNotification message to a store.
         /// </summary>
         /// <param name="requestUuid">The request UUID.</param>
-        /// <returns>The message identifier.</returns>
-        long CancelPartNotification(Guid requestUuid);
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        EtpMessage<UnsubscribePartNotification> UnsubscribePartNotification(Guid requestUuid, IMessageHeaderExtension extension = null);
 
         /// <summary>
-        /// Handles the PartChangeNotification event from a store.
+        /// Handles the PartSubscriptionEnded event from a store when sent in response to a UnsubscribePartNotification.
         /// </summary>
-        event ProtocolEventHandler<PartChangeNotification> OnPartChangeNotification;
+        event EventHandler<ResponseEventArgs<UnsubscribePartNotification, PartSubscriptionEnded>> OnResponsePartSubscriptionEnded;
 
         /// <summary>
-        /// Handles the PartDeleteNotification event from a store.
+        /// Handles the PartSubscriptionEnded event from a store when not sent in response to a request.
         /// </summary>
-        event ProtocolEventHandler<PartDeleteNotification> OnPartDeleteNotification;
-
-        /// <summary>
-        /// Handles the DeletePartsByRangeNotification event from a store.
-        /// </summary>
-        event ProtocolEventHandler<DeletePartsByRangeNotification> OnDeletePartsByRangeNotification;
-
-        /// <summary>
-        /// Handles the ReplacePartsByRangeNotification event from a store.
-        /// </summary>
-        event ProtocolEventHandler<ReplacePartsByRangeNotification> OnReplacePartsByRangeNotification;
+        event EventHandler<NotificationEventArgs<SubscriptionInfo, PartSubscriptionEnded>> OnNotificationPartSubscriptionEnded;
     }
 }

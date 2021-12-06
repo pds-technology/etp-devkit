@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,11 +16,8 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using Avro.IO;
+using System;
 using Energistics.Etp.Common;
-using Energistics.Etp.Common.Datatypes;
 using Energistics.Etp.Common.Protocol.Core;
 
 namespace Energistics.Etp.v11.Protocol.Discovery
@@ -30,101 +27,65 @@ namespace Energistics.Etp.v11.Protocol.Discovery
     /// </summary>
     /// <seealso cref="Etp11ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v11.Protocol.Discovery.IDiscoveryCustomer" />
-    public class DiscoveryCustomerHandler : Etp11ProtocolHandler, IDiscoveryCustomer
+    public class DiscoveryCustomerHandler : Etp11ProtocolHandlerWithCounterpartCapabilities<CapabilitiesStore, ICapabilitiesStore>, IDiscoveryCustomer
     {
-        private readonly IDictionary<long, string> _requests;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscoveryCustomerHandler"/> class.
         /// </summary>
-        public DiscoveryCustomerHandler() : base((int)Protocols.Discovery, "customer", "store")
+        public DiscoveryCustomerHandler() : base((int)Protocols.Discovery, Roles.Customer, Roles.Store)
         {
-            _requests = new ConcurrentDictionary<long, string>();
+            RegisterMessageHandler<GetResourcesResponse>(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse, HandleGetResourcesResponse);
         }
 
         /// <summary>
         /// Sends a GetResources message to a store.
         /// </summary>
         /// <param name="uri">The URI.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long GetResources(string uri)
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetResources> GetResources(string uri)
         {
-            var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResources);
-
-            var getResources = new GetResources()
+            var body = new GetResources()
             {
-                Uri = uri
+                Uri = uri ?? string.Empty,
             };
-            
-            return Session.SendMessage(header, getResources,
-                h => _requests[h.MessageId] = uri // Cache requested URIs by message ID
-            );
+
+            return SendRequest(body);
         }
 
         /// <summary>
         /// Handles the GetResourcesResponse event from a store.
         /// </summary>
-        public event ProtocolEventHandler<GetResourcesResponse, string> OnGetResourcesResponse;
+        public event EventHandler<ResponseEventArgs<GetResources, GetResourcesResponse>> OnGetResourcesResponse;
 
         /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
+        /// Handles the ProtocolException message.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
+        /// <param name="message">The message.</param>
+        protected override void HandleProtocolException(EtpMessage<IProtocolException> message)
         {
-            switch (header.MessageType)
-            {
-                case (int)MessageTypes.Discovery.GetResourcesResponse:
-                    HandleGetResourcesResponse(header, decoder.Decode<GetResourcesResponse>(body));
-                    break;
+            base.HandleProtocolException(message);
 
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Handle any final cleanup related to the final message in response to a request.
-        /// </summary>
-        /// <param name="correlationId">The correlation ID of the request</param>
-        protected override void HandleFinalResponse(long correlationId)
-        {
-            _requests.Remove(correlationId);
+            var request = TryGetCorrelatedMessage<GetResources>(message);
+            if (request != null)
+                HandleResponseMessage(request, message, OnGetResourcesResponse, HandleGetResourcesResponse);
         }
 
         /// <summary>
         /// Handles the GetResourcesResponse message from a store.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="getResourcesResponse">The GetResourcesResponse message.</param>
-        protected virtual void HandleGetResourcesResponse(IMessageHeader header, GetResourcesResponse getResourcesResponse)
+        /// <param name="message">The GetResourcesResponse message.</param>
+        protected virtual void HandleGetResourcesResponse(EtpMessage<GetResourcesResponse> message)
         {
-            var uri = GetRequestedUri(header);
-            var args = Notify(OnGetResourcesResponse, header, getResourcesResponse, uri);
-            HandleGetResourcesResponse(args);
+            var request = TryGetCorrelatedMessage<GetResources>(message);
+            HandleResponseMessage(request, message, OnGetResourcesResponse, HandleGetResourcesResponse);
         }
 
         /// <summary>
         /// Handles the GetResourcesResponse message from a store.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{GetResourcesResponse}"/> instance containing the event data.</param>
-        protected virtual void HandleGetResourcesResponse(ProtocolEventArgs<GetResourcesResponse, string> args)
+        /// <param name="args">The <see cref="ResponseEventArgs{GetResources, GetResourcesResponse}"/> instance containing the event data.</param>
+        protected virtual void HandleGetResourcesResponse(ResponseEventArgs<GetResources, GetResourcesResponse> args)
         {
-        }
-
-        /// <summary>
-        /// Gets the requested URI from the internal cache of message IDs.
-        /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <returns>The requested URI.</returns>
-        private string GetRequestedUri(IMessageHeader header)
-        {
-            string uri;
-            _requests.TryGetValue(header.CorrelationId, out uri);
-            return uri;
         }
     }
 }

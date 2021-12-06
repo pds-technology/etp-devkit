@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,12 +16,10 @@
 // limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using Avro.IO;
 using Energistics.Etp.Common;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.v12.Datatypes;
 using Energistics.Etp.v12.Datatypes.Object;
 
 namespace Energistics.Etp.v12.Protocol.Discovery
@@ -31,114 +29,141 @@ namespace Energistics.Etp.v12.Protocol.Discovery
     /// </summary>
     /// <seealso cref="Etp12ProtocolHandler" />
     /// <seealso cref="Energistics.Etp.v12.Protocol.Discovery.IDiscoveryStore" />
-    public class DiscoveryStoreHandler : Etp12ProtocolHandler, IDiscoveryStore
+    public class DiscoveryStoreHandler : Etp12ProtocolHandler<CapabilitiesStore, ICapabilitiesStore, CapabilitiesCustomer, ICapabilitiesCustomer>, IDiscoveryStore
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscoveryStoreHandler"/> class.
         /// </summary>
-        public DiscoveryStoreHandler() : base((int)Protocols.Discovery, "store", "customer")
+        public DiscoveryStoreHandler() : base((int)Protocols.Discovery, Roles.Store, Roles.Customer)
         {
-            MaxResponseCount = EtpSettings.DefaultMaxResponseCount;
-        }
-
-        /// <summary>
-        /// Gets the maximum response count.
-        /// </summary>
-        public int MaxResponseCount { get; set; }
-
-        /// <summary>
-        /// Gets the capabilities supported by the protocol handler.
-        /// </summary>
-        /// <returns>A collection of protocol capabilities.</returns>
-        public override IDictionary<string, IDataValue> GetCapabilities()
-        {
-            var capabilities = base.GetCapabilities();
-
-            capabilities[EtpSettings.MaxResponseCountKey] = new DataValue { Item = MaxResponseCount };
-
-            return capabilities;
-        }
-
-        /// <summary>
-        /// Sends a GetResourcesResponse message to a customer.
-        /// </summary>
-        /// <param name="request">The request.</param>
-        /// <param name="resources">The list of <see cref="Resource" /> objects.</param>
-        /// <returns>The message identifier.</returns>
-        public virtual long GetResourcesResponse(IMessageHeader request, IList<Resource> resources)
-        {
-            if (!resources.Any())
-            {
-                return Acknowledge(request.MessageId, MessageFlags.NoData);
-            }
-
-            long messageId = 0;
-
-            for (int i=0; i<resources.Count; i++)
-            {
-                var messageFlags = i < resources.Count - 1
-                    ? MessageFlags.MultiPart
-                    : MessageFlags.MultiPartAndFinalPart;
-
-                var header = CreateMessageHeader(Protocols.Discovery, MessageTypes.Discovery.GetResourcesResponse, request.MessageId, messageFlags);
-
-                var getResourcesResponse = new GetResourcesResponse()
-                {
-                    Resource = resources[i]
-                };
-
-                messageId = Session.SendMessage(header, getResourcesResponse);
-            }
-
-            return messageId;
+            RegisterMessageHandler<GetResources>(Protocols.Discovery, MessageTypes.Discovery.GetResources, HandleGetResources);
+            RegisterMessageHandler<GetDeletedResources>(Protocols.Discovery, MessageTypes.Discovery.GetDeletedResources, HandleGetDeletedResources);
         }
 
         /// <summary>
         /// Handles the GetResources event from a customer.
         /// </summary>
-        public event ProtocolEventHandler<GetResources, IList<Resource>> OnGetResources;
+        public event EventHandler<DualListRequestEventArgs<GetResources, Resource, Edge>> OnGetResources;
 
         /// <summary>
-        /// Decodes the message based on the message type contained in the specified <see cref="IMessageHeader" />.
+        /// Sends a GetResourcesResponse message to a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="decoder">The message decoder.</param>
-        /// <param name="body">The message body.</param>
-        protected override void HandleMessage(IMessageHeader header, Decoder decoder, string body)
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetResourcesResponse> GetResourcesResponse(IMessageHeader correlatedHeader, IList<Resource> resources, bool isFinalPart = true, IMessageHeaderExtension extension = null)
         {
-            switch (header.MessageType)
+            var body = new GetResourcesResponse
             {
-                case (int)MessageTypes.Discovery.GetResources:
-                    HandleGetResources(header, decoder.Decode<GetResources>(body));
-                    break;
+                Resources = resources ?? new List<Resource>(),
+            };
 
-                default:
-                    base.HandleMessage(header, decoder, body);
-                    break;
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a GetResourcesEdgeResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="edges">The list of <see cref="Edge"/> objects.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetResourcesEdgesResponse> GetResourcesEdgesResponse(IMessageHeader correlatedHeader, IList<Edge> edges, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetResourcesEdgesResponse
+            {
+                Edges = edges ?? new List<Edge>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
+        }
+
+        /// <summary>
+        /// Sends a complete multi-part set of GetResourcesResponse and GetResourcesEdgesResponse messagess to a customer.
+        /// If there are no resources, an empty GetResourcesResponse message is sent.
+        /// If there are no edges, no GetResourcesEdgesResponse message is sent.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="resources">The list of <see cref="Resource"/> objects.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="resourcesExtension">The message header extension for the GetResourcesResponse message.</param>
+        /// <param name="edgesExtension">The message header extension for the GetResourcesEdgesResponse message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetResourcesResponse> GetResourcesResponse(IMessageHeader correlatedHeader, IList<Resource> resources, IList<Edge> edges, bool setFinalPart = true, IMessageHeaderExtension resourcesExtension = null, IMessageHeaderExtension edgesExtension = null)
+        {
+            var message = GetResourcesResponse(correlatedHeader, resources, isFinalPart: ((edges == null || edges.Count == 0) && setFinalPart), extension: resourcesExtension);
+            if (message == null)
+                return null;
+
+            if (edges?.Count > 0)
+            {
+                var ret = GetResourcesEdgesResponse(correlatedHeader, edges, isFinalPart: setFinalPart, extension: edgesExtension);
+                if (ret == null)
+                    return null;
             }
+
+            return message;
+        }
+
+        /// <summary>
+        /// Handles the GetDeletedResources event from a customer.
+        /// </summary>
+        public event EventHandler<ListRequestEventArgs<GetDeletedResources, DeletedResource>> OnGetDeletedResources;
+
+        /// <summary>
+        /// Sends a GetDeletedResourcesResponse message to a customer.
+        /// </summary>
+        /// <param name="correlatedHeader">The message header that the messages to send are correlated with.</param>
+        /// <param name="deletedResources">The list of <see cref="DeletedResource"/> objects.</param>
+        /// <param name="isFinalPart">Whether or not this is the final part of a multi-part message.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<GetDeletedResourcesResponse> GetDeletedResourcesResponse(IMessageHeader correlatedHeader, IList<DeletedResource> deletedResources, bool isFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var body = new GetDeletedResourcesResponse
+            {
+                DeletedResources = deletedResources ?? new List<DeletedResource>(),
+            };
+
+            return SendResponse(body, correlatedHeader, extension: extension, isMultiPart: true, isFinalPart: isFinalPart);
         }
 
         /// <summary>
         /// Handles the GetResources message from a customer.
         /// </summary>
-        /// <param name="header">The message header.</param>
-        /// <param name="getResources">The GetResources message.</param>
-        protected virtual void HandleGetResources(IMessageHeader header, GetResources getResources)
+        /// <param name="message">The GetResources message.</param>
+        protected virtual void HandleGetResources(EtpMessage<GetResources> message)
         {
-            var args = Notify(OnGetResources, header, getResources, new List<Resource>());
-            HandleGetResources(args);
-
-            if (!args.Cancel)
-            {
-                GetResourcesResponse(header, args.Context);
-            }
+            HandleRequestMessage(message, OnGetResources, HandleGetResources,
+                responseMethod: (args) => GetResourcesResponse(args.Request?.Header, args.Responses1, args.Responses2, setFinalPart: !args.HasErrors, resourcesExtension: args.Response1Extension, edgesExtension: args.Response2Extension));
         }
 
         /// <summary>
         /// Handles the GetResources message from a customer.
         /// </summary>
-        /// <param name="args">The <see cref="ProtocolEventArgs{GetResources}"/> instance containing the event data.</param>
-        protected virtual void HandleGetResources(ProtocolEventArgs<GetResources, IList<Resource>> args)
+        /// <param name="args">The <see cref="DualListRequestEventArgs{GetResources, Resource, Edge}"/> instance containing the event data.</param>
+        protected virtual void HandleGetResources(DualListRequestEventArgs<GetResources, Resource, Edge> args)
+        {
+        }
+
+        /// <summary>
+        /// Handles the GetDeletedResources message from a customer.
+        /// </summary>
+        /// <param name="message">The GetDeletedResources message.</param>
+        protected virtual void HandleGetDeletedResources(EtpMessage<GetDeletedResources> message)
+        {
+            HandleRequestMessage(message, OnGetDeletedResources, HandleGetDeletedResources,
+                responseMethod: (args) => GetDeletedResourcesResponse(args.Request?.Header, args.Responses, isFinalPart: !args.HasErrors, extension: args.ResponseExtension));
+        }
+
+        /// <summary>
+        /// Handles the GetDeletedResources message from a customer.
+        /// </summary>
+        /// <param name="args">The <see cref="ListRequestEventArgs{GetDeletedResources, DeletedResource}"/> instance containing the event data.</param>
+        protected virtual void HandleGetDeletedResources(ListRequestEventArgs<GetDeletedResources, DeletedResource> args)
         {
         }
     }

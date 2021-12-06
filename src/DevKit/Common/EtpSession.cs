@@ -1,7 +1,7 @@
 ﻿//----------------------------------------------------------------------- 
 // ETP DevKit, 1.2
 //
-// Copyright 2018 Energistics
+// Copyright 2019 Energistics
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,17 +17,20 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Avro.IO;
-using Avro.Specific;
+using Energistics.Avro.Encoding;
+using Energistics.Avro.Encoding.Binary;
+using Energistics.Avro.Encoding.Json;
 using Energistics.Etp.Common.Datatypes;
-using Energistics.Etp.Properties;
-using Newtonsoft.Json.Linq;
+using Energistics.Etp.Common.Protocol.Core;
+using Nito.AsyncEx;
 
 
 namespace Energistics.Etp.Common
@@ -39,40 +42,82 @@ namespace Energistics.Etp.Common
     /// <seealso cref="Energistics.Etp.Common.IEtpSession" />
     public abstract class EtpSession : EtpBase, IEtpSession
     {
+        private int _socketOpenedEventCount = 0;
         private long _messageId;
-        private bool? _isJsonEncoding;
+        private readonly long _messageIdOffset;
+        private readonly List<object> _contextObjects = new List<object>();
+        protected const string TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff";
+
         // Used to ensure only one thread at a time sends data over a websocket.
-        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1);
-        // Used to ensure only one thread at a time manipulates the collection of handlers.
-        private readonly ReaderWriterLockSlim _handlersLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
+        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
+        private readonly CancellationTokenSource _sendTokenSource = new CancellationTokenSource();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtpSession"/> class.
         /// </summary>
         /// <param name="etpVersion">The ETP version for the session.</param>
-        /// <param name="application">The application name.</param>
-        /// <param name="version">The application version.</param>
+        /// <param name="encoding">The ETP encoding for the session.</param>
+        /// <param name="info">The endpoint's information.</param>
+        /// <param name="parameters">The endpoint's parameters.</param>
         /// <param name="headers">The WebSocket or HTTP headers.</param>
         /// <param name="isClient">Whether or not this is the client-side of the session.</param>
-        protected EtpSession(EtpVersion etpVersion, string application, string version, IDictionary<string, string> headers, bool isClient)
+        /// <param name="sessionId">The session ID if this is a server.</param>
+        /// <param name="captureAsyncContext">Where or not the synchronization context should be captured for async tasks.</param>
+        protected EtpSession(EtpVersion etpVersion, EtpEncoding encoding, EtpEndpointInfo info, EtpEndpointParameters parameters, IDictionary<string, string> headers, bool isClient, string sessionId, bool captureAsyncContext)
+            : base(captureAsyncContext)
         {
             IsClient = isClient;
+            Encoding = encoding;
 
             Headers = headers ?? new Dictionary<string, string>();
-            HandlersByType = new Dictionary<Type, IProtocolHandler>();
-            HandlersByProtocol = new Dictionary<int, IProtocolHandler>();
-            ApplicationName = application;
-            ApplicationVersion = version;
+            HandlersByType = new ConcurrentDictionary<Type, IProtocolHandler>();
+            HandlersByProtocol = new ConcurrentDictionary<int, IProtocolHandler>();
+
+            Headers.SetEncoding(encoding);
+
             ValidateHeaders();
 
-            Adapter = ResolveEtpAdapter(etpVersion);
-            Adapter.RegisterCore(this);
+            Adapter = EtpFactory.CreateEtpAdapter(etpVersion);
+
+            InstanceInfo = info;
+            InstanceParameters = parameters?.CloneForVersion(EtpVersion) ?? new EtpEndpointParameters(EtpVersion);
+            RegisterHandlerCore(Adapter.CreateDefaultCoreHandler(IsClient));
+            foreach (var handler in InstanceParameters.SupportedProtocols)
+                RegisterHandlerCore(handler);
+
+            if (!IsClient)
+            {
+                _messageIdOffset = -1;
+                Guid guid;
+                if (!Guid.TryParse(sessionId, out guid))
+                    throw new ArgumentException("Not a valid GUID.", nameof(sessionId));
+
+                SessionId = guid;
+            }
+
+            UpdateSessionKey();
         }
+
+
+        /// <summary>
+        /// The cancellation token for sending on the websocket.
+        /// </summary>
+        private CancellationToken SendToken => _sendTokenSource.Token;
+
+        /// <summary>
+        /// Whether or not sending is enabled on the websocket.
+        /// </summary>
+        private bool IsSendingEnabled { get; set; } = true;
 
         /// <summary>
         /// Gets the ETP version supported by this session.
         /// </summary>
-        public EtpVersion SupportedVersion {  get { return Adapter.SupportedVersion; } }
+        public EtpVersion EtpVersion => Adapter.EtpVersion;
+
+        /// <summary>
+        /// Gets the encoding used by this session (binary or json).
+        /// </summary>
+        public EtpEncoding Encoding { get; }
 
         /// <summary>
         /// Gets the version specific ETP adapter.
@@ -85,74 +130,170 @@ namespace Energistics.Etp.Common
         public bool IsClient { get; private set; }
 
         /// <summary>
-        /// Gets the name of the application.
+        /// Gets this instance's info.
         /// </summary>
-        /// <value>The name of the application.</value>
-        public string ApplicationName { get; }
+        public EtpEndpointInfo InstanceInfo { get; }
 
         /// <summary>
-        /// Gets the application version.
+        /// Gets the counterpart's info.
         /// </summary>
-        /// <value>The application version.</value>
-        public string ApplicationVersion { get; }
+        public EtpEndpointInfo CounterpartInfo { get; private set; }
 
         /// <summary>
-        /// Gets or sets the session identifier.
+        /// Gets the client info.
+        /// </summary>
+        public EtpEndpointInfo ClientInfo => IsClient ? InstanceInfo : CounterpartInfo;
+
+        /// <summary>
+        /// Gets the server info.
+        /// </summary>
+        public EtpEndpointInfo ServerInfo => IsClient ? CounterpartInfo : InstanceInfo;
+
+        /// <summary>
+        /// Gets this instances parameters.
+        /// </summary>
+        private EtpEndpointParameters InstanceParameters { get; }
+
+        /// <summary>
+        /// Gets this instance's details.
+        /// </summary>
+        public IEndpointDetails InstanceDetails => InstanceParameters;
+
+        /// <summary>
+        /// Gets the counterpart's details.
+        /// </summary>
+        public IEndpointDetails CounterpartDetails { get; private set; }
+
+        /// <summary>
+        /// Gets the client details.
+        /// </summary>
+        public IEndpointDetails ClientDetails => IsClient ? InstanceDetails : CounterpartDetails;
+
+        /// <summary>
+        /// Gets the server details.
+        /// </summary>
+        public IEndpointDetails ServerDetails => IsClient ? CounterpartDetails : InstanceDetails;
+
+        /// <summary>
+        /// Gets or sets the session key.
+        /// </summary>
+        /// <value>The session key.</value>
+        public string SessionKey { get; private set; }
+
+        /// <summary>
+        /// Gets the session identifier.
         /// </summary>
         /// <value>The session identifier.</value>
-        public string SessionId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the supported compression type.
-        /// </summary>
-        public string SupportedCompression { get; set; }
+        public Guid SessionId { get; private set; }
 
         /// <summary>
         /// Gets a value indicating whether the underlying websocket connection is open.
         /// </summary>
         /// <value>
-        ///   <c>true</c> if this instance is open; otherwise, <c>false</c>.
+        ///   <c>true</c> if the underlying websocket is open; otherwise, <c>false</c>.
         /// </value>
-        public abstract bool IsOpen { get; }
+        public abstract bool IsWebSocketOpen { get; }
 
         /// <summary>
-        /// Gets a value indicating whether this instance is json encoding.
+        /// Whether or not the websocket has successfully been closed.
+        /// </summary>
+        private bool IsWebSocketClosed { get; set; } = false;
+
+        /// <summary>
+        /// Gets a value indicating whether the session is open.
         /// </summary>
         /// <value>
-        /// <c>true</c> if this instance is json encoding; otherwise, <c>false</c>.
+        ///   <c>true</c> if the session is open; otherwise, <c>false</c>.
         /// </value>
-        public bool IsJsonEncoding
-        {
-            get
-            {
-                if (!_isJsonEncoding.HasValue)
-                {
-                    string header;
-                    Headers.TryGetValue(Settings.Default.EtpEncodingHeader, out header);
-                    _isJsonEncoding = Settings.Default.EtpEncodingJson.Equals(header);
-                }
-
-                return _isJsonEncoding.Value;
-            }
-        }
+        public bool IsSessionOpen { get; private set; }
 
         /// <summary>
         /// Gets the collection of WebSocket or HTTP headers.
         /// </summary>
         /// <value>The headers.</value>
-        protected IDictionary<string, string> Headers { get; }
+        public IDictionary<string, string> Headers { get; }
+
+        /// <summary>
+        /// Maximum size allowed for a WebSocket frame (which is determined by the library you use to implement WebSocket). WebSocket is the transport protocol used by ETP.
+        /// </summary>
+        public long SessionMaxWebSocketFramePayloadSize { get; private set; }
+
+        /// <summary>
+        /// Maximum size allowed for a WebSocket message (which is composed of multiple WebSocket frames, which is determined by the library you use to implement WebSocket). WebSocket is the transport protocol used by ETP.
+        /// </summary>
+        public long SessionMaxWebSocketMessagePayloadSize { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the negotiated list of supported protocols for this session.
+        /// </summary>
+        /// <value>The negotiated list of supported protocols for this session.</value>
+        public IReadOnlyDictionary<int, ISessionProtocol> SessionSupportedProtocols { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the negotiated compression type for this session.
+        /// </summary>
+        public string SessionSupportedCompression { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the negotiated list of supported objects for this session.
+        /// </summary>
+        /// <value>The negotiated list of supported objects for this session.</value>
+        public EtpSupportedDataObjectCollection SessionSupportedDataObjects { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the negotiated list of supported objects for this session.
+        /// </summary>
+        /// <value>The negotiated list of supported objects for this session.</value>
+        ISessionSupportedDataObjectCollection IEtpSession.SessionSupportedDataObjects => SessionSupportedDataObjects;
+
+        /// <summary>
+        /// Gets or sets the negotiated list of formats supported for this session.
+        /// </summary>
+        public IReadOnlyList<string> SessionSupportedFormats { get; private set; }
+
+        /// <summary>
+        /// The high water mark timestamp for the counterpart.
+        /// </summary>
+        public DateTime CounterpartHighWaterMark { get; private set; }
 
         /// <summary>
         /// Gets the collection of registered protocol handlers by Type.
         /// </summary>
         /// <value>The handlers.</value>
-        private IDictionary<Type, IProtocolHandler> HandlersByType { get; }
+        private ConcurrentDictionary<Type, IProtocolHandler> HandlersByType { get; }
 
         /// <summary>
         /// Gets the collection of registered protocol handlers by protocol.
         /// </summary>
         /// <value>The handlers.</value>
-        private IDictionary<int, IProtocolHandler> HandlersByProtocol { get; }
+        private ConcurrentDictionary<int, IProtocolHandler> HandlersByProtocol { get; }
+
+        /// <summary>
+        /// The request session message for the session.
+        /// </summary>
+        public EtpMessage<IRequestSession> RequestSessionMessage { get; private set; }
+
+        /// <summary>
+        /// The open session message for the session.
+        /// </summary>
+        public EtpMessage<IOpenSession> OpenSessionMessage { get; private set; }
+
+        /// <summary>
+        /// Returns whether the specified ETP version is supported.
+        /// </summary>
+        /// <param name="version">The specified ETP version.</param>
+        /// <returns><c>true</c> if the version is supported; <c>false</c> otherwise.</returns>
+        public bool IsEtpVersionSupported(EtpVersion version) => version == EtpVersion;
+
+        /// <summary>
+        /// Gets the registered handler for the specified protocol.
+        /// </summary>
+        /// <param name="protocol">The protocol.</param>
+        /// <returns>The registered protocol handler instance.</returns>
+        public IProtocolHandler Handler(int protocol)
+        {
+            return GetHandler(protocol);
+        }
 
         /// <summary>
         /// Gets the registered protocol handler for the specified ETP interface.
@@ -162,21 +303,12 @@ namespace Energistics.Etp.Common
         /// <exception cref="System.NotSupportedException"></exception>
         public T Handler<T>() where T : IProtocolHandler
         {
-            try
-            {
-                _handlersLock.TryEnterReadLock(-1);
+            IProtocolHandler handler;
+            if (HandlersByType.TryGetValue(typeof(T), out handler) && handler is T)
+                return (T)handler;
 
-                IProtocolHandler handler;
-                if (HandlersByType.TryGetValue(typeof(T), out handler) && handler is T)
-                    return (T)handler;
-            }
-            finally
-            {
-                _handlersLock.ExitReadLock();
-            }
-
-            Logger.Debug(Log("[{0}] Protocol handler not registered for {1}.", SessionId, typeof(T).FullName));
-            throw new NotSupportedException($"Protocol handler not registered for { typeof(T).FullName }.");
+            Logger.Debug(Log($"[{SessionKey}] Protocol handler not registered for {typeof(T).FullName}."));
+            throw new NotSupportedException($"Protocol handler not registered for {typeof(T).FullName}.");
         }
 
         /// <summary>
@@ -188,273 +320,959 @@ namespace Energistics.Etp.Common
         /// </returns>
         public bool CanHandle<T>() where T : IProtocolHandler
         {
-            try
-            {
-                _handlersLock.TryEnterReadLock(-1);
+            return HandlersByType.ContainsKey(typeof(T));
+        }
 
-                return HandlersByType.ContainsKey(typeof(T));
-            }
-            finally
+        /// <summary>
+        /// Occurs when the WebSocket is opened.
+        /// </summary>
+        public event EventHandler SocketOpened;
+        
+        /// <summary>
+        /// Raises the SocketOpened event.
+        /// </summary>
+        protected void RaiseSocketOpened()
+        {
+            var prevSocketOpenedEventCount = Interlocked.CompareExchange(ref _socketOpenedEventCount, 1, 0);
+
+            if (prevSocketOpenedEventCount == 0)
             {
-                _handlersLock.ExitReadLock();
+                Logger.Debug(Log($"[{SessionKey}] Socket opened."));
+
+                SocketOpened?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        /// <summary>
+        /// Occurs when the WebSocket is closed.
+        /// </summary>
+        public event EventHandler SocketClosed;
+
+        /// <summary>
+        /// Raises the SocketClosed event.
+        /// </summary>
+        protected void RaiseSocketClosed()
+        {
+            var prevSocketOpenedEventCount = Interlocked.CompareExchange(ref _socketOpenedEventCount, 0, 1);
+
+            if (prevSocketOpenedEventCount == 1)
+            {
+                if (IsSessionOpen)
+                    RaiseSessionClosed(false, "Socket closed.");
+
+                Logger.Debug(Log($"[{SessionKey}] Socket closed."));
+
+                SocketClosed?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        /// <summary>
+        /// Occurs when the WebSocket has an error.
+        /// </summary>
+        public event EventHandler<ErrorEventArgs> SocketError;
+
+        /// <summary>
+        /// Raises the SocketError event.
+        /// </summary>
+        /// <param name="ex">The socket exception.</param>
+        protected void RaiseSocketError(Exception ex)
+        {
+            var prevSocketOpenedEventCount = Interlocked.CompareExchange(ref _socketOpenedEventCount, 0, 1);
+
+            if (prevSocketOpenedEventCount == 1)
+                SocketError?.Invoke(this, new ErrorEventArgs(ex));
+        }
+
+        /// <summary>
+        /// Sends the RequestSession message to establish a session.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual async Task<EtpMessage<IRequestSession>> RequestSessionAsync()
+        {
+            if (!IsClient)
+                throw new InvalidOperationException("RequestSession can only be called from a client.");
+            if (IsSessionOpen)
+                throw new InvalidOperationException("Session is already open.");
+
+            Logger.Trace($"[{SessionKey}] Sending Request Session.");
+
+            var header = EtpFactory.CreateMessageHeader(EtpVersion, Protocols.Core, MessageTypes.Core.RequestSession);
+
+            var body = EtpFactory.CreateRequestSession(EtpVersion, InstanceInfo, InstanceDetails);
+
+            var message = new EtpMessage<IRequestSession>(header, body);
+
+            RequestSessionMessage = message;
+
+            return await SendMessageAsync(message, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow).ConfigureAwait(CaptureAsyncContext);
+        }
+
+        protected virtual void HandleRequestSession(EtpMessage<IRequestSession> message)
+        {
+            Logger.Verbose($"[{SessionKey}] Handling request session.");
+
+            RequestSessionMessage = message;
+
+            var success = InitializeSession(message.ToEndpointInfo(), message.ToEndpointDetails());
+
+            if (success && SessionSupportedProtocols.Count > 0)
+            {
+                OpenSession(message.Header);
+            }
+            else
+            {
+                if (SessionSupportedProtocols.Count == 0)
+                {
+                    Logger.Debug($"[{SessionKey}] No supported protocols.  Closing session.");
+                    ProtocolException((int)Protocols.Core, ErrorInfo().NoSupportedProtocols(), message.Header);
+                }
+                else
+                {
+                    Logger.Debug($"[{SessionKey}] Session initialization failed.  Closing session.");
+                    ProtocolException((int)Protocols.Core, ErrorInfo().InvalidState(), message.Header);
+                }
+
+                RaiseSessionOpened(false);
+                CloseSession();
+            }
+        }
+
+        protected virtual EtpMessage<IOpenSession> OpenSession(IMessageHeader correlatedHeader)
+        {
+            if (IsClient)
+                throw new InvalidOperationException("RequestSession can only be called from a server.");
+            if (IsSessionOpen)
+                throw new InvalidOperationException("Session is already open.");
+
+            Logger.Trace($"[{SessionKey}] Sending Open Session.");
+
+            var header = EtpFactory.CreateMessageHeader(EtpVersion, Protocols.Core, MessageTypes.Core.OpenSession);
+
+            var sessionDetails = new EtpEndpointDetails(
+                InstanceDetails.Capabilities,
+                SessionSupportedProtocols.Values.ToList(),
+                InstanceDetails.SupportedDataObjects,
+                new List<string> { SessionSupportedCompression },
+                SessionSupportedFormats
+            );
+
+            header.PrepareHeader(correlatedHeader, false, false);
+            var body = EtpFactory.CreateOpenSession(EtpVersion, InstanceInfo, sessionDetails, SessionId);
+
+            var message = new EtpMessage<IOpenSession>(header, body);
+
+            OpenSessionMessage = message;
+
+            message = SendMessage(message, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow);
+
+            IsSessionOpen = message != null;
+
+            if (IsSessionOpen)
+                StartHandlers();
+
+            RaiseSessionOpened(IsSessionOpen);
+
+            return message;
+        }
+
+        protected virtual void HandleOpenSession(EtpMessage<IOpenSession> message)
+        {
+            Logger.Verbose($"[{SessionKey}] Handling open session.");
+
+            SessionId = message.Body.SessionId;
+            var success = InitializeSession(message.ToEndpointInfo(), message.ToEndpointDetails());
+
+            if (success)
+            {
+                IsSessionOpen = true;
+                StartHandlers();
+                RaiseSessionOpened(true);
+            }
+            else
+            {
+                Logger.Debug($"[{SessionKey}] Session initialization failed.  Closing session.");
+
+                ProtocolException((int)Protocols.Core, ErrorInfo().InvalidState(), message.Header);
+
+                RaiseSessionOpened(false);
+                CloseSession();
+            }
+        }
+
+        /// <summary>
+        /// Starts the protocol handlers.
+        /// </summary>
+        private void StartHandlers()
+        {
+            foreach (var protocol in SessionSupportedProtocols.Keys)
+            {
+                HandlersByProtocol[protocol].StartHandling();
             }
         }
 
         /// <summary>
         /// Called when the ETP session is opened.
         /// </summary>
-        /// <param name="requestedProtocols">The requested protocols.</param>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        public override void OnSessionOpened(IList<ISupportedProtocol> requestedProtocols, IList<ISupportedProtocol> supportedProtocols)
+        /// <param name="openedSuccessfully"><c>true</c> if the session opened without errors; <c>false</c> if there were errors when opening the session.</param>
+        protected void RaiseSessionOpened(bool openedSuccessfully)
         {
-            Logger.Trace($"[{SessionId}] OnSessionOpened");
-            HandleUnsupportedProtocols(supportedProtocols);
+            Logger.Trace($"[{SessionKey}] Session opened; Success: {openedSuccessfully}");
 
-            try
+            SessionOpened?.Invoke(this, new SessionOpenedEventArgs(openedSuccessfully));
+        }
+
+        /// <summary>
+        /// Event raised when the session is opened.
+        /// </summary>
+        public event EventHandler<SessionOpenedEventArgs> SessionOpened;
+
+        /// <summary>
+        /// Initialize the session based on details from the counterpart.
+        /// After this, the protocols, objects, compression, formats and capabilities that will be used in the session will be initialized.
+        /// </summary>
+        /// <param name="counterpartInfo">The counterpart's info.</param>
+        /// <param name="counterpartDetails">The counterpart's details.</param>
+        /// <returns><c>true</c> if the session was successfully initialized; <c>false</c> otherwise.</returns>
+        protected virtual bool InitializeSession(EtpEndpointInfo counterpartInfo, EtpEndpointDetails counterpartDetails)
+        {
+            var success = true;
+
+            CounterpartInfo = counterpartInfo;
+            CounterpartDetails = counterpartDetails;
+
+            UpdateSessionKey();
+
+            if (!InitializeSessionSupportedProtocols())
+                success = false;
+
+            if (!InitializeSessionSupportedDataObjects())
+                success = false;
+
+            if (!InitializeSessionSupportedCompression())
+                success = false;
+
+            if (!InitializeSessionSupportedFormats())
+                success = false;
+
+            if (!InitializeSessionCapabilities())
+                success = false;
+
+            return success;
+        }
+
+        /// <summary>
+        /// Initializes the protocols for use in this session.
+        /// </summary>
+        /// <returns><c>true</c> if initialization was successful; <c>false</c> otherwise.</returns>
+        protected virtual bool InitializeSessionSupportedProtocols()
+        {
+            var success = true;
+
+            var handlers = new List<IProtocolHandler>();
+            var sessionSupportedProtocols = new Dictionary<int, ISessionProtocol>();
+
+            foreach (var protocol in InstanceParameters.SupportedProtocols.OrderBy(p => p.Protocol))
             {
-                _handlersLock.TryEnterReadLock(-1);
-
-                var handlers = HandlersByType.Values.ToList();
-
-                // notify protocol handlers about new session
-                foreach (var handler in handlers)
+                var counterpartProtocol = CounterpartDetails.SupportedProtocols.FirstOrDefault(p => p.Protocol == protocol.Protocol && p.EtpVersion == protocol.EtpVersion && p.Role.Equals(protocol.CounterpartRole, StringComparison.OrdinalIgnoreCase) && p.CounterpartRole.Equals(protocol.Role, StringComparison.OrdinalIgnoreCase));
+                if (counterpartProtocol == null)
                 {
-                    handler.OnSessionOpened(requestedProtocols, supportedProtocols);
+                    if (IsClient)
+                    {
+                        Logger.Debug($"[{SessionKey}] Requested protocol not supported by server. Protocol: {protocol.Protocol}; Role: {protocol.Role}; Version: {protocol.EtpVersion.ToVersionString()}");
+                    }
+                    else
+                    {
+                        Logger.Verbose($"[{SessionKey}] Supported protocol was not requested by client. Protocol: {protocol.Protocol}; Role: {protocol.Role}; Version: {protocol.EtpVersion.ToVersionString()}");
+                    }
+
+                    continue;
+                }
+
+                handlers.Add(protocol);
+                protocol.SetCounterpartCapabilities(counterpartProtocol.Capabilities);
+                sessionSupportedProtocols[protocol.Protocol] = protocol;
+            }
+
+            foreach (var counterpartProtocol in CounterpartDetails.SupportedProtocols.OrderBy(p => p.Protocol))
+            {
+                var supportedProtocol = handlers.FirstOrDefault(p => p.Protocol == counterpartProtocol.Protocol && p.EtpVersion == counterpartProtocol.EtpVersion && p.Role.Equals(counterpartProtocol.CounterpartRole, StringComparison.OrdinalIgnoreCase) && p.CounterpartRole.Equals(counterpartProtocol.Role, StringComparison.OrdinalIgnoreCase));
+                if (supportedProtocol == null)
+                {
+                    if (IsClient)
+                        Logger.Debug($"[{SessionKey}] Ignoring unrequested protocol. Protocol: {counterpartProtocol.Protocol}; Role: {counterpartProtocol.Role}");
+                    else
+                        Logger.Debug($"[{SessionKey}] Requested protocol not supported. Protocol: {counterpartProtocol.Protocol}; Role: {counterpartProtocol.Role}");
                 }
             }
-            finally
+
+            if (HandlersByProtocol.IsEmpty)
             {
-                _handlersLock.ExitReadLock();
+                Logger.Debug(Log($"[{SessionKey}] No handlers registered were registered for any protocol."));
             }
+            else if (!HandlersByProtocol.ContainsKey((int)Protocols.Core))
+            {
+                Logger.Debug(Log($"[{SessionKey}] No handler registered for the Core protocol."));
+            }
+            else if (success)
+            {
+                sessionSupportedProtocols[(int)Protocols.Core] = HandlersByProtocol[(int)Protocols.Core];
+            }
+            else
+            {
+                sessionSupportedProtocols.Clear();
+            }
+
+            SessionSupportedProtocols = new ReadOnlyDictionary<int, ISessionProtocol>(sessionSupportedProtocols);
+
+            return success;
+        }
+
+        /// <summary>
+        /// Initializes the supported objects for this session.
+        /// </summary>
+        /// <returns><c>true</c> if initialization was successful; <c>false</c> otherwise.</returns>
+        protected virtual bool InitializeSessionSupportedDataObjects()
+        {
+            var success = true;
+
+            var supportedDataObjectList = new List<EtpSupportedDataObject>();
+            foreach (var supportedDataObject in InstanceDetails.SupportedDataObjects)
+            {
+                if (!supportedDataObject.QualifiedType.IsValid || supportedDataObject.QualifiedType.IsBaseType)
+                {
+                    Logger.Debug($"[{SessionKey}] Invalid object type supported by this instance. Object Type: {supportedDataObject.QualifiedType.ToVersionKey(EtpVersion)}");
+
+                    continue;
+                }
+
+                supportedDataObjectList.Add(new EtpSupportedDataObject(supportedDataObject.QualifiedType, supportedDataObject.Capabilities));
+            }
+
+            var counterpartSupportedDataObjectList = new List<EtpSupportedDataObject>();
+            foreach (var counterpartSupportedDataObject in CounterpartDetails.SupportedDataObjects)
+            {
+                if (!counterpartSupportedDataObject.QualifiedType.IsValid || counterpartSupportedDataObject.QualifiedType.IsBaseType)
+                {
+                    Logger.Debug($"[{SessionKey}] Invalid object type supported by counterpart. Object Type: {counterpartSupportedDataObject.QualifiedType.ToVersionKey(EtpVersion)}");
+
+                    continue;
+                }
+
+                counterpartSupportedDataObjectList.Add(new EtpSupportedDataObject(counterpartSupportedDataObject.QualifiedType, counterpartSupportedDataObject.Capabilities));
+            }
+
+            SessionSupportedDataObjects = EtpSupportedDataObjectCollection.GetSupportedDataObjectCollection(supportedDataObjectList, counterpartSupportedDataObjectList, Adapter.AreSupportedDataObjectsNegotiated);
+            if (SessionSupportedDataObjects.Count == 0)
+            {
+                Logger.Debug($"[{SessionKey}] No mutually supported data objects.");
+            }
+
+            return success;
+        }
+
+        /// <summary>
+        /// Initializes the compression for use in this session.
+        /// </summary>
+        /// <returns><c>true</c> if initialization was successful; <c>false</c> otherwise.</returns>
+        protected virtual bool InitializeSessionSupportedCompression()
+        {
+            string supportedCompression = string.Empty;
+            foreach (var compression in InstanceDetails.SupportedCompression)
+            {
+                if (!EtpCompression.IsSupportedCompressionMethod(compression))
+                {
+                    Logger.Debug($"[{SessionKey}] Unexpected compression supported by this instance: {compression}");
+                }
+
+                var counterpartCompression = CounterpartDetails.SupportedCompression.FirstOrDefault(c => (string.IsNullOrEmpty(c) && string.IsNullOrEmpty(compression)) || compression.Equals(c, StringComparison.OrdinalIgnoreCase));
+                if (counterpartCompression != null)
+                {
+                    supportedCompression = counterpartCompression;
+                    break;
+                }
+                else
+                {
+                    Logger.Trace($"[{SessionKey}] Ignoring compression not supported by counterpart: {compression}");
+                }
+            }
+
+            SessionSupportedCompression = supportedCompression;
+            return true;
+        }
+
+        /// <summary>
+        /// Initializes the formats for use in this session.
+        /// </summary>
+        /// <returns><c>true</c> if initialization was successful; <c>false</c> otherwise.</returns>
+        protected virtual bool InitializeSessionSupportedFormats()
+        {
+            var supportedFormats = new List<string>();
+            foreach (var format in InstanceDetails.SupportedFormats)
+            {
+                if (!format.Equals(Formats.Xml, StringComparison.OrdinalIgnoreCase))
+                {
+                    Logger.Debug($"[{SessionKey}] Unexpected format supported by this instance: {format}");
+                }
+
+                var counterpartFormat = CounterpartDetails.SupportedFormats.FirstOrDefault(f => format.Equals(f, StringComparison.OrdinalIgnoreCase));
+                if (counterpartFormat != null)
+                    supportedFormats.Add(counterpartFormat);
+                else
+                    Logger.Trace($"[{SessionKey}] Ignoring format not supported by counterpart: {format}");
+            }
+
+            SessionSupportedFormats = supportedFormats;
+            return true;
+        }
+
+        /// <summary>
+        /// Initializes the capabilities for use in this session where special handling is needed to account for both the instance and the counterpart's capability values..
+        /// </summary>
+        /// <returns><c>true</c> if initialization was successful; <c>false</c> otherwise.</returns>
+        protected virtual bool InitializeSessionCapabilities()
+        {
+            SessionMaxWebSocketFramePayloadSize = Math.Min(CounterpartDetails.Capabilities.MaxWebSocketFramePayloadSize ?? long.MaxValue, InstanceDetails.Capabilities.MaxWebSocketFramePayloadSize ?? long.MaxValue);
+            SessionMaxWebSocketMessagePayloadSize = Math.Min(CounterpartDetails.Capabilities.MaxWebSocketMessagePayloadSize ?? long.MaxValue, InstanceDetails.Capabilities.MaxWebSocketMessagePayloadSize ?? long.MaxValue);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Sends an Acknowledge message in response to the message associated with the correlation header.
+        /// </summary>
+        /// <param name="protocol">The protocol to send the acknowledge message on.</param>
+        /// <param name="correlatedHeader">The message header the acknowledge message is correlated with.</param>
+        /// <param name="isNoData">Whether or not the acknowledge message should have the NoData flag set.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<IAcknowledge> Acknowledge(int protocol, IMessageHeader correlatedHeader, bool isNoData = false, IMessageHeaderExtension extension = null)
+        {
+            var header = EtpFactory.CreateMessageHeader(EtpVersion, protocol, MessageTypes.Core.Acknowledge);
+            if (isNoData)
+                header.SetNoData();
+
+            var body = EtpFactory.CreateAcknowledge(EtpVersion);
+
+            header.PrepareHeader(correlatedHeader, false, false);
+            var message = new EtpMessage<IAcknowledge>(header, body, extension: extension);
+
+            return SendMessage(message);
+        }
+
+        /// <summary>
+        /// Constructs a new <see cref="IErrorInfo"/> instance compatible with the session.
+        /// </summary>
+        /// <returns>The constructed error info.</returns>
+        public IErrorInfo ErrorInfo() => EtpFactory.CreateErrorInfo(EtpVersion);
+
+        /// <summary>
+        /// Sends a ProtocolException message.
+        /// </summary>
+        /// <param name="protocol">The protocol to send the acknowledge message on.</param>
+        /// <param name="error">The error in the protocol exception.</param>
+        /// <param name="correlatedHeader">The message header the protocol exception is correlated with, if any.</param>
+        /// <param name="isFinalPart">Whether or not the protocol exception is the final part in a multi-part message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<IProtocolException> ProtocolException(int protocol, IErrorInfo error, IMessageHeader correlatedHeader = null, bool isFinalPart = false, IMessageHeaderExtension extension = null)
+        {
+            var exception = EtpFactory.CreateProtocolException(EtpVersion, error);
+            return ProtocolException(protocol, exception, correlatedHeader: correlatedHeader, isFinalPart: isFinalPart, extension: extension);
+        }
+
+        /// <summary>
+        /// Sends a ProtocolException message with the specified exception details.
+        /// </summary>
+        /// <param name="exception">The ETP exception.</param>
+        /// <param name="isFinalPart">Whether or not the protocol exception is the final part in a multi-part message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<IProtocolException> ProtocolException(EtpException exception, bool isFinalPart = false, IMessageHeaderExtension extension = null)
+        {
+            if (exception.InnerException != null)
+                Logger.LogErrorInfo(exception.ErrorInfo);
+
+            return ProtocolException(exception.Protocol, exception.ErrorInfo, correlatedHeader: exception.CorrelatedHeader, isFinalPart: isFinalPart, extension: extension);
+        }
+
+        /// <summary>
+        /// Sends a ProtocolException message(s) with the specified exception details.
+        /// </summary>
+        /// <param name="protocol">The protocol to send the protocol exception on.</param>
+        /// <param name="errors">The errors in the protocol exception.</param>
+        /// <param name="correlatedHeader">The message header the protocol exception is correlated with, if any.</param>
+        /// <param name="setFinalPart">Whether or not the final part flag should be set on the last message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The first message sent in the response on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<IProtocolException> ProtocolException(int protocol, IDictionary<string, IErrorInfo> errors, IMessageHeader correlatedHeader = null, bool setFinalPart = true, IMessageHeaderExtension extension = null)
+        {
+            var exceptions = EtpFactory.CreateProtocolExceptions(EtpVersion, errors);
+
+            EtpMessage<IProtocolException> message = null;
+
+            for (int i = 0; i < exceptions.Count; i++)
+            {
+                var ret = ProtocolException(protocol, exceptions[i], correlatedHeader: correlatedHeader, isFinalPart: (i == exceptions.Count - 1 && setFinalPart), extension: extension);
+                if (ret == null)
+                    return null;
+                message = message ?? ret;
+            }
+
+            return message;
+        }
+
+        /// <summary>
+        /// Sends a ProtocolException message with the specified exception details.
+        /// </summary>
+        /// <param name="protocol">The protocol to send the protocol exception on.</param>
+        /// <param name="exception">The protocol exception body to send.</param>
+        /// <param name="correlatedHeader">The message header the protocol exception is correlated with, if any.</param>
+        /// <param name="isFinalPart">Whether or not the protocol exception is the final part in a multi-part message.</param>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public EtpMessage<IProtocolException> ProtocolException(int protocol, IProtocolException exception, IMessageHeader correlatedHeader = null, bool isFinalPart = false, IMessageHeaderExtension extension = null)
+        {
+            var header = EtpFactory.CreateMessageHeader(EtpVersion, protocol, MessageTypes.Core.ProtocolException);
+
+            var body = exception;
+
+            header.PrepareHeader(correlatedHeader, Adapter.IsProtocolExceptionMultiPart, isFinalPart);
+            var message = new EtpMessage<IProtocolException>(header, body, extension: extension);
+
+            return SendMessage(message);
+        }
+
+        /// <summary>
+        /// Occurs when a ProtocolException message is received for any protocol.
+        /// </summary>
+        public event EventHandler<MessageEventArgs<IProtocolException>> OnProtocolException;
+
+        /// <summary>
+        /// Sends a Ping message.
+        /// </summary>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public EtpMessage<IPing> Ping(IMessageHeaderExtension extension = null)
+        {
+            var header = EtpFactory.CreateMessageHeader(EtpVersion, Protocols.Core, MessageTypes.Core.Ping);
+
+            var body = EtpFactory.CreatePing(EtpVersion);
+            if (body == null)
+                return null;
+
+            var message = new EtpMessage<IPing>(header, body, extension: extension);
+
+            return SendMessage(message, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow);
+        }
+
+        /// <summary>
+        /// Handles a Ping message.
+        /// </summary>
+        /// <param name="message">The Ping message.</param>
+        protected virtual void HandlePing(EtpMessage<IPing> message)
+        {
+            Logger.Verbose($"[{SessionKey}] Handling ping.");
+
+            OnPing?.Invoke(this, new MessageEventArgs<IPing>(message));
+
+            Pong();
+        }
+
+        /// <summary>
+        /// Event raised when a ping response is received from the counterpart.
+        /// </summary>
+        public event EventHandler<MessageEventArgs<IPing>> OnPing;
+
+        /// <summary>
+        /// Sends a Pong message.
+        /// </summary>
+        /// <param name="extension">The message header extension to send with the message.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        protected virtual EtpMessage<IPong> Pong(IMessageHeaderExtension extension = null)
+        {
+            var header = EtpFactory.CreateMessageHeader(EtpVersion, Protocols.Core, MessageTypes.Core.Pong);
+
+            var body = EtpFactory.CreatePong(EtpVersion);
+            if (body == null)
+                return null;
+
+            var message = new EtpMessage<IPong>(header, body, extension: extension);
+
+            return SendMessage(message, onBeforeSend: (m) => m.Body.CurrentDateTime = DateTime.UtcNow);
+        }
+
+        /// <summary>
+        /// Event raised when a pong response is received from the counterpart.
+        /// </summary>
+        public event EventHandler<MessageEventArgs<IPong>> OnPong;
+
+        /// <summary>
+        /// Handles a Pong message.
+        /// </summary>
+        /// <param name="message">The Pong message.</param>
+        protected virtual void HandlePong(EtpMessage<IPong> message)
+        {
+            Logger.Verbose($"[{SessionKey}] Handling pong.");
+
+            OnPong?.Invoke(this, new MessageEventArgs<IPong>(message));
+        }
+
+        /// <summary>
+        /// Sends a CloseSession message to the session's counterpart.
+        /// </summary>
+        /// <param name="reason">The reason.</param>
+        /// <param name="extension">The message header extension.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public virtual EtpMessage<ICloseSession> CloseSession(string reason = null, IMessageHeaderExtension extension = null)
+        {
+            Logger.Trace($"[{SessionKey}] Closing Session: {reason}");
+
+            var header = EtpFactory.CreateMessageHeader(EtpVersion, Protocols.Core, MessageTypes.Core.CloseSession);
+
+            var body = EtpFactory.CreateCloseSession(EtpVersion, reason);
+
+            header.PrepareHeader(null, false, false);
+            var message = new EtpMessage<ICloseSession>(header, body, extension: extension);
+
+            message = SendMessage(message);
+
+            RaiseSessionClosed(message != null, reason);
+
+            CloseWebSocket(reason);
+
+            return message;
+        }
+
+        /// <summary>
+        /// Handles the CloseSession message.
+        /// </summary>
+        /// <param name="message">The close session message.</param>
+        protected virtual void HandleCloseSession(EtpMessage<ICloseSession> message)
+        {
+            RaiseSessionClosed(true, message.Body.Reason);
+
+            CloseWebSocket(message.Body.Reason);
         }
 
         /// <summary>
         /// Called when the ETP session is closed.
         /// </summary>
-        public override void OnSessionClosed()
+        /// <param name="closedSuccessfully"><c>true</c> if the session closed without errors; <c>false</c> if there were errors when closing the session.</param>
+        /// <param name="reason">The reason provided when the session closed.</param>
+        protected void RaiseSessionClosed(bool closedSuccessfully, string reason)
         {
-            Logger.Trace($"[{SessionId}] OnSessionClosed");
+            Logger.Trace($"[{SessionKey}] Session closed; Success: {closedSuccessfully}; Reason: {reason}");
 
-            try
+            IsSessionOpen = false;
+
+            var handlers = HandlersByProtocol.Values.ToList();
+
+            // notify protocol handlers about new session
+            foreach (var handler in handlers)
             {
-                _handlersLock.TryEnterReadLock(-1);
-
-                var handlers = HandlersByType.Values.ToList();
-
-                // notify protocol handlers about new session
-                foreach (var handler in handlers)
-                {
-                    handler.OnSessionClosed();
-                }
+                handler.StopHandling();
             }
-            finally
-            {
-                _handlersLock.ExitReadLock();
-            }
+
+            SessionClosed?.Invoke(this, new SessionClosedEventArgs(closedSuccessfully, reason));
         }
 
         /// <summary>
-        /// Called when WebSocket data is received.
+        /// Event raised when the session is closed.
         /// </summary>
-        /// <param name="data">The data.</param>
-        public virtual void OnDataReceived(byte[] data)
-        {
-            Decode(data);
-        }
+        public event EventHandler<SessionClosedEventArgs> SessionClosed;
 
         /// <summary>
-        /// Called when a WebSocket message is received.
+        /// Event raised when binary WebSocket data is received.
         /// </summary>
-        /// <param name="message">The message.</param>
-        public virtual void OnMessageReceived(string message)
-        {
-            Decode(message);
-        }
+        public event EventHandler<DataReceivedEventArgs> DataReceived;
 
         /// <summary>
-        /// Sends the message.
+        /// Event raised when text WebSocket data is received.
+        /// </summary>
+        public event EventHandler<MessageReceivedEventArgs> MessageReceived;
+
+        /// <summary>
+        /// Event raised when the counterpart's high water mark has changed.
+        /// </summary>
+        public event EventHandler<HighWaterMarkChangedEventArgs> CounterpartHighWaterMarkChanged;
+
+        /// <summary>
+        /// Synchronously sends the message.
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="header">The header.</param>
-        /// <param name="body">The body.</param>
+        /// <param name="message">The message.</param>
         /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
-        /// <returns>The message identifier.</returns>
-        public long SendMessage<T>(IMessageHeader header, T body, Action<IMessageHeader> onBeforeSend = null) where T : ISpecificRecord
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public EtpMessage<T> SendMessage<T>(EtpMessage<T> message, Action<EtpMessage<T>> onBeforeSend = null)
+            where T : IEtpMessageBody
         {
+            return AsyncContext.Run(() => SendMessageAsync(message, onBeforeSend));
+        }
+
+        /// <summary>
+        /// Asynchronously sends the message.
+        /// </summary>
+        /// <typeparam name="T">The type of the message body.</typeparam>
+        /// <param name="message">The message.</param>
+        /// <param name="onBeforeSend">Action called just before sending the message with the actual header having the definitive message ID.</param>
+        /// <returns>The sent message on success; <c>null</c> otherwise.</returns>
+        public async Task<EtpMessage<T>> SendMessageAsync<T>(EtpMessage<T> message, Action<EtpMessage<T>> onBeforeSend = null) where T : IEtpMessageBody
+        {
+            if (!IsSendingEnabled)
+            {
+                Logger.Trace($"[{SessionKey}] Sending disabled.");
+                return null;
+            }
+
+            // Lock to ensure only one thread at a time attempts to send data and to ensure that messages are sent with sequential IDs
             try
             {
-                // Lock to ensure only one thread at a time attempts to send data and to ensure that messages are sent with sequential IDs
+                var acquired = false;
                 try
                 {
-                    _sendLock.Wait();
-
-                    if (!IsOpen)
+                    try
                     {
-                        Log("Warning: Sending on a session that is not open.");
-                        Logger.Debug("Sending on a session that is not open.");
-                        return -1;
+                        Logger.Verbose($"[{SessionKey}] Acquiring send lock in SendMessageAsync");
+                        await _sendLock.WaitAsync(SendToken).ConfigureAwait(CaptureAsyncContext);
+                        acquired = true;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        Logger.Trace($"[{SessionKey}] Sending canceled.");
+                        return null;
+                    }
+                    if (SendToken.IsCancellationRequested)
+                    {
+                        Logger.Trace($"[{SessionKey}] Sending canceled.");
+                        return null;
                     }
 
-                    header.MessageId = NewMessageId();
+                    if (!IsWebSocketOpen)
+                    {
+                        Log($"[{SessionKey}] Warning: Sending on a closed websocket.");
+                        Logger.Debug($"[{SessionKey}] Sending on a closed websocket.");
+                        return null;
+                    }
+                    if (!IsSessionOpen && !message.Header.IsAllowedBeforeSessionIsOpen())
+                    {
+                        Log($"[{SessionKey}] Sending an unsupported message before the session is open: {message.MessageName}.");
+                        Logger.Debug($"[{SessionKey}] Sending an unsupported message before the session is open: {message.MessageName}.");
+                    }
+
+                    message.Header.MessageId = NewMessageId();
+                    message.Header.Timestamp = DateTime.UtcNow;
+                    if (message.Extension != null)
+                        message.Header.SetHasHeaderExtension();
 
                     // Call the pre-send action in case any deterministic handling is needed with the actual message ID.
                     // Must be invoked before sending to ensure the response is not asynchronously processed before this method returns.
-                    onBeforeSend?.Invoke(header);
+                    onBeforeSend?.Invoke(message);
 
                     // Log message just before it gets sent if needed.
-                    Sending(header, body);
+                    LogMessage(message, true);
 
-                    if (IsJsonEncoding)
-                    {
-                        var message = EtpExtensions.Serialize(new object[] {header, body});
-                        SendAsync(message).Wait();
-                    }
-                    else
-                    {
-                        var data = body.Encode(header, SupportedCompression);
-                        SendAsync(data, 0, data.Length).Wait();
-                    }
+                    var includeExtension = CounterpartDetails?.Capabilities?.SupportsMessageHeaderExtension ?? false;
+                    var bytes = Encoding == EtpEncoding.Json
+                        ? message.Serialize(includeExtension: includeExtension)
+                        : message.Encode(asBinary: Encoding == EtpEncoding.Binary, includeExtension: includeExtension, compression: SessionSupportedCompression);
+
+                    var data = new ArraySegment<byte>(bytes);
+                    if (!await SendAsync(data).ConfigureAwait(CaptureAsyncContext))
+                        return null;
                 }
                 finally
                 {
-                    _sendLock.Release();
+                    if (acquired)
+                    {
+                        Logger.Verbose($"[{SessionKey}] Releasing send lock in SendMessageAsync");
+                        _sendLock.Release();
+                    }
                 }
             }
             catch (Exception ex)
             {
-                // Handler already locked by the calling code...
-                return Handler(header.Protocol)
-                    .ProtocolException((int) EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
+                Logger.Debug(ex);
+
+                // Send protocol exception unless the message being sent was already a protocol exception.
+                if (message.Header.MessageType != (int)MessageTypes.Core.ProtocolException)
+                    ProtocolException(message.Header.Protocol, ErrorInfo().InvalidState(), message.Header);
+
+                return null;
             }
 
-            return header.MessageId;
-        }
-
-        /// <summary>
-        /// Gets the supported protocols.
-        /// </summary>
-        /// <returns>A list of supported protocols.</returns>
-        public IList<ISupportedProtocol> GetSupportedProtocols()
-        {
-            try
-            {
-                _handlersLock.TryEnterReadLock(-1);
-
-                return Adapter.GetSupportedProtocols(HandlersByType.Values.ToList(), IsClient);
-            }
-            finally
-            {
-                _handlersLock.ExitReadLock();
-            }
+            return message;
         }
 
         /// <summary>
         /// Generates a new unique message identifier for the current session.
         /// </summary>
-        /// <returns>The message identifier.</returns>
+        /// <returns>The new message identifier.  For servers, the message identifiers
+        /// are non-zero odd numbers.  For clients, the message identifiers are non-zero
+        /// even numbers.</returns>
         public long NewMessageId()
         {
-            return Interlocked.Increment(ref _messageId);
+            return Interlocked.Increment(ref _messageId) * 2 + _messageIdOffset;
         }
 
         /// <summary>
         /// Closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        public void Close(string reason)
+        public void CloseWebSocket(string reason)
         {
-            CloseAsync(reason).Wait();
+            AsyncContext.Run(() => CloseWebSocketAsync(reason));
         }
 
         /// <summary>
         /// Asynchronously closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        public async Task CloseAsync(string reason)
+        public async Task CloseWebSocketAsync(string reason)
         {
+            var acquired = false;
+
             // Closing sends messages over the websocket so need to ensure no other messages are being sent when closing
             try
             {
-                await _sendLock.WaitAsync();
-                Logger.Trace($"Closing Session: {reason}");
+                if (IsWebSocketClosed)
+                {
+                    Logger.Verbose($"[{SessionKey}] Websocket already closed.");
+                    return;
+                }
 
-                await CloseAsyncCore(reason);
+                Logger.Verbose($"[{SessionKey}] Acquiring send lock in CloseWebSocketAsync");
+
+                try
+                {
+                    await _sendLock.WaitAsync(SendToken).ConfigureAwait(CaptureAsyncContext);
+                    acquired = true;
+                }
+                catch (OperationCanceledException)
+                {
+                    Logger.Verbose($"[{SessionKey}] Acquiring send lock was canceled in CloseWebSocketAsync");
+                    return;
+                }
+                catch (ObjectDisposedException)
+                {
+                    Logger.Verbose($"[{SessionKey}] Sendlock was already disposed. No need to acquire and stop acquiring.");
+                }
+                Logger.Trace($"[{SessionKey}] Closing WebSocket: {reason}");
+
+                _sendTokenSource.Cancel();
+                IsSendingEnabled = false;
+                IsWebSocketClosed = true;
+
+                await CloseWebSocketAsyncCore(reason).ConfigureAwait(CaptureAsyncContext);
             }
             finally
             {
-                _sendLock.Release();
+                if (acquired)
+                {
+                    Logger.Verbose($"[{SessionKey}] Releasing send lock in CloseWebSocketAsync");
+                    _sendLock.Release();
+                }
             }
         }
 
         /// <summary>
-        /// Resolves the ETP adapter.
+        /// Sets the context object of type <typeparamref name="T"/> for this session.
         /// </summary>
-        /// <param name="version">The ETP version.</param>
-        /// <returns>A new <see cref="IEtpAdapter"/> instance.</returns>
-        private static IEtpAdapter ResolveEtpAdapter(EtpVersion version)
+        /// <typeparam name="T">The type of the context object.</typeparam>
+        /// <param name="context">The context object.</param>
+        public void SetContext<T>(T context)
         {
-            return version == EtpVersion.v12 ? (IEtpAdapter)new v12.Etp12Adapter() : (IEtpAdapter)new v11.Etp11Adapter();
+            for (int i = 0; i < _contextObjects.Count; i++)
+            {
+                if (_contextObjects[i] is T)
+                {
+                    _contextObjects[i] = context;
+                    return;
+                }
+            }
+
+            _contextObjects.Add(context);
+        }
+
+        /// <summary>
+        /// Getsets the context object of type <typeparamref name="T"/> for this session.
+        /// </summary>
+        /// <typeparam name="T">The type of the context object.</typeparam>
+        /// <returns>The context object.</returns>
+        public T GetContext<T>()
+        {
+            return (T)_contextObjects.FirstOrDefault(o => o is T);
         }
 
         /// <summary>
         /// Asynchronously closes the WebSocket connection for the specified reason.
         /// </summary>
         /// <param name="reason">The reason.</param>
-        protected abstract Task CloseAsyncCore(string reason);
+        protected abstract Task CloseWebSocketAsyncCore(string reason);
 
         /// <summary>
         /// Sends the specified data.
         /// </summary>
         /// <param name="data">The data.</param>
-        /// <param name="offset">The offset.</param>
-        /// <param name="length">The length.</param>
-        protected abstract Task SendAsync(byte[] data, int offset, int length);
-
-        /// <summary>
-        /// Sends the specified messages.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        protected abstract Task SendAsync(string message);
+        protected abstract Task<bool> SendAsync(ArraySegment<byte> data);
 
         /// <summary>
         /// Decodes the specified data.
         /// </summary>
         /// <param name="data">The data.</param>
-        protected void Decode(byte[] data)
+        protected void Decode(ArraySegment<byte> data)
         {
-            using (var inputStream = new MemoryStream(data))
+            if (Encoding == EtpEncoding.Binary)
             {
-                // create avro binary decoder to read from memory stream
-                var decoder = new BinaryDecoder(inputStream);
+                DecodeBinary(data);
+            }
+            else
+            {
+                var message = System.Text.Encoding.UTF8.GetString(data.Array, data.Offset, data.Count);
+                DecodeJson(message);
+            }
+        }
+
+        /// <summary>
+        /// Decodes the specified data.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        protected void DecodeBinary(ArraySegment<byte> data)
+        {
+            DataReceived?.Invoke(this, new DataReceivedEventArgs(data));
+
+            using (var inputStream = new MemoryStream(data.Array, data.Offset, data.Count, false))
+            using (var headerDecoder = new BinaryAvroDecoder(inputStream))
+            {
                 // deserialize the header
-                var header = Adapter.DecodeMessageHeader(decoder, null);
+                var header = Adapter.DecodeMessageHeader(headerDecoder);
+                header.Timestamp = DateTime.UtcNow;
 
                 // log message metadata
                 if (Logger.IsVerboseEnabled())
                 {
-                    Logger.VerboseFormat("[{0}] Binary message received: {1}", SessionId, EtpExtensions.Serialize(header));
+                    Logger.Verbose($"[{SessionKey}] Binary message received: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
                 }
 
-                Stream gzip = null;
+                if (!HandleHeader(header))
+                    return;
 
-                try
+                using (var decompressionStream = header.IsCompressed() ? EtpCompression.TryGetDecompresionStream(SessionSupportedCompression, inputStream) : null)
+                using (var bodyDecoder = Encoding == EtpEncoding.Binary ? (IAvroDecoder)new BinaryAvroDecoder(decompressionStream ?? inputStream) : new JsonAvroDecoder(decompressionStream ?? inputStream))
                 {
                     // decompress message body if compression has been negotiated
-                    if (header.CanCompressMessageBody(true))
+                    if (header.IsCompressed() && !header.CanBeCompressed())
                     {
-                        if (EtpExtensions.GzipEncoding.Equals(SupportedCompression, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            gzip = new GZipStream(inputStream, CompressionMode.Decompress, true);
-                            decoder = new BinaryDecoder(gzip);
-                        }
+                        ProtocolException(header.Protocol, ErrorInfo().CompressionNotSupported(), header);
+                        return;
                     }
 
+                    // Header Extension and Body are compressed
+                    var extension = header.CanHaveHeaderExtension() && header.HasHeaderExtension()
+                        ? Adapter.DecodeMessageHeaderExtension(bodyDecoder)
+                        : null;
+
                     // call processing action
-                    HandleMessage(header, decoder, null);
-                }
-                finally
-                {
-                    gzip?.Dispose();
+                    HandleMessage(header, extension, bodyDecoder);
                 }
             }
         }
@@ -463,179 +1281,277 @@ namespace Energistics.Etp.Common
         /// Decodes the specified message.
         /// </summary>
         /// <param name="message">The message.</param>
-        protected void Decode(string message)
+        protected void DecodeJson(string message)
         {
-            // split message header and body
-            var array = JArray.Parse(message);
-            var header = array[0].ToString();
-            var body = array[1].ToString();
+            MessageReceived?.Invoke(this, new MessageReceivedEventArgs(message));
 
-            // log message metadata
-            if (Logger.IsVerboseEnabled())
+            using (var decoder = new JsonAvroDecoder(message))
             {
-                Logger.VerboseFormat("[{0}] JSON message received: {1}", SessionId, header);
+                decoder.DecodeArrayStart();
+                var header = Adapter.DecodeMessageHeader(decoder);
+                decoder.DecodeArrayItemSeparator();
+                header.Timestamp = DateTime.UtcNow;
+
+                // log message metadata
+                if (Logger.IsVerboseEnabled())
+                {
+                    Logger.Verbose($"[{SessionKey}] JSON message received: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
+                }
+
+                HandleHeader(header);
+
+                var extension = header.HasHeaderExtension() ? Adapter.DecodeMessageHeaderExtension(decoder) : null;
+                if (header.HasHeaderExtension())
+                    decoder.DecodeArrayItemSeparator();
+
+                // call processing action
+                HandleMessage(header, extension, decoder);
             }
-            
-            // call processing action
-            HandleMessage(Adapter.DeserializeMessageHeader(header), null, body);
+        }
+
+        private bool HandleHeader(IMessageHeader header)
+        {
+            // Handle global Acknowledge request
+            if (header.IsAcknowledgeRequested())
+            {
+                if (EtpVersion == EtpVersion.v11) // Can't request Acknowledge in ETP 1.1
+                {
+                    ProtocolException(header.Protocol, ErrorInfo().InvalidArgument("messageFlags", header.MessageFlags));
+                    return false;
+                }
+                else if (header.IsAcknowledge())
+                {
+                    ProtocolException(header.Protocol, ErrorInfo().InvalidState());
+                    return false;
+                }
+                Acknowledge(header.Protocol, header);
+            }
+
+            return true;
         }
 
         /// <summary>
         /// Handles the message.
         /// </summary>
         /// <param name="header">The header.</param>
+        /// <param name="extension">The header extension.</param>
         /// <param name="decoder">The decoder.</param>
-        /// <param name="body">The body.</param>
-        protected void HandleMessage(IMessageHeader header, Decoder decoder, string body)
+        protected void HandleMessage(IMessageHeader header, IMessageHeaderExtension extension, IAvroDecoder decoder)
         {
-            IProtocolHandler handler = null;
+            if (Logger.IsVerboseEnabled())
+                Logger.Verbose($"[{SessionKey}] Handling message: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
+
+            IProtocolHandler handler;
+            var isSessionManagementMessage = header.IsRequestSession() || header.IsOpenSession() || header.IsCloseSession() || header.IsPing() || header.IsPong();
+
+            if (!HandlersByProtocol.TryGetValue(header.Protocol, out handler) && !isSessionManagementMessage)
+            {
+                // Protocol handlers are cleared when the session is disposed or the socket is closed, but this method can still be called during or after that.
+                if (HandlersByProtocol.IsEmpty)
+                    Logger.Trace($"[{SessionKey}] Ignoring message on closed session: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
+                else
+                {
+                    Logger.Debug($"[{SessionKey}] Unsupported protocol: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
+                    ProtocolException(header.Protocol, ErrorInfo().UnsupportedProtocol(header.Protocol), header);
+                }
+
+                return;
+            }
+
+            if (!Adapter.IsValidMessageType(header.Protocol, header.MessageType))
+            {
+                Logger.Debug($"[{SessionKey}] Invalid message type: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
+                ProtocolException(header.Protocol, ErrorInfo().InvalidMessageType(header.Protocol, header.MessageType), header);
+                return;
+            }
+
+            var message = Adapter.DecodeMessage(header, extension, decoder);
+
+            if (message == null)
+            {
+                Logger.Debug($"[{SessionKey}] Invalid message: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
+                ProtocolException(header.Protocol, ErrorInfo().InvalidMessage(header.Protocol, header.MessageType), header);
+                return;
+            }
+
+            LogMessage(message, false);
 
             try
             {
-                _handlersLock.TryEnterReadLock(-1);
+                var counterpartHighWaterMark = CounterpartHighWaterMark;
+                var messageTimestamp = message.Body.GetLatestChangeTimestamp();
 
-                HandlersByProtocol.TryGetValue(header.Protocol, out handler);
-
-                if (handler == null)
+                if (messageTimestamp > counterpartHighWaterMark)
                 {
-                    HandlersByProtocol.TryGetValue((int)v11.Protocols.Core, out handler);
-
-                    if (handler == null) // Socket has been closed
-                    {
-                        Logger.Trace($"Ignoring message on closed session: {EtpExtensions.Serialize(header)}");
-                        return;
-                    }
-                    var message = $"Protocol handler not registered for protocol { header.Protocol }.";
-                    handler?.ProtocolException((int)EtpErrorCodes.UnsupportedProtocol, message, header.MessageId);
-
-                    return;
+                    CounterpartHighWaterMark = messageTimestamp;
+                    Logger.Trace($"[{SessionKey}] Counterpart high water mark updated: Old: {counterpartHighWaterMark:O}; New: {messageTimestamp:O}");
+                    CounterpartHighWaterMarkChanged?.Invoke(this, new HighWaterMarkChangedEventArgs(messageTimestamp));
                 }
 
-                try
+                if (isSessionManagementMessage)
                 {
-                    // Handle global Acknowledge request
-                    if (header.IsAcknowledgeRequested())
-                    {
-                        handler.Acknowledge(header.MessageId);
-                    }
-
-                    if (Logger.IsVerboseEnabled())
-                    {
-                        Logger.Verbose($"[{SessionId}] Handling message with {handler.GetType()}; Message: {EtpExtensions.Serialize(header)}");
-                    }
-
-                    handler.HandleMessage(header, decoder, body);
+                    if (header.IsRequestSession())
+                        HandleRequestSession(message as EtpMessage<IRequestSession>);
+                    else if (header.IsOpenSession())
+                        HandleOpenSession(message as EtpMessage<IOpenSession>);
+                    else if (header.IsCloseSession())
+                        HandleCloseSession(message as EtpMessage<ICloseSession>);
+                    else if (header.IsPing())
+                        HandlePing(message as EtpMessage<IPing>);
+                    else if (header.IsPong())
+                        HandlePong(message as EtpMessage<IPong>);
                 }
-                catch (Exception ex)
+                else if (header.IsProtocolException())
                 {
-                    Logger.Debug(ex);
-                    handler.ProtocolException((int)EtpErrorCodes.InvalidState, ex.Message, header.MessageId);
+                    OnProtocolException?.Invoke(this, new MessageEventArgs<IProtocolException>(message as EtpMessage<IProtocolException>));
+                    handler.HandleMessage(message);
+                }
+                else if (IsSessionOpen || header.IsAllowedBeforeSessionIsOpen())
+                    handler.HandleMessage(message);
+                else
+                {
+                    Logger.Debug($"[{SessionKey}] Unexpected message before session is open: Name: {header.ToMessageName()}; Header: {EtpExtensions.Serialize(header)}");
+                    ProtocolException(header.Protocol, ErrorInfo().InvalidState(), header);
                 }
             }
-            finally
+            catch (Exception ex)
             {
-                _handlersLock.ExitReadLock();
+                Logger.Debug($"[{SessionKey}] Exception while handling message: {ex}");
+                ProtocolException(header.Protocol, ErrorInfo().InvalidState(), header);
             }
         }
 
         /// <summary>
-        /// Registers a protocol handler for the specified contract type.
+        /// Registers a protocol handler.
         /// </summary>
-        /// <param name="contractType">Type of the contract.</param>
-        /// <param name="handlerType">Type of the handler.</param>
-        protected override void Register(Type contractType, Type handlerType)
+        /// <param name="handler">The protocol handler.</param>
+        public void Register(IProtocolHandler handler)
         {
-            base.Register(contractType, handlerType);
+            Register(new List<IProtocolHandler> { handler });
+        }
 
-            var handler = CreateInstance(contractType);
+        /// <summary>
+        /// Registers protocol handlers.
+        /// </summary>
+        /// <param name="handlers">The protocol handlers.</param>
+        public void Register(IEnumerable<IProtocolHandler> handlers)
+        {
+            if (IsSessionOpen)
+                throw new InvalidOperationException("Session Already Open");
 
-            if (handler != null)
+            foreach (var handler in handlers)
             {
-                handler.Session = this;
-                HandlersByType[contractType] = handler;
-                HandlersByProtocol[handler.Protocol] = handler;
+                InstanceParameters.SupportedProtocols.Add(handler);
+                RegisterHandlerCore(handler);
             }
         }
 
         /// <summary>
-        /// Get the registered handler for the specified protocol.
+        /// Does the internal the protocol handler registration.
+        /// </summary>
+        /// <param name="handler">The handlers by type.</param>
+        private void RegisterHandlerCore(IProtocolHandler handler)
+        {
+            if (HandlersByProtocol.ContainsKey(handler.Protocol))
+                Logger.Debug(Log($"[{SessionKey}] Replacing existing handler registered for Protocol {handler.Protocol}."));
+
+            HandlersByProtocol[handler.Protocol] = handler;
+
+            foreach (var @interface in handler.GetType().GetInterfaces().Where(t => typeof(IProtocolHandler).IsAssignableFrom(t) && t != typeof(IProtocolHandler)))
+                HandlersByType[@interface] = handler;
+
+            handler.SetSession(this);
+        }
+
+        /// <summary>
+        /// Registers a supported data object.
+        /// </summary>
+        /// <param name="supportedDataObject">The supported data object.</param>
+        public void Register(IEndpointSupportedDataObject supportedDataObject)
+        {
+            Register(new List<IEndpointSupportedDataObject> { supportedDataObject });
+        }
+
+        /// <summary>
+        /// Registers supported data objects.
+        /// </summary>
+        /// <param name="supportedDataObjects">The supported data objects.</param>
+        public void Register(IEnumerable<IEndpointSupportedDataObject> supportedDataObjects)
+        {
+            if (IsSessionOpen)
+                throw new InvalidOperationException("Session Already Open");
+
+            foreach (var supportedDataObject in supportedDataObjects)
+                InstanceParameters.SupportedDataObjects.Add(new EtpSupportedDataObject(supportedDataObject));
+        }
+
+        /// <summary>
+        /// Gets the registered handler for the specified protocol.
         /// </summary>
         /// <param name="protocol">The protocol.</param>
         /// <returns>The registered protocol handler instance.</returns>
         /// <exception cref="System.NotSupportedException"></exception>
-        protected IProtocolHandler Handler(int protocol)
+        protected IProtocolHandler GetHandler(int protocol)
         {
-            try
-            {
-                _handlersLock.TryEnterReadLock(-1);
+            IProtocolHandler handler;
+            if (HandlersByProtocol.TryGetValue(protocol, out handler))
+                return handler;
 
-                IProtocolHandler handler;
-                if (HandlersByProtocol.TryGetValue(protocol, out handler))
-                    return handler;
-            }
-            finally
-            {
-                _handlersLock.ExitReadLock();
-            }
-
-            Logger.Debug(Log("[{0}] Protocol handler not registered for protocol {1}.", SessionId, protocol));
-            throw new NotSupportedException($"Protocol handler not registered for protocol { protocol }.");
+            Logger.Debug(Log($"[{SessionKey}] Protocol handler not registered for protocol {EtpFactory.GetProtocolName(EtpVersion, protocol)}."));
+            throw new NotSupportedException($"Protocol handler not registered for protocol {EtpFactory.GetProtocolName(EtpVersion, protocol)}.");
         }
 
         /// <summary>
-        /// Handles the unsupported protocols.
-        /// </summary>
-        /// <param name="supportedProtocols">The supported protocols.</param>
-        protected virtual void HandleUnsupportedProtocols(IList<ISupportedProtocol> supportedProtocols)
-        {
-            // remove unsupported handler mappings (excluding Core protocol)
-            try
-            {
-                _handlersLock.TryEnterReadLock(-1);
-
-                HandlersByType
-                    .Where(x => x.Value.Protocol > 0 && !supportedProtocols.Contains(x.Value.Protocol, x.Value.Role))
-                    .ToList()
-                    .ForEach(x =>
-                    {
-                        x.Value.Session = null;
-                        HandlersByType.Remove(x.Key);
-                        HandlersByProtocol.Remove(x.Value.Protocol);
-                    });
-
-                // update remaining handler mappings by protocol
-                foreach (var handler in HandlersByType.Values.ToArray())
-                {
-                    if (!HandlersByProtocol.ContainsKey(handler.Protocol))
-                        HandlersByProtocol[handler.Protocol] = handler;
-                }
-            }
-            finally
-            {
-                _handlersLock.ExitReadLock();
-            }
-        }
-
-        /// <summary>
-        /// Logs the specified header and message body.
+        /// Logs the specified message.
         /// </summary>
         /// <typeparam name="T">The type of message.</typeparam>
-        /// <param name="header">The header.</param>
-        /// <param name="body">The message body.</param>
-        protected void Sending<T>(IMessageHeader header, T body)
+        /// <param name="message">The message.</param>
+        protected void Sending<T>(EtpMessage<T> message)
+            where T : IEtpMessageBody
         {
             var now = DateTime.Now;
+
             if (Output != null)
             {
-                Log("[{0}] Sending message at {1}", SessionId, now.ToString(TimestampFormat));
-                Log(EtpExtensions.Serialize(header));
-                Log(EtpExtensions.Serialize(body, true));
+                Log("[{0}] Sending message at {1}: Name: {2}", SessionKey, now.ToString(TimestampFormat), message.MessageName);
+                Log(EtpExtensions.Serialize(message.Header));
+                if (message.Extension != null)
+                    Log(EtpExtensions.Serialize(message.Extension));
+                Log(EtpExtensions.Serialize(message.Body));
             }
 
             if (Logger.IsVerboseEnabled())
             {
-                Logger.VerboseFormat("[{0}] Sending message at {1}: {2}{3}{4}",
-                    SessionId, now.ToString(TimestampFormat), EtpExtensions.Serialize(header), Environment.NewLine, EtpExtensions.Serialize(body, true));
+                var extension = message.Extension == null ? string.Empty : $"{Environment.NewLine}{EtpExtensions.Serialize(message.Body)}";
+                Logger.Verbose($"[{SessionKey}] Sending message at {now.ToString(TimestampFormat)}: Name: {message.MessageName}; Message: {EtpExtensions.Serialize(message.Header)}{Environment.NewLine}{EtpExtensions.Serialize(message.Body)}{extension}");
+            }
+        }
+
+        /// <summary>
+        /// Logs the specified message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        protected void LogMessage(EtpMessage message, bool sending)
+        {
+            var now = DateTime.Now;
+
+            var action = sending ? "Sending message" : "Message received";
+            if (Output != null)
+            {
+                Log($"[{SessionKey}] {action} at {now.ToString(TimestampFormat)}");
+                Log(EtpExtensions.Serialize(message.Header));
+                if (message.Extension != null)
+                    Log(EtpExtensions.Serialize(message.Header));
+                Log(EtpExtensions.Serialize(message.Body));
+            }
+
+            if (Logger.IsVerboseEnabled())
+            {
+                var extension = message.Extension != null
+                    ? $"{EtpExtensions.Serialize(message.Extension)}{Environment.NewLine}"
+                    : string.Empty;
+
+                Logger.Verbose($"[{SessionKey}] {action} at {now.ToString(TimestampFormat)}: Name: {message.MessageName}; Message: {EtpExtensions.Serialize(message.Header)}{Environment.NewLine}{extension}{EtpExtensions.Serialize(message.Body)}");
             }
         }
 
@@ -650,26 +1566,39 @@ namespace Energistics.Etp.Common
         {
             if (disposing)
             {
+                Logger.Verbose($"[{SessionKey}] Disposing EtpSession for {GetType().Name}");
+
                 IEnumerable<IProtocolHandler> handlers;
+
+                handlers = HandlersByProtocol.Values.ToList();
+
+                HandlersByType.Clear();
+                HandlersByProtocol.Clear();
+
+                foreach (var handler in handlers)
+                {
+                    handler.Dispose();
+                }
+
+                if (!_sendTokenSource.IsCancellationRequested)
+                    _sendTokenSource.Cancel();
 
                 try
                 {
-                    _handlersLock.TryEnterWriteLock(-1);
+                    Logger.Verbose($"[{SessionKey}] Acquiring send lock in Dispose");
 
-                    handlers = HandlersByType.Values.ToList();
-
-                    HandlersByType.Clear();
-                    HandlersByProtocol.Clear();
-
-                    foreach (var handler in handlers)
-                    {
-                        handler.Dispose();
-                    }
+                    _sendLock.Wait();
+                    IsSendingEnabled = false;
                 }
                 finally
                 {
-                    _handlersLock.ExitWriteLock();
+                    Logger.Verbose($"[{SessionKey}] Releasing send lock in Dispose");
+
+                    _sendLock.Dispose();
+                    _sendTokenSource.Cancel();
                 }
+
+                Logger.Verbose($"[{SessionKey}] Disposed EtpSession for {GetType().Name}");
             }
 
             base.Dispose(disposing);
@@ -680,6 +1609,14 @@ namespace Energistics.Etp.Common
         /// </summary>
         protected virtual void ValidateHeaders()
         {
+        }
+
+        /// <summary>
+        /// Updates the session key.
+        /// </summary>
+        private void UpdateSessionKey()
+        {
+            SessionKey = EtpFactory.CreateSessionKey(EtpVersion, SessionId, ClientInfo?.InstanceId ?? default(Guid), ServerInfo?.InstanceId ?? default(Guid));
         }
     }
 }
