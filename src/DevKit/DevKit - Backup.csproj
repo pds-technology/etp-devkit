@@ -49,7 +49,7 @@
   </Target>
   <ItemGroup>
     <PackageReference Include="Apache.Avro" Version="1.9.0" />
-    <PackageReference Include="log4net" Version="2.0.8" />
+    <PackageReference Include="log4net" Version="2.0.10" />
     <PackageReference Include="Microsoft.Bcl" Version="1.1.10" />
     <PackageReference Include="Microsoft.Bcl.Async" Version="1.0.168" />
     <PackageReference Include="Microsoft.Bcl.Build" Version="1.0.21" />
