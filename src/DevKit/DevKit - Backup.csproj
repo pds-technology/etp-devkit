@@ -48,7 +48,7 @@
     <Error Condition="!Exists('$(SolutionDir)\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
   </Target>
   <ItemGroup>
-    <PackageReference Include="Apache.Avro" Version="1.9.0" />
+    <PackageReference Include="Apache.Avro" Version="1.11.0" />
     <PackageReference Include="log4net" Version="2.0.8" />
     <PackageReference Include="Microsoft.Bcl" Version="1.1.10" />
     <PackageReference Include="Microsoft.Bcl.Async" Version="1.0.168" />
