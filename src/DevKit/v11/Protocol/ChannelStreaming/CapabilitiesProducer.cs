@@ -26,6 +26,10 @@ namespace Energistics.Etp.v11.Protocol.ChannelStreaming
         /// <summary>
         /// Indicates the producer does not accept requests to stream individual channels but always sends all of its channels.
         /// </summary>
-        public bool? SimpleStreamer { get; set; }
+        public bool? SimpleStreamer
+        {
+            get { return TryGetValue<bool>("SimpleStreamer"); }
+            set { Dictionary.SetValue<bool>("SimpleStreamer", value); }
+        }
     }
 }

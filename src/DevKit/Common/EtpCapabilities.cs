@@ -32,7 +32,7 @@ namespace Energistics.Etp.Common
         /// <summary>
         /// The underlying dictionary holding the capabilities.
         /// </summary>
-        private IDataValueDictionary Dictionary { get; }
+        protected IDataValueDictionary Dictionary { get; }
 
         /// <summary>
         /// Initializes a new <see cref="EtpCapabilities"/> instance.
