@@ -64,8 +64,6 @@ namespace Energistics.Etp.Common
 
             Assert.AreEqual(0, collection.SupportedTypes.Count());
             Assert.AreEqual(1, collection.SupportedFamilies.Count());
-            Assert.AreEqual(int.MaxValue, collection.SupportedTypes.First().Capabilities.ActiveTimeoutPeriod);
-            Assert.AreEqual(false, collection.SupportedTypes.First().CounterpartCapabilities.SupportsPut);
         }
 
         [TestMethod]

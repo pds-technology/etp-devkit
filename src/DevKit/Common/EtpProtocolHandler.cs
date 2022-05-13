@@ -1021,8 +1021,7 @@ namespace Energistics.Etp.Common
             _source?.Cancel();
             try
             {
-                if (_backgroundCleanUpTask != null)
-                    AsyncContext.Run(() => _backgroundCleanUpTask.ConfigureAwait(Session.CaptureAsyncContext));
+                AsyncContext.Run(() => _backgroundCleanUpTask?.ConfigureAwait(Session.CaptureAsyncContext));
             }
             catch (OperationCanceledException)
             {
