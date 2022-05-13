@@ -521,7 +521,7 @@ namespace Energistics.Etp
                 requestSession.SetSupportedDataObjectsFrom(new List<ISupportedDataObject>());
             requestSession.SupportedCompression = clientDetails.SupportedCompression.ToList();
             requestSession.SupportedFormats = clientDetails.SupportedFormats.ToList();
-            requestSession.SetEndpointCapabilitiesFrom(clientDetails.Capabilities);
+            requestSession.SetEndpointCapabilitiesFrom(clientDetails.Capabilities.CloneCapabilities());
 
             return requestSession;
         }
@@ -570,7 +570,7 @@ namespace Energistics.Etp
                 openSession.SetSupportedDataObjectsFrom(new List<ISupportedDataObject>());
             openSession.SupportedCompression = sessionDetails.SupportedCompression.FirstOrDefault();
             openSession.SupportedFormats = sessionDetails.SupportedFormats.ToList();
-            openSession.SetEndpointCapabilitiesFrom(sessionDetails.Capabilities);
+            openSession.SetEndpointCapabilitiesFrom(sessionDetails.Capabilities.CloneCapabilities());
 
             return openSession;
         }
@@ -678,7 +678,7 @@ namespace Energistics.Etp
 
             serverCapabilities.SetSupportedProtocolsFrom(details.SupportedProtocols.Where(s => s.EtpVersion == version && s.Protocol != (int)Protocols.Core).Select(s => CreateSupportedProtocol(version, s, true)));
             serverCapabilities.SetSupportedDataObjectsFrom(details.SupportedDataObjects.Select(d => CreateSupportedDataObject(version, d)));
-            serverCapabilities.SetEndpointCapabilitiesFrom(details.Capabilities);
+            serverCapabilities.SetEndpointCapabilitiesFrom(details.Capabilities.CloneCapabilities());
 
             return serverCapabilities;
         }
@@ -827,7 +827,7 @@ namespace Energistics.Etp
             supportedProtocol.EtpVersion = version;
             supportedProtocol.Protocol = endpointProtocol.Protocol;
             supportedProtocol.Role = useRole ? endpointProtocol.Role : endpointProtocol.CounterpartRole;
-            supportedProtocol.SetProtocolCapabilitiesFrom(endpointProtocol.Capabilities);
+            supportedProtocol.SetProtocolCapabilitiesFrom(endpointProtocol.Capabilities.CloneCapabilities());
 
             return supportedProtocol;
         }
@@ -863,7 +863,7 @@ namespace Energistics.Etp
             var supportedDataObject = CreateSupportedDataObject(version);
 
             supportedDataObject.QualifiedType = endpointDataObject.QualifiedType;
-            supportedDataObject.SetDataObjectCapabilitiesFrom(endpointDataObject.Capabilities);
+            supportedDataObject.SetDataObjectCapabilitiesFrom(endpointDataObject.Capabilities.CloneCapabilities());
 
             return supportedDataObject;
         }
